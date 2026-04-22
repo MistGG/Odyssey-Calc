@@ -9,7 +9,7 @@ import {
   skillIsSupportOnly,
   skillSustainDps,
 } from '../lib/skillDamage'
-import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffects'
+import { buildSupportSkillEffects } from '../lib/supportEffects'
 import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../lib/dpsSim'
 import type { WikiDigimonDetail } from '../types/wikiApi'
@@ -245,15 +245,7 @@ export function DigimonDetailPage() {
               cap,
             )
             const support = skillIsSupportOnly(s.base_dmg, s.scaling)
-            const supportEffects = support
-              ? [
-                  ...parseSupportEffects(
-                    `${s.description} ${s.buff?.description ?? ''}`,
-                    L,
-                  ),
-                  ...parseBuffNumericEffects(s.buff, L),
-                ]
-              : []
+            const supportEffects = support ? buildSupportSkillEffects(s, L) : []
             return (
               <li
                 key={s.id}
@@ -282,11 +274,15 @@ export function DigimonDetailPage() {
                   )}
                   <span className="muted"> · {s.element}</span>
                 </div>
-                <p className="skill-desc">{s.description}</p>
-                {support && s.buff?.description?.trim() && (
-                  <p className="skill-buff-desc">
-                    Buff data: {s.buff.description}
-                  </p>
+                {s.description?.trim() &&
+                  (!support || !s.buff?.description?.trim()) && (
+                    <p className="skill-desc">{s.description}</p>
+                  )}
+                {support && s.description?.trim() && s.buff?.description?.trim() && (
+                  <details className="skill-flavor-details">
+                    <summary>Skill text</summary>
+                    <p className="skill-desc">{s.description}</p>
+                  </details>
                 )}
                 {support && supportEffects.length > 0 && (
                   <ul className="support-effects">

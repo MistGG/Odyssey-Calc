@@ -1,3 +1,5 @@
+import type { WikiSkill } from '../types/wikiApi'
+
 export type ParsedSupportEffect = {
   label: string
   base: number
@@ -229,4 +231,78 @@ export function parseBuffNumericEffects(
     seen.add(k)
     return true
   })
+}
+
+/**
+ * Prefer `buff.description` (structured buff lines) over the skill flavor `description`
+ * so we do not parse the same stats twice when both repeat the same numbers.
+ */
+export function supportEffectParseText(skill: Pick<WikiSkill, 'description' | 'buff'>): string {
+  const buffDesc = skill.buff?.description?.trim()
+  if (buffDesc) return buffDesc
+  return skill.description?.trim() ?? ''
+}
+
+function effectStatBucket(e: ParsedSupportEffect): string {
+  const l = e.label.toLowerCase()
+  const u = e.unit
+  if (/\bskill\s*(damage|dmg)\b/i.test(l) || /\bskill\s*damage\s*pct\b/i.test(l)) return `skill_dmg|${u}`
+  if (/\battack\s*speed\b/i.test(l)) return `atk_spd|${u}`
+  if (/\bcritical\s*damage\b|\bcrit\s*damage\b|\bcd\b/i.test(l)) return `crit_dmg|${u}`
+  if (/\bcritical\s*rate\b|\bcrit\s*rate\b|\bct\b/i.test(l)) return `crit_rate|${u}`
+  if (/\bhit\s*rate\b/i.test(l)) return `hit_rate|${u}`
+  if (/\bdefense\b|\bdefence\b/i.test(l)) return `def|${u}`
+  if (/\bdamage\s*reduction\b|\bdmg\s*reduction\b/i.test(l)) return `dmg_red|${u}`
+  if (/\bmax\s*hp\b/i.test(l)) return `max_hp|${u}`
+  if (/\bhp\b/i.test(l) && !/max/.test(l)) return `hp|${u}`
+  if (/\bds\b/i.test(l)) return `ds|${u}`
+  if (
+    /\battack\s*power\b/i.test(l) ||
+    /\battack\s*pct\b/i.test(l) ||
+    /\battack\s*flat\b/i.test(l) ||
+    (/\battack\b/i.test(l) && !/\battack\s*speed\b/i.test(l)) ||
+    /\batk\b/i.test(l)
+  ) {
+    return `atk|${u}`
+  }
+  return `other|${l}|${u}`
+}
+
+function labelStyleRank(label: string): number {
+  const t = label.trim().toLowerCase()
+  if (t.startsWith('increases ') || t.startsWith('decreases ')) return 3
+  if (t.startsWith('reduces ') || t.startsWith('recovers ') || t.startsWith('restores ')) return 3
+  if (t.startsWith('raises ') || t.startsWith('boosts ')) return 2
+  return 1
+}
+
+function preferSupportEffect(a: ParsedSupportEffect, b: ParsedSupportEffect): ParsedSupportEffect {
+  const ra = labelStyleRank(a.label)
+  const rb = labelStyleRank(b.label)
+  if (rb !== ra) return rb > ra ? b : a
+  if (a.label.length !== b.label.length) return a.label.length <= b.label.length ? a : b
+  return a
+}
+
+/** Collapse duplicate rows from flavor + buff text + numeric buff keys describing the same stat. */
+export function dedupeSupportEffectsByStat(effects: ParsedSupportEffect[]): ParsedSupportEffect[] {
+  const map = new Map<string, ParsedSupportEffect>()
+  for (const e of effects) {
+    const key = `${effectStatBucket(e)}|${e.base}|${e.perLevel}|${e.unit}`
+    const prev = map.get(key)
+    if (!prev) {
+      map.set(key, e)
+      continue
+    }
+    map.set(key, preferSupportEffect(prev, e))
+  }
+  return [...map.values()]
+}
+
+/** Parsed lines for display and sim: buff text (preferred) + numeric buff fields, deduped. */
+export function buildSupportSkillEffects(skill: WikiSkill, level: number): ParsedSupportEffect[] {
+  const L = Math.max(1, Math.floor(level))
+  const fromText = parseSupportEffects(supportEffectParseText(skill), L)
+  const fromNums = parseBuffNumericEffects(skill.buff, L)
+  return dedupeSupportEffectsByStat([...fromText, ...fromNums])
 }

@@ -12,7 +12,7 @@ import {
 } from '../lib/digimonRoleSkills'
 import { SKILL_LEVEL_CAP } from '../lib/skillDamage'
 import { skillIsSupportOnly } from '../lib/skillDamage'
-import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffects'
+import { buildSupportSkillEffects } from '../lib/supportEffects'
 import type { RotationEvent } from '../lib/dpsSim'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
@@ -346,13 +346,7 @@ export function DpsLabPage() {
       skillIsSupportOnly(s.base_dmg, s.scaling),
     )
     const supportWithAttackBuff = supportSkills.filter((s) =>
-      [
-        ...parseSupportEffects(
-          `${s.description} ${s.buff?.description ?? ''}`,
-          skillLevels[s.id] ?? 1,
-        ),
-        ...parseBuffNumericEffects(s.buff, skillLevels[s.id] ?? 1),
-      ].some(
+      buildSupportSkillEffects(s, skillLevels[s.id] ?? 1).some(
         (e) =>
           e.unit === '%' &&
           /(increase|raise|boost).*(\battack\b|\bskill damage\b|\bskill dmg\b)/i.test(
