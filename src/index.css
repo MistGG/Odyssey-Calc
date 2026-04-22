@@ -488,6 +488,10 @@ code {
   min-width: 0;
 }
 
+.tier-cell-content {
+  min-height: 120px;
+}
+
 .tier-entry-list {
   margin: 0;
   padding: 0;

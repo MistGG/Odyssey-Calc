@@ -315,7 +315,10 @@ export function TierListPage() {
     () => buildTierGroups(filteredEntries),
     [filteredEntries],
   )
-  const roles = useMemo(() => groups.map((g) => g.role), [groups])
+  const roles = useMemo(
+    () => buildTierGroups(cache?.entries ?? {}).map((g) => g.role),
+    [cache?.entries],
+  )
   const byRole = useMemo(() => {
     const map: Record<string, (typeof groups)[number]> = {}
     groups.forEach((g) => {
@@ -451,34 +454,36 @@ export function TierListPage() {
                       const entries = byRole[role]?.tiers[tier] ?? []
                       return (
                         <td key={`${tier}-${role}`} className={`tier-cell tier-${tier.toLowerCase()}`}>
-                          {entries.length === 0 ? (
-                            <span className="muted">—</span>
-                          ) : (
-                            <ul className="tier-entry-list">
-                              {entries.map((e) => {
-                                const modelId = listMeta[e.id]?.model_id ?? ''
-                                const icon = modelId
-                                  ? digimonPortraitUrl(modelId, e.id, e.name)
-                                  : undefined
-                                return (
-                                  <li key={`${tier}-${role}-${e.id}`} className="tier-entry">
-                                    <Link
-                                      to={`/lab?digimonId=${encodeURIComponent(e.id)}`}
-                                      className="tier-entry-link"
-                                    >
-                                      {icon ? (
-                                        <img src={icon} alt="" loading="lazy" />
-                                      ) : (
-                                        <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
-                                      )}
-                                      <span className="tier-entry-name">{e.name}</span>
-                                      <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
-                                    </Link>
-                                  </li>
-                                )
-                              })}
-                            </ul>
-                          )}
+                          <div className="tier-cell-content">
+                            {entries.length === 0 ? (
+                              <span className="muted">—</span>
+                            ) : (
+                              <ul className="tier-entry-list">
+                                {entries.map((e) => {
+                                  const modelId = listMeta[e.id]?.model_id ?? ''
+                                  const icon = modelId
+                                    ? digimonPortraitUrl(modelId, e.id, e.name)
+                                    : undefined
+                                  return (
+                                    <li key={`${tier}-${role}-${e.id}`} className="tier-entry">
+                                      <Link
+                                        to={`/lab?digimonId=${encodeURIComponent(e.id)}`}
+                                        className="tier-entry-link"
+                                      >
+                                        {icon ? (
+                                          <img src={icon} alt="" loading="lazy" />
+                                        ) : (
+                                          <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
+                                        )}
+                                        <span className="tier-entry-name">{e.name}</span>
+                                        <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
+                                      </Link>
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            )}
+                          </div>
                         </td>
                       )
                     })}

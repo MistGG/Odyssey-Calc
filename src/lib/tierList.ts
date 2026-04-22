@@ -86,11 +86,7 @@ export function buildTierGroups(entriesMap: Record<string, SustainedDpsEntry>) {
     groups.push({ role, tiers })
   }
 
-  groups.sort((a, b) => {
-    const aTotal = Object.values(a.tiers).reduce((sum, arr) => sum + arr.length, 0)
-    const bTotal = Object.values(b.tiers).reduce((sum, arr) => sum + arr.length, 0)
-    return bTotal - aTotal
-  })
+  groups.sort((a, b) => a.role.localeCompare(b.role))
   return groups
 }
 
