@@ -359,6 +359,16 @@ code {
   cursor: not-allowed;
 }
 
+.tier-update-btn + .tier-update-btn {
+  margin-left: 0.55rem;
+}
+
+.tier-update-btn-secondary {
+  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.38);
+  color: var(--text-soft);
+}
+
 .stage-tabs {
   display: flex;
   flex-wrap: wrap;

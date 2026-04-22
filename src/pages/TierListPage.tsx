@@ -21,6 +21,38 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function listSignature(d: WikiDigimonListItem) {
+  return [
+    d.id,
+    d.name,
+    d.model_id,
+    d.stage,
+    d.attribute,
+    d.element,
+    d.role,
+    d.rank,
+    d.hp,
+    d.attack,
+    (d.family_types ?? []).join(','),
+  ].join('|')
+}
+
+async function fetchAllDigimonIndex() {
+  const first = await fetchDigimonPage(0, 500)
+  const all = [...first.data]
+  for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
+    const next = await fetchDigimonPage(p - 1, 500)
+    all.push(...next.data)
+  }
+  const meta: Record<string, WikiDigimonListItem> = {}
+  const signatures: Record<string, string> = {}
+  all.forEach((d) => {
+    meta[d.id] = d
+    signatures[d.id] = listSignature(d)
+  })
+  return { all, meta, signatures }
+}
+
 function levelMapForSkills(skills: { id: string; max_level: number }[]) {
   const map: Record<string, number> = {}
   for (const s of skills) map[s.id] = Math.max(1, Math.min(25, s.max_level || 25))
@@ -32,6 +64,7 @@ export function TierListPage() {
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
   const [initializing, setInitializing] = useState(true)
   const [building, setBuilding] = useState(false)
+  const [buildMode, setBuildMode] = useState<'incremental' | 'force'>('incremental')
   const [status, setStatus] = useState<string>('Preparing tier list cache…')
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
@@ -54,19 +87,10 @@ export function TierListPage() {
 
       try {
         setStatus('Fetching Digimon index…')
-        const first = await fetchDigimonPage(0, 500)
-        const all = [...first.data]
-        let totalPages = Math.max(1, first.total_pages || 1)
-        for (let p = 2; p <= totalPages; p += 1) {
-          const next = await fetchDigimonPage(p - 1, 500)
-          all.push(...next.data)
-        }
+        const { all, meta, signatures } = await fetchAllDigimonIndex()
         const ids = all.map((d) => d.id)
-        const meta: Record<string, WikiDigimonListItem> = {}
-        all.forEach((d) => {
-          meta[d.id] = d
-        })
         const created = createEmptyTierListCache(ids)
+        created.listSignatures = signatures
         saveTierListCache(created)
         if (!cancelled) {
           setListMeta(meta)
@@ -93,17 +117,8 @@ export function TierListPage() {
     let cancelled = false
     async function fillMeta() {
       try {
-        const first = await fetchDigimonPage(0, 500)
-        const all = [...first.data]
-        for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
-          const next = await fetchDigimonPage(p - 1, 500)
-          all.push(...next.data)
-        }
+        const { meta } = await fetchAllDigimonIndex()
         if (cancelled) return
-        const meta: Record<string, WikiDigimonListItem> = {}
-        all.forEach((d) => {
-          meta[d.id] = d
-        })
         setListMeta(meta)
       } catch {
         // Best effort for display metadata.
@@ -115,17 +130,61 @@ export function TierListPage() {
     }
   }, [cache, listMeta])
 
-  async function updateTierList() {
+  async function updateTierList(mode: 'incremental' | 'force' = 'incremental') {
     if (!cache || building || initializing) return
     setBuilding(true)
+    setBuildMode(mode)
     setError(null)
     let working: TierListCache = {
       ...cache,
       queue: [...cache.queue],
       entries: { ...cache.entries },
+      listSignatures: { ...cache.listSignatures },
     }
 
     try {
+      setStatus('Checking index for updates…')
+      const { all, meta, signatures } = await fetchAllDigimonIndex()
+      setListMeta(meta)
+
+      const latestIds = new Set(all.map((d) => d.id))
+      for (const cachedId of Object.keys(working.entries)) {
+        if (!latestIds.has(cachedId)) delete working.entries[cachedId]
+      }
+      for (const cachedId of Object.keys(working.listSignatures)) {
+        if (!latestIds.has(cachedId)) delete working.listSignatures[cachedId]
+      }
+      working.total = all.length
+
+      const changedOrMissing = all
+        .map((d) => d.id)
+        .filter(
+          (id) =>
+            working.listSignatures[id] !== signatures[id] ||
+            !working.entries[id],
+        )
+      const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
+      const plannedQueue =
+        mode === 'force'
+          ? all.map((d) => d.id)
+          : [...new Set([...carryOverQueue, ...changedOrMissing])]
+
+      working.queue = plannedQueue
+      working.listSignatures = signatures
+      working.lastCheckedAt = new Date().toISOString()
+      saveTierListCache(working)
+      setCache({
+        ...working,
+        queue: [...working.queue],
+        entries: { ...working.entries },
+        listSignatures: { ...working.listSignatures },
+      })
+
+      if (working.queue.length === 0) {
+        setStatus('Tier list is already up to date. No changed Digimon found.')
+        return
+      }
+
       let processed = 0
       let backoffMs = 0
       while (working.queue.length > 0) {
@@ -166,7 +225,12 @@ export function TierListPage() {
             working.queue.shift()
             working.queue.push(id)
             saveTierListCache(working)
-            setCache({ ...working, queue: [...working.queue], entries: { ...working.entries } })
+            setCache({
+              ...working,
+              queue: [...working.queue],
+              entries: { ...working.entries },
+              listSignatures: { ...working.listSignatures },
+            })
             continue
           }
           // Move failed id to back of queue so build can continue later.
@@ -177,7 +241,12 @@ export function TierListPage() {
 
         working.lastCheckedAt = new Date().toISOString()
         saveTierListCache(working)
-        setCache({ ...working, queue: [...working.queue], entries: { ...working.entries } })
+        setCache({
+          ...working,
+          queue: [...working.queue],
+          entries: { ...working.entries },
+          listSignatures: { ...working.listSignatures },
+        })
         if (
           processed > 0 &&
           processed % COOLDOWN_EVERY_N_REQUESTS === 0 &&
@@ -193,12 +262,17 @@ export function TierListPage() {
       }
 
       if (working.queue.length === 0) {
-        setStatus('Tier list complete. Use Update to refresh with new checks.')
+        setStatus(
+          mode === 'force'
+            ? 'Force update complete. All Digimon were recalculated.'
+            : 'Tier list update complete. Changed Digimon were refreshed.',
+        )
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Tier update failed.')
     } finally {
       setBuilding(false)
+      setBuildMode('incremental')
     }
   }
 
@@ -270,9 +344,19 @@ export function TierListPage() {
           type="button"
           className="tier-update-btn"
           disabled={initializing || building || !cache}
-          onClick={() => void updateTierList()}
+          onClick={() => void updateTierList('incremental')}
         >
-          {building ? 'Building tier list…' : 'Update tier list'}
+          {building && buildMode === 'incremental'
+            ? 'Updating changed Digimon…'
+            : 'Update tier list'}
+        </button>
+        <button
+          type="button"
+          className="tier-update-btn tier-update-btn-secondary"
+          disabled={initializing || building || !cache}
+          onClick={() => void updateTierList('force')}
+        >
+          {building && buildMode === 'force' ? 'Force updating all…' : 'Force update'}
         </button>
         {error && (
           <p className="error" role="alert">

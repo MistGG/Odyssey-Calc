@@ -1,4 +1,4 @@
-export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v1'
+export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v2'
 
 export type TierBucket = 'S' | 'A' | 'B' | 'C'
 
@@ -12,10 +12,11 @@ export type SustainedDpsEntry = {
 }
 
 export type TierListCache = {
-  version: 1
+  version: 2
   total: number
   queue: string[]
   entries: Record<string, SustainedDpsEntry>
+  listSignatures: Record<string, string>
   lastCheckedAt?: string
 }
 
@@ -28,9 +29,19 @@ export function loadTierListCache(): TierListCache | null {
   try {
     const raw = localStorage.getItem(TIER_LIST_CACHE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as TierListCache
-    if (!parsed || parsed.version !== 1) return null
-    return parsed
+    const parsed = JSON.parse(raw) as
+      | TierListCache
+      | (Omit<TierListCache, 'version' | 'listSignatures'> & { version: 1 })
+    if (!parsed) return null
+    if (parsed.version === 2) return parsed
+    if (parsed.version === 1) {
+      return {
+        ...parsed,
+        version: 2,
+        listSignatures: {},
+      }
+    }
+    return null
   } catch {
     return null
   }
@@ -42,10 +53,11 @@ export function saveTierListCache(cache: TierListCache) {
 
 export function createEmptyTierListCache(ids: string[]): TierListCache {
   return {
-    version: 1,
+    version: 2,
     total: ids.length,
     queue: [...ids],
     entries: {},
+    listSignatures: {},
   }
 }
 
