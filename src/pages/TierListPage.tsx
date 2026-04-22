@@ -173,7 +173,8 @@ export function TierListPage() {
           (id) =>
             (hadPriorSignatures &&
               working.listSignatures[id] !== signatures[id]) ||
-            !working.entries[id],
+            !working.entries[id] ||
+            !working.entries[id]?.status,
         )
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
       const plannedQueue =
@@ -417,7 +418,7 @@ export function TierListPage() {
           disabled={initializing || building || !cache}
           onClick={() => void updateTierList('force')}
         >
-          {building && buildMode === 'force' ? 'Force updating all…' : 'Force update'}
+          {building && buildMode === 'force' ? 'Force checking all…' : 'Force check all'}
         </button>
         {error && (
           <p className="error" role="alert">
@@ -483,6 +484,7 @@ export function TierListPage() {
                                 {entries.map((e) => {
                                   const modelId = listMeta[e.id]?.model_id ?? ''
                                   const rank = listMeta[e.id]?.rank ?? 1
+                                const status = e.status ?? 'unknown'
                                   const icon = modelId
                                     ? digimonPortraitUrl(modelId, e.id, e.name)
                                     : undefined
@@ -490,9 +492,11 @@ export function TierListPage() {
                                     <li
                                       key={`${tier}-${role}-${e.id}`}
                                       className={`tier-entry ${
-                                        e.status === 'incomplete'
+                                        status === 'incomplete'
                                           ? 'tier-entry-incomplete'
-                                          : 'tier-entry-complete'
+                                          : status === 'complete'
+                                            ? 'tier-entry-complete'
+                                            : 'tier-entry-unknown'
                                       }`}
                                     >
                                       <Link
@@ -514,12 +518,22 @@ export function TierListPage() {
                                           <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
                                           <span
                                             className={`tier-status-dot ${
-                                              e.status === 'incomplete'
+                                              status === 'incomplete'
                                                 ? 'tier-status-dot-incomplete'
-                                                : 'tier-status-dot-complete'
+                                                : status === 'complete'
+                                                  ? 'tier-status-dot-complete'
+                                                  : 'tier-status-dot-unknown'
                                             }`}
-                                            title={contentStatusLabel(e.status ?? 'complete')}
-                                            aria-label={contentStatusLabel(e.status ?? 'complete')}
+                                            title={
+                                              status === 'unknown'
+                                                ? 'Status pending (run Update tier list)'
+                                                : contentStatusLabel(status)
+                                            }
+                                            aria-label={
+                                              status === 'unknown'
+                                                ? 'Status pending (run Update tier list)'
+                                                : contentStatusLabel(status)
+                                            }
                                           />
                                         </span>
                                       </Link>

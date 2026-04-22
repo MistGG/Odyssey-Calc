@@ -517,6 +517,10 @@ code {
   border-color: rgba(251, 113, 133, 0.42);
 }
 
+.tier-entry-unknown {
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
 .tier-entry-link {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr) auto;
@@ -603,6 +607,11 @@ code {
 .tier-status-dot-incomplete {
   background: #fb7185;
   box-shadow: 0 0 8px rgba(251, 113, 133, 0.45);
+}
+
+.tier-status-dot-unknown {
+  background: #94a3b8;
+  box-shadow: 0 0 8px rgba(148, 163, 184, 0.4);
 }
 
 .tier-status-legend {
