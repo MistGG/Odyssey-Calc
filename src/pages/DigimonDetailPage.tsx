@@ -113,7 +113,17 @@ export function DigimonDetailPage() {
           </div>
         )}
         <div className="detail-intro">
-          <h1>{data.name}</h1>
+          <div className="detail-title-row">
+            <h1>{data.name}</h1>
+            <a
+              className="wiki-btn"
+              href={`https://thedigitalodyssey.com/wiki#digimon/${encodeURIComponent(data.id)}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Official wiki
+            </a>
+          </div>
           <ul className="chips">
             <li>{data.stage}</li>
             <li>{data.element}</li>
