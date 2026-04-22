@@ -274,15 +274,9 @@ export function DigimonDetailPage() {
                   )}
                   <span className="muted"> · {s.element}</span>
                 </div>
-                {s.description?.trim() &&
-                  (!support || !s.buff?.description?.trim()) && (
-                    <p className="skill-desc">{s.description}</p>
-                  )}
-                {support && s.description?.trim() && s.buff?.description?.trim() && (
-                  <details className="skill-flavor-details">
-                    <summary>Skill text</summary>
-                    <p className="skill-desc">{s.description}</p>
-                  </details>
+                {s.description?.trim() && <p className="skill-desc">{s.description}</p>}
+                {support && s.buff?.description?.trim() && (
+                  <p className="skill-buff-desc">Buff data: {s.buff.description}</p>
                 )}
                 {support && supportEffects.length > 0 && (
                   <ul className="support-effects">

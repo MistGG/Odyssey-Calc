@@ -1427,8 +1427,7 @@ code {
   border-color: rgba(52, 211, 153, 0.5);
 }
 
-.skill-list li.skill-panel-support .skill-desc,
-.skill-list li.skill-panel-support .skill-flavor-details .skill-desc {
+.skill-list li.skill-panel-support .skill-desc {
   color: #a7f3d0;
 }
 
@@ -1525,25 +1524,12 @@ code {
   line-height: 1.5;
 }
 
-.skill-flavor-details {
-  margin: 0.35rem 0 0;
+.skill-buff-desc {
+  margin: 0.45rem 0 0;
   font-size: 0.82rem;
-  color: var(--muted);
-}
-
-.skill-flavor-details summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--text-soft);
-  list-style-position: outside;
-}
-
-.skill-flavor-details summary:hover {
   color: #a5f3fc;
-}
-
-.skill-flavor-details .skill-desc {
-  margin-top: 0.35rem;
+  border-left: 2px solid rgba(34, 211, 238, 0.35);
+  padding-left: 0.55rem;
 }
 
 .skill-actions {
