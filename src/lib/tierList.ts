@@ -1,3 +1,5 @@
+import type { DigimonContentStatus } from './contentStatus'
+
 export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v1'
 
 export type TierBucket = 'S' | 'A' | 'B' | 'C'
@@ -8,6 +10,7 @@ export type SustainedDpsEntry = {
   role: string
   stage: string
   dps: number
+  status?: DigimonContentStatus
   checkedAt: string
 }
 
@@ -24,6 +27,20 @@ export type TierGroup = {
   role: string
   tiers: Record<TierBucket, SustainedDpsEntry[]>
 }
+
+const ROLE_ORDER = [
+  'Melee DPS',
+  'Ranged DPS',
+  'Caster',
+  'Hybrid',
+  'Tank',
+  'Support',
+  'None',
+] as const
+
+const ROLE_ORDER_INDEX = new Map<string, number>(
+  ROLE_ORDER.map((role, idx) => [role, idx]),
+)
 
 export function loadTierListCache(): TierListCache | null {
   try {
@@ -86,7 +103,14 @@ export function buildTierGroups(entriesMap: Record<string, SustainedDpsEntry>) {
     groups.push({ role, tiers })
   }
 
-  groups.sort((a, b) => a.role.localeCompare(b.role))
+  groups.sort((a, b) => {
+    const aIdx = ROLE_ORDER_INDEX.get(a.role)
+    const bIdx = ROLE_ORDER_INDEX.get(b.role)
+    if (aIdx != null && bIdx != null) return aIdx - bIdx
+    if (aIdx != null) return -1
+    if (bIdx != null) return 1
+    return a.role.localeCompare(b.role)
+  })
   return groups
 }
 

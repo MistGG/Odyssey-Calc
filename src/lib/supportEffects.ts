@@ -11,6 +11,17 @@ function toNum(v: string) {
   return Number.isFinite(n) ? n : 0
 }
 
+function normalizeEffectLabel(raw: string) {
+  const text = raw.trim().replace(/\s+/g, ' ')
+  if (/^AT$/i.test(text)) return 'Attack Power'
+  if (/^CT$/i.test(text)) return 'Critical Rate'
+  if (/^HP$/i.test(text)) return 'HP'
+  if (/^DS$/i.test(text)) return 'DS'
+  if (/^dmg\s*reduction$/i.test(text)) return 'Damage Reduction'
+  if (/^max\s*hp$/i.test(text)) return 'Max HP'
+  return text
+}
+
 export function parseSupportEffects(
   description: string,
   level: number,
@@ -120,7 +131,7 @@ export function parseSupportEffects(
   const shortScaleRe =
     /([A-Za-z][A-Za-z0-9\s/-]*?)\s*\+(\d+(?:\.\d+)?)\s*(%?)\s*\(\+(\d+(?:\.\d+)?)\s*(%?)\s*\/\s*Lv\)/gi
   for (const m of description.matchAll(shortScaleRe)) {
-    const target = m[1].trim()
+    const target = normalizeEffectLabel(m[1])
     const base = toNum(m[2])
     const baseUnit = (m[3] as '%' | '') || ''
     const per = toNum(m[4])
@@ -132,6 +143,24 @@ export function parseSupportEffects(
       perLevel: per,
       unit,
       valueAtLevel: base + per * (L - 1),
+    })
+  }
+
+  // Example shorthand without per-level:
+  // "AT +12%. CT +10% (20s). Max HP +15%. Dmg Reduction +15%"
+  const shortFlatRe =
+    /([A-Za-z][A-Za-z0-9\s/-]*?)\s*([+-])\s*(\d+(?:\.\d+)?)\s*(%?)(?:\s*\(\d+\s*s\))?/gi
+  for (const m of description.matchAll(shortFlatRe)) {
+    const target = normalizeEffectLabel(m[1])
+    const sign = m[2] === '-' ? -1 : 1
+    const base = sign * toNum(m[3])
+    const unit = ((m[4] as '%' | '') || '') as '%' | ''
+    out.push({
+      label: sign < 0 ? `Decreases ${target}` : `Increases ${target}`,
+      base,
+      perLevel: 0,
+      unit,
+      valueAtLevel: base,
     })
   }
 

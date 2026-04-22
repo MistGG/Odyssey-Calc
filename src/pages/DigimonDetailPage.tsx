@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
-import { digimonPortraitUrl, skillIconUrl } from '../lib/digimonImage'
+import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import {
   SKILL_LEVEL_CAP,
   skillDamageAtLevel,
@@ -9,6 +9,7 @@ import {
   skillSustainDps,
 } from '../lib/skillDamage'
 import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffects'
+import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 function allSkillsLabHref(digimonId: string) {
@@ -59,17 +60,21 @@ export function DigimonDetailPage() {
   const statRows = useMemo(() => {
     const s = data?.stats
     if (!s) return []
+    const critRatePct = s.crit_rate / 1000
+    const atkSpeedVal = s.atk_speed / 1000
     return [
       ['HP', s.hp],
       ['DS', s.ds],
       ['Attack', s.attack],
       ['Defense', s.defense],
-      ['Crit rate', s.crit_rate],
-      ['ATK speed', s.atk_speed],
+      ['Crit rate', `${s.crit_rate.toLocaleString()} (${critRatePct.toFixed(1)}%)`],
+      ['ATK speed', `${s.atk_speed.toLocaleString()} (${atkSpeedVal.toFixed(1)})`],
+      ['DEX', s.dex],
+      ['INT', s.int],
       ['Evasion', s.evasion],
       ['Hit rate', s.hit_rate],
       ['Block rate', s.block_rate],
-    ] as const
+    ] as Array<[string, number | string]>
   }, [data])
 
   if (!id.trim()) {
@@ -91,6 +96,7 @@ export function DigimonDetailPage() {
 
   const portraitSrc = digimonPortraitUrl(data.model_id, data.id, data.name)
   const showPortrait = portraitSrc && !portraitBroken
+  const status = getDigimonContentStatus(data.skills)
 
   return (
     <article className="detail">
@@ -100,40 +106,72 @@ export function DigimonDetailPage() {
         <span>{data.name}</span>
       </nav>
 
-      <header
-        className={`detail-header ${showPortrait ? '' : 'detail-header-textonly'}`}
-      >
-        {showPortrait && (
+      <header className="detail-header detail-header-split">
+        <div className="detail-summary-card">
           <div className="detail-art">
-            <img
-              src={portraitSrc}
-              alt=""
-              onError={() => setPortraitBroken(true)}
-            />
+            {showPortrait ? (
+              <img
+                src={portraitSrc}
+                alt=""
+                onError={() => setPortraitBroken(true)}
+              />
+            ) : (
+              <span className="thumb-initial">{data.name.slice(0, 1)}</span>
+            )}
+            <span className="detail-rank-badge-wrap" aria-hidden="true">
+              <span style={rankSpriteStyle(data.rank)} />
+            </span>
           </div>
-        )}
-        <div className="detail-intro">
-          <div className="detail-title-row">
-            <h1>{data.name}</h1>
-            <a
-              className="wiki-btn"
-              href={`https://thedigitalodyssey.com/wiki#digimon/${encodeURIComponent(data.id)}`}
-              target="_blank"
-              rel="noreferrer"
+          <h1 className="detail-summary-name">{data.name}</h1>
+          <div className="detail-stage">{data.stage}</div>
+          <div className="detail-top-badges">
+            <span className="detail-info-pill detail-info-pill-type">
+              {data.attribute || 'None'}
+            </span>
+            <span className="detail-info-pill detail-info-pill-attrib">
+              {data.element || 'None'}
+            </span>
+          </div>
+          <a
+            className="wiki-btn"
+            href={`https://thedigitalodyssey.com/wiki#digimon/${encodeURIComponent(data.id)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Official wiki
+          </a>
+        </div>
+
+        <div className="detail-info-card detail-info-card-side" aria-label="Digimon info">
+          <h3>Info</h3>
+          <div className="detail-info-row">
+            <span className="detail-info-label">Class</span>
+            <span className="detail-info-value detail-info-pill detail-info-pill-class">
+              + {data.role || 'None'}
+            </span>
+          </div>
+          <div className="detail-info-row">
+            <span className="detail-info-label">Family</span>
+            <span className="detail-info-value">
+              {(data.family_types ?? []).join(', ') || 'None'}
+            </span>
+          </div>
+          <div className="detail-info-row">
+            <span className="detail-info-label">Skills</span>
+            <span className="detail-info-value detail-info-skills">
+              {data.skills?.length ?? 0}
+            </span>
+          </div>
+          <div className="detail-info-row">
+            <span className="detail-info-label">Status</span>
+            <span
+              className={`detail-info-value detail-info-pill ${
+                status === 'incomplete' ? 'status-pill-incomplete' : 'status-pill-complete'
+              }`}
             >
-              Official wiki
-            </a>
+              {contentStatusLabel(status)}
+            </span>
           </div>
-          <ul className="chips">
-            <li>{data.stage}</li>
-            <li>{data.element}</li>
-            <li>{data.attribute}</li>
-            <li>{data.role}</li>
-            <li>Rank {data.rank}</li>
-          </ul>
-          <p className="muted">
-            Family: {(data.family_types ?? []).join(', ') || '—'}
-          </p>
         </div>
       </header>
 
@@ -143,7 +181,9 @@ export function DigimonDetailPage() {
           {statRows.map(([label, val]) => (
             <div key={label} className="stat-cell">
               <span className="stat-label">{label}</span>
-              <span className="stat-val">{val.toLocaleString()}</span>
+              <span className="stat-val">
+                {typeof val === 'number' ? val.toLocaleString() : val}
+              </span>
             </div>
           ))}
         </div>
@@ -235,6 +275,11 @@ export function DigimonDetailPage() {
                   <span className="muted"> · {s.element}</span>
                 </div>
                 <p className="skill-desc">{s.description}</p>
+                {support && s.buff?.description?.trim() && (
+                  <p className="skill-buff-desc">
+                    Buff data: {s.buff.description}
+                  </p>
+                )}
                 {support && supportEffects.length > 0 && (
                   <ul className="support-effects">
                     {supportEffects.map((e, idx) => (

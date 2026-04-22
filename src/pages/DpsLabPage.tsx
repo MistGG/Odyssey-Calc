@@ -85,6 +85,8 @@ export function DpsLabPage() {
       secs,
       Math.max(1, targets),
       data.attack,
+      data.stats?.atk_speed ?? 0,
+      data.stats?.crit_rate ?? 0,
     )
   }, [data, durationSec, skillLevels, targets])
 
@@ -95,7 +97,7 @@ export function DpsLabPage() {
       { name: string; casts: number; damage: number }
     >()
     for (const e of sim.events) {
-      if (e.eventType !== 'damage') continue
+      if (e.eventType === 'support') continue
       const prev = bySkill.get(e.skillId)
       if (prev) {
         prev.casts += 1
@@ -310,7 +312,9 @@ export function DpsLabPage() {
                 DPS-impacting buffs applied: +{sim.totalDpsBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                 % (ATK% {sim.attackBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%, Skill DMG%{' '}
                 {sim.skillDamageBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%, Flat ATK{' '}
-                {sim.attackPowerFlat.toLocaleString(undefined, { maximumFractionDigits: 1 })})
+                {sim.attackPowerFlat.toLocaleString(undefined, { maximumFractionDigits: 1 })}, Crit Rate{' '}
+                {sim.critRatePct.toLocaleString(undefined, { maximumFractionDigits: 2 })}%, Crit DMG{' '}
+                {sim.critDamagePct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%)
               </p>
               <p>
                 Total damage:{' '}
@@ -387,7 +391,9 @@ export function DpsLabPage() {
                         {icon ? (
                           <img className="timeline-skill-icon" src={icon} alt="" />
                         ) : (
-                          <span className="timeline-fallback">{e.skillName.slice(0, 2)}</span>
+                          <span className="timeline-fallback">
+                            {e.eventType === 'auto' ? 'AA' : e.skillName.slice(0, 2)}
+                          </span>
                         )}
                       </span>
                       {idx < sim.events.length - 1 && (
@@ -438,7 +444,10 @@ export function DpsLabPage() {
                           {e.eventType === 'support' && (
                             <span className="lab-event-tag lab-event-tag-support">Buff</span>
                           )}
-                          {e.eventType === 'damage' && e.buffedBy.length > 0 && (
+                          {e.eventType === 'auto' && (
+                            <span className="lab-event-tag">Auto</span>
+                          )}
+                          {e.eventType !== 'support' && e.buffedBy.length > 0 && (
                             <span className="lab-event-tag lab-event-tag-buffed">
                               +{e.totalBuffPct.toFixed(1)}%
                             </span>

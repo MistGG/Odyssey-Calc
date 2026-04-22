@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonPage } from '../api/digimonService'
 import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
-import { digimonPortraitUrl } from '../lib/digimonImage'
+import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
 const ROLE_OPTIONS = [
@@ -281,6 +281,7 @@ export function BrowsePage() {
                 modelId={d.model_id}
                 id={d.id}
                 name={d.name}
+                rank={d.rank}
               />
               <div className="card-body">
                 <span className="card-title">{d.name}</span>
@@ -321,10 +322,12 @@ function DigimonThumb({
   modelId,
   id,
   name,
+  rank,
 }: {
   modelId: string
   id: string
   name: string
+  rank: number
 }) {
   const src = digimonPortraitUrl(modelId, id, name)
   const [broken, setBroken] = useState(!src)
@@ -345,6 +348,9 @@ function DigimonThumb({
         loading="lazy"
         onError={() => setBroken(true)}
       />
+      <span className="rank-badge-wrap" aria-hidden="true">
+        <span style={rankSpriteStyle(rank)} />
+      </span>
     </div>
   )
 }

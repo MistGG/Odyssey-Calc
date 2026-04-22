@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
 import { simulateRotation } from '../lib/dpsSim'
-import { digimonPortraitUrl } from '../lib/digimonImage'
+import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
+import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
 import {
   buildTierGroups,
   createEmptyTierListCache,
@@ -218,13 +219,22 @@ export function TierListPage() {
         try {
           const detail = await fetchDigimonDetail(id)
           const levels = levelMapForSkills(detail.skills)
-          const sim = simulateRotation(detail.skills, levels, 60, 1, detail.attack)
+          const sim = simulateRotation(
+            detail.skills,
+            levels,
+            60,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+          )
           const entry: SustainedDpsEntry = {
             id: detail.id,
             name: detail.name,
             role: detail.role,
             stage: detail.stage,
             dps: sim.dps,
+            status: getDigimonContentStatus(detail.skills),
             checkedAt: new Date().toISOString(),
           }
           working.entries[id] = entry
@@ -423,6 +433,17 @@ export function TierListPage() {
             Ranking criteria per role (sorted by 60s sustained DPS, single target):
             S = top 10%, A = next 20%, B = next 30%, C = remaining.
           </p>
+          <div className="tier-status-legend" role="note" aria-label="Status criteria">
+            <span className="tier-status-chip tier-status-chip-complete">
+              {contentStatusLabel('complete')}
+            </span>
+            <span className="tier-status-chip tier-status-chip-incomplete">
+              {contentStatusLabel('incomplete')}
+            </span>
+            <span className="muted">
+              Incomplete if skills &lt; 5 or any skill name contains “placeholder”.
+            </span>
+          </div>
           <div className="stage-tabs" role="tablist" aria-label="Filter by stage">
             {stageOptions.map((s) => (
               <button
@@ -461,22 +482,46 @@ export function TierListPage() {
                               <ul className="tier-entry-list">
                                 {entries.map((e) => {
                                   const modelId = listMeta[e.id]?.model_id ?? ''
+                                  const rank = listMeta[e.id]?.rank ?? 1
                                   const icon = modelId
                                     ? digimonPortraitUrl(modelId, e.id, e.name)
                                     : undefined
                                   return (
-                                    <li key={`${tier}-${role}-${e.id}`} className="tier-entry">
+                                    <li
+                                      key={`${tier}-${role}-${e.id}`}
+                                      className={`tier-entry ${
+                                        e.status === 'incomplete'
+                                          ? 'tier-entry-incomplete'
+                                          : 'tier-entry-complete'
+                                      }`}
+                                    >
                                       <Link
                                         to={`/lab?digimonId=${encodeURIComponent(e.id)}`}
                                         className="tier-entry-link"
                                       >
                                         {icon ? (
-                                          <img src={icon} alt="" loading="lazy" />
+                                          <span className="tier-entry-thumb-wrap">
+                                            <img src={icon} alt="" loading="lazy" />
+                                            <span className="tier-rank-badge" aria-hidden="true">
+                                              <span style={rankSpriteStyle(rank)} />
+                                            </span>
+                                          </span>
                                         ) : (
                                           <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
                                         )}
                                         <span className="tier-entry-name">{e.name}</span>
-                                        <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
+                                        <span className="tier-entry-dps-wrap">
+                                          <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
+                                          <span
+                                            className={`tier-status-dot ${
+                                              e.status === 'incomplete'
+                                                ? 'tier-status-dot-incomplete'
+                                                : 'tier-status-dot-complete'
+                                            }`}
+                                            title={contentStatusLabel(e.status ?? 'complete')}
+                                            aria-label={contentStatusLabel(e.status ?? 'complete')}
+                                          />
+                                        </span>
                                       </Link>
                                     </li>
                                   )
