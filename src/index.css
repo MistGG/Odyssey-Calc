@@ -26,6 +26,8 @@
   --font-display: 'Exo 2', var(--font);
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
   --shadow-glow: 0 0 0 1px var(--border), 0 12px 40px -12px rgba(34, 211, 238, 0.15);
+  /* Custom <select> chevron (Browse filters) */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2367e8f9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
 *,
@@ -298,30 +300,90 @@ code {
   color: var(--muted);
 }
 
-.filters select,
-.filters button {
-  height: 38px;
+.filters select {
+  height: 40px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--surface-solid);
   color: var(--text);
   font: inherit;
-  padding: 0 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 0 2.4rem 0 0.85rem;
+  cursor: pointer;
+  color-scheme: dark;
+  background-color: #0b1220;
+  background-image: var(--select-chevron), linear-gradient(180deg, rgba(51, 65, 85, 0.42) 0%, rgba(15, 23, 42, 0.98) 48%, #0a0f1a 100%);
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 0.7rem center, 0 0;
+  background-size: 12px 12px, 100% 100%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(0, 0, 0, 0.35);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
 }
 
-.filters select:focus,
+.filters select::-ms-expand {
+  display: none;
+}
+
+.filters select:hover {
+  border-color: rgba(34, 211, 238, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(34, 211, 238, 0.06),
+    0 6px 20px -8px rgba(0, 0, 0, 0.45);
+}
+
+.filters select:focus {
+  outline: none;
+  border-color: rgba(34, 211, 238, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 3px var(--cyan-dim),
+    0 8px 28px -10px rgba(34, 211, 238, 0.12);
+}
+
+.filters select:active {
+  border-color: rgba(34, 211, 238, 0.4);
+}
+
+.filters select option,
+.filters select optgroup {
+  background-color: #0f172a;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.filters button {
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: rgba(14, 165, 233, 0.14);
+  color: var(--cyan);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.85rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.filters button:hover {
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(14, 165, 233, 0.22);
+  box-shadow: 0 4px 18px -6px rgba(34, 211, 238, 0.2);
+}
+
 .filters button:focus {
   outline: none;
   border-color: var(--cyan);
   box-shadow: 0 0 0 3px var(--cyan-dim);
-}
-
-.filters button {
-  border-color: var(--border-strong);
-  background: rgba(14, 165, 233, 0.14);
-  color: var(--cyan);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .tier-page .lab-result {

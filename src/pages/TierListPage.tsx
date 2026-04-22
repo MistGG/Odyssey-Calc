@@ -70,7 +70,8 @@ export function TierListPage() {
   const [status, setStatus] = useState<string>('Preparing tier list cache…')
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
-  const [selectedStage, setSelectedStage] = useState<string>('All')
+  /** Empty = show all stages. Otherwise OR-filter by listed stages (multi-select). */
+  const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [showProgressBar, setShowProgressBar] = useState(true)
   const [fadeProgressBar, setFadeProgressBar] = useState(false)
   const sawIncompleteProgress = useRef(false)
@@ -332,13 +333,25 @@ export function TierListPage() {
 
   const filteredEntries = useMemo(() => {
     const all = cache?.entries ?? {}
-    if (selectedStage === 'All') return all
+    if (selectedStages.length === 0) return all
+    const allow = new Set(selectedStages)
     const out: Record<string, SustainedDpsEntry> = {}
     for (const [id, e] of Object.entries(all)) {
-      if (e.stage === selectedStage) out[id] = e
+      if (allow.has(e.stage)) out[id] = e
     }
     return out
-  }, [cache?.entries, selectedStage])
+  }, [cache?.entries, selectedStages])
+
+  function onStageFilterClick(label: string) {
+    if (label === 'All') {
+      setSelectedStages([])
+      return
+    }
+    setSelectedStages((prev) => {
+      if (prev.includes(label)) return prev.filter((x) => x !== label)
+      return [...prev, label].sort((a, b) => a.localeCompare(b))
+    })
+  }
 
   const groups = useMemo(
     () => buildTierGroups(filteredEntries),
@@ -465,19 +478,23 @@ export function TierListPage() {
               Incomplete if skills &lt; 5 or any skill name contains “placeholder”.
             </span>
           </div>
-          <div className="stage-tabs" role="tablist" aria-label="Filter by stage">
-            {stageOptions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className="stage-tab"
-                style={digimonStageTierFilterStyle(s, selectedStage === s)}
-                onClick={() => setSelectedStage(s)}
-                aria-pressed={selectedStage === s}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="stage-tabs" role="group" aria-label="Filter by stage (multi-select)">
+            {stageOptions.map((s) => {
+              const selected =
+                s === 'All' ? selectedStages.length === 0 : selectedStages.includes(s)
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  className="stage-tab"
+                  style={digimonStageTierFilterStyle(s, selected)}
+                  onClick={() => onStageFilterClick(s)}
+                  aria-pressed={selected}
+                >
+                  {s}
+                </button>
+              )
+            })}
           </div>
           <div className="tier-matrix-wrap">
             <table className="tier-matrix">

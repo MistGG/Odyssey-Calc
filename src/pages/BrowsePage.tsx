@@ -4,6 +4,7 @@ import { fetchDigimonPage } from '../api/digimonService'
 import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
 import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
+import { WIKI_RANK_LABELS, wikiRankLabelFromNumber } from '../lib/wikiRank'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
 const ROLE_OPTIONS = [
@@ -52,8 +53,6 @@ const FAMILY_OPTIONS = [
   'Wind Guardians',
 ] as const
 
-const RANK_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7] as const
-
 type BrowseFilters = {
   role: string
   stage: string
@@ -80,7 +79,7 @@ function matchesFilters(item: WikiDigimonListItem, q: string, f: BrowseFilters) 
   if (f.element && item.element !== f.element) return false
   if (f.attribute && item.attribute !== f.attribute) return false
   if (f.family && !(item.family_types ?? []).includes(f.family)) return false
-  if (f.rank !== '' && Number(f.rank) !== item.rank) return false
+  if (f.rank !== '' && wikiRankLabelFromNumber(item.rank) !== f.rank) return false
   return true
 }
 
@@ -312,9 +311,9 @@ export function BrowsePage() {
                 if (allDigimonCache) setPage(0)
               }}
             >
-              <option value="">Any</option>
-              {RANK_OPTIONS.map((v) => (
-                <option key={v} value={String(v)}>
+              <option value="">All Ranks</option>
+              {WIKI_RANK_LABELS.map((v) => (
+                <option key={v} value={v}>
                   {v}
                 </option>
               ))}
