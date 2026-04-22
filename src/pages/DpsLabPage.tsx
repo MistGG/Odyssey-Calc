@@ -377,7 +377,14 @@ export function DpsLabPage() {
 
   return (
     <div className="lab lab-page">
-      <h1>Lab</h1>
+      <div className="lab-page-head">
+        <h1>Lab</h1>
+        {data && (
+          <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
+            Digimon page
+          </Link>
+        )}
+      </div>
       <p className="muted">
         This lab runs a timed rotation using your Digimon&apos;s wiki skills plus
         Digimon role skills (passives tied to wiki role; not tamer skills). Same cast
