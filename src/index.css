@@ -1626,19 +1626,24 @@ code {
 .lab-page-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem 1rem;
-  margin-bottom: 0.25rem;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.lab-page-head .lab-page-title {
+  margin: 0;
+  line-height: 1.05;
+  flex: 0 1 auto;
 }
 
 .lab-to-detail-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1.1rem;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  padding: 0.28em 0.95em 0.32em;
+  border-radius: 999px;
+  font-size: clamp(0.8125rem, 2.1vw, 0.9375rem);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -1650,6 +1655,9 @@ code {
     rgba(8, 47, 73, 0.55) 100%
   );
   box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.06);
+  line-height: 1.25;
+  margin-left: auto;
+  transform: translateY(0.03em);
 }
 
 .lab-to-detail-btn:hover {

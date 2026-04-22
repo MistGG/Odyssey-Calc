@@ -378,7 +378,7 @@ export function DpsLabPage() {
   return (
     <div className="lab lab-page">
       <div className="lab-page-head">
-        <h1>Lab</h1>
+        <h1 className="lab-page-title">Lab</h1>
         {data && (
           <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
             Go back to {`${data.name}'s page`} →
