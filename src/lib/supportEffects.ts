@@ -23,10 +23,10 @@ function normalizeEffectLabel(raw: string) {
 }
 
 export function parseSupportEffects(
-  description: string,
+  description: string | undefined | null,
   level: number,
 ): ParsedSupportEffect[] {
-  if (!description.trim()) return []
+  if (!description?.trim()) return []
   const L = Math.max(1, Math.floor(level))
   const out: ParsedSupportEffect[] = []
 

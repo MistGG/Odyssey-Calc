@@ -80,8 +80,9 @@ function supportProfiles(
   return supportSkills
     .map((s) => {
       const L = Math.max(1, Math.floor(levelBySkillId[s.id] ?? 25))
+      const desc = [s.description, s.buff?.description].filter(Boolean).join(' ')
       const effects = [
-        ...parseSupportEffects(`${s.description} ${s.buff?.description ?? ''}`, L),
+        ...parseSupportEffects(desc, L),
         ...parseBuffNumericEffects(s.buff, L),
       ]
       let attackPct = 0
@@ -127,7 +128,7 @@ function supportProfiles(
 export function estimateSupportAttackBuffPct(supportSkills: WikiSkill[], level: number) {
   let total = 0
   for (const s of supportSkills) {
-    const effects = parseSupportEffects(s.description, level)
+    const effects = parseSupportEffects(s.description ?? '', level)
     const attackPct = effects
       .filter(
         (e) =>
@@ -242,8 +243,9 @@ function sortDamageByDpct(ctx: SimCtx, skills: WikiSkill[]) {
 function availableDamaging(ctx: SimCtx, m: SimMutable, hold: DamageHold | null) {
   let list = ctx.damaging.filter((s) => (m.readyAt.get(s.id) ?? 0) <= m.t)
   if (hold && m.t < hold.until) {
-    const filtered = list.filter((s) => s.id !== hold.skillId)
-    if (filtered.length > 0) list = filtered
+    // Always omit the held skill. If nothing else is ready, return [] so the main
+    // loop can auto-attack / jump time instead of spinning on "defer" forever.
+    list = list.filter((s) => s.id !== hold.skillId)
   }
   return sortDamageByDpct(ctx, list)
 }
@@ -496,7 +498,7 @@ function branchDamageGain(
 }
 
 export function simulateRotation(
-  skills: WikiSkill[],
+  skills: WikiSkill[] | undefined | null,
   levelBySkillId: Record<string, number>,
   durationSec: number,
   targets: number,
@@ -504,8 +506,9 @@ export function simulateRotation(
   attackSpeed: number = 0,
   baseCritRateStat: number = 0,
 ): RotationResult {
-  const damaging = skills.filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
-  const support = skills.filter((s) => skillIsSupportOnly(s.base_dmg, s.scaling))
+  const list = Array.isArray(skills) ? skills : []
+  const damaging = list.filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
+  const support = list.filter((s) => skillIsSupportOnly(s.base_dmg, s.scaling))
   const supportBuffs = supportProfiles(support, levelBySkillId)
   const skillLevel = (skill: WikiSkill) => {
     const requested = levelBySkillId[skill.id] ?? 25
@@ -570,7 +573,13 @@ export function simulateRotation(
 
   let damageHold: DamageHold | null = null
 
+  try {
+  let stepGuard = 0
   while (m.t < durationSec - 1e-9) {
+    if (++stepGuard > 250000) {
+      console.error('[dpsSim] simulateRotation: step limit exceeded, aborting early')
+      break
+    }
     if (damageHold && m.t >= damageHold.until) damageHold = null
 
     purgeExpiredBuffs(m, m.t)
@@ -654,7 +663,10 @@ export function simulateRotation(
       const nextReady = Number.isFinite(next) ? Math.min(durationSec, next) : durationSec
       if (nextReady <= m.t) break
 
-      while (m.t + autoIntervalSec <= nextReady + 1e-9) {
+      while (
+        m.t + autoIntervalSec <= nextReady + 1e-9 &&
+        m.t < durationSec - 1e-9
+      ) {
         const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
         const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
         const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
@@ -768,5 +780,21 @@ export function simulateRotation(
             100)
         : buffs.totalDpsBuffPct,
     events: m.events,
+  }
+  } catch (err) {
+    console.error('[dpsSim] simulateRotation failed', err)
+    return {
+      totalDamage: 0,
+      dps: 0,
+      casts: 0,
+      durationSec,
+      attackBuffPct: buffs.attackPct,
+      skillDamageBuffPct: buffs.skillDamagePct,
+      attackPowerFlat: buffs.flatAttack,
+      critRatePct: buffs.critRatePct,
+      critDamagePct: buffs.critDamagePct,
+      totalDpsBuffPct: buffs.totalDpsBuffPct,
+      events: [],
+    }
   }
 }

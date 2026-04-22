@@ -55,7 +55,7 @@ export function DpsLabPage() {
         if (!cancelled) {
           setData(d)
           const next: Record<string, number> = {}
-          d.skills.forEach((s) => {
+          ;(d.skills ?? []).forEach((s) => {
             const cap = Math.max(1, Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP))
             next[s.id] = Math.max(1, Math.min(cap, initialLevel))
           })
@@ -80,7 +80,7 @@ export function DpsLabPage() {
     if (!data) return null
     const secs = Math.max(10, durationSec)
     return simulateRotation(
-      data.skills,
+      data.skills ?? [],
       skillLevels,
       secs,
       Math.max(1, targets),
@@ -143,7 +143,9 @@ export function DpsLabPage() {
       )
     }
 
-    const supportSkills = data.skills.filter((s) => skillIsSupportOnly(s.base_dmg, s.scaling))
+    const supportSkills = (data.skills ?? []).filter((s) =>
+      skillIsSupportOnly(s.base_dmg, s.scaling),
+    )
     const supportWithAttackBuff = supportSkills.filter((s) =>
       [
         ...parseSupportEffects(
@@ -210,7 +212,7 @@ export function DpsLabPage() {
               {data.name} <span className="muted">({data.stage})</span>
             </h2>
             <p className="muted">
-              {data.skills.length} skills loaded. Attack stat:{' '}
+              {(data.skills ?? []).length} skills loaded. Attack stat:{' '}
               {data.attack.toLocaleString()}
             </p>
           </section>
@@ -229,7 +231,7 @@ export function DpsLabPage() {
                   setSkillLevels((prev) => {
                     const next: Record<string, number> = {}
                     if (!data) return prev
-                    data.skills.forEach((s) => {
+                    ;(data.skills ?? []).forEach((s) => {
                       const cap = Math.max(
                         1,
                         Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP),
@@ -276,7 +278,7 @@ export function DpsLabPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.skills.map((s) => {
+                  {(data.skills ?? []).map((s) => {
                     const cap = Math.max(
                       1,
                       Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP),
