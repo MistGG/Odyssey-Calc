@@ -19,7 +19,8 @@ import type { WikiDigimonListItem } from '../types/wikiApi'
 
 const REQUEST_DELAY_MS = 700
 const COOLDOWN_EVERY_N_REQUESTS = 50
-const COOLDOWN_PAUSE_MS = 30000
+/** Proactive pause every N requests and backoff after HTTP 429 (tier list detail fetches). */
+const RATE_LIMIT_COOLDOWN_MS = 10_000
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -266,7 +267,7 @@ export function TierListPage() {
           const msg = e instanceof Error ? e.message : 'unknown error'
           if (/429|rate/i.test(msg)) {
             // Backoff and retry same id later, keeping queue intact.
-            backoffMs = Math.max(backoffMs, 60000)
+            backoffMs = Math.max(backoffMs, RATE_LIMIT_COOLDOWN_MS)
             working.queue.shift()
             working.queue.push(id)
             saveTierListCache(working)
@@ -298,9 +299,9 @@ export function TierListPage() {
           working.queue.length > 0
         ) {
           setStatus(
-            `Cooling down for ${Math.ceil(COOLDOWN_PAUSE_MS / 1000)}s to avoid rate limits… (${Object.keys(working.entries).length}/${working.total})`,
+            `Cooling down for ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s to avoid rate limits… (${Object.keys(working.entries).length}/${working.total})`,
           )
-          await sleep(COOLDOWN_PAUSE_MS)
+          await sleep(RATE_LIMIT_COOLDOWN_MS)
         } else {
           await sleep(REQUEST_DELAY_MS)
         }
