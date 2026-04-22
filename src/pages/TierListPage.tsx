@@ -4,7 +4,11 @@ import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
-import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
+import {
+  contentStatusLabel,
+  getDigimonContentStatus,
+  type DigimonContentStatus,
+} from '../lib/contentStatus'
 import {
   buildTierGroups,
   createEmptyTierListCache,
@@ -21,6 +25,131 @@ const REQUEST_DELAY_MS = 700
 const COOLDOWN_EVERY_N_REQUESTS = 50
 /** Proactive pause every N requests and backoff after HTTP 429 (tier list detail fetches). */
 const RATE_LIMIT_COOLDOWN_MS = 10_000
+
+const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'
+const TIER_DPS_CHANGE_EPS = 0.05
+
+type TierListUpdateSummary = {
+  finishedAt: string
+  mode: 'incremental' | 'force'
+  refreshedCount: number
+  dpsUp: Array<{
+    id: string
+    name: string
+    role: string
+    before: number
+    after: number
+    delta: number
+  }>
+  dpsDown: Array<{
+    id: string
+    name: string
+    role: string
+    before: number
+    after: number
+    delta: number
+  }>
+  dpsNew: Array<{ id: string; name: string; role: string; after: number }>
+  statusChanges: Array<{
+    id: string
+    name: string
+    role: string
+    from: DigimonContentStatus | undefined
+    to: DigimonContentStatus
+  }>
+}
+
+function readTierUpdatePanelMinimized(): boolean {
+  try {
+    return localStorage.getItem(TIER_UPDATE_PANEL_MINIMIZED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeTierUpdatePanelMinimized(minimized: boolean) {
+  try {
+    localStorage.setItem(TIER_UPDATE_PANEL_MINIMIZED_KEY, minimized ? '1' : '0')
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function formatTierStatus(s: DigimonContentStatus | undefined) {
+  if (!s) return 'Pending'
+  return contentStatusLabel(s)
+}
+
+function labHrefForTierEntry(id: string) {
+  return `/lab?digimonId=${encodeURIComponent(id)}&duration=${DEFAULT_ROTATION_SIM_DURATION_SEC}`
+}
+
+function buildTierListUpdateSummary(
+  mode: 'incremental' | 'force',
+  snapshotBefore: Record<string, { dps: number; status?: DigimonContentStatus }>,
+  entriesAfter: Record<string, SustainedDpsEntry>,
+  refreshedIds: Set<string>,
+): TierListUpdateSummary {
+  const dpsUp: TierListUpdateSummary['dpsUp'] = []
+  const dpsDown: TierListUpdateSummary['dpsDown'] = []
+  const dpsNew: TierListUpdateSummary['dpsNew'] = []
+  const statusChanges: TierListUpdateSummary['statusChanges'] = []
+
+  for (const id of refreshedIds) {
+    const after = entriesAfter[id]
+    if (!after) continue
+    const before = snapshotBefore[id]
+    if (before === undefined) {
+      dpsNew.push({ id, name: after.name, role: after.role, after: after.dps })
+    } else {
+      const delta = after.dps - before.dps
+      if (delta > TIER_DPS_CHANGE_EPS) {
+        dpsUp.push({
+          id,
+          name: after.name,
+          role: after.role,
+          before: before.dps,
+          after: after.dps,
+          delta,
+        })
+      } else if (delta < -TIER_DPS_CHANGE_EPS) {
+        dpsDown.push({
+          id,
+          name: after.name,
+          role: after.role,
+          before: before.dps,
+          after: after.dps,
+          delta,
+        })
+      }
+    }
+    const prevStatus = before?.status
+    const nextStatus = after.status
+    if (nextStatus !== undefined && prevStatus !== nextStatus) {
+      statusChanges.push({
+        id,
+        name: after.name,
+        role: after.role,
+        from: prevStatus,
+        to: nextStatus,
+      })
+    }
+  }
+
+  dpsUp.sort((a, b) => b.delta - a.delta)
+  dpsDown.sort((a, b) => a.delta - b.delta)
+  statusChanges.sort((a, b) => a.name.localeCompare(b.name))
+
+  return {
+    finishedAt: new Date().toISOString(),
+    mode,
+    refreshedCount: refreshedIds.size,
+    dpsUp,
+    dpsDown,
+    dpsNew,
+    statusChanges,
+  }
+}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -79,6 +208,8 @@ export function TierListPage() {
   const [fadeProgressBar, setFadeProgressBar] = useState(false)
   const sawIncompleteProgress = useRef(false)
   const buildRunRef = useRef<{ total: number } | null>(null)
+  const [updateSummary, setUpdateSummary] = useState<TierListUpdateSummary | null>(null)
+  const [updatePanelMinimized, setUpdatePanelMinimized] = useState(readTierUpdatePanelMinimized)
 
   useEffect(() => {
     let cancelled = false
@@ -153,6 +284,12 @@ export function TierListPage() {
     }
 
     try {
+      const snapshotBefore: Record<string, { dps: number; status?: DigimonContentStatus }> = {}
+      for (const [id, e] of Object.entries(cache.entries)) {
+        snapshotBefore[id] = { dps: e.dps, status: e.status }
+      }
+      const refreshedIds = new Set<string>()
+
       setStatus('Checking index for updates…')
       const { all, meta, signatures } = await fetchAllDigimonIndex()
       setListMeta(meta)
@@ -261,6 +398,7 @@ export function TierListPage() {
             skillsSignature: tierSkillsSignature(detail.skills),
           }
           working.entries[id] = entry
+          refreshedIds.add(id)
           working.queue.shift()
           processed += 1
         } catch (e: unknown) {
@@ -313,6 +451,11 @@ export function TierListPage() {
             ? 'Force check complete. All Digimon were recalculated.'
             : 'Tier list update complete. Changed Digimon were refreshed.',
         )
+        if (refreshedIds.size > 0) {
+          setUpdateSummary(
+            buildTierListUpdateSummary(mode, snapshotBefore, working.entries, refreshedIds),
+          )
+        }
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Tier update failed.')
@@ -360,6 +503,14 @@ export function TierListPage() {
     setSelectedStages((prev) => {
       if (prev.includes(label)) return prev.filter((x) => x !== label)
       return [...prev, label].sort((a, b) => a.localeCompare(b))
+    })
+  }
+
+  function toggleUpdatePanelMinimized() {
+    setUpdatePanelMinimized((prev) => {
+      const next = !prev
+      writeTierUpdatePanelMinimized(next)
+      return next
     })
   }
 
@@ -467,6 +618,187 @@ export function TierListPage() {
           </p>
         )}
       </section>
+
+      {updateSummary && (
+        <section
+          className="lab-result tier-update-summary"
+          aria-label="Last tier list update summary"
+        >
+          <div className="tier-update-summary-head">
+            <div className="tier-update-summary-head-text">
+              <h3>Last update</h3>
+              {!updatePanelMinimized && (
+                <p className="muted tier-update-summary-meta">
+                  {new Date(updateSummary.finishedAt).toLocaleString()}
+                  {' · '}
+                  {updateSummary.mode === 'force' ? 'Force check' : 'Incremental update'}
+                  {' · '}
+                  {updateSummary.refreshedCount} Digimon refreshed
+                </p>
+              )}
+            </div>
+            <div className="tier-update-summary-actions">
+              <button
+                type="button"
+                className="tier-update-summary-btn"
+                onClick={toggleUpdatePanelMinimized}
+                aria-expanded={!updatePanelMinimized}
+              >
+                {updatePanelMinimized ? 'Expand' : 'Minimize'}
+              </button>
+              <button
+                type="button"
+                className="tier-update-summary-btn tier-update-summary-btn-dismiss"
+                onClick={() => setUpdateSummary(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+          {updatePanelMinimized ? (
+            <p className="tier-update-summary-collapsed-line muted">
+              {new Date(updateSummary.finishedAt).toLocaleString()}
+              {' — '}
+              DPS: {updateSummary.dpsUp.length}↑ {updateSummary.dpsDown.length}↓, {updateSummary.dpsNew.length}{' '}
+              new
+              {' · '}
+              Status: {updateSummary.statusChanges.length} change
+              {updateSummary.statusChanges.length === 1 ? '' : 's'}
+            </p>
+          ) : (
+            <div className="tier-update-summary-body">
+              {updateSummary.dpsUp.length === 0 &&
+              updateSummary.dpsDown.length === 0 &&
+              updateSummary.dpsNew.length === 0 &&
+              updateSummary.statusChanges.length === 0 ? (
+                <p className="muted">
+                  No DPS shifts above {TIER_DPS_CHANGE_EPS} and no content status changes among
+                  refreshed Digimon.
+                </p>
+              ) : null}
+
+              {(updateSummary.dpsUp.length > 0 ||
+                updateSummary.dpsDown.length > 0 ||
+                updateSummary.dpsNew.length > 0) && (
+                <div className="tier-update-summary-block">
+                  <h4 className="tier-update-summary-subhead">DPS ({DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained)</h4>
+                  {updateSummary.dpsUp.length > 0 && (
+                    <div className="tier-update-summary-subblock">
+                      <p className="tier-update-summary-label">Increased</p>
+                      <table className="tier-update-summary-table">
+                        <thead>
+                          <tr>
+                            <th>Digimon</th>
+                            <th>Role</th>
+                            <th>Before</th>
+                            <th>After</th>
+                            <th>Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {updateSummary.dpsUp.map((r) => (
+                            <tr key={`up-${r.id}`}>
+                              <td>
+                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                              </td>
+                              <td>{r.role}</td>
+                              <td>{r.before.toFixed(1)}</td>
+                              <td>{r.after.toFixed(1)}</td>
+                              <td className="tier-update-summary-delta-pos">+{r.delta.toFixed(1)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {updateSummary.dpsDown.length > 0 && (
+                    <div className="tier-update-summary-subblock">
+                      <p className="tier-update-summary-label">Decreased</p>
+                      <table className="tier-update-summary-table">
+                        <thead>
+                          <tr>
+                            <th>Digimon</th>
+                            <th>Role</th>
+                            <th>Before</th>
+                            <th>After</th>
+                            <th>Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {updateSummary.dpsDown.map((r) => (
+                            <tr key={`dn-${r.id}`}>
+                              <td>
+                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                              </td>
+                              <td>{r.role}</td>
+                              <td>{r.before.toFixed(1)}</td>
+                              <td>{r.after.toFixed(1)}</td>
+                              <td className="tier-update-summary-delta-neg">{r.delta.toFixed(1)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {updateSummary.dpsNew.length > 0 && (
+                    <div className="tier-update-summary-subblock">
+                      <p className="tier-update-summary-label">Newly calculated</p>
+                      <table className="tier-update-summary-table">
+                        <thead>
+                          <tr>
+                            <th>Digimon</th>
+                            <th>Role</th>
+                            <th>DPS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {updateSummary.dpsNew.map((r) => (
+                            <tr key={`nw-${r.id}`}>
+                              <td>
+                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                              </td>
+                              <td>{r.role}</td>
+                              <td>{r.after.toFixed(1)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {updateSummary.statusChanges.length > 0 && (
+                <div className="tier-update-summary-block">
+                  <h4 className="tier-update-summary-subhead">Content status</h4>
+                  <table className="tier-update-summary-table">
+                    <thead>
+                      <tr>
+                        <th>Digimon</th>
+                        <th>Role</th>
+                        <th>Was</th>
+                        <th>Now</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {updateSummary.statusChanges.map((r) => (
+                        <tr key={`st-${r.id}`}>
+                          <td>
+                            <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                          </td>
+                          <td>{r.role}</td>
+                          <td>{formatTierStatus(r.from)}</td>
+                          <td>{formatTierStatus(r.to)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {roles.length > 0 && (
         <section className="lab-result">

@@ -437,6 +437,133 @@ code {
   color: var(--text-soft);
 }
 
+.tier-update-summary {
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(15, 23, 42, 0.55) 0%,
+    rgba(17, 24, 39, 0.5) 100%
+  );
+}
+
+.tier-update-summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
+.tier-update-summary-head-text h3 {
+  margin: 0 0 0.2rem;
+}
+
+.tier-update-summary-meta {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.tier-update-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tier-update-summary-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(14, 165, 233, 0.12);
+  color: var(--cyan);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tier-update-summary-btn-dismiss {
+  border-color: rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.35);
+  color: var(--text-soft);
+}
+
+.tier-update-summary-collapsed-line {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+}
+
+.tier-update-summary-body {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tier-update-summary-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.tier-update-summary-subhead {
+  margin: 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7dd3fc;
+}
+
+.tier-update-summary-subblock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tier-update-summary-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.tier-update-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.tier-update-summary-table th,
+.tier-update-summary-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.55);
+}
+
+.tier-update-summary-table th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.tier-update-summary-table a {
+  color: #e0f2fe;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tier-update-summary-table a:hover {
+  text-decoration: underline;
+}
+
+.tier-update-summary-delta-pos {
+  color: #6ee7b7;
+  font-weight: 600;
+}
+
+.tier-update-summary-delta-neg {
+  color: #fca5a5;
+  font-weight: 600;
+}
+
 .stage-tabs {
   display: flex;
   flex-wrap: wrap;
