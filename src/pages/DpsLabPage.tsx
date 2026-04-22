@@ -1,12 +1,176 @@
-import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { skillIconUrl } from '../lib/digimonImage'
 import { simulateRotation } from '../lib/dpsSim'
+import {
+  DIGIMON_ROLE_SKILL_CAST_SEC,
+  digimonRoleWikiSkills,
+  normalizeWikiRole,
+  type HybridStance,
+} from '../lib/digimonRoleSkills'
 import { SKILL_LEVEL_CAP } from '../lib/skillDamage'
 import { skillIsSupportOnly } from '../lib/skillDamage'
 import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffects'
+import type { RotationEvent } from '../lib/dpsSim'
 import type { WikiDigimonDetail } from '../types/wikiApi'
+
+/** Table-only: one buff strength value; hover opens a themed breakdown popover. */
+function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 300 })
+
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearClose = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }
+
+  const scheduleClose = () => {
+    clearClose()
+    closeTimer.current = setTimeout(() => setOpen(false), 220)
+  }
+
+  const updatePos = useCallback(() => {
+    const t = triggerRef.current
+    if (!t) return
+    const r = t.getBoundingClientRect()
+    const width = Math.min(320, Math.max(260, window.innerWidth - 16))
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8))
+    const top = r.bottom + 8
+    setPos({ top, left, width })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updatePos()
+    const onScroll = () => updatePos()
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [open, updatePos])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current)
+    }
+  }, [])
+
+  if (e.eventType === 'support' || e.buffedBy.length === 0) return null
+
+  const list = e.buffContributions && e.buffContributions.length > 0 ? e.buffContributions : null
+  const showNumeric = e.totalBuffPct > 0.05
+  const label = showNumeric ? `+${e.totalBuffPct.toFixed(1)}%` : 'Buff'
+
+  const panelInner = (
+    <>
+      <div className="buff-breakdown-panel-header">Buff breakdown</div>
+      {list?.some((c) => c.key === 'hit') && (
+        <p className="buff-breakdown-panel-sub">
+          The pill is ATK + skill + flat (as % of wiki ATK) + expected crit. Hit-rate uses a separate
+          proxy multiplier below.
+        </p>
+      )}
+      {list && list.length > 0 ? (
+        <div className="buff-breakdown-sections">
+          {list.map((c) => (
+            <div key={c.key} className="buff-breakdown-section">
+              <div className="buff-breakdown-section-head">
+                <span className="buff-breakdown-section-label">{c.label}</span>
+                <span className="buff-breakdown-section-pct">+{c.valuePct.toFixed(1)}%</span>
+              </div>
+              <ul className="buff-breakdown-lines">
+                {c.detailLines.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : showNumeric ? (
+        <p className="buff-breakdown-muted">
+          Combined attack, skill, flat (as % of wiki ATK), and expected crit contribution for this
+          hit: <strong>+{e.totalBuffPct.toFixed(1)}%</strong> (see sim code for exact stacking).
+        </p>
+      ) : (
+        <p className="buff-breakdown-muted">
+          Buffs are active on this line (e.g. attack speed) but they don&apos;t add a combined % to
+          this damage row in the current model.
+        </p>
+      )}
+      <div className="buff-breakdown-footer">
+        <span className="buff-breakdown-footer-title">Active</span>
+        <span className="buff-breakdown-footer-names">{e.buffedBy.join(' · ')}</span>
+      </div>
+    </>
+  )
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="lab-event-tag lab-event-tag-buffed buff-breakdown-trigger"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onMouseEnter={() => {
+          clearClose()
+          setOpen(true)
+          queueMicrotask(updatePos)
+        }}
+        onMouseLeave={scheduleClose}
+        onFocus={() => {
+          setOpen(true)
+          queueMicrotask(updatePos)
+        }}
+        onBlur={(ev) => {
+          if (panelRef.current?.contains(ev.relatedTarget as Node)) return
+          scheduleClose()
+        }}
+      >
+        {label}
+      </button>
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className="buff-breakdown-popover"
+            role="tooltip"
+            style={{
+              position: 'fixed',
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
+              zIndex: 10050,
+            }}
+            onMouseEnter={clearClose}
+            onMouseLeave={scheduleClose}
+          >
+            <div className="buff-breakdown-panel">{panelInner}</div>
+          </div>,
+          document.body,
+        )}
+    </>
+  )
+}
 
 function toInt(v: string | null, fallback: number) {
   if (v == null || v.trim() === '') return fallback
@@ -14,11 +178,21 @@ function toInt(v: string | null, fallback: number) {
   return Number.isFinite(n) ? Math.floor(n) : fallback
 }
 
+function parseHybridStance(v: string | null): HybridStance {
+  const x = (v ?? '').trim().toLowerCase()
+  if (x === 'ranged' || x === 'caster') return x
+  return 'melee'
+}
+
 export function DpsLabPage() {
   const { search } = useLocation()
   const params = useMemo(() => new URLSearchParams(search), [search])
   const digimonId = params.get('digimonId')?.trim() ?? ''
   const initialLevel = Math.max(1, Math.min(SKILL_LEVEL_CAP, toInt(params.get('level'), 25)))
+
+  const [hybridStance, setHybridStance] = useState<HybridStance>(() =>
+    parseHybridStance(params.get('hybrid')),
+  )
 
   const [data, setData] = useState<WikiDigimonDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -38,6 +212,10 @@ export function DpsLabPage() {
       return next
     })
   }, [initialLevel])
+
+  useEffect(() => {
+    setHybridStance(parseHybridStance(new URLSearchParams(search).get('hybrid')))
+  }, [search])
 
   useEffect(() => {
     if (!digimonId) {
@@ -76,6 +254,17 @@ export function DpsLabPage() {
     }
   }, [digimonId, initialLevel])
 
+  const roleNorm = useMemo(() => normalizeWikiRole(data?.role), [data?.role])
+  const isHybridRole = roleNorm === 'hybrid'
+
+  const digimonRoleWikiSkillsForRole = useMemo(
+    () =>
+      data
+        ? digimonRoleWikiSkills(roleNorm, isHybridRole ? hybridStance : 'melee')
+        : [],
+    [data, roleNorm, isHybridRole, hybridStance],
+  )
+
   const sim = useMemo(() => {
     if (!data) return null
     const secs = Math.max(10, durationSec)
@@ -87,8 +276,12 @@ export function DpsLabPage() {
       data.attack,
       data.stats?.atk_speed ?? 0,
       data.stats?.crit_rate ?? 0,
+      {
+        role: data.role,
+        hybridStance: isHybridRole ? hybridStance : 'best',
+      },
     )
-  }, [data, durationSec, skillLevels, targets])
+  }, [data, durationSec, skillLevels, targets, isHybridRole, hybridStance])
 
   const breakdown = useMemo(() => {
     if (!sim) return []
@@ -172,18 +365,27 @@ export function DpsLabPage() {
       lines.push(`Use support skills (${names}) for utility windows; they are excluded from DPS casts.`)
     }
 
+    if (digimonRoleWikiSkillsForRole.length > 0) {
+      const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
+      lines.push(
+        `Digimon role skills (${tn}) are cast when ready like other supports; attack-speed buffs shorten auto-attack spacing. Hover the buff % in the timeline table for a per-hit breakdown.`,
+      )
+    }
+
     return lines
-  }, [breakdown, data, sim, skillLevels])
+  }, [breakdown, data, sim, skillLevels, digimonRoleWikiSkillsForRole])
 
   return (
     <div className="lab lab-page">
       <h1>Lab</h1>
       <p className="muted">
-        This lab runs a timed rotation using your Digimon&apos;s wiki skills.
-        Supports are interpreted for buff durations and effects; when a support is
-        off cooldown and its buff isn&apos;t already active, we cast it. Damage
-        skills scale with whatever buffs are currently up. Between skills we fill
-        with auto attacks until something else is ready.
+        This lab runs a timed rotation using your Digimon&apos;s wiki skills plus
+        Digimon role skills (passives tied to wiki role; not tamer skills). Same cast
+        times and cooldowns as in-game. Supports
+        are interpreted for buff durations and effects; when a support is off cooldown
+        and its buff isn&apos;t already active, we cast it. Damage skills scale with
+        whatever buffs are currently up. Between skills we fill with auto attacks
+        until something else is ready.
       </p>
       <p className="muted">
         Whenever you could press a damage skill, we peek a few seconds ahead and
@@ -263,6 +465,58 @@ export function DpsLabPage() {
               />
             </label>
           </div>
+
+          {data && digimonRoleWikiSkillsForRole.length > 0 && (
+            <section className="lab-result">
+              <h3>Digimon role skills ({data.role})</h3>
+              <p className="muted">
+                These are passives for the Digimon&apos;s wiki role (tamer role skills are not included yet).
+                All use {DIGIMON_ROLE_SKILL_CAST_SEC}s cast time. Hybrid stances are mutually exclusive in the
+                sim (switching applies the new stance and drops the previous one). Hit-rate buffs use a simple
+                damage proxy. Intelligence is not applied to DPS (in-game it also affects cooldowns, which we
+                do not model). Skills that only grant intelligence (e.g. Magia Code: Omega) are listed here but
+                are omitted from the rotation sim until that is modeled.
+              </p>
+              {isHybridRole && (
+                <fieldset className="lab-fieldset">
+                  <legend>Hybrid stance</legend>
+                  {(['melee', 'ranged', 'caster'] as const).map((st) => (
+                    <label key={st} className="lab-inline-radio">
+                      <input
+                        type="radio"
+                        name="hybrid-stance"
+                        checked={hybridStance === st}
+                        onChange={() => setHybridStance(st)}
+                      />{' '}
+                      {st === 'melee' ? 'Melee' : st === 'ranged' ? 'Ranged' : 'Caster'}
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+              <div className="lab-table-wrap">
+                <table className="lab-table">
+                  <thead>
+                    <tr>
+                      <th>Skill</th>
+                      <th>CD</th>
+                      <th>Buff duration</th>
+                      <th>Cast</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {digimonRoleWikiSkillsForRole.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.name}</td>
+                        <td>{s.cooldown_sec}s</td>
+                        <td>{typeof s.buff?.duration === 'number' ? `${s.buff.duration}s` : '—'}</td>
+                        <td>{s.cast_time_sec}s</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           <section className="lab-result">
             <h3>Skill levels (per skill)</h3>
@@ -387,6 +641,9 @@ export function DpsLabPage() {
           {sim && sim.events.length > 0 && (
             <section className="lab-result">
               <h3>Rotation timeline</h3>
+              <p className="muted timeline-buff-hint">
+                Icons only here. In the table below, hover the buff % on a row for a full breakdown.
+              </p>
               <div className="timeline-sequence" aria-label="Sequential skill icon order">
                 {sim.events.map((e, idx) => {
                   const icon = skillIconUrl(e.iconId)
@@ -461,11 +718,7 @@ export function DpsLabPage() {
                           {e.eventType === 'auto' && (
                             <span className="lab-event-tag">Auto</span>
                           )}
-                          {e.eventType !== 'support' && e.buffedBy.length > 0 && (
-                            <span className="lab-event-tag lab-event-tag-buffed">
-                              +{e.totalBuffPct.toFixed(1)}%
-                            </span>
-                          )}
+                          <BuffBreakdownBadge e={e} />
                         </td>
                         <td>{e.castTimeSec.toFixed(1)}s</td>
                         <td>{e.damage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>

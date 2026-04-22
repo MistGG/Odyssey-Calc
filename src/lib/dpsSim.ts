@@ -1,6 +1,23 @@
 import type { WikiSkill } from '../types/wikiApi'
 import { skillDamageAtLevel, skillIsSupportOnly } from './skillDamage'
+import {
+  digimonRoleWikiSkills,
+  isHybridStanceSkillId,
+  normalizeWikiRole,
+  type HybridStance,
+} from './digimonRoleSkills'
 import { parseBuffNumericEffects, parseSupportEffects } from './supportEffects'
+
+/** One line in a timeline buff tooltip (how that +% was derived). */
+export type BuffContribution = {
+  key: string
+  /** Short label on the chip, e.g. ATK, Skill, Flat, Crit, Hit */
+  label: string
+  /** Shown as +valuePct% on the chip */
+  valuePct: number
+  /** Full breakdown; joined for native `title` tooltip */
+  detailLines: string[]
+}
 
 export type RotationEvent = {
   atSec: number
@@ -12,6 +29,8 @@ export type RotationEvent = {
   damage: number
   buffedBy: string[]
   totalBuffPct: number
+  /** Split buff strength for UI (separate + chips + hover breakdown). */
+  buffContributions?: BuffContribution[]
   cumulativeDamage: number
 }
 
@@ -47,6 +66,8 @@ type SupportBuffProfile = {
   flatAttack: number
   critRatePct: number
   critDamagePct: number
+  atkSpeedPct: number
+  hitRatePct: number
 }
 
 type ActiveBuff = {
@@ -58,6 +79,8 @@ type ActiveBuff = {
   flatAttack: number
   critRatePct: number
   critDamagePct: number
+  atkSpeedPct: number
+  hitRatePct: number
 }
 
 type DamageHold = { skillId: string; until: number }
@@ -90,6 +113,8 @@ function supportProfiles(
       let flatAttack = 0
       let critRatePct = 0
       let critDamagePct = 0
+      let atkSpeedPct = 0
+      let hitRatePct = 0
       for (const e of effects) {
         const label = e.label.toLowerCase()
         if (e.unit === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) {
@@ -98,9 +123,17 @@ function supportProfiles(
           critDamagePct += e.valueAtLevel
         } else if (e.unit === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) {
           critRatePct += e.valueAtLevel
-        } else if (e.unit === '%' && /\battack( power)?\b/.test(label)) {
+        } else if (e.unit === '%' && /\battack speed\b/.test(label)) {
+          atkSpeedPct += e.valueAtLevel
+        } else if (e.unit === '%' && /\bhit rate\b/.test(label)) {
+          hitRatePct += e.valueAtLevel
+        } else if (
+          e.unit === '%' &&
+          /\battack( power)?\b/.test(label) &&
+          !/\battack speed\b/.test(label)
+        ) {
           attackPct += e.valueAtLevel
-        } else if (!e.unit && /\battack( power)?\b/.test(label)) {
+        } else if (!e.unit && /\battack( power)?\b/.test(label) && !/\battack speed\b/.test(label)) {
           flatAttack += e.valueAtLevel
         }
       }
@@ -112,6 +145,8 @@ function supportProfiles(
         flatAttack,
         critRatePct,
         critDamagePct,
+        atkSpeedPct,
+        hitRatePct,
       }
     })
     .filter(
@@ -121,7 +156,9 @@ function supportProfiles(
           p.skillDamagePct > 0 ||
           p.flatAttack > 0 ||
           p.critRatePct > 0 ||
-          p.critDamagePct > 0),
+          p.critDamagePct > 0 ||
+          p.atkSpeedPct > 0 ||
+          p.hitRatePct > 0),
     )
 }
 
@@ -188,7 +225,8 @@ type SimCtx = {
   targets: number
   baseAttack: number
   baseCritRateStat: number
-  autoIntervalSec: number
+  /** Auto-attack interval from wiki atk_speed stat only (no temporary buffs). */
+  baseAutoIntervalSec: number
   skillLevel: (skill: WikiSkill) => number
 }
 
@@ -205,6 +243,135 @@ type SimMutable = {
   critRateAtDamageCasts: number
   critDamageAtDamageCasts: number
   damageCastCount: number
+}
+
+function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
+  const atkSpdPct = m.activeBuffs.reduce((sum, b) => sum + (b.atkSpeedPct ?? 0), 0)
+  const mult = 1 + Math.max(-0.85, atkSpdPct) / 100
+  return Math.max(0.15, ctx.baseAutoIntervalSec / mult)
+}
+
+/** Hit-rate buffs scale expected damage (rough proxy; not a full accuracy model). */
+function hitRateDamageMult(m: SimMutable) {
+  const hitPct = m.activeBuffs.reduce((sum, b) => sum + (b.hitRatePct ?? 0), 0)
+  return hitPct > 0 ? 1 + Math.min(0.35, hitPct / 143) : 1
+}
+
+const BUFF_SPLIT_EPS = 1e-3
+
+/**
+ * Per-category buff contributions for one damage/auto hit (tooltip + separate + chips).
+ * Omits attack-speed-only buffs (they change cadence, not this hit’s % breakdown).
+ */
+function buildBuffContributionsForDamage(
+  ctx: SimCtx,
+  m: SimMutable,
+  includeSkillPct: boolean,
+): BuffContribution[] {
+  const out: BuffContribution[] = []
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
+  const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+  const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const critChance = Math.max(
+    0,
+    Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
+  )
+  const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
+  const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+  const hitMult = hitRateDamageMult(m)
+  const baseCritP = critRateToChance(ctx.baseCritRateStat)
+
+  if (activeAttackPct > BUFF_SPLIT_EPS) {
+    const detailLines: string[] = [
+      `Total attack % from active buffs: +${activeAttackPct.toFixed(2)}%.`,
+      'Used inside (1 + (attack% + skill damage% + flat-as-%) ÷ 100) before crit and hit multipliers.',
+    ]
+    for (const b of m.activeBuffs) {
+      if (b.attackPct > BUFF_SPLIT_EPS) {
+        detailLines.push(`• ${b.skillName}: +${b.attackPct.toFixed(2)}% attack`)
+      }
+    }
+    out.push({ key: 'atk', label: 'ATK', valuePct: activeAttackPct, detailLines })
+  }
+
+  if (includeSkillPct && activeSkillPct > BUFF_SPLIT_EPS) {
+    const detailLines: string[] = [
+      `Total skill damage % from active buffs: +${activeSkillPct.toFixed(2)}%.`,
+      'Added in the same bracket as attack % and flat attack (as % of wiki attack).',
+    ]
+    for (const b of m.activeBuffs) {
+      if (b.skillDamagePct > BUFF_SPLIT_EPS) {
+        detailLines.push(`• ${b.skillName}: +${b.skillDamagePct.toFixed(2)}% skill damage`)
+      }
+    }
+    out.push({ key: 'skill', label: 'Skill', valuePct: activeSkillPct, detailLines })
+  }
+
+  if (flatPct > BUFF_SPLIT_EPS) {
+    const detailLines: string[] = [
+      `Total flat attack from buffs: ${activeFlatAtk.toFixed(0)}`,
+      `Wiki attack stat: ${ctx.baseAttack}`,
+      `Flat as % of wiki attack: (${activeFlatAtk.toFixed(0)} ÷ ${ctx.baseAttack}) × 100 = ${flatPct.toFixed(2)}%`,
+    ]
+    for (const b of m.activeBuffs) {
+      if (b.flatAttack > BUFF_SPLIT_EPS) {
+        detailLines.push(`• ${b.skillName}: +${b.flatAttack.toFixed(0)} flat attack`)
+      }
+    }
+    out.push({ key: 'flat', label: 'Flat', valuePct: flatPct, detailLines })
+  }
+
+  const critExtraPct = (critMult - 1) * 100
+  if (critExtraPct > BUFF_SPLIT_EPS) {
+    const detailLines: string[] = [
+      'Expected crit multiplier = 1 + p × (1 + CD÷100),',
+      'where p is crit chance (0–1) and CD is total bonus crit damage % from buffs.',
+      `Wiki crit_rate stat: ${ctx.baseCritRateStat} → base chance p₀ = clamp(stat ÷ 100000, 0–1) = ${baseCritP.toFixed(6)}`,
+    ]
+    if (activeCritRatePct > BUFF_SPLIT_EPS) {
+      detailLines.push(
+        `Buff crit rate % (UI values) sum to +${activeCritRatePct.toFixed(2)}%; each +1% adds 0.01 to p before the 0–1 cap.`,
+      )
+      for (const b of m.activeBuffs) {
+        if (b.critRatePct > BUFF_SPLIT_EPS) {
+          detailLines.push(`• ${b.skillName}: +${b.critRatePct.toFixed(2)}% crit rate`)
+        }
+      }
+    }
+    detailLines.push(`Final crit chance p (capped): ${critChance.toFixed(4)}`)
+    if (activeCritDamagePct > BUFF_SPLIT_EPS) {
+      detailLines.push(`Total crit damage % from buffs: +${activeCritDamagePct.toFixed(2)}%`)
+      for (const b of m.activeBuffs) {
+        if (b.critDamagePct > BUFF_SPLIT_EPS) {
+          detailLines.push(`• ${b.skillName}: +${b.critDamagePct.toFixed(2)}% crit damage`)
+        }
+      }
+    }
+    detailLines.push(
+      `Expected mult = ${critMult.toFixed(4)} → extra vs always non-crit: (mult − 1) × 100 = ${critExtraPct.toFixed(2)}%`,
+    )
+    out.push({ key: 'crit', label: 'Crit', valuePct: critExtraPct, detailLines })
+  }
+
+  if (hitMult > 1 + BUFF_SPLIT_EPS) {
+    const hitPct = m.activeBuffs.reduce((sum, b) => sum + (b.hitRatePct ?? 0), 0)
+    const proxyPct = (hitMult - 1) * 100
+    const detailLines: string[] = [
+      `Sum of buff hit rate %: ${hitPct.toFixed(2)}%`,
+      'Proxy mult = 1 + min(0.35, sum ÷ 143) (not a full accuracy model).',
+      `→ mult = ${hitMult.toFixed(4)}, shown as +(mult − 1)×100 = +${proxyPct.toFixed(2)}% on damage.`,
+    ]
+    for (const b of m.activeBuffs) {
+      if ((b.hitRatePct ?? 0) > BUFF_SPLIT_EPS) {
+        detailLines.push(`• ${b.skillName}: +${(b.hitRatePct ?? 0).toFixed(2)}% hit rate`)
+      }
+    }
+    out.push({ key: 'hit', label: 'Hit', valuePct: proxyPct, detailLines })
+  }
+
+  return out
 }
 
 function cloneSim(m: SimMutable): SimMutable {
@@ -265,10 +432,12 @@ function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEve
   const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
   const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
   const totalBuffPct = activeAttackPct + activeSkillPct + flatPct + (critMult - 1) * 100
+  const ext = hitRateDamageMult(m)
   const dmg =
     skillDamagePerCast(skill, usedLevel, ctx.targets) *
     (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
-    critMult
+    critMult *
+    ext
 
   m.totalDamage += dmg
   m.damageCastCount += 1
@@ -289,6 +458,8 @@ function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEve
       damage: dmg,
       buffedBy: m.activeBuffs.map((b) => b.skillName),
       totalBuffPct,
+      buffContributions:
+        m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, true) : undefined,
       cumulativeDamage: m.totalDamage,
     })
   }
@@ -315,6 +486,9 @@ function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProf
   }
   m.readyAt.set(chosen.skill.id, m.t + (chosen.skill.cooldown_sec || 0))
   const startAt = m.t + castTime
+  if (isHybridStanceSkillId(chosen.skill.id)) {
+    m.activeBuffs = m.activeBuffs.filter((b) => !isHybridStanceSkillId(b.skillId))
+  }
   m.activeBuffs.push({
     skillId: chosen.skill.id,
     skillName: chosen.skill.name,
@@ -324,6 +498,8 @@ function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProf
     flatAttack: chosen.flatAttack,
     critRatePct: chosen.critRatePct,
     critDamagePct: chosen.critDamagePct,
+    atkSpeedPct: chosen.atkSpeedPct,
+    hitRatePct: chosen.hitRatePct,
   })
   m.t += castTime
 }
@@ -353,8 +529,8 @@ function runGreedyUntilWall(
       availableSupport.sort((a, b) => {
         const aFlat = ctx.baseAttack > 0 ? (a.flatAttack / ctx.baseAttack) * 100 : 0
         const bFlat = ctx.baseAttack > 0 ? (b.flatAttack / ctx.baseAttack) * 100 : 0
-        const aScore = a.attackPct + a.skillDamagePct + aFlat
-        const bScore = b.attackPct + b.skillDamagePct + bFlat
+        const aScore = a.attackPct + a.skillDamagePct + aFlat + a.atkSpeedPct * 0.12
+        const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
         return bScore - aScore
       })
       castSupportProfile(ctx, m, availableSupport[0], recordEvents)
@@ -379,7 +555,8 @@ function runGreedyUntilWall(
       m.t < damageBan.until
     ) {
       const holdEnd = Math.min(damageBan.until, wall)
-      while (m.t + ctx.autoIntervalSec <= holdEnd + 1e-9 && m.t < wall - 1e-9) {
+      while (m.t + autoIntervalFor(ctx, m) <= holdEnd + 1e-9 && m.t < wall - 1e-9) {
+        const step = autoIntervalFor(ctx, m)
         const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
         const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
         const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
@@ -392,8 +569,9 @@ function runGreedyUntilWall(
         const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
         const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
         const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-        const autoDmg =
+        let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
+        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -409,14 +587,16 @@ function runGreedyUntilWall(
             skillName: 'Auto Attack',
             iconId: '',
             eventType: 'auto',
-            castTimeSec: ctx.autoIntervalSec,
+            castTimeSec: step,
             damage: autoDmg,
             buffedBy: m.activeBuffs.map((b) => b.skillName),
             totalBuffPct,
+            buffContributions:
+              m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
             cumulativeDamage: m.totalDamage,
           })
         }
-        m.t += ctx.autoIntervalSec
+        m.t += step
         purgeExpiredBuffs(m, m.t)
       }
       m.t = Math.min(Math.max(m.t, holdEnd), wall)
@@ -432,7 +612,8 @@ function runGreedyUntilWall(
       const nextReady = Number.isFinite(next) ? Math.min(ctx.durationSec, next) : ctx.durationSec
       if (nextReady <= m.t) break
 
-      while (m.t + ctx.autoIntervalSec <= nextReady + 1e-9 && m.t < wall - 1e-9) {
+      while (m.t + autoIntervalFor(ctx, m) <= nextReady + 1e-9 && m.t < wall - 1e-9) {
+        const step = autoIntervalFor(ctx, m)
         const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
         const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
         const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
@@ -445,8 +626,9 @@ function runGreedyUntilWall(
         const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
         const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
         const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-        const autoDmg =
+        let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
+        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -462,14 +644,16 @@ function runGreedyUntilWall(
             skillName: 'Auto Attack',
             iconId: '',
             eventType: 'auto',
-            castTimeSec: ctx.autoIntervalSec,
+            castTimeSec: step,
             damage: autoDmg,
             buffedBy: m.activeBuffs.map((b) => b.skillName),
             totalBuffPct,
+            buffContributions:
+              m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
             cumulativeDamage: m.totalDamage,
           })
         }
-        m.t += ctx.autoIntervalSec
+        m.t += step
         purgeExpiredBuffs(m, m.t)
       }
       m.t = Math.max(m.t, Math.min(nextReady, wall))
@@ -497,31 +681,47 @@ function branchDamageGain(
   return shadow.totalDamage - base.totalDamage
 }
 
-export function simulateRotation(
+export type RotationSimOptions = {
+  /** Wiki Digimon role; enables Digimon role skills in the sim (not tamer skills). */
+  role?: string | null
+  /** Hybrid only. `'best'` runs all three stances and keeps the highest DPS (tier list default). */
+  hybridStance?: HybridStance | 'best'
+}
+
+type RotationSimCoreOpts = {
+  roleNorm: string
+  hybridStance: HybridStance
+}
+
+function runRotationSim(
   skills: WikiSkill[] | undefined | null,
   levelBySkillId: Record<string, number>,
   durationSec: number,
   targets: number,
-  baseAttack: number = 0,
-  attackSpeed: number = 0,
-  baseCritRateStat: number = 0,
+  baseAttack: number,
+  attackSpeed: number,
+  baseCritRateStat: number,
+  core: RotationSimCoreOpts,
 ): RotationResult {
   const list = Array.isArray(skills) ? skills : []
   const damaging = list.filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
   const support = list.filter((s) => skillIsSupportOnly(s.base_dmg, s.scaling))
-  const supportBuffs = supportProfiles(support, levelBySkillId)
+  const digimonRoleSkills = digimonRoleWikiSkills(core.roleNorm, core.hybridStance)
+  const profileLevels: Record<string, number> = { ...levelBySkillId }
+  for (const s of digimonRoleSkills) profileLevels[s.id] = profileLevels[s.id] ?? 25
+
+  const supportBuffs = [
+    ...supportProfiles(digimonRoleSkills, profileLevels),
+    ...supportProfiles(support, profileLevels),
+  ]
+  const supportMerged = [...digimonRoleSkills, ...support]
   const skillLevel = (skill: WikiSkill) => {
-    const requested = levelBySkillId[skill.id] ?? 25
+    const requested = profileLevels[skill.id] ?? 25
     const cap = Math.max(1, Math.min(skill.max_level || 25, 25))
     return Math.max(1, Math.min(Math.floor(requested), cap))
   }
   if (damaging.length === 0) {
-    const buffs = estimateSupportDpsBuffs(
-      support,
-      levelBySkillId,
-      baseAttack,
-      baseCritRateStat,
-    )
+    const buffs = estimateSupportDpsBuffs(supportMerged, profileLevels, baseAttack, baseCritRateStat)
     return {
       totalDamage: 0,
       dps: 0,
@@ -537,13 +737,8 @@ export function simulateRotation(
     }
   }
 
-  const buffs = estimateSupportDpsBuffs(
-    support,
-    levelBySkillId,
-    baseAttack,
-    baseCritRateStat,
-  )
-  const autoIntervalSec = attackSpeed > 0 ? Math.max(0.35, attackSpeed / 1000) : 1.5
+  const buffs = estimateSupportDpsBuffs(supportMerged, profileLevels, baseAttack, baseCritRateStat)
+  const baseAutoIntervalSec = attackSpeed > 0 ? Math.max(0.35, attackSpeed / 1000) : 1.5
 
   const ctx: SimCtx = {
     damaging,
@@ -552,7 +747,7 @@ export function simulateRotation(
     targets,
     baseAttack,
     baseCritRateStat,
-    autoIntervalSec,
+    baseAutoIntervalSec,
     skillLevel,
   }
 
@@ -594,8 +789,8 @@ export function simulateRotation(
       availableSupport.sort((a, b) => {
         const aFlat = baseAttack > 0 ? (a.flatAttack / baseAttack) * 100 : 0
         const bFlat = baseAttack > 0 ? (b.flatAttack / baseAttack) * 100 : 0
-        const aScore = a.attackPct + a.skillDamagePct + aFlat
-        const bScore = b.attackPct + b.skillDamagePct + bFlat
+        const aScore = a.attackPct + a.skillDamagePct + aFlat + a.atkSpeedPct * 0.12
+        const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
         return bScore - aScore
       })
       castSupportProfile(ctx, m, availableSupport[0], true)
@@ -614,7 +809,8 @@ export function simulateRotation(
       m.t < damageHold.until
     ) {
       const holdEnd = Math.min(damageHold.until, durationSec)
-      while (m.t + autoIntervalSec <= holdEnd + 1e-9 && m.t < durationSec - 1e-9) {
+      while (m.t + autoIntervalFor(ctx, m) <= holdEnd + 1e-9 && m.t < durationSec - 1e-9) {
+        const step = autoIntervalFor(ctx, m)
         const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
         const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
         const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
@@ -627,8 +823,9 @@ export function simulateRotation(
         const flatPct = baseAttack > 0 ? (activeFlatAtk / baseAttack) * 100 : 0
         const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
-        const autoDmg =
+        let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
+        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -643,13 +840,15 @@ export function simulateRotation(
           skillName: 'Auto Attack',
           iconId: '',
           eventType: 'auto',
-          castTimeSec: autoIntervalSec,
+          castTimeSec: step,
           damage: autoDmg,
           buffedBy: m.activeBuffs.map((b) => b.skillName),
           totalBuffPct,
+          buffContributions:
+            m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
           cumulativeDamage: m.totalDamage,
         })
-        m.t += autoIntervalSec
+        m.t += step
         purgeExpiredBuffs(m, m.t)
       }
       m.t = Math.min(Math.max(m.t, holdEnd), durationSec)
@@ -663,10 +862,8 @@ export function simulateRotation(
       const nextReady = Number.isFinite(next) ? Math.min(durationSec, next) : durationSec
       if (nextReady <= m.t) break
 
-      while (
-        m.t + autoIntervalSec <= nextReady + 1e-9 &&
-        m.t < durationSec - 1e-9
-      ) {
+      while (m.t + autoIntervalFor(ctx, m) <= nextReady + 1e-9 && m.t < durationSec - 1e-9) {
+        const step = autoIntervalFor(ctx, m)
         const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
         const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
         const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
@@ -679,8 +876,9 @@ export function simulateRotation(
         const flatPct = baseAttack > 0 ? (activeFlatAtk / baseAttack) * 100 : 0
         const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
-        const autoDmg =
+        let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
+        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -695,13 +893,15 @@ export function simulateRotation(
           skillName: 'Auto Attack',
           iconId: '',
           eventType: 'auto',
-          castTimeSec: autoIntervalSec,
+          castTimeSec: step,
           damage: autoDmg,
           buffedBy: m.activeBuffs.map((b) => b.skillName),
           totalBuffPct,
+          buffContributions:
+            m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
           cumulativeDamage: m.totalDamage,
         })
-        m.t += autoIntervalSec
+        m.t += step
         purgeExpiredBuffs(m, m.t)
       }
       m.t = Math.max(m.t, nextReady)
@@ -782,7 +982,7 @@ export function simulateRotation(
     events: m.events,
   }
   } catch (err) {
-    console.error('[dpsSim] simulateRotation failed', err)
+    console.error('[dpsSim] runRotationSim failed', err)
     return {
       totalDamage: 0,
       dps: 0,
@@ -797,4 +997,53 @@ export function simulateRotation(
       events: [],
     }
   }
+}
+
+export function simulateRotation(
+  skills: WikiSkill[] | undefined | null,
+  levelBySkillId: Record<string, number>,
+  durationSec: number,
+  targets: number,
+  baseAttack: number = 0,
+  attackSpeed: number = 0,
+  baseCritRateStat: number = 0,
+  options?: RotationSimOptions,
+): RotationResult {
+  const roleNorm = normalizeWikiRole(options?.role ?? '')
+  const hybridOpt = options?.hybridStance
+
+  if (roleNorm === 'hybrid' && (hybridOpt === undefined || hybridOpt === 'best')) {
+    let best: RotationResult | null = null
+    for (const st of ['melee', 'ranged', 'caster'] as const) {
+      const r = runRotationSim(
+        skills,
+        levelBySkillId,
+        durationSec,
+        targets,
+        baseAttack,
+        attackSpeed,
+        baseCritRateStat,
+        { roleNorm, hybridStance: st },
+      )
+      if (!best || r.dps > best.dps) best = r
+    }
+    return best as RotationResult
+  }
+
+  const hybridConcrete: HybridStance =
+    roleNorm === 'hybrid' &&
+    (hybridOpt === 'melee' || hybridOpt === 'ranged' || hybridOpt === 'caster')
+      ? hybridOpt
+      : 'melee'
+
+  return runRotationSim(
+    skills,
+    levelBySkillId,
+    durationSec,
+    targets,
+    baseAttack,
+    attackSpeed,
+    baseCritRateStat,
+    { roleNorm, hybridStance: hybridConcrete },
+  )
 }

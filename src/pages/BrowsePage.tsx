@@ -7,12 +7,15 @@ import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import { WIKI_RANK_LABELS, wikiRankLabelFromNumber } from '../lib/wikiRank'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
+/** Match wiki `role` values used elsewhere (tier list, filters). */
 const ROLE_OPTIONS = [
-  'Tank',
   'Melee DPS',
   'Ranged DPS',
-  'Support',
+  'Caster',
   'Hybrid',
+  'Tank',
+  'Support',
+  'None',
 ] as const
 const STAGE_OPTIONS = [
   'Rookie',

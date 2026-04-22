@@ -245,6 +245,10 @@ export function TierListPage() {
             detail.attack,
             detail.stats?.atk_speed ?? 0,
             detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+            },
           )
           const entry: SustainedDpsEntry = {
             id: detail.id,
