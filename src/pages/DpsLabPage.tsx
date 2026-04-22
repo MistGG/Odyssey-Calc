@@ -101,8 +101,9 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
         </div>
       ) : showNumeric ? (
         <p className="buff-breakdown-muted">
-          Combined attack, skill, flat (as % of wiki ATK), and expected crit contribution for this
-          hit: <strong>+{e.totalBuffPct.toFixed(1)}%</strong> (see sim code for exact stacking).
+          Combined attack, skill, flat (as % of wiki ATK), plus extra expected damage from buff crit
+          stats only (wiki baseline crit is not counted as a buff):{' '}
+          <strong>+{e.totalBuffPct.toFixed(1)}%</strong> (see sim code for exact stacking).
         </p>
       ) : (
         <p className="buff-breakdown-muted">
