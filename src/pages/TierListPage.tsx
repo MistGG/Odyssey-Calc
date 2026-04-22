@@ -12,7 +12,9 @@ import {
 } from '../lib/tierList'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
-const REQUEST_DELAY_MS = 700
+const REQUEST_DELAY_MS = 2500
+const COOLDOWN_EVERY_N_REQUESTS = 20
+const COOLDOWN_PAUSE_MS = 30000
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -123,12 +125,21 @@ export function TierListPage() {
 
     try {
       let processed = 0
+      let backoffMs = 0
       while (working.queue.length > 0) {
         const id = working.queue[0]
         const meta = listMeta[id]
         setStatus(
           `Building tier list… ${Object.keys(working.entries).length}/${working.total} (checking ${meta?.name ?? id})`,
         )
+
+        if (backoffMs > 0) {
+          setStatus(
+            `Rate limit cooldown (${Math.ceil(backoffMs / 1000)}s)… then resuming at ${Object.keys(working.entries).length}/${working.total}.`,
+          )
+          await sleep(backoffMs)
+          backoffMs = 0
+        }
 
         try {
           const detail = await fetchDigimonDetail(id)
@@ -148,7 +159,13 @@ export function TierListPage() {
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : 'unknown error'
           if (/429|rate/i.test(msg)) {
-            throw new Error('Rate limited by API. Wait a bit, then click Update again.')
+            // Backoff and retry same id later, keeping queue intact.
+            backoffMs = Math.max(backoffMs, 60000)
+            working.queue.shift()
+            working.queue.push(id)
+            saveTierListCache(working)
+            setCache({ ...working, queue: [...working.queue], entries: { ...working.entries } })
+            continue
           }
           // Move failed id to back of queue so build can continue later.
           working.queue.shift()
@@ -159,7 +176,18 @@ export function TierListPage() {
         working.lastCheckedAt = new Date().toISOString()
         saveTierListCache(working)
         setCache({ ...working, queue: [...working.queue], entries: { ...working.entries } })
-        await sleep(REQUEST_DELAY_MS)
+        if (
+          processed > 0 &&
+          processed % COOLDOWN_EVERY_N_REQUESTS === 0 &&
+          working.queue.length > 0
+        ) {
+          setStatus(
+            `Cooling down for ${Math.ceil(COOLDOWN_PAUSE_MS / 1000)}s to avoid rate limits… (${Object.keys(working.entries).length}/${working.total})`,
+          )
+          await sleep(COOLDOWN_PAUSE_MS)
+        } else {
+          await sleep(REQUEST_DELAY_MS)
+        }
       }
 
       if (working.queue.length === 0) {
