@@ -27,6 +27,7 @@ const COOLDOWN_EVERY_N_REQUESTS = 50
 const RATE_LIMIT_COOLDOWN_MS = 10_000
 
 const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'
+const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
 const TIER_DPS_CHANGE_EPS = 0.05
 
 type TierListUpdateSummary = {
@@ -72,6 +73,43 @@ function writeTierUpdatePanelMinimized(minimized: boolean) {
     localStorage.setItem(TIER_UPDATE_PANEL_MINIMIZED_KEY, minimized ? '1' : '0')
   } catch {
     /* ignore quota / private mode */
+  }
+}
+
+function isTierListUpdateSummary(v: unknown): v is TierListUpdateSummary {
+  if (!v || typeof v !== 'object') return false
+  const o = v as Record<string, unknown>
+  return (
+    typeof o.finishedAt === 'string' &&
+    (o.mode === 'incremental' || o.mode === 'force') &&
+    typeof o.refreshedCount === 'number' &&
+    Array.isArray(o.dpsUp) &&
+    Array.isArray(o.dpsDown) &&
+    Array.isArray(o.dpsNew) &&
+    Array.isArray(o.statusChanges)
+  )
+}
+
+function loadTierUpdateSummaryFromStorage(): TierListUpdateSummary | null {
+  try {
+    const raw = localStorage.getItem(TIER_UPDATE_SUMMARY_STORAGE_KEY)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    return isTierListUpdateSummary(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function saveTierUpdateSummaryToStorage(summary: TierListUpdateSummary | null) {
+  try {
+    if (!summary) {
+      localStorage.removeItem(TIER_UPDATE_SUMMARY_STORAGE_KEY)
+      return
+    }
+    localStorage.setItem(TIER_UPDATE_SUMMARY_STORAGE_KEY, JSON.stringify(summary))
+  } catch {
+    /* ignore */
   }
 }
 
@@ -208,7 +246,9 @@ export function TierListPage() {
   const [fadeProgressBar, setFadeProgressBar] = useState(false)
   const sawIncompleteProgress = useRef(false)
   const buildRunRef = useRef<{ total: number } | null>(null)
-  const [updateSummary, setUpdateSummary] = useState<TierListUpdateSummary | null>(null)
+  const [updateSummary, setUpdateSummary] = useState<TierListUpdateSummary | null>(
+    loadTierUpdateSummaryFromStorage,
+  )
   const [updatePanelMinimized, setUpdatePanelMinimized] = useState(readTierUpdatePanelMinimized)
 
   useEffect(() => {
@@ -452,9 +492,14 @@ export function TierListPage() {
             : 'Tier list update complete. Changed Digimon were refreshed.',
         )
         if (refreshedIds.size > 0) {
-          setUpdateSummary(
-            buildTierListUpdateSummary(mode, snapshotBefore, working.entries, refreshedIds),
+          const nextSummary = buildTierListUpdateSummary(
+            mode,
+            snapshotBefore,
+            working.entries,
+            refreshedIds,
           )
+          setUpdateSummary(nextSummary)
+          saveTierUpdateSummaryToStorage(nextSummary)
         }
       }
     } catch (e: unknown) {
@@ -469,11 +514,18 @@ export function TierListPage() {
   const checkedCount = cache ? Object.keys(cache.entries).length : 0
   const total = cache?.total ?? 0
   const run = buildRunRef.current
-  const progressNumerator =
-    building && run && run.total > 0
-      ? Math.min(run.total, run.total - (cache?.queue.length ?? 0))
+  /** Ref is set only after the index fetch, before the detail queue runs; avoid checkedCount/total then. */
+  const hasActiveBuildRun = Boolean(building && run && run.total > 0)
+  const progressNumerator = hasActiveBuildRun
+    ? Math.min(run!.total, run!.total - (cache?.queue.length ?? run!.total))
+    : building
+      ? 0
       : checkedCount
-  const progressDenominator = building && run && run.total > 0 ? run.total : total
+  const progressDenominator = hasActiveBuildRun
+    ? run!.total
+    : building
+      ? Math.max(1, total || 1)
+      : total
   const progress = progressDenominator > 0 ? (progressNumerator / progressDenominator) * 100 : 0
   const tierBuildComplete = Boolean(cache && total > 0 && cache.queue.length === 0 && checkedCount >= total)
   const stageOptions = useMemo(() => {
@@ -649,7 +701,10 @@ export function TierListPage() {
               <button
                 type="button"
                 className="tier-update-summary-btn tier-update-summary-btn-dismiss"
-                onClick={() => setUpdateSummary(null)}
+                onClick={() => {
+                  setUpdateSummary(null)
+                  saveTierUpdateSummaryToStorage(null)
+                }}
               >
                 Dismiss
               </button>
