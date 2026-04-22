@@ -11,10 +11,9 @@ import {
 import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffects'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
-function allSkillsLabHref(digimonId: string, level: number) {
+function allSkillsLabHref(digimonId: string) {
   const p = new URLSearchParams()
   p.set('digimonId', digimonId)
-  p.set('level', String(level))
   return `/lab?${p.toString()}`
 }
 
@@ -144,8 +143,8 @@ export function DigimonDetailPage() {
         <h2>Skills ({data.skills?.length ?? 0})</h2>
         <div className="skill-level-bar">
           <p className="skill-actions">
-            <Link to={allSkillsLabHref(data.id, skillLevel)}>
-              Send all skills to DPS Lab
+            <Link to={allSkillsLabHref(data.id)}>
+              Send all skills to Lab
             </Link>
           </p>
           <label htmlFor="skill-level">
@@ -332,7 +331,7 @@ export function DigimonDetailPage() {
       </section>
 
       <p className="lab-cta">
-        <Link to="/lab">Open DPS lab</Link> for ad-hoc math; skill damage above
+        <Link to="/lab">Open Lab</Link> for ad-hoc math; skill damage above
         follows wiki base + per-level scaling.
       </p>
     </article>

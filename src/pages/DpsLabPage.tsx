@@ -171,8 +171,8 @@ export function DpsLabPage() {
   }, [breakdown, data, sim, skillLevels])
 
   return (
-    <div className="lab">
-      <h1>DPS lab</h1>
+    <div className="lab lab-page">
+      <h1>Lab</h1>
       <p className="muted">
         Simulates a simple rotation over time using live wiki skills. Support
         skills are parsed for attack buffs and applied as uptime-weighted

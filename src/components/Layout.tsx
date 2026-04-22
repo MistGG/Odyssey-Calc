@@ -11,7 +11,7 @@ export function Layout() {
         </Link>
         <nav className="nav">
           <Link to="/">Browse</Link>
-          <Link to="/lab">DPS lab</Link>
+          <Link to="/lab">Lab</Link>
           <Link to="/tier-list">Tier list</Link>
         </nav>
       </header>
