@@ -9,6 +9,7 @@ import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffe
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 function toInt(v: string | null, fallback: number) {
+  if (v == null || v.trim() === '') return fallback
   const n = Number(v)
   return Number.isFinite(n) ? Math.floor(n) : fallback
 }
