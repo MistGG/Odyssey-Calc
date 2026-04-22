@@ -381,7 +381,7 @@ export function DpsLabPage() {
         <h1>Lab</h1>
         {data && (
           <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
-            Digimon page
+            Go back to {`${data.name}'s page`} →
           </Link>
         )}
       </div>
