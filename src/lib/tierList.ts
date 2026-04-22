@@ -2,6 +2,17 @@ import type { DigimonContentStatus } from './contentStatus'
 
 export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v1'
 
+/** Re-fetch detail (skills + stats) after this long even if the index row is unchanged. */
+export const TIER_ENTRY_STALE_MS = 7 * 24 * 60 * 60 * 1000
+
+export function tierEntryIsStaleForDetailFetch(
+  entry: SustainedDpsEntry | undefined,
+  nowMs = Date.now(),
+): boolean {
+  if (!entry?.checkedAt) return true
+  return nowMs - new Date(entry.checkedAt).getTime() > TIER_ENTRY_STALE_MS
+}
+
 export type TierBucket = 'S' | 'A' | 'B' | 'C'
 
 export type SustainedDpsEntry = {
@@ -12,6 +23,8 @@ export type SustainedDpsEntry = {
   dps: number
   status?: DigimonContentStatus
   checkedAt: string
+  /** Fingerprint of skill stats last time detail was fetched (see tierSkillsSignature). */
+  skillsSignature?: string
 }
 
 export type TierListCache = {

@@ -10,9 +10,12 @@ import {
   createEmptyTierListCache,
   loadTierListCache,
   saveTierListCache,
+  TIER_ENTRY_STALE_MS,
+  tierEntryIsStaleForDetailFetch,
   type SustainedDpsEntry,
   type TierListCache,
 } from '../lib/tierList'
+import { tierSkillsSignature } from '../lib/tierSkillsSignature'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
 const REQUEST_DELAY_MS = 700
@@ -172,13 +175,15 @@ export function TierListPage() {
 
       const changedOrMissing = all
         .map((d) => d.id)
-        .filter(
-          (id) =>
-            (hadPriorSignatures &&
-              working.listSignatures[id] !== signatures[id]) ||
-            !working.entries[id] ||
-            !working.entries[id]?.status,
-        )
+        .filter((id) => {
+          const entry = working.entries[id]
+          return (
+            (hadPriorSignatures && working.listSignatures[id] !== signatures[id]) ||
+            !entry ||
+            !entry.status ||
+            tierEntryIsStaleForDetailFetch(entry)
+          )
+        })
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
       const plannedQueue =
         mode === 'force'
@@ -249,6 +254,7 @@ export function TierListPage() {
             dps: sim.dps,
             status: getDigimonContentStatus(detail.skills),
             checkedAt: new Date().toISOString(),
+            skillsSignature: tierSkillsSignature(detail.skills),
           }
           working.entries[id] = entry
           working.queue.shift()
@@ -415,6 +421,13 @@ export function TierListPage() {
 
       <section className="lab-result">
         <h3>Update tier list</h3>
+        <p className="muted">
+          Incremental update compares the wiki Digimon <strong>index</strong> row (name, stats on
+          the list, role, etc.). Skill-only edits do not always change that row, so we also
+          re-fetch any Digimon whose last sim is older than{' '}
+          <strong>{Math.round(TIER_ENTRY_STALE_MS / (24 * 60 * 60 * 1000))} days</strong>. Use{' '}
+          <strong>Force check all</strong> to ignore both and recalculate everyone immediately.
+        </p>
         <p className="muted">{status}</p>
         <p>
           Progress:{' '}
