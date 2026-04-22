@@ -156,11 +156,19 @@ export function TierListPage() {
       }
       working.total = all.length
 
+      const hadPriorSignatures = Object.keys(working.listSignatures).length > 0
+      // Migration safety: if signatures were not present in an older cache,
+      // baseline them now so incremental mode does not force a full rebuild.
+      if (!hadPriorSignatures && mode === 'incremental') {
+        working.listSignatures = { ...signatures }
+      }
+
       const changedOrMissing = all
         .map((d) => d.id)
         .filter(
           (id) =>
-            working.listSignatures[id] !== signatures[id] ||
+            (hadPriorSignatures &&
+              working.listSignatures[id] !== signatures[id]) ||
             !working.entries[id],
         )
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
@@ -170,7 +178,9 @@ export function TierListPage() {
           : [...new Set([...carryOverQueue, ...changedOrMissing])]
 
       working.queue = plannedQueue
-      working.listSignatures = signatures
+      if (mode === 'force' || hadPriorSignatures) {
+        working.listSignatures = signatures
+      }
       working.lastCheckedAt = new Date().toISOString()
       saveTierListCache(working)
       setCache({

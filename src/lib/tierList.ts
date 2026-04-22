@@ -1,4 +1,4 @@
-export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v2'
+export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v1'
 
 export type TierBucket = 'S' | 'A' | 'B' | 'C'
 
