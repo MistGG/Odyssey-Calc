@@ -177,13 +177,21 @@ export function DpsLabPage() {
     <div className="lab lab-page">
       <h1>Lab</h1>
       <p className="muted">
-        Simulates rotation over time using live wiki skills. Support skills are
-        parsed for buffs and cast when available. Damage choices use a short
-        lookahead: compare casting the top DPCT skill now, a filler skill, or
-        deferring the top skill (autos/supports only) until the horizon when that
-        yields more damage over the preview window. This is not global optimal
-        play, but it does model holding a nuke for an upcoming buff window when
-        the numbers say it pays off.
+        This lab runs a timed rotation using your Digimon&apos;s wiki skills.
+        Supports are interpreted for buff durations and effects; when a support is
+        off cooldown and its buff isn&apos;t already active, we cast it. Damage
+        skills scale with whatever buffs are currently up. Between skills we fill
+        with auto attacks until something else is ready.
+      </p>
+      <p className="muted">
+        Whenever you could press a damage skill, we peek a few seconds ahead and
+        compare three choices: cast the hardest-hitting skill first (best damage
+        per second of cast time); cast another damage skill instead as filler; or
+        skip your biggest hit for that short window—only autos and supports—to
+        see if waiting lines up better with buffs. We pick whichever option dealt
+        the most damage in that preview slice. Preview length is capped (about
+        twelve seconds at most), so this is smart timing, not a perfect solve for
+        the entire fight.
       </p>
 
       {!digimonId && (

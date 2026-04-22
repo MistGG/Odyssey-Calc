@@ -9,6 +9,10 @@ export type DigimonFilters = {
   stage?: string
   element?: string
   attribute?: string
+  /** Wiki may filter by family type name when supported. */
+  family?: string
+  /** Numeric rank index (wiki sprite row/col); passed as `rank` query param when set. */
+  rank?: string
 }
 
 /**
@@ -37,6 +41,9 @@ export function wikiDigimonListUrl(
   if (filters?.stage) u.searchParams.set('stage', filters.stage)
   if (filters?.element) u.searchParams.set('element', filters.element)
   if (filters?.attribute) u.searchParams.set('attribute', filters.attribute)
+  if (filters?.family) u.searchParams.set('family', filters.family)
+  const rk = filters?.rank?.trim()
+  if (rk !== undefined && rk !== '') u.searchParams.set('rank', rk)
   return u.toString()
 }
 

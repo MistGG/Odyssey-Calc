@@ -21,19 +21,21 @@ export function skillIconUrl(iconId: string) {
 }
 
 /** Rank sprite from /web_assets/digimon_rank.png (32x28 cells on a 160x56 sheet). */
-export function rankSpriteStyle(rank: number): CSSProperties {
+export function rankSpriteStyle(rank: number, scale = 1): CSSProperties {
   const safe = Math.max(1, Math.floor(rank || 1))
   const col = (safe - 1) % 5
   const row = Math.floor((safe - 1) / 5)
+  const cw = 32 * scale
+  const ch = 28 * scale
   return {
-    width: '32px',
-    height: '28px',
+    width: `${cw}px`,
+    height: `${ch}px`,
     overflow: 'hidden',
     display: 'inline-block',
     flexShrink: 0,
     backgroundImage: `url('${WIKI_SITE_ORIGIN}/web_assets/digimon_rank.png')`,
-    backgroundPosition: `${-32 * col}px ${-28 * row}px`,
-    backgroundSize: '160px 56px',
+    backgroundPosition: `${-cw * col}px ${-ch * row}px`,
+    backgroundSize: `${160 * scale}px ${56 * scale}px`,
     backgroundRepeat: 'no-repeat',
   }
 }

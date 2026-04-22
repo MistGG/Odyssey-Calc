@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonPage } from '../api/digimonService'
 import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
 import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
+import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
 const ROLE_OPTIONS = [
@@ -36,11 +37,30 @@ const ELEMENT_OPTIONS = [
 ] as const
 const ATTRIBUTE_OPTIONS = ['Vaccine', 'Data', 'Virus', 'Free', 'None'] as const
 
+/** Distinct family types present in the current wiki dataset (Digimon may belong to several). */
+const FAMILY_OPTIONS = [
+  'Dark Area',
+  'Deep Savers',
+  "Dragon's Roar",
+  'Jungle Troopers',
+  'Metal Empire',
+  'Nature Spirits',
+  'Nightmare Soldiers',
+  'TBD',
+  'Unknown',
+  'Virus Busters',
+  'Wind Guardians',
+] as const
+
+const RANK_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7] as const
+
 type BrowseFilters = {
   role: string
   stage: string
   element: string
   attribute: string
+  family: string
+  rank: string
 }
 
 const EMPTY_FILTERS: BrowseFilters = {
@@ -48,6 +68,8 @@ const EMPTY_FILTERS: BrowseFilters = {
   stage: '',
   element: '',
   attribute: '',
+  family: '',
+  rank: '',
 }
 
 function matchesFilters(item: WikiDigimonListItem, q: string, f: BrowseFilters) {
@@ -57,6 +79,8 @@ function matchesFilters(item: WikiDigimonListItem, q: string, f: BrowseFilters) 
   if (f.stage && item.stage !== f.stage) return false
   if (f.element && item.element !== f.element) return false
   if (f.attribute && item.attribute !== f.attribute) return false
+  if (f.family && !(item.family_types ?? []).includes(f.family)) return false
+  if (f.rank !== '' && Number(f.rank) !== item.rank) return false
   return true
 }
 
@@ -71,7 +95,8 @@ export function BrowsePage() {
     null,
   )
   const [totalPages, setTotalPages] = useState(0)
-  const [total, setTotal] = useState(0)
+  /** Server-reported total rows for the current API query (unused when full cache is active). */
+  const [_apiTotalRows, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,6 +118,8 @@ export function BrowsePage() {
         stage: appliedFilters.stage || undefined,
         element: appliedFilters.element || undefined,
         attribute: appliedFilters.attribute || undefined,
+        family: appliedFilters.family || undefined,
+        rank: appliedFilters.rank || undefined,
       },
     )
       .then((data) => {
@@ -108,6 +135,8 @@ export function BrowsePage() {
           !appliedFilters.stage &&
           !appliedFilters.element &&
           !appliedFilters.attribute &&
+          !appliedFilters.family &&
+          !appliedFilters.rank &&
           data.total <= WIKI_DIGIMON_PER_PAGE
         ) {
           setAllDigimonCache(data.data)
@@ -140,25 +169,28 @@ export function BrowsePage() {
     setPage(0)
   }
 
-  const localFiltered = allDigimonCache
-    ? allDigimonCache.filter((d) => matchesFilters(d, query, filters))
-    : null
+  const filteredList = useMemo(() => {
+    const source = allDigimonCache ?? items
+    return source.filter((d) => matchesFilters(d, query, filters))
+  }, [allDigimonCache, items, query, filters])
 
-  const visibleItems = (() => {
-    if (!localFiltered) return items
-    const start = page * WIKI_DIGIMON_PER_PAGE
-    return localFiltered.slice(start, start + WIKI_DIGIMON_PER_PAGE)
-  })()
+  const visibleItems = useMemo(() => {
+    if (allDigimonCache) {
+      const start = page * WIKI_DIGIMON_PER_PAGE
+      return filteredList.slice(start, start + WIKI_DIGIMON_PER_PAGE)
+    }
+    return filteredList
+  }, [allDigimonCache, filteredList, page])
 
-  const effectiveTotal = localFiltered ? localFiltered.length : total
-  const effectiveTotalPages = localFiltered
-    ? Math.max(1, Math.ceil(localFiltered.length / WIKI_DIGIMON_PER_PAGE))
+  const effectiveTotal = filteredList.length
+  const effectiveTotalPages = allDigimonCache
+    ? Math.max(1, Math.ceil(filteredList.length / WIKI_DIGIMON_PER_PAGE))
     : Math.max(1, totalPages)
 
   useEffect(() => {
-    if (!localFiltered) return
+    if (!allDigimonCache) return
     if (page > effectiveTotalPages - 1) setPage(0)
-  }, [effectiveTotalPages, localFiltered, page])
+  }, [effectiveTotalPages, allDigimonCache, page])
 
   return (
     <div className="browse">
@@ -167,7 +199,7 @@ export function BrowsePage() {
         <form className="search" onSubmit={onSearch}>
           <input
             type="search"
-            placeholder="Search (API: q=…)"
+            placeholder="Search..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
@@ -254,6 +286,40 @@ export function BrowsePage() {
               ))}
             </select>
           </label>
+          <label>
+            Family
+            <select
+              value={filters.family}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, family: e.target.value }))
+                if (allDigimonCache) setPage(0)
+              }}
+            >
+              <option value="">Any</option>
+              {FAMILY_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Rank
+            <select
+              value={filters.rank}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, rank: e.target.value }))
+                if (allDigimonCache) setPage(0)
+              }}
+            >
+              <option value="">Any</option>
+              {RANK_OPTIONS.map((v) => (
+                <option key={v} value={String(v)}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="submit">Apply</button>
         </form>
         <p className="meta">
@@ -281,6 +347,7 @@ export function BrowsePage() {
                 modelId={d.model_id}
                 id={d.id}
                 name={d.name}
+                stage={d.stage}
                 rank={d.rank}
               />
               <div className="card-body">
@@ -322,35 +389,88 @@ function DigimonThumb({
   modelId,
   id,
   name,
+  stage,
   rank,
 }: {
   modelId: string
   id: string
   name: string
+  stage: string
   rank: number
 }) {
   const src = digimonPortraitUrl(modelId, id, name)
   const [broken, setBroken] = useState(!src)
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [badgeMetrics, setBadgeMetrics] = useState<{ rsz: number; rszH: number } | null>(
+    null,
+  )
+
+  const portraitBg = digimonStagePortraitGradient(stage)
+
+  useLayoutEffect(() => {
+    const el = frameRef.current
+    if (!el) return
+    const update = () => {
+      const sz = el.getBoundingClientRect().width
+      if (!sz) return
+      const rsz = Math.round(sz * 0.42)
+      const rszH = Math.round((rsz * 62) / 72)
+      setBadgeMetrics({ rsz, rszH })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const rankScale = badgeMetrics ? badgeMetrics.rsz / 32 : 1
+  const rankWrapStyle =
+    badgeMetrics && rank > 0
+      ? {
+          bottom: -Math.round(badgeMetrics.rszH * 0.4),
+          right: -Math.round(badgeMetrics.rsz * 0.4),
+        }
+      : rank > 0
+        ? { bottom: -11, right: -13 }
+        : undefined
+
+  const rankBadge =
+    rank > 0 ? (
+      <span className="browse-rank-badge-wrap" style={rankWrapStyle} aria-hidden="true">
+        <span style={rankSpriteStyle(rank, rankScale)} />
+      </span>
+    ) : null
 
   if (!src || broken) {
     return (
-      <div className="thumb thumb-placeholder" aria-hidden="true">
-        <span className="thumb-initial">{name.slice(0, 2)}</span>
+      <div className="thumb browse-thumb thumb-placeholder" aria-hidden="true">
+        <div ref={frameRef} className="browse-thumb-frame">
+          <div
+            className="browse-thumb-mask browse-thumb-mask-placeholder"
+            style={{ background: portraitBg }}
+          >
+            <span className="browse-thumb-initial">{name.slice(0, 2)}</span>
+          </div>
+          {rankBadge}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="thumb">
-      <img
-        src={src}
-        alt=""
-        loading="lazy"
-        onError={() => setBroken(true)}
-      />
-      <span className="rank-badge-wrap" aria-hidden="true">
-        <span style={rankSpriteStyle(rank)} />
-      </span>
+    <div className="thumb browse-thumb">
+      <div ref={frameRef} className="browse-thumb-frame">
+        <div className="browse-thumb-mask" style={{ background: portraitBg }}>
+          <img
+            className="browse-thumb-img"
+            src={src}
+            alt=""
+            loading="lazy"
+            onError={() => setBroken(true)}
+          />
+        </div>
+        {rankBadge}
+      </div>
     </div>
   )
 }

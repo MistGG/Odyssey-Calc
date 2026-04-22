@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
+import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import {
   SKILL_LEVEL_CAP,
   skillDamageAtLevel,
@@ -108,7 +109,10 @@ export function DigimonDetailPage() {
 
       <header className="detail-header detail-header-split">
         <div className="detail-summary-card">
-          <div className="detail-art">
+          <div
+            className="detail-art"
+            style={{ background: digimonStagePortraitGradient(data.stage) }}
+          >
             {showPortrait ? (
               <img
                 src={portraitSrc}
@@ -118,9 +122,11 @@ export function DigimonDetailPage() {
             ) : (
               <span className="thumb-initial">{data.name.slice(0, 1)}</span>
             )}
-            <span className="detail-rank-badge-wrap" aria-hidden="true">
-              <span style={rankSpriteStyle(data.rank)} />
-            </span>
+            {data.rank > 0 && (
+              <span className="detail-rank-badge-wrap" aria-hidden="true">
+                <span style={rankSpriteStyle(data.rank)} />
+              </span>
+            )}
           </div>
           <h1 className="detail-summary-name">{data.name}</h1>
           <div className="detail-stage">{data.stage}</div>
@@ -132,14 +138,19 @@ export function DigimonDetailPage() {
               {data.element || 'None'}
             </span>
           </div>
-          <a
-            className="wiki-btn"
-            href={`https://thedigitalodyssey.com/wiki#digimon/${encodeURIComponent(data.id)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Official wiki
-          </a>
+          <div className="detail-summary-cta-row">
+            <a
+              className="wiki-btn"
+              href={`https://thedigitalodyssey.com/wiki#digimon/${encodeURIComponent(data.id)}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Official wiki
+            </a>
+            <Link className="wiki-btn detail-lab-sim-btn" to={allSkillsLabHref(data.id)}>
+              Simulate in Lab
+            </Link>
+          </div>
         </div>
 
         <div className="detail-info-card detail-info-card-side" aria-label="Digimon info">
@@ -192,11 +203,6 @@ export function DigimonDetailPage() {
       <section className="section">
         <h2>Skills ({data.skills?.length ?? 0})</h2>
         <div className="skill-level-bar">
-          <p className="skill-actions">
-            <Link to={allSkillsLabHref(data.id)}>
-              Send all skills to Lab
-            </Link>
-          </p>
           <label htmlFor="skill-level">
             Skill level (1–{SKILL_LEVEL_CAP}):{' '}
             <strong>{skillLevel}</strong>
@@ -385,9 +391,10 @@ export function DigimonDetailPage() {
         )}
       </section>
 
-      <p className="lab-cta">
-        <Link to="/lab">Open Lab</Link> for ad-hoc math; skill damage above
-        follows wiki base + per-level scaling.
+      <p className="lab-cta muted">
+        Skill damage above follows wiki base + per-level scaling at the slider
+        level. Use <strong>Simulate in Lab</strong> in the header to open the
+        rotation simulator for this Digimon.
       </p>
     </article>
   )
