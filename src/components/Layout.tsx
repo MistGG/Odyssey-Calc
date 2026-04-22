@@ -14,6 +14,7 @@ export function Layout() {
           <Link to="/lab">Lab</Link>
           <Link to="/tier-list">Tier list</Link>
           <a
+            className="nav-link-official"
             href="https://thedigitalodyssey.com/"
             target="_blank"
             rel="noreferrer noopener"

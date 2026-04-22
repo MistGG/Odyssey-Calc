@@ -205,6 +205,36 @@ code {
   border-color: var(--border-strong);
 }
 
+/* External link to the live game site — distinct from in-app routes */
+.nav a.nav-link-official {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.5);
+  background: linear-gradient(
+    135deg,
+    rgba(251, 191, 36, 0.14) 0%,
+    rgba(245, 158, 11, 0.1) 100%
+  );
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.08), 0 2px 12px rgba(245, 158, 11, 0.12);
+}
+
+.nav a.nav-link-official::after {
+  content: ' \2197';
+  font-size: 0.72em;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.nav a.nav-link-official:hover {
+  color: #fffbeb;
+  border-color: rgba(252, 211, 77, 0.75);
+  background: linear-gradient(
+    135deg,
+    rgba(251, 191, 36, 0.26) 0%,
+    rgba(245, 158, 11, 0.18) 100%
+  );
+  box-shadow: 0 0 0 1px rgba(252, 211, 77, 0.2), 0 4px 18px rgba(245, 158, 11, 0.22);
+}
+
 .main {
   flex: 1;
   padding: 1.5rem 0 2rem;
