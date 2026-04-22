@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
-import { simulateRotation } from '../lib/dpsSim'
+import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
 import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
@@ -10,7 +10,6 @@ import {
   createEmptyTierListCache,
   loadTierListCache,
   saveTierListCache,
-  TIER_ENTRY_STALE_MS,
   tierEntryIsStaleForDetailFetch,
   type SustainedDpsEntry,
   type TierListCache,
@@ -240,7 +239,7 @@ export function TierListPage() {
           const sim = simulateRotation(
             detail.skills,
             levels,
-            60,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
             1,
             detail.attack,
             detail.stats?.atk_speed ?? 0,
@@ -425,13 +424,6 @@ export function TierListPage() {
 
       <section className="lab-result">
         <h3>Update tier list</h3>
-        <p className="muted">
-          Incremental update compares the wiki Digimon <strong>index</strong> row (name, stats on
-          the list, role, etc.). Skill-only edits do not always change that row, so we also
-          re-fetch any Digimon whose last sim is older than{' '}
-          <strong>{Math.round(TIER_ENTRY_STALE_MS / (24 * 60 * 60 * 1000))} days</strong>. Use{' '}
-          <strong>Force check all</strong> to ignore both and recalculate everyone immediately.
-        </p>
         <p className="muted">{status}</p>
         <p>
           Progress:{' '}
@@ -479,7 +471,8 @@ export function TierListPage() {
         <section className="lab-result">
           <h3>Sustained DPS</h3>
           <p className="muted">
-            Ranking criteria per role (sorted by 60s sustained DPS, single target):
+            Ranking criteria per role (sorted by {DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained DPS,
+            single target):
             S = top 10%, A = next 20%, B = next 30%, C = remaining.
           </p>
           <div className="tier-status-legend" role="note" aria-label="Status criteria">
@@ -555,7 +548,7 @@ export function TierListPage() {
                                       style={{ borderColor: digimonStageBorderColor(e.stage) }}
                                     >
                                       <Link
-                                        to={`/lab?digimonId=${encodeURIComponent(e.id)}`}
+                                        to={`/lab?digimonId=${encodeURIComponent(e.id)}&duration=${DEFAULT_ROTATION_SIM_DURATION_SEC}`}
                                         className="tier-entry-link"
                                       >
                                         {icon ? (

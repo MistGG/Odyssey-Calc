@@ -11,11 +11,13 @@ import {
 } from '../lib/skillDamage'
 import { parseBuffNumericEffects, parseSupportEffects } from '../lib/supportEffects'
 import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
+import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../lib/dpsSim'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 function allSkillsLabHref(digimonId: string) {
   const p = new URLSearchParams()
   p.set('digimonId', digimonId)
+  p.set('duration', String(DEFAULT_ROTATION_SIM_DURATION_SEC))
   return `/lab?${p.toString()}`
 }
 

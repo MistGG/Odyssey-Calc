@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { skillIconUrl } from '../lib/digimonImage'
-import { simulateRotation } from '../lib/dpsSim'
+import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
 import {
   DIGIMON_ROLE_SKILL_CAST_SEC,
   digimonRoleWikiSkills,
@@ -83,12 +83,6 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
   const panelInner = (
     <>
       <div className="buff-breakdown-panel-header">Buff breakdown</div>
-      {list?.some((c) => c.key === 'hit') && (
-        <p className="buff-breakdown-panel-sub">
-          The pill is ATK + skill + flat (as % of wiki ATK) + expected crit. Hit-rate uses a separate
-          proxy multiplier below.
-        </p>
-      )}
       {list && list.length > 0 ? (
         <div className="buff-breakdown-sections">
           {list.map((c) => (
@@ -189,6 +183,11 @@ export function DpsLabPage() {
   const params = useMemo(() => new URLSearchParams(search), [search])
   const digimonId = params.get('digimonId')?.trim() ?? ''
   const initialLevel = Math.max(1, Math.min(SKILL_LEVEL_CAP, toInt(params.get('level'), 25)))
+  const durationFromUrl = useMemo(() => {
+    const raw = new URLSearchParams(search).get('duration')
+    if (raw == null || raw.trim() === '') return null
+    return Math.max(10, toInt(raw, DEFAULT_ROTATION_SIM_DURATION_SEC))
+  }, [search])
 
   const [hybridStance, setHybridStance] = useState<HybridStance>(() =>
     parseHybridStance(params.get('hybrid')),
@@ -200,7 +199,13 @@ export function DpsLabPage() {
   const [globalLevel, setGlobalLevel] = useState(initialLevel)
   const [skillLevels, setSkillLevels] = useState<Record<string, number>>({})
   const [targets, setTargets] = useState(1)
-  const [durationSec, setDurationSec] = useState(60)
+  const [durationSec, setDurationSec] = useState(() =>
+    durationFromUrl ?? DEFAULT_ROTATION_SIM_DURATION_SEC,
+  )
+
+  useEffect(() => {
+    if (durationFromUrl != null) setDurationSec(durationFromUrl)
+  }, [durationFromUrl])
 
   useEffect(() => {
     setGlobalLevel(initialLevel)
@@ -461,7 +466,11 @@ export function DpsLabPage() {
                 min={10}
                 step={5}
                 value={durationSec}
-                onChange={(e) => setDurationSec(Math.max(10, Number(e.target.value) || 60))}
+                onChange={(e) =>
+                  setDurationSec(
+                    Math.max(10, Number(e.target.value) || DEFAULT_ROTATION_SIM_DURATION_SEC),
+                  )
+                }
               />
             </label>
           </div>
@@ -472,10 +481,10 @@ export function DpsLabPage() {
               <p className="muted">
                 These are passives for the Digimon&apos;s wiki role (tamer role skills are not included yet).
                 All use {DIGIMON_ROLE_SKILL_CAST_SEC}s cast time. Hybrid stances are mutually exclusive in the
-                sim (switching applies the new stance and drops the previous one). Hit-rate buffs use a simple
-                damage proxy. Intelligence is not applied to DPS (in-game it also affects cooldowns, which we
-                do not model). Skills that only grant intelligence (e.g. Magia Code: Omega) are listed here but
-                are omitted from the rotation sim until that is modeled.
+                sim (switching applies the new stance and drops the previous one). Hit rate and intelligence
+                are not applied to DPS yet (in-game INT also affects cooldowns). Skills that only grant those
+                (e.g. Ultimate Accuracy, Magia Code: Omega) are listed here but omitted from the rotation sim
+                until modeled.
               </p>
               {isHybridRole && (
                 <fieldset className="lab-fieldset">

@@ -48,6 +48,9 @@ export type RotationResult = {
   events: RotationEvent[]
 }
 
+/** Default window for `simulateRotation` in Lab and tier list (same sim). */
+export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
+
 function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
 }
@@ -67,7 +70,6 @@ type SupportBuffProfile = {
   critRatePct: number
   critDamagePct: number
   atkSpeedPct: number
-  hitRatePct: number
 }
 
 type ActiveBuff = {
@@ -80,7 +82,6 @@ type ActiveBuff = {
   critRatePct: number
   critDamagePct: number
   atkSpeedPct: number
-  hitRatePct: number
 }
 
 type DamageHold = { skillId: string; until: number }
@@ -114,7 +115,6 @@ function supportProfiles(
       let critRatePct = 0
       let critDamagePct = 0
       let atkSpeedPct = 0
-      let hitRatePct = 0
       for (const e of effects) {
         const label = e.label.toLowerCase()
         if (e.unit === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) {
@@ -125,8 +125,6 @@ function supportProfiles(
           critRatePct += e.valueAtLevel
         } else if (e.unit === '%' && /\battack speed\b/.test(label)) {
           atkSpeedPct += e.valueAtLevel
-        } else if (e.unit === '%' && /\bhit rate\b/.test(label)) {
-          hitRatePct += e.valueAtLevel
         } else if (
           e.unit === '%' &&
           /\battack( power)?\b/.test(label) &&
@@ -146,7 +144,6 @@ function supportProfiles(
         critRatePct,
         critDamagePct,
         atkSpeedPct,
-        hitRatePct,
       }
     })
     .filter(
@@ -157,8 +154,7 @@ function supportProfiles(
           p.flatAttack > 0 ||
           p.critRatePct > 0 ||
           p.critDamagePct > 0 ||
-          p.atkSpeedPct > 0 ||
-          p.hitRatePct > 0),
+          p.atkSpeedPct > 0),
     )
 }
 
@@ -251,12 +247,6 @@ function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
   return Math.max(0.15, ctx.baseAutoIntervalSec / mult)
 }
 
-/** Hit-rate buffs scale expected damage (rough proxy; not a full accuracy model). */
-function hitRateDamageMult(m: SimMutable) {
-  const hitPct = m.activeBuffs.reduce((sum, b) => sum + (b.hitRatePct ?? 0), 0)
-  return hitPct > 0 ? 1 + Math.min(0.35, hitPct / 143) : 1
-}
-
 const BUFF_SPLIT_EPS = 1e-3
 
 /**
@@ -280,13 +270,12 @@ function buildBuffContributionsForDamage(
   )
   const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
   const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
-  const hitMult = hitRateDamageMult(m)
   const baseCritP = critRateToChance(ctx.baseCritRateStat)
 
   if (activeAttackPct > BUFF_SPLIT_EPS) {
     const detailLines: string[] = [
       `Total attack % from active buffs: +${activeAttackPct.toFixed(2)}%.`,
-      'Used inside (1 + (attack% + skill damage% + flat-as-%) ÷ 100) before crit and hit multipliers.',
+      'Used inside (1 + (attack% + skill damage% + flat-as-%) ÷ 100) before the crit multiplier.',
     ]
     for (const b of m.activeBuffs) {
       if (b.attackPct > BUFF_SPLIT_EPS) {
@@ -355,22 +344,6 @@ function buildBuffContributionsForDamage(
     out.push({ key: 'crit', label: 'Crit', valuePct: critExtraPct, detailLines })
   }
 
-  if (hitMult > 1 + BUFF_SPLIT_EPS) {
-    const hitPct = m.activeBuffs.reduce((sum, b) => sum + (b.hitRatePct ?? 0), 0)
-    const proxyPct = (hitMult - 1) * 100
-    const detailLines: string[] = [
-      `Sum of buff hit rate %: ${hitPct.toFixed(2)}%`,
-      'Proxy mult = 1 + min(0.35, sum ÷ 143) (not a full accuracy model).',
-      `→ mult = ${hitMult.toFixed(4)}, shown as +(mult − 1)×100 = +${proxyPct.toFixed(2)}% on damage.`,
-    ]
-    for (const b of m.activeBuffs) {
-      if ((b.hitRatePct ?? 0) > BUFF_SPLIT_EPS) {
-        detailLines.push(`• ${b.skillName}: +${(b.hitRatePct ?? 0).toFixed(2)}% hit rate`)
-      }
-    }
-    out.push({ key: 'hit', label: 'Hit', valuePct: proxyPct, detailLines })
-  }
-
   return out
 }
 
@@ -432,12 +405,10 @@ function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEve
   const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
   const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
   const totalBuffPct = activeAttackPct + activeSkillPct + flatPct + (critMult - 1) * 100
-  const ext = hitRateDamageMult(m)
   const dmg =
     skillDamagePerCast(skill, usedLevel, ctx.targets) *
     (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
-    critMult *
-    ext
+    critMult
 
   m.totalDamage += dmg
   m.damageCastCount += 1
@@ -499,7 +470,6 @@ function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProf
     critRatePct: chosen.critRatePct,
     critDamagePct: chosen.critDamagePct,
     atkSpeedPct: chosen.atkSpeedPct,
-    hitRatePct: chosen.hitRatePct,
   })
   m.t += castTime
 }
@@ -571,7 +541,6 @@ function runGreedyUntilWall(
         const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
         let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
-        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -628,7 +597,6 @@ function runGreedyUntilWall(
         const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
         let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
-        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -825,7 +793,6 @@ function runRotationSim(
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
         let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
-        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct
@@ -878,7 +845,6 @@ function runRotationSim(
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
         let autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
-        autoDmg *= hitRateDamageMult(m)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
         m.attackPctAtDamageCasts += activeAttackPct

@@ -1784,13 +1784,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   border-bottom: 1px solid rgba(56, 189, 248, 0.2);
 }
 
-.buff-breakdown-panel-sub {
-  margin: 0 0 0.55rem;
-  font-size: 0.72rem;
-  line-height: 1.4;
-  color: var(--muted);
-}
-
 .buff-breakdown-sections {
   display: flex;
   flex-direction: column;
