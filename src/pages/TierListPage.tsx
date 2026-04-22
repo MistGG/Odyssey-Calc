@@ -12,8 +12,8 @@ import {
 } from '../lib/tierList'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
-const REQUEST_DELAY_MS = 2500
-const COOLDOWN_EVERY_N_REQUESTS = 20
+const REQUEST_DELAY_MS = 700
+const COOLDOWN_EVERY_N_REQUESTS = 50
 const COOLDOWN_PAUSE_MS = 30000
 
 function sleep(ms: number) {
@@ -34,6 +34,7 @@ export function TierListPage() {
   const [status, setStatus] = useState<string>('Preparing tier list cache…')
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
+  const [selectedStage, setSelectedStage] = useState<string>('All')
 
   useEffect(() => {
     let cancelled = false
@@ -203,9 +204,27 @@ export function TierListPage() {
   const checkedCount = cache ? Object.keys(cache.entries).length : 0
   const total = cache?.total ?? 0
   const progress = total > 0 ? (checkedCount / total) * 100 : 0
+  const stageOptions = useMemo(() => {
+    const stages = new Set<string>()
+    Object.values(cache?.entries ?? {}).forEach((e) => {
+      if (e.stage?.trim()) stages.add(e.stage.trim())
+    })
+    return ['All', ...[...stages].sort((a, b) => a.localeCompare(b))]
+  }, [cache?.entries])
+
+  const filteredEntries = useMemo(() => {
+    const all = cache?.entries ?? {}
+    if (selectedStage === 'All') return all
+    const out: Record<string, SustainedDpsEntry> = {}
+    for (const [id, e] of Object.entries(all)) {
+      if (e.stage === selectedStage) out[id] = e
+    }
+    return out
+  }, [cache?.entries, selectedStage])
+
   const groups = useMemo(
-    () => buildTierGroups(cache?.entries ?? {}),
-    [cache?.entries],
+    () => buildTierGroups(filteredEntries),
+    [filteredEntries],
   )
   const roles = useMemo(() => groups.map((g) => g.role), [groups])
   const byRole = useMemo(() => {
@@ -268,6 +287,19 @@ export function TierListPage() {
             Ranking criteria per role (sorted by 60s sustained DPS, single target):
             S = top 10%, A = next 20%, B = next 30%, C = remaining.
           </p>
+          <div className="stage-tabs" role="tablist" aria-label="Filter by stage">
+            {stageOptions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={`stage-tab ${selectedStage === s ? 'stage-tab-active' : ''}`}
+                onClick={() => setSelectedStage(s)}
+                aria-pressed={selectedStage === s}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
           <div className="tier-matrix-wrap">
             <table className="tier-matrix">
               <thead>
