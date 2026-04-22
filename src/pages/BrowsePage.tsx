@@ -164,6 +164,15 @@ export function BrowsePage() {
     setAppliedFilters(filters)
   }
 
+  /** Dropdowns update `filters` immediately; when not using the full local cache, sync API params too. */
+  function applyFilterPatch(patch: Partial<BrowseFilters>) {
+    setFilters((f) => ({ ...f, ...patch }))
+    if (!allDigimonCache) {
+      setAppliedFilters((f) => ({ ...f, ...patch }))
+    }
+    setPage(0)
+  }
+
   function clearFilters() {
     setFilters(EMPTY_FILTERS)
     setAppliedQuery('')
@@ -219,14 +228,13 @@ export function BrowsePage() {
           </button>
         </form>
 
-        <form className="filters" onSubmit={onSearch}>
+        <div className="filters" role="group" aria-label="Filter by role, stage, and attributes">
           <label>
             Role
             <select
               value={filters.role}
               onChange={(e) => {
-                setFilters((f) => ({ ...f, role: e.target.value }))
-                if (allDigimonCache) setPage(0)
+                applyFilterPatch({ role: e.target.value })
               }}
             >
               <option value="">Any</option>
@@ -242,8 +250,7 @@ export function BrowsePage() {
             <select
               value={filters.stage}
               onChange={(e) => {
-                setFilters((f) => ({ ...f, stage: e.target.value }))
-                if (allDigimonCache) setPage(0)
+                applyFilterPatch({ stage: e.target.value })
               }}
             >
               <option value="">Any</option>
@@ -259,8 +266,7 @@ export function BrowsePage() {
             <select
               value={filters.element}
               onChange={(e) => {
-                setFilters((f) => ({ ...f, element: e.target.value }))
-                if (allDigimonCache) setPage(0)
+                applyFilterPatch({ element: e.target.value })
               }}
             >
               <option value="">Any</option>
@@ -276,8 +282,7 @@ export function BrowsePage() {
             <select
               value={filters.attribute}
               onChange={(e) => {
-                setFilters((f) => ({ ...f, attribute: e.target.value }))
-                if (allDigimonCache) setPage(0)
+                applyFilterPatch({ attribute: e.target.value })
               }}
             >
               <option value="">Any</option>
@@ -293,8 +298,7 @@ export function BrowsePage() {
             <select
               value={filters.family}
               onChange={(e) => {
-                setFilters((f) => ({ ...f, family: e.target.value }))
-                if (allDigimonCache) setPage(0)
+                applyFilterPatch({ family: e.target.value })
               }}
             >
               <option value="">Any</option>
@@ -310,8 +314,7 @@ export function BrowsePage() {
             <select
               value={filters.rank}
               onChange={(e) => {
-                setFilters((f) => ({ ...f, rank: e.target.value }))
-                if (allDigimonCache) setPage(0)
+                applyFilterPatch({ rank: e.target.value })
               }}
             >
               <option value="">All Ranks</option>
@@ -322,8 +325,7 @@ export function BrowsePage() {
               ))}
             </select>
           </label>
-          <button type="submit">Apply</button>
-        </form>
+        </div>
         <p className="meta">
           {loading
             ? 'Loading…'
