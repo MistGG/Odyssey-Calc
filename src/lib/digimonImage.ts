@@ -12,3 +12,9 @@ export function digimonPortraitUrl(modelId: string, id: string, name: string) {
   if (!modelId?.trim()) return undefined
   return `${WIKI_SITE_ORIGIN}/models/${modelId}l.png`
 }
+
+/** Wiki skill icon path (pixel-art style in game UI). */
+export function skillIconUrl(iconId: string) {
+  if (!iconId?.trim()) return undefined
+  return `${WIKI_SITE_ORIGIN}/game_icons/skills/${iconId}.png`
+}

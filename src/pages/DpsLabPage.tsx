@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
+import { skillIconUrl } from '../lib/digimonImage'
 import { simulateRotation } from '../lib/dpsSim'
 import { SKILL_LEVEL_CAP } from '../lib/skillDamage'
 import { skillIsSupportOnly } from '../lib/skillDamage'
@@ -367,6 +368,39 @@ export function DpsLabPage() {
           {sim && sim.events.length > 0 && (
             <section className="lab-result">
               <h3>Rotation timeline</h3>
+              <div className="timeline-sequence" aria-label="Sequential skill icon order">
+                {sim.events.map((e, idx) => {
+                  const icon = skillIconUrl(e.iconId)
+                  return (
+                    <span key={`seq-${e.skillId}-${idx}`} className="timeline-seq-node">
+                      <span
+                        className={
+                          e.eventType === 'support'
+                            ? 'timeline-seq-item timeline-seq-support'
+                            : e.buffedBy.length > 0
+                              ? 'timeline-seq-item timeline-seq-buffed'
+                              : 'timeline-seq-item'
+                        }
+                        title={`${e.atSec.toFixed(1)}s · ${e.skillName}`}
+                      >
+                        {icon ? (
+                          <img className="timeline-skill-icon" src={icon} alt="" />
+                        ) : (
+                          <span className="timeline-fallback">{e.skillName.slice(0, 2)}</span>
+                        )}
+                      </span>
+                      {idx < sim.events.length - 1 && (
+                        <span className="timeline-link" aria-hidden="true">
+                          <span className="timeline-link-time">
+                            {sim.events[idx + 1].castTimeSec.toFixed(1)}s
+                          </span>
+                          <span className="timeline-link-arrow">→</span>
+                        </span>
+                      )}
+                    </span>
+                  )
+                })}
+              </div>
               <div className="lab-table-wrap">
                 <table className="lab-table">
                   <thead>
@@ -392,6 +426,13 @@ export function DpsLabPage() {
                       >
                         <td>{e.atSec.toFixed(1)}</td>
                         <td>
+                          {skillIconUrl(e.iconId) && (
+                            <img
+                              className="timeline-row-icon"
+                              src={skillIconUrl(e.iconId)}
+                              alt=""
+                            />
+                          )}
                           {e.skillName}
                           {e.eventType === 'support' && (
                             <span className="lab-event-tag lab-event-tag-support">Buff</span>

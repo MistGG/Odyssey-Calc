@@ -660,6 +660,16 @@ code {
   gap: 0.35rem 0.5rem;
 }
 
+.skill-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  image-rendering: pixelated;
+  object-fit: contain;
+  background: rgba(15, 23, 42, 0.75);
+}
+
 .skill-head strong {
   color: var(--text);
   font-family: var(--font-display);
@@ -866,6 +876,89 @@ code {
 
 .lab-row-buffed td {
   background: rgba(59, 130, 246, 0.11);
+}
+
+.timeline-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.timeline-seq-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.timeline-seq-item {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  background: rgba(15, 23, 42, 0.85);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeline-seq-support {
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.22);
+}
+
+.timeline-seq-buffed {
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.timeline-skill-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.timeline-fallback {
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.timeline-link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  margin-right: 0.1rem;
+}
+
+.timeline-link-time {
+  font-size: 0.58rem;
+  color: #93c5fd;
+  line-height: 1;
+  margin-bottom: 0.05rem;
+}
+
+.timeline-link-arrow {
+  color: #60a5fa;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.timeline-row-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.35rem;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  image-rendering: pixelated;
+  object-fit: contain;
+  vertical-align: text-bottom;
 }
 
 .lab-event-tag {

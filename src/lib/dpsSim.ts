@@ -6,6 +6,7 @@ export type RotationEvent = {
   atSec: number
   skillId: string
   skillName: string
+  iconId: string
   eventType: 'damage' | 'support'
   castTimeSec: number
   damage: number
@@ -207,6 +208,7 @@ export function simulateRotation(
         atSec: t,
         skillId: chosen.skill.id,
         skillName: chosen.skill.name,
+        iconId: chosen.skill.icon_id,
         eventType: 'support',
         castTimeSec: castTime,
         damage: 0,
@@ -266,6 +268,7 @@ export function simulateRotation(
       atSec: t,
       skillId: chosen.id,
       skillName: chosen.name,
+      iconId: chosen.icon_id,
       eventType: 'damage',
       castTimeSec: castTime,
       damage: dmg,

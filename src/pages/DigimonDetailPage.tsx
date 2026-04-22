@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
-import { digimonPortraitUrl } from '../lib/digimonImage'
+import { digimonPortraitUrl, skillIconUrl } from '../lib/digimonImage'
 import {
   SKILL_LEVEL_CAP,
   skillDamageAtLevel,
@@ -203,6 +203,14 @@ export function DigimonDetailPage() {
                 className={support ? 'skill-panel-support' : undefined}
               >
                 <div className="skill-head">
+                  {skillIconUrl(s.icon_id) && (
+                    <img
+                      className="skill-icon"
+                      src={skillIconUrl(s.icon_id)}
+                      alt=""
+                      loading="lazy"
+                    />
+                  )}
                   <strong>{s.name}</strong>
                   {support && (
                     <span className="skill-tag skill-tag-support">Support</span>
