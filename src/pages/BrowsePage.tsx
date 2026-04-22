@@ -5,26 +5,113 @@ import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
+const ROLE_OPTIONS = [
+  'Tank',
+  'Melee DPS',
+  'Ranged DPS',
+  'Support',
+  'Hybrid',
+] as const
+const STAGE_OPTIONS = [
+  'Rookie',
+  'Champion',
+  'Ultimate',
+  'Mega',
+  'Burst Mode',
+  'Armor',
+  'Spirit',
+] as const
+const ELEMENT_OPTIONS = [
+  'Fire',
+  'Water',
+  'Wind',
+  'Earth',
+  'Light',
+  'Darkness',
+  'Steel',
+  'Wood',
+  'Thunder',
+  'Ice',
+  'Neutral',
+] as const
+const ATTRIBUTE_OPTIONS = ['Vaccine', 'Data', 'Virus', 'Free', 'None'] as const
+
+type BrowseFilters = {
+  role: string
+  stage: string
+  element: string
+  attribute: string
+}
+
+const EMPTY_FILTERS: BrowseFilters = {
+  role: '',
+  stage: '',
+  element: '',
+  attribute: '',
+}
+
+function matchesFilters(item: WikiDigimonListItem, q: string, f: BrowseFilters) {
+  const query = q.trim().toLowerCase()
+  if (query && !item.name.toLowerCase().includes(query)) return false
+  if (f.role && item.role !== f.role) return false
+  if (f.stage && item.stage !== f.stage) return false
+  if (f.element && item.element !== f.element) return false
+  if (f.attribute && item.attribute !== f.attribute) return false
+  return true
+}
+
 export function BrowsePage() {
   const [page, setPage] = useState(0)
   const [query, setQuery] = useState('')
   const [appliedQuery, setAppliedQuery] = useState('')
+  const [filters, setFilters] = useState<BrowseFilters>(EMPTY_FILTERS)
+  const [appliedFilters, setAppliedFilters] = useState<BrowseFilters>(EMPTY_FILTERS)
   const [items, setItems] = useState<WikiDigimonListItem[]>([])
+  const [allDigimonCache, setAllDigimonCache] = useState<WikiDigimonListItem[] | null>(
+    null,
+  )
   const [totalPages, setTotalPages] = useState(0)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (allDigimonCache) {
+      setLoading(false)
+      setError(null)
+      return
+    }
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchDigimonPage(page, WIKI_DIGIMON_PER_PAGE, appliedQuery || undefined)
+    fetchDigimonPage(
+      page,
+      WIKI_DIGIMON_PER_PAGE,
+      appliedQuery || undefined,
+      {
+        role: appliedFilters.role || undefined,
+        stage: appliedFilters.stage || undefined,
+        element: appliedFilters.element || undefined,
+        attribute: appliedFilters.attribute || undefined,
+      },
+    )
       .then((data) => {
         if (cancelled) return
         setItems(data.data)
         setTotalPages(data.total_pages)
         setTotal(data.total)
+        // If this page includes the whole dataset, use local filtering from now on.
+        if (
+          page === 0 &&
+          !appliedQuery &&
+          !appliedFilters.role &&
+          !appliedFilters.stage &&
+          !appliedFilters.element &&
+          !appliedFilters.attribute &&
+          data.total <= WIKI_DIGIMON_PER_PAGE
+        ) {
+          setAllDigimonCache(data.data)
+        }
       })
       .catch((e: unknown) => {
         if (cancelled) return
@@ -36,13 +123,42 @@ export function BrowsePage() {
     return () => {
       cancelled = true
     }
-  }, [page, appliedQuery])
+  }, [allDigimonCache, page, appliedQuery, appliedFilters])
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault()
     setPage(0)
+    if (allDigimonCache) return
     setAppliedQuery(query)
+    setAppliedFilters(filters)
   }
+
+  function clearFilters() {
+    setFilters(EMPTY_FILTERS)
+    setAppliedQuery('')
+    setAppliedFilters(EMPTY_FILTERS)
+    setPage(0)
+  }
+
+  const localFiltered = allDigimonCache
+    ? allDigimonCache.filter((d) => matchesFilters(d, query, filters))
+    : null
+
+  const visibleItems = (() => {
+    if (!localFiltered) return items
+    const start = page * WIKI_DIGIMON_PER_PAGE
+    return localFiltered.slice(start, start + WIKI_DIGIMON_PER_PAGE)
+  })()
+
+  const effectiveTotal = localFiltered ? localFiltered.length : total
+  const effectiveTotalPages = localFiltered
+    ? Math.max(1, Math.ceil(localFiltered.length / WIKI_DIGIMON_PER_PAGE))
+    : Math.max(1, totalPages)
+
+  useEffect(() => {
+    if (!localFiltered) return
+    if (page > effectiveTotalPages - 1) setPage(0)
+  }, [effectiveTotalPages, localFiltered, page])
 
   return (
     <div className="browse">
@@ -53,15 +169,97 @@ export function BrowsePage() {
             type="search"
             placeholder="Search (API: q=…)"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              if (allDigimonCache) setPage(0)
+            }}
             aria-label="Search by name"
           />
           <button type="submit">Search</button>
+          <button
+            type="button"
+            className="button-ghost"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
+        </form>
+
+        <form className="filters" onSubmit={onSearch}>
+          <label>
+            Role
+            <select
+              value={filters.role}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, role: e.target.value }))
+                if (allDigimonCache) setPage(0)
+              }}
+            >
+              <option value="">Any</option>
+              {ROLE_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Stage
+            <select
+              value={filters.stage}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, stage: e.target.value }))
+                if (allDigimonCache) setPage(0)
+              }}
+            >
+              <option value="">Any</option>
+              {STAGE_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Element
+            <select
+              value={filters.element}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, element: e.target.value }))
+                if (allDigimonCache) setPage(0)
+              }}
+            >
+              <option value="">Any</option>
+              {ELEMENT_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Type / Attribute
+            <select
+              value={filters.attribute}
+              onChange={(e) => {
+                setFilters((f) => ({ ...f, attribute: e.target.value }))
+                if (allDigimonCache) setPage(0)
+              }}
+            >
+              <option value="">Any</option>
+              {ATTRIBUTE_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Apply</button>
         </form>
         <p className="meta">
           {loading
             ? 'Loading…'
-            : `${total.toLocaleString()} Digimon · page ${page + 1} of ${Math.max(1, totalPages)} (${WIKI_DIGIMON_PER_PAGE} / page)`}
+            : `${effectiveTotal.toLocaleString()} Digimon · page ${page + 1} of ${effectiveTotalPages} (${WIKI_DIGIMON_PER_PAGE} / page)${allDigimonCache ? ' · local filtering' : ''}`}
         </p>
       </div>
 
@@ -71,12 +269,12 @@ export function BrowsePage() {
         </div>
       )}
 
-      {!loading && !error && items.length === 0 && (
+      {!loading && !error && visibleItems.length === 0 && (
         <p className="empty">No matches. Try another search.</p>
       )}
 
       <ul className="grid">
-        {items.map((d) => (
+        {visibleItems.map((d) => (
           <li key={d.id}>
             <Link to={`/digimon/${encodeURIComponent(d.id)}`} className="card">
               <DigimonThumb
@@ -105,11 +303,11 @@ export function BrowsePage() {
           Previous
         </button>
         <span className="pager-status">
-          {loading ? '…' : `${page + 1} / ${Math.max(1, totalPages)}`}
+          {loading ? '…' : `${page + 1} / ${effectiveTotalPages}`}
         </span>
         <button
           type="button"
-          disabled={loading || page >= totalPages - 1 || totalPages === 0}
+          disabled={loading || page >= effectiveTotalPages - 1 || effectiveTotalPages === 0}
           onClick={() => setPage((p) => p + 1)}
         >
           Next

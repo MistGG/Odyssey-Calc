@@ -4,6 +4,13 @@ import { fetchJson } from './http'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
 
+export type DigimonFilters = {
+  role?: string
+  stage?: string
+  element?: string
+  attribute?: string
+}
+
 /**
  * `new URL('/api/wiki/digimon')` throws in the browser (invalid URL). Relative
  * bases must be resolved against the page origin (e.g. Vite dev + proxy).
@@ -19,12 +26,17 @@ export function wikiDigimonListUrl(
   pageOneBased: number,
   perPage: number,
   searchQuery?: string,
+  filters?: DigimonFilters,
 ) {
   const u = wikiDigimonEndpoint()
   u.searchParams.set('page', String(pageOneBased))
   u.searchParams.set('per_page', String(perPage))
   const q = searchQuery?.trim()
   if (q) u.searchParams.set('q', q)
+  if (filters?.role) u.searchParams.set('role', filters.role)
+  if (filters?.stage) u.searchParams.set('stage', filters.stage)
+  if (filters?.element) u.searchParams.set('element', filters.element)
+  if (filters?.attribute) u.searchParams.set('attribute', filters.attribute)
   return u.toString()
 }
 
@@ -38,10 +50,11 @@ export async function fetchDigimonPage(
   pageZeroBased: number,
   perPage: number,
   searchQuery?: string,
+  filters?: DigimonFilters,
 ) {
   const page = pageZeroBased + 1
   return fetchJson<WikiDigimonListResponse>(
-    wikiDigimonListUrl(page, perPage, searchQuery),
+    wikiDigimonListUrl(page, perPage, searchQuery, filters),
   )
 }
 

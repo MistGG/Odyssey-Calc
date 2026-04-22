@@ -261,6 +261,54 @@ code {
   transform: translateY(0);
 }
 
+.button-ghost {
+  border-color: rgba(100, 116, 139, 0.45) !important;
+  color: var(--text-soft) !important;
+  background: rgba(51, 65, 85, 0.2) !important;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.65rem;
+  align-items: end;
+  margin-bottom: 0.8rem;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.filters select,
+.filters button {
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text);
+  font: inherit;
+  padding: 0 0.65rem;
+}
+
+.filters select:focus,
+.filters button:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px var(--cyan-dim);
+}
+
+.filters button {
+  border-color: var(--border-strong);
+  background: rgba(14, 165, 233, 0.14);
+  color: var(--cyan);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .meta {
   color: var(--muted);
   margin: 0 0 1.5rem;
