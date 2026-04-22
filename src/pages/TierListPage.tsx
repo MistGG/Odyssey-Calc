@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
 import { simulateRotation } from '../lib/dpsSim'
 import { digimonPortraitUrl } from '../lib/digimonImage'
@@ -329,13 +330,18 @@ export function TierListPage() {
                                   : undefined
                                 return (
                                   <li key={`${tier}-${role}-${e.id}`} className="tier-entry">
-                                    {icon ? (
-                                      <img src={icon} alt="" loading="lazy" />
-                                    ) : (
-                                      <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
-                                    )}
-                                    <span className="tier-entry-name">{e.name}</span>
-                                    <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
+                                    <Link
+                                      to={`/lab?digimonId=${encodeURIComponent(e.id)}`}
+                                      className="tier-entry-link"
+                                    >
+                                      {icon ? (
+                                        <img src={icon} alt="" loading="lazy" />
+                                      ) : (
+                                        <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
+                                      )}
+                                      <span className="tier-entry-name">{e.name}</span>
+                                      <span className="tier-entry-dps">{e.dps.toFixed(1)}</span>
+                                    </Link>
                                   </li>
                                 )
                               })}
