@@ -13,26 +13,18 @@ export function Layout() {
           <Link to="/">Browse</Link>
           <Link to="/lab">Lab</Link>
           <Link to="/tier-list">Tier list</Link>
+          <a
+            href="https://thedigitalodyssey.com/"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Official Site
+          </a>
         </nav>
       </header>
       <main className="main">
         <Outlet />
       </main>
-      <footer className="footer">
-        <span>
-          Wiki API (
-          <a
-            href="https://thedigitalodyssey.com/api/wiki/digimon"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <code>/api/wiki/digimon</code>
-          </a>
-          ) — local dev uses a Vite proxy for the API. Portraits load from
-          <code> /models/&#123;model_id&#125;l.png </code> on the site (override with{' '}
-          <code>VITE_WIKI_SITE_ORIGIN</code> or <code>VITE_WIKI_DIGIMON_IMAGE_TEMPLATE</code>).
-        </span>
-      </footer>
     </div>
   )
 }

@@ -210,15 +210,6 @@ code {
   padding: 1.5rem 0 2rem;
 }
 
-.footer {
-  font-size: 0.8125rem;
-  line-height: 1.55;
-  color: var(--muted);
-  border-top: 1px solid var(--border);
-  padding-top: 1.5rem;
-  margin-top: auto;
-}
-
 /* Browse */
 .browse-head h1 {
   margin: 0 0 1rem;
