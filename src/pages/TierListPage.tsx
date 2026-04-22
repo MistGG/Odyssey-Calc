@@ -73,6 +73,7 @@ export function TierListPage() {
   const [showProgressBar, setShowProgressBar] = useState(true)
   const [fadeProgressBar, setFadeProgressBar] = useState(false)
   const sawIncompleteProgress = useRef(false)
+  const buildRunRef = useRef<{ total: number } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -183,6 +184,9 @@ export function TierListPage() {
           : [...new Set([...carryOverQueue, ...changedOrMissing])]
 
       working.queue = plannedQueue
+      buildRunRef.current = {
+        total: plannedQueue.length,
+      }
       if (mode === 'force' || hadPriorSignatures) {
         working.listSignatures = signatures
       }
@@ -197,6 +201,7 @@ export function TierListPage() {
 
       if (working.queue.length === 0) {
         setStatus('Tier list is already up to date. No changed Digimon found.')
+        buildRunRef.current = null
         return
       }
 
@@ -205,8 +210,13 @@ export function TierListPage() {
       while (working.queue.length > 0) {
         const id = working.queue[0]
         const meta = listMeta[id]
+        const run = buildRunRef.current
+        const runDone =
+          run && run.total > 0 ? Math.min(run.total, run.total - working.queue.length) : 0
         setStatus(
-          `Building tier list… ${Object.keys(working.entries).length}/${working.total} (checking ${meta?.name ?? id})`,
+          mode === 'force'
+            ? `Force checking all… ${runDone}/${run?.total ?? working.queue.length} (checking ${meta?.name ?? id})`
+            : `Updating tier list… ${runDone}/${run?.total ?? working.queue.length} (checking ${meta?.name ?? id})`,
         )
 
         if (backoffMs > 0) {
@@ -288,7 +298,7 @@ export function TierListPage() {
       if (working.queue.length === 0) {
         setStatus(
           mode === 'force'
-            ? 'Force update complete. All Digimon were recalculated.'
+            ? 'Force check complete. All Digimon were recalculated.'
             : 'Tier list update complete. Changed Digimon were refreshed.',
         )
       }
@@ -297,12 +307,19 @@ export function TierListPage() {
     } finally {
       setBuilding(false)
       setBuildMode('incremental')
+      buildRunRef.current = null
     }
   }
 
   const checkedCount = cache ? Object.keys(cache.entries).length : 0
   const total = cache?.total ?? 0
-  const progress = total > 0 ? (checkedCount / total) * 100 : 0
+  const run = buildRunRef.current
+  const progressNumerator =
+    building && run && run.total > 0
+      ? Math.min(run.total, run.total - (cache?.queue.length ?? 0))
+      : checkedCount
+  const progressDenominator = building && run && run.total > 0 ? run.total : total
+  const progress = progressDenominator > 0 ? (progressNumerator / progressDenominator) * 100 : 0
   const tierBuildComplete = Boolean(cache && total > 0 && cache.queue.length === 0 && checkedCount >= total)
   const stageOptions = useMemo(() => {
     const stages = new Set<string>()
@@ -388,7 +405,7 @@ export function TierListPage() {
         <p>
           Progress:{' '}
           <strong>
-            {checkedCount}/{total || '…'} ({progress.toFixed(1)}%)
+            {progressNumerator}/{progressDenominator || '…'} ({progress.toFixed(1)}%)
           </strong>
         </p>
         {showProgressBar && (
@@ -435,11 +452,13 @@ export function TierListPage() {
             S = top 10%, A = next 20%, B = next 30%, C = remaining.
           </p>
           <div className="tier-status-legend" role="note" aria-label="Status criteria">
-            <span className="tier-status-chip tier-status-chip-complete">
-              {contentStatusLabel('complete')}
+            <span className="tier-status-legend-item">
+              <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
+              <span>{contentStatusLabel('complete')}</span>
             </span>
-            <span className="tier-status-chip tier-status-chip-incomplete">
-              {contentStatusLabel('incomplete')}
+            <span className="tier-status-legend-item">
+              <span className="tier-status-dot tier-status-dot-incomplete" aria-hidden="true" />
+              <span>{contentStatusLabel('incomplete')}</span>
             </span>
             <span className="muted">
               Incomplete if skills &lt; 5 or any skill name contains “placeholder”.

@@ -60,9 +60,10 @@ type ActiveBuff = {
   critDamagePct: number
 }
 
+type DamageHold = { skillId: string; until: number }
+
 function critRateToChance(critRateStat: number) {
   if (!Number.isFinite(critRateStat) || critRateStat <= 0) return 0
-  // Game-style stat scale: 1453 -> 1.453% crit chance.
   return Math.max(0, Math.min(1, critRateStat / 100000))
 }
 
@@ -179,6 +180,321 @@ function estimateSupportDpsBuffs(
   }
 }
 
+type SimCtx = {
+  damaging: WikiSkill[]
+  supportBuffs: SupportBuffProfile[]
+  durationSec: number
+  targets: number
+  baseAttack: number
+  baseCritRateStat: number
+  autoIntervalSec: number
+  skillLevel: (skill: WikiSkill) => number
+}
+
+type SimMutable = {
+  t: number
+  totalDamage: number
+  casts: number
+  readyAt: Map<string, number>
+  activeBuffs: ActiveBuff[]
+  events: RotationEvent[]
+  attackPctAtDamageCasts: number
+  skillPctAtDamageCasts: number
+  flatAtkAtDamageCasts: number
+  critRateAtDamageCasts: number
+  critDamageAtDamageCasts: number
+  damageCastCount: number
+}
+
+function cloneSim(m: SimMutable): SimMutable {
+  return {
+    t: m.t,
+    totalDamage: m.totalDamage,
+    casts: m.casts,
+    readyAt: new Map(m.readyAt),
+    activeBuffs: m.activeBuffs.map((b) => ({ ...b })),
+    events: [],
+    attackPctAtDamageCasts: m.attackPctAtDamageCasts,
+    skillPctAtDamageCasts: m.skillPctAtDamageCasts,
+    flatAtkAtDamageCasts: m.flatAtkAtDamageCasts,
+    critRateAtDamageCasts: m.critRateAtDamageCasts,
+    critDamageAtDamageCasts: m.critDamageAtDamageCasts,
+    damageCastCount: m.damageCastCount,
+  }
+}
+
+function purgeExpiredBuffs(m: SimMutable, t: number) {
+  for (let i = m.activeBuffs.length - 1; i >= 0; i -= 1) {
+    if (m.activeBuffs[i].untilSec <= t) m.activeBuffs.splice(i, 1)
+  }
+}
+
+function sortDamageByDpct(ctx: SimCtx, skills: WikiSkill[]) {
+  return [...skills].sort((a, b) => {
+    const aScore =
+      skillDamagePerCast(a, ctx.skillLevel(a), ctx.targets) / effectiveCastTime(a.cast_time_sec)
+    const bScore =
+      skillDamagePerCast(b, ctx.skillLevel(b), ctx.targets) / effectiveCastTime(b.cast_time_sec)
+    return bScore - aScore
+  })
+}
+
+function availableDamaging(ctx: SimCtx, m: SimMutable, hold: DamageHold | null) {
+  let list = ctx.damaging.filter((s) => (m.readyAt.get(s.id) ?? 0) <= m.t)
+  if (hold && m.t < hold.until) {
+    const filtered = list.filter((s) => s.id !== hold.skillId)
+    if (filtered.length > 0) list = filtered
+  }
+  return sortDamageByDpct(ctx, list)
+}
+
+function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEvents: boolean) {
+  const castTime = effectiveCastTime(skill.cast_time_sec)
+  const usedLevel = ctx.skillLevel(skill)
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
+  const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+  const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const critChance = Math.max(
+    0,
+    Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
+  )
+  const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
+  const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+  const totalBuffPct = activeAttackPct + activeSkillPct + flatPct + (critMult - 1) * 100
+  const dmg =
+    skillDamagePerCast(skill, usedLevel, ctx.targets) *
+    (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
+    critMult
+
+  m.totalDamage += dmg
+  m.damageCastCount += 1
+  m.attackPctAtDamageCasts += activeAttackPct
+  m.skillPctAtDamageCasts += activeSkillPct
+  m.flatAtkAtDamageCasts += activeFlatAtk
+  m.critRateAtDamageCasts += critChance * 100
+  m.critDamageAtDamageCasts += activeCritDamagePct
+  m.casts += 1
+  if (recordEvents) {
+    m.events.push({
+      atSec: m.t,
+      skillId: skill.id,
+      skillName: skill.name,
+      iconId: skill.icon_id,
+      eventType: 'damage',
+      castTimeSec: castTime,
+      damage: dmg,
+      buffedBy: m.activeBuffs.map((b) => b.skillName),
+      totalBuffPct,
+      cumulativeDamage: m.totalDamage,
+    })
+  }
+  m.readyAt.set(skill.id, m.t + (skill.cooldown_sec || 0))
+  m.t += castTime
+}
+
+function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProfile, recordEvents: boolean) {
+  const castTime = effectiveCastTime(chosen.skill.cast_time_sec)
+  m.casts += 1
+  if (recordEvents) {
+    m.events.push({
+      atSec: m.t,
+      skillId: chosen.skill.id,
+      skillName: chosen.skill.name,
+      iconId: chosen.skill.icon_id,
+      eventType: 'support',
+      castTimeSec: castTime,
+      damage: 0,
+      buffedBy: [],
+      totalBuffPct: 0,
+      cumulativeDamage: m.totalDamage,
+    })
+  }
+  m.readyAt.set(chosen.skill.id, m.t + (chosen.skill.cooldown_sec || 0))
+  const startAt = m.t + castTime
+  m.activeBuffs.push({
+    skillId: chosen.skill.id,
+    skillName: chosen.skill.name,
+    untilSec: startAt + chosen.durationSec,
+    attackPct: chosen.attackPct,
+    skillDamagePct: chosen.skillDamagePct,
+    flatAttack: chosen.flatAttack,
+    critRatePct: chosen.critRatePct,
+    critDamagePct: chosen.critDamagePct,
+  })
+  m.t += castTime
+}
+
+/**
+ * Greedy timeline without lookahead: supports > damage (DPCT, optional ban) > autos / jump.
+ * Stops when t >= wallTime or duration ends.
+ */
+function runGreedyUntilWall(
+  ctx: SimCtx,
+  m: SimMutable,
+  wallTime: number,
+  damageBan: DamageHold | null,
+  recordEvents: boolean,
+) {
+  const wall = Math.min(wallTime, ctx.durationSec)
+  while (m.t < wall - 1e-9 && m.t < ctx.durationSec - 1e-9) {
+    purgeExpiredBuffs(m, m.t)
+
+    const availableSupport = ctx.supportBuffs.filter((p) => {
+      const ready = (m.readyAt.get(p.skill.id) ?? 0) <= m.t
+      const alreadyUp = m.activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > m.t)
+      return ready && !alreadyUp
+    })
+
+    if (availableSupport.length > 0) {
+      availableSupport.sort((a, b) => {
+        const aFlat = ctx.baseAttack > 0 ? (a.flatAttack / ctx.baseAttack) * 100 : 0
+        const bFlat = ctx.baseAttack > 0 ? (b.flatAttack / ctx.baseAttack) * 100 : 0
+        const aScore = a.attackPct + a.skillDamagePct + aFlat
+        const bScore = b.attackPct + b.skillDamagePct + bFlat
+        return bScore - aScore
+      })
+      castSupportProfile(ctx, m, availableSupport[0], recordEvents)
+      continue
+    }
+
+    let available = ctx.damaging.filter((s) => (m.readyAt.get(s.id) ?? 0) <= m.t)
+    if (damageBan && m.t < damageBan.until) {
+      const filtered = available.filter((s) => s.id !== damageBan.skillId)
+      if (filtered.length > 0) available = filtered
+    }
+    available = sortDamageByDpct(ctx, available)
+
+    const rawReadyDamage = sortDamageByDpct(
+      ctx,
+      ctx.damaging.filter((s) => (m.readyAt.get(s.id) ?? 0) <= m.t),
+    )
+    if (
+      available.length === 0 &&
+      rawReadyDamage.length > 0 &&
+      damageBan &&
+      m.t < damageBan.until
+    ) {
+      const holdEnd = Math.min(damageBan.until, wall)
+      while (m.t + ctx.autoIntervalSec <= holdEnd + 1e-9 && m.t < wall - 1e-9) {
+        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+        const critChance = Math.max(
+          0,
+          Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
+        )
+        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
+        const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+        const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
+        const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
+        const autoDmg =
+          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
+        m.totalDamage += autoDmg
+        m.damageCastCount += 1
+        m.attackPctAtDamageCasts += activeAttackPct
+        m.flatAtkAtDamageCasts += activeFlatAtk
+        m.critRateAtDamageCasts += critChance * 100
+        m.critDamageAtDamageCasts += activeCritDamagePct
+        m.skillPctAtDamageCasts += 0
+        m.casts += 1
+        if (recordEvents) {
+          m.events.push({
+            atSec: m.t,
+            skillId: 'auto-attack',
+            skillName: 'Auto Attack',
+            iconId: '',
+            eventType: 'auto',
+            castTimeSec: ctx.autoIntervalSec,
+            damage: autoDmg,
+            buffedBy: m.activeBuffs.map((b) => b.skillName),
+            totalBuffPct,
+            cumulativeDamage: m.totalDamage,
+          })
+        }
+        m.t += ctx.autoIntervalSec
+        purgeExpiredBuffs(m, m.t)
+      }
+      m.t = Math.min(Math.max(m.t, holdEnd), wall)
+      continue
+    }
+
+    if (available.length === 0) {
+      const next = Math.min(
+        ...[...ctx.damaging, ...ctx.supportBuffs.map((p) => p.skill)].map(
+          (s) => m.readyAt.get(s.id) ?? 0,
+        ),
+      )
+      const nextReady = Number.isFinite(next) ? Math.min(ctx.durationSec, next) : ctx.durationSec
+      if (nextReady <= m.t) break
+
+      while (m.t + ctx.autoIntervalSec <= nextReady + 1e-9 && m.t < wall - 1e-9) {
+        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+        const critChance = Math.max(
+          0,
+          Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
+        )
+        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
+        const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+        const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
+        const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
+        const autoDmg =
+          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
+        m.totalDamage += autoDmg
+        m.damageCastCount += 1
+        m.attackPctAtDamageCasts += activeAttackPct
+        m.flatAtkAtDamageCasts += activeFlatAtk
+        m.critRateAtDamageCasts += critChance * 100
+        m.critDamageAtDamageCasts += activeCritDamagePct
+        m.skillPctAtDamageCasts += 0
+        m.casts += 1
+        if (recordEvents) {
+          m.events.push({
+            atSec: m.t,
+            skillId: 'auto-attack',
+            skillName: 'Auto Attack',
+            iconId: '',
+            eventType: 'auto',
+            castTimeSec: ctx.autoIntervalSec,
+            damage: autoDmg,
+            buffedBy: m.activeBuffs.map((b) => b.skillName),
+            totalBuffPct,
+            cumulativeDamage: m.totalDamage,
+          })
+        }
+        m.t += ctx.autoIntervalSec
+        purgeExpiredBuffs(m, m.t)
+      }
+      m.t = Math.max(m.t, Math.min(nextReady, wall))
+      continue
+    }
+
+    const chosen = available[0]
+    castDamageSkill(ctx, m, chosen, recordEvents)
+  }
+}
+
+const LOOKAHEAD_SEC = 12
+const LOOKAHEAD_MAX_FRACTION = 0.35
+
+function branchDamageGain(
+  ctx: SimCtx,
+  base: SimMutable,
+  wallTime: number,
+  firstCast: WikiSkill | null,
+  damageBan: DamageHold | null,
+): number {
+  const shadow = cloneSim(base)
+  if (firstCast) castDamageSkill(ctx, shadow, firstCast, false)
+  runGreedyUntilWall(ctx, shadow, wallTime, damageBan, false)
+  return shadow.totalDamage - base.totalDamage
+}
+
 export function simulateRotation(
   skills: WikiSkill[],
   levelBySkillId: Record<string, number>,
@@ -224,30 +540,44 @@ export function simulateRotation(
     baseAttack,
     baseCritRateStat,
   )
-  const readyAt = new Map<string, number>()
-  const activeBuffs: ActiveBuff[] = []
-  let t = 0
-  let totalDamage = 0
-  let casts = 0
-  const events: RotationEvent[] = []
-  let attackPctAtDamageCasts = 0
-  let skillPctAtDamageCasts = 0
-  let flatAtkAtDamageCasts = 0
-  let critRateAtDamageCasts = 0
-  let critDamageAtDamageCasts = 0
-  let damageCastCount = 0
-  const autoIntervalSec =
-    attackSpeed > 0 ? Math.max(0.35, attackSpeed / 1000) : 1.5
+  const autoIntervalSec = attackSpeed > 0 ? Math.max(0.35, attackSpeed / 1000) : 1.5
 
-  while (t < durationSec) {
-    // remove expired windows
-    for (let i = activeBuffs.length - 1; i >= 0; i -= 1) {
-      if (activeBuffs[i].untilSec <= t) activeBuffs.splice(i, 1)
-    }
+  const ctx: SimCtx = {
+    damaging,
+    supportBuffs,
+    durationSec,
+    targets,
+    baseAttack,
+    baseCritRateStat,
+    autoIntervalSec,
+    skillLevel,
+  }
+
+  const m: SimMutable = {
+    t: 0,
+    totalDamage: 0,
+    casts: 0,
+    readyAt: new Map(),
+    activeBuffs: [],
+    events: [],
+    attackPctAtDamageCasts: 0,
+    skillPctAtDamageCasts: 0,
+    flatAtkAtDamageCasts: 0,
+    critRateAtDamageCasts: 0,
+    critDamageAtDamageCasts: 0,
+    damageCastCount: 0,
+  }
+
+  let damageHold: DamageHold | null = null
+
+  while (m.t < durationSec - 1e-9) {
+    if (damageHold && m.t >= damageHold.until) damageHold = null
+
+    purgeExpiredBuffs(m, m.t)
 
     const availableSupport = supportBuffs.filter((p) => {
-      const ready = (readyAt.get(p.skill.id) ?? 0) <= t
-      const alreadyUp = activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > t)
+      const ready = (m.readyAt.get(p.skill.id) ?? 0) <= m.t
+      const alreadyUp = m.activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > m.t)
       return ready && !alreadyUp
     })
 
@@ -259,52 +589,27 @@ export function simulateRotation(
         const bScore = b.attackPct + b.skillDamagePct + bFlat
         return bScore - aScore
       })
-      const chosen = availableSupport[0]
-      const castTime = effectiveCastTime(chosen.skill.cast_time_sec)
-      casts += 1
-      events.push({
-        atSec: t,
-        skillId: chosen.skill.id,
-        skillName: chosen.skill.name,
-        iconId: chosen.skill.icon_id,
-        eventType: 'support',
-        castTimeSec: castTime,
-        damage: 0,
-        buffedBy: [],
-        totalBuffPct: 0,
-        cumulativeDamage: totalDamage,
-      })
-      readyAt.set(chosen.skill.id, t + (chosen.skill.cooldown_sec || 0))
-      const startAt = t + castTime
-      activeBuffs.push({
-        skillId: chosen.skill.id,
-        skillName: chosen.skill.name,
-        untilSec: startAt + chosen.durationSec,
-        attackPct: chosen.attackPct,
-        skillDamagePct: chosen.skillDamagePct,
-        flatAttack: chosen.flatAttack,
-        critRatePct: chosen.critRatePct,
-        critDamagePct: chosen.critDamagePct,
-      })
-      t += castTime
+      castSupportProfile(ctx, m, availableSupport[0], true)
       continue
     }
 
-    const available = damaging.filter((s) => (readyAt.get(s.id) ?? 0) <= t)
-    if (available.length === 0) {
-      const next = Math.min(
-        ...[...damaging, ...supportBuffs.map((p) => p.skill)].map(
-          (s) => readyAt.get(s.id) ?? 0,
-        ),
-      )
-      const nextReady = Number.isFinite(next) ? Math.min(durationSec, next) : durationSec
-      if (nextReady <= t) break
-
-      while (t + autoIntervalSec <= nextReady + 1e-9) {
-        const activeAttackPct = activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-        const activeFlatAtk = activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-        const activeCritRatePct = activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-        const activeCritDamagePct = activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+    const available = availableDamaging(ctx, m, damageHold)
+    const rawReadyDamage = sortDamageByDpct(
+      ctx,
+      ctx.damaging.filter((s) => (m.readyAt.get(s.id) ?? 0) <= m.t),
+    )
+    if (
+      available.length === 0 &&
+      rawReadyDamage.length > 0 &&
+      damageHold &&
+      m.t < damageHold.until
+    ) {
+      const holdEnd = Math.min(damageHold.until, durationSec)
+      while (m.t + autoIntervalSec <= holdEnd + 1e-9 && m.t < durationSec - 1e-9) {
+        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
         const critChance = Math.max(
           0,
           Math.min(1, critRateToChance(baseCritRateStat) + activeCritRatePct / 100),
@@ -315,112 +620,153 @@ export function simulateRotation(
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
         const autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
-        totalDamage += autoDmg
-        damageCastCount += 1
-        attackPctAtDamageCasts += activeAttackPct
-        flatAtkAtDamageCasts += activeFlatAtk
-        critRateAtDamageCasts += critChance * 100
-        critDamageAtDamageCasts += activeCritDamagePct
-        skillPctAtDamageCasts += 0
-        casts += 1
-        events.push({
-          atSec: t,
+        m.totalDamage += autoDmg
+        m.damageCastCount += 1
+        m.attackPctAtDamageCasts += activeAttackPct
+        m.flatAtkAtDamageCasts += activeFlatAtk
+        m.critRateAtDamageCasts += critChance * 100
+        m.critDamageAtDamageCasts += activeCritDamagePct
+        m.skillPctAtDamageCasts += 0
+        m.casts += 1
+        m.events.push({
+          atSec: m.t,
           skillId: 'auto-attack',
           skillName: 'Auto Attack',
           iconId: '',
           eventType: 'auto',
           castTimeSec: autoIntervalSec,
           damage: autoDmg,
-          buffedBy: activeBuffs.map((b) => b.skillName),
+          buffedBy: m.activeBuffs.map((b) => b.skillName),
           totalBuffPct,
-          cumulativeDamage: totalDamage,
+          cumulativeDamage: m.totalDamage,
         })
-        t += autoIntervalSec
-        for (let i = activeBuffs.length - 1; i >= 0; i -= 1) {
-          if (activeBuffs[i].untilSec <= t) activeBuffs.splice(i, 1)
-        }
+        m.t += autoIntervalSec
+        purgeExpiredBuffs(m, m.t)
       }
-      t = Math.max(t, nextReady)
+      m.t = Math.min(Math.max(m.t, holdEnd), durationSec)
       continue
     }
 
-    available.sort((a, b) => {
-      const aScore =
-        skillDamagePerCast(a, skillLevel(a), targets) / effectiveCastTime(a.cast_time_sec)
-      const bScore =
-        skillDamagePerCast(b, skillLevel(b), targets) / effectiveCastTime(b.cast_time_sec)
-      return bScore - aScore
-    })
-    const chosen = available[0]
-    const castTime = effectiveCastTime(chosen.cast_time_sec)
-    const usedLevel = skillLevel(chosen)
-    const activeAttackPct = activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-    const activeSkillPct = activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
-    const activeFlatAtk = activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-    const activeCritRatePct = activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-    const activeCritDamagePct = activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-    const critChance = Math.max(
-      0,
-      Math.min(1, critRateToChance(baseCritRateStat) + activeCritRatePct / 100),
-    )
-    const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
-    const flatPct = baseAttack > 0 ? (activeFlatAtk / baseAttack) * 100 : 0
-    const totalBuffPct = activeAttackPct + activeSkillPct + flatPct + (critMult - 1) * 100
-    const dmg =
-      skillDamagePerCast(chosen, usedLevel, targets) *
-      (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
-      critMult
-    totalDamage += dmg
-    damageCastCount += 1
-    attackPctAtDamageCasts += activeAttackPct
-    skillPctAtDamageCasts += activeSkillPct
-    flatAtkAtDamageCasts += activeFlatAtk
-    critRateAtDamageCasts += critChance * 100
-    critDamageAtDamageCasts += activeCritDamagePct
-    casts += 1
-    events.push({
-      atSec: t,
-      skillId: chosen.id,
-      skillName: chosen.name,
-      iconId: chosen.icon_id,
-      eventType: 'damage',
-      castTimeSec: castTime,
-      damage: dmg,
-      buffedBy: activeBuffs.map((b) => b.skillName),
-      totalBuffPct,
-      cumulativeDamage: totalDamage,
-    })
-    readyAt.set(chosen.id, t + (chosen.cooldown_sec || 0))
-    t += castTime
+    if (available.length === 0) {
+      const next = Math.min(
+        ...[...damaging, ...supportBuffs.map((p) => p.skill)].map((s) => m.readyAt.get(s.id) ?? 0),
+      )
+      const nextReady = Number.isFinite(next) ? Math.min(durationSec, next) : durationSec
+      if (nextReady <= m.t) break
+
+      while (m.t + autoIntervalSec <= nextReady + 1e-9) {
+        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+        const critChance = Math.max(
+          0,
+          Math.min(1, critRateToChance(baseCritRateStat) + activeCritRatePct / 100),
+        )
+        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
+        const flatPct = baseAttack > 0 ? (activeFlatAtk / baseAttack) * 100 : 0
+        const totalBuffPct = activeAttackPct + flatPct + (critMult - 1) * 100
+        const autoBase = Math.max(0, baseAttack + activeFlatAtk)
+        const autoDmg =
+          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
+        m.totalDamage += autoDmg
+        m.damageCastCount += 1
+        m.attackPctAtDamageCasts += activeAttackPct
+        m.flatAtkAtDamageCasts += activeFlatAtk
+        m.critRateAtDamageCasts += critChance * 100
+        m.critDamageAtDamageCasts += activeCritDamagePct
+        m.skillPctAtDamageCasts += 0
+        m.casts += 1
+        m.events.push({
+          atSec: m.t,
+          skillId: 'auto-attack',
+          skillName: 'Auto Attack',
+          iconId: '',
+          eventType: 'auto',
+          castTimeSec: autoIntervalSec,
+          damage: autoDmg,
+          buffedBy: m.activeBuffs.map((b) => b.skillName),
+          totalBuffPct,
+          cumulativeDamage: m.totalDamage,
+        })
+        m.t += autoIntervalSec
+        purgeExpiredBuffs(m, m.t)
+      }
+      m.t = Math.max(m.t, nextReady)
+      continue
+    }
+
+    const primary = available[0]
+    const secondary = available[1]
+
+    let chosen: WikiSkill = primary
+
+    {
+      const horizon = Math.min(
+        LOOKAHEAD_SEC,
+        Math.max(0, durationSec - m.t) * LOOKAHEAD_MAX_FRACTION,
+      )
+      const branchWall = Math.min(durationSec, m.t + Math.max(0.5, horizon))
+
+      const gPrimary = branchDamageGain(ctx, m, branchWall, primary, null)
+      const gSecondary = secondary ? branchDamageGain(ctx, m, branchWall, secondary, null) : -Infinity
+      const gDefer = branchDamageGain(ctx, m, branchWall, null, {
+        skillId: primary.id,
+        until: branchWall,
+      })
+
+      let best = gPrimary
+      let pick: 'primary' | 'secondary' | 'hold' = 'primary'
+      if (gSecondary > best + 1e-6) {
+        best = gSecondary
+        pick = 'secondary'
+      }
+      if (gDefer > best + 1e-6) {
+        best = gDefer
+        pick = 'hold'
+      }
+
+      if (pick === 'secondary' && secondary) {
+        chosen = secondary
+      } else if (pick === 'hold') {
+        if (secondary && gDefer >= gSecondary - 1e-6) {
+          chosen = secondary
+        } else {
+          damageHold = { skillId: primary.id, until: branchWall }
+          continue
+        }
+      }
+    }
+
+    castDamageSkill(ctx, m, chosen, true)
   }
 
   return {
-    totalDamage,
-    dps: durationSec > 0 ? totalDamage / durationSec : 0,
-    casts,
+    totalDamage: m.totalDamage,
+    dps: durationSec > 0 ? m.totalDamage / durationSec : 0,
+    casts: m.casts,
     durationSec,
     attackBuffPct:
-      damageCastCount > 0 ? attackPctAtDamageCasts / damageCastCount : buffs.attackPct,
+      m.damageCastCount > 0 ? m.attackPctAtDamageCasts / m.damageCastCount : buffs.attackPct,
     skillDamageBuffPct:
-      damageCastCount > 0 ? skillPctAtDamageCasts / damageCastCount : buffs.skillDamagePct,
+      m.damageCastCount > 0 ? m.skillPctAtDamageCasts / m.damageCastCount : buffs.skillDamagePct,
     attackPowerFlat:
-      damageCastCount > 0 ? flatAtkAtDamageCasts / damageCastCount : buffs.flatAttack,
+      m.damageCastCount > 0 ? m.flatAtkAtDamageCasts / m.damageCastCount : buffs.flatAttack,
     critRatePct:
-      damageCastCount > 0 ? critRateAtDamageCasts / damageCastCount : buffs.critRatePct,
+      m.damageCastCount > 0 ? m.critRateAtDamageCasts / m.damageCastCount : buffs.critRatePct,
     critDamagePct:
-      damageCastCount > 0 ? critDamageAtDamageCasts / damageCastCount : buffs.critDamagePct,
+      m.damageCastCount > 0 ? m.critDamageAtDamageCasts / m.damageCastCount : buffs.critDamagePct,
     totalDpsBuffPct:
-      damageCastCount > 0
-        ? (attackPctAtDamageCasts + skillPctAtDamageCasts) / damageCastCount +
-          (baseAttack > 0 ? (flatAtkAtDamageCasts / damageCastCount / baseAttack) * 100 : 0) +
+      m.damageCastCount > 0
+        ? (m.attackPctAtDamageCasts + m.skillPctAtDamageCasts) / m.damageCastCount +
+          (baseAttack > 0 ? (m.flatAtkAtDamageCasts / m.damageCastCount / baseAttack) * 100 : 0) +
           ((expectedCritMultiplier(
-            Math.max(0, Math.min(1, (critRateAtDamageCasts / damageCastCount) / 100)),
-            critDamageAtDamageCasts / damageCastCount,
+            Math.max(0, Math.min(1, (m.critRateAtDamageCasts / m.damageCastCount) / 100)),
+            m.critDamageAtDamageCasts / m.damageCastCount,
           ) -
             1) *
             100)
         : buffs.totalDpsBuffPct,
-    events,
+    events: m.events,
   }
 }
-

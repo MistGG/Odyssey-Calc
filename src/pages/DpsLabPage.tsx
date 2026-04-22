@@ -177,9 +177,13 @@ export function DpsLabPage() {
     <div className="lab lab-page">
       <h1>Lab</h1>
       <p className="muted">
-        Simulates a simple rotation over time using live wiki skills. Support
-        skills are parsed for attack buffs and applied as uptime-weighted
-        modifiers.
+        Simulates rotation over time using live wiki skills. Support skills are
+        parsed for buffs and cast when available. Damage choices use a short
+        lookahead: compare casting the top DPCT skill now, a filler skill, or
+        deferring the top skill (autos/supports only) until the horizon when that
+        yields more damage over the preview window. This is not global optimal
+        play, but it does model holding a nuke for an upcoming buff window when
+        the numbers say it pays off.
       </p>
 
       {!digimonId && (
@@ -361,7 +365,7 @@ export function DpsLabPage() {
 
           {rotationAdvice.length > 0 && (
             <section className="lab-result">
-              <h3>Rotation coach summary</h3>
+              <h3>Rotation Notes</h3>
               <ul className="lab-advice-list">
                 {rotationAdvice.map((line, i) => (
                   <li key={i}>{line}</li>
