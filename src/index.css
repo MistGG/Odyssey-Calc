@@ -393,11 +393,7 @@ code {
   cursor: pointer;
 }
 
-.stage-tab-active {
-  border-color: rgba(34, 211, 238, 0.55);
-  background: rgba(14, 165, 233, 0.24);
-  color: var(--cyan);
-}
+/* Selected / stage colors — digimonStageTierFilterStyle inline on Tier list buttons */
 
 .tier-grid {
   display: grid;
@@ -509,23 +505,13 @@ code {
   overflow: hidden;
 }
 
-.tier-entry-complete {
-  border-color: rgba(74, 222, 128, 0.35);
-}
-
-.tier-entry-incomplete {
-  border-color: rgba(251, 113, 133, 0.42);
-}
-
-.tier-entry-unknown {
-  border-color: rgba(148, 163, 184, 0.45);
-}
+/* Border color comes from inline digimonStageBorderColor(stage) on each row */
 
 .tier-entry-link {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.35rem;
   width: 100%;
   padding: 0.2rem 0.3rem;
   color: inherit;
@@ -544,20 +530,12 @@ code {
 }
 
 .tier-entry-thumb-wrap {
-  position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 16px;
   height: 16px;
-}
-
-.tier-rank-badge {
-  position: absolute;
-  right: -10px;
-  bottom: -8px;
-  transform: scale(0.45);
-  transform-origin: bottom right;
-  z-index: 2;
-  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .tier-entry img {

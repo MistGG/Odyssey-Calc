@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
 import { simulateRotation } from '../lib/dpsSim'
-import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
+import { digimonPortraitUrl } from '../lib/digimonImage'
+import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
 import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
 import {
   buildTierGroups,
@@ -469,7 +470,8 @@ export function TierListPage() {
               <button
                 key={s}
                 type="button"
-                className={`stage-tab ${selectedStage === s ? 'stage-tab-active' : ''}`}
+                className="stage-tab"
+                style={digimonStageTierFilterStyle(s, selectedStage === s)}
                 onClick={() => setSelectedStage(s)}
                 aria-pressed={selectedStage === s}
               >
@@ -502,8 +504,7 @@ export function TierListPage() {
                               <ul className="tier-entry-list">
                                 {entries.map((e) => {
                                   const modelId = listMeta[e.id]?.model_id ?? ''
-                                  const rank = listMeta[e.id]?.rank ?? 1
-                                const status = e.status ?? 'unknown'
+                                  const status = e.status ?? 'unknown'
                                   const icon = modelId
                                     ? digimonPortraitUrl(modelId, e.id, e.name)
                                     : undefined
@@ -517,6 +518,7 @@ export function TierListPage() {
                                             ? 'tier-entry-complete'
                                             : 'tier-entry-unknown'
                                       }`}
+                                      style={{ borderColor: digimonStageBorderColor(e.stage) }}
                                     >
                                       <Link
                                         to={`/lab?digimonId=${encodeURIComponent(e.id)}`}
@@ -525,9 +527,6 @@ export function TierListPage() {
                                         {icon ? (
                                           <span className="tier-entry-thumb-wrap">
                                             <img src={icon} alt="" loading="lazy" />
-                                            <span className="tier-rank-badge" aria-hidden="true">
-                                              <span style={rankSpriteStyle(rank)} />
-                                            </span>
                                           </span>
                                         ) : (
                                           <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
