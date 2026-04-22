@@ -41,24 +41,24 @@ export function DpsLabPage() {
   useEffect(() => {
     if (!digimonId) {
       setData(null)
+      setSkillLevels({})
       return
     }
     let cancelled = false
     setLoading(true)
     setError(null)
+    setGlobalLevel(initialLevel)
+    setSkillLevels({})
     fetchDigimonDetail(digimonId)
       .then((d) => {
         if (!cancelled) {
           setData(d)
-          setSkillLevels((prev) => {
-            const next: Record<string, number> = {}
-            d.skills.forEach((s) => {
-              const cap = Math.max(1, Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP))
-              const seeded = prev[s.id] ?? initialLevel
-              next[s.id] = Math.max(1, Math.min(cap, seeded))
-            })
-            return next
+          const next: Record<string, number> = {}
+          d.skills.forEach((s) => {
+            const cap = Math.max(1, Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP))
+            next[s.id] = Math.max(1, Math.min(cap, initialLevel))
           })
+          setSkillLevels(next)
         }
       })
       .catch((e: unknown) => {
@@ -73,7 +73,7 @@ export function DpsLabPage() {
     return () => {
       cancelled = true
     }
-  }, [digimonId])
+  }, [digimonId, initialLevel])
 
   const sim = useMemo(() => {
     if (!data) return null

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
 import { simulateRotation } from '../lib/dpsSim'
@@ -69,6 +69,9 @@ export function TierListPage() {
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
   const [selectedStage, setSelectedStage] = useState<string>('All')
+  const [showProgressBar, setShowProgressBar] = useState(true)
+  const [fadeProgressBar, setFadeProgressBar] = useState(false)
+  const sawIncompleteProgress = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -289,6 +292,7 @@ export function TierListPage() {
   const checkedCount = cache ? Object.keys(cache.entries).length : 0
   const total = cache?.total ?? 0
   const progress = total > 0 ? (checkedCount / total) * 100 : 0
+  const tierBuildComplete = Boolean(cache && total > 0 && cache.queue.length === 0 && checkedCount >= total)
   const stageOptions = useMemo(() => {
     const stages = new Set<string>()
     Object.values(cache?.entries ?? {}).forEach((e) => {
@@ -328,6 +332,38 @@ export function TierListPage() {
     }
   }, [autoStarted, building, cache, initializing])
 
+  useEffect(() => {
+    if (!cache || total <= 0) {
+      setShowProgressBar(true)
+      setFadeProgressBar(false)
+      sawIncompleteProgress.current = false
+      return
+    }
+
+    if (!tierBuildComplete) {
+      sawIncompleteProgress.current = true
+      setShowProgressBar(true)
+      setFadeProgressBar(false)
+      return
+    }
+
+    // On refresh when cache is already complete, hide immediately.
+    if (!sawIncompleteProgress.current) {
+      setShowProgressBar(false)
+      setFadeProgressBar(false)
+      return
+    }
+
+    setShowProgressBar(true)
+    setFadeProgressBar(true)
+    const t = window.setTimeout(() => {
+      setShowProgressBar(false)
+    }, 900)
+    return () => {
+      window.clearTimeout(t)
+    }
+  }, [cache, tierBuildComplete, total])
+
   return (
     <div className="lab tier-page">
       <h1>Tier Lists</h1>
@@ -341,9 +377,11 @@ export function TierListPage() {
             {checkedCount}/{total || '…'} ({progress.toFixed(1)}%)
           </strong>
         </p>
-        <div className="tier-progress">
-          <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
-        </div>
+        {showProgressBar && (
+          <div className={`tier-progress ${fadeProgressBar ? 'tier-progress-fade' : ''}`}>
+            <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
+          </div>
+        )}
         <p className="muted">
           Last checked:{' '}
           {cache?.lastCheckedAt

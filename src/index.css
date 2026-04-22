@@ -336,6 +336,12 @@ code {
   border: 1px solid var(--border);
   overflow: hidden;
   margin: 0.45rem 0 0.7rem;
+  opacity: 1;
+  transition: opacity 0.9s ease;
+}
+
+.tier-progress-fade {
+  opacity: 0;
 }
 
 .tier-progress-bar {
