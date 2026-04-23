@@ -1339,56 +1339,38 @@ export function TierListPage() {
           {tierMode === 'tank' ? (
             <>
               <p className="muted">
-                <strong>Tank</strong> wiki role only. Ranks use a composite <em>tank index</em> (not
-                in-game EHP or official formulas). Higher score ≈ more of what we measure below.
+                Tank wiki role only. Score is a heuristic for sorting this list, not in-game EHP.
               </p>
               <details className="tier-score-explainer">
-                <summary>How the tank score works (read this for why S/A/B/C look the way they do)</summary>
+                <summary>Tank score (how it&apos;s calculated)</summary>
                 <div className="tier-score-explainer-body">
-                  <p>
-                    <strong>Why a single number?</strong> The game does not expose a full mitigation
-                    simulator here, so we rank Tanks with a transparent heuristic: parse support skill
-                    text (and structured buff numbers), estimate how often those buffs are up, then mix
-                    that with base stats. The number is only for <em>ordering</em> Digimon in this list.
-                  </p>
-                  <p>
-                    <strong>Layer 1 — Mitigation kit (~55% of the composite):</strong> From each
-                    skill we read effects like damage reduction, barriers/shields, HP recovery, and Max
-                    HP bonuses. Each effect is turned into a raw strength, then multiplied by an{' '}
-                    <strong>uptime</strong> guess: buff duration divided by cooldown+cast time (capped at
-                    100%). If the wiki omits duration, we assume partial coverage. That is why two
-                    Digimon with similar text can rank differently if cooldowns differ.
-                  </p>
-                  <p>
-                    <strong>Layer 2 — Core stats (~30%):</strong> HP plus weighted Defense (Defense is
-                    multiplied before being combined with HP so it matters but does not dwarf HP).
-                  </p>
-                  <p>
-                    <strong>Layer 3 — Avoidance (~15%):</strong> Block rate and Evasion. These are
-                    down-weighted because many games soften or cap them and we do not model enemy
-                    accuracy here.
-                  </p>
-                  <p>
-                    <strong>Final mix:</strong> We apply <code>log1p</code> to each layer so one
-                    extreme stat or one huge shield line does not automatically win every matchup.
-                    Formula:{' '}
-                    <code>
-                      0.55·log1p(mitigationRaw) + 0.30·log1p(coreRaw/1000) + 0.15·log1p(avoidanceRaw)
-                    </code>
-                    .
-                  </p>
-                  <p>
-                    <strong>Tier letters (S/A/B/C):</strong> The same percentile buckets as DPS lists
-                    (top ~10% S, next ~20% A, next ~30% B, rest C), but computed only among{' '}
-                    <strong>Tanks</strong> after filters — so an S here is “top of Tanks in this view,”
-                    not “best in the whole game.”
-                  </p>
-                  <p>
-                    <strong>Limits:</strong> Regex parsing misses unusual wording; self-target vs party
-                    is not distinguished; overheal, shields on allies, and enemy damage types are not
-                    modeled. When wiki data changes, run <strong>Update tier list</strong> so scores
-                    refresh.
-                  </p>
+                  <ul className="tier-score-explainer-list">
+                    <li>
+                      Parses skill/buff text and numbers, mixes in base stats; used only to order rows.
+                    </li>
+                    <li>
+                      Mitigation (~55%): damage reduction, shields, heals, Max HP% — each scaled by
+                      estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if duration
+                      missing).
+                    </li>
+                    <li>Core (~30%): HP plus weighted Defense.</li>
+                    <li>Avoidance (~15%): block + evasion (down-weighted).</li>
+                    <li>
+                      Combined with <code>log1p</code> so one huge value does not decide everything:{' '}
+                      <code>
+                        0.55·log1p(mit) + 0.30·log1p(core/1000) + 0.15·log1p(avoid)
+                      </code>
+                      .
+                    </li>
+                    <li>
+                      S/A/B/C: same cutoffs as DPS (~10% / ~20% / ~30% / rest), but only among Tanks
+                      after your filters.
+                    </li>
+                    <li>
+                      Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
+                      Refresh scores after wiki changes via Update tier list.
+                    </li>
+                  </ul>
                 </div>
               </details>
               {tankScoresStale && (
@@ -1402,59 +1384,39 @@ export function TierListPage() {
           {tierMode === 'healer' ? (
             <>
               <p className="muted">
-                <strong>Support</strong> wiki role only (healers). Ranks use a composite{' '}
-                <em>healer index</em> prioritizing healing output from skills, then defensive support,
-                then offensive buffs, then INT.
+                Support wiki role only. Score favors healing, then shields/DR, then damage buffs, then
+                INT — for sorting only, not real HPS.
               </p>
               <details className="tier-score-explainer">
-                <summary>
-                  How the healer score works (read this for why S/A/B/C look the way they do)
-                </summary>
+                <summary>Healer score (how it&apos;s calculated)</summary>
                 <div className="tier-score-explainer-body">
-                  <p>
-                    <strong>Design goal:</strong> Healers are judged mainly on how much effective
-                    healing and sustain they bring through skills, then on how much they reduce damage
-                    or add barriers, then on party damage buffs, with INT as a small tie-breaker for
-                    scaling. This is not HPS metering, mana/DS, or overheal modeling.
-                  </p>
-                  <p>
-                    <strong>Layer 1 — Healing (~50%):</strong> Lines that recover/restore/heal{' '}
-                    <strong>HP</strong> (% or flat) are parsed from each skill. Flat heals are scaled
-                    against the Digimon&apos;s own HP as a rough normalization. Everything is multiplied
-                    by the same <strong>uptime</strong> estimate as tanks (duration vs cooldown+cast).
-                  </p>
-                  <p>
-                    <strong>Layer 2 — Shields &amp; damage reduction (~28%):</strong> Barriers/shields
-                    and damage reduction only (healing is not double-counted here). Helps capture
-                    defensive support kits.
-                  </p>
-                  <p>
-                    <strong>Layer 3 — Damage buffs (~12%):</strong> Party-style offensive stats parsed
-                    the same way as the Lab DPS sim cares about: Skill Damage%, Attack Power%, crit rate,
-                    crit damage, attack speed, and flat attack. Each contribution is scaled by uptime.
-                  </p>
-                  <p>
-                    <strong>Layer 4 — INT (~10%):</strong> Combat stat <code>int</code> from the wiki
-                    detail — a light nudge because many healers scale healing with INT even when text
-                    does not repeat it.
-                  </p>
-                  <p>
-                    <strong>Final mix:</strong>{' '}
-                    <code>
-                      0.50·log1p(healingRaw) + 0.28·log1p(mitigationRaw) + 0.12·log1p(damageBuffRaw) +
-                      0.10·log1p(INT)
-                    </code>
-                    . <code>log1p</code> keeps one huge heal line from automatically dominating every
-                    rank.
-                  </p>
-                  <p>
-                    <strong>Tier letters:</strong> Same percentile buckets as DPS, but only among{' '}
-                    <strong>Support</strong> rows in the current filters.
-                  </p>
-                  <p>
-                    <strong>Limits:</strong> HoT vs burst, number of targets, DS healing, cleanses, and
-                    passive regen are not modeled separately. Parsing can miss non-standard skill text.
-                  </p>
+                  <ul className="tier-score-explainer-list">
+                    <li>
+                      Healing (~50%): HP recover/heal lines (% or flat; flat normalized vs this
+                      Digimon&apos;s HP) × uptime (same duration/cooldown idea as tank).
+                    </li>
+                    <li>
+                      Shields and damage reduction (~28%): barriers and DR only (healing not counted
+                      again here).
+                    </li>
+                    <li>
+                      Damage buffs (~12%): skill damage, ATK%, crit, attack speed, flat ATK × uptime
+                      (same idea as Lab offensive support).
+                    </li>
+                    <li>INT (~10%): small tie-breaker from wiki combat stats.</li>
+                    <li>
+                      Blend with <code>log1p</code>:{' '}
+                      <code>
+                        0.50·log1p(heal) + 0.28·log1p(mit) + 0.12·log1p(buff) + 0.10·log1p(INT)
+                      </code>
+                      .
+                    </li>
+                    <li>S/A/B/C: same cutoffs as DPS, only among Support rows after filters.</li>
+                    <li>
+                      Limits: no HoT vs burst, target count, DS heals, or passives; odd skill text may
+                      parse wrong.
+                    </li>
+                  </ul>
                 </div>
               </details>
               {healerScoresStale && (
