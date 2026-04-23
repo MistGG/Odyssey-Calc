@@ -10,19 +10,21 @@ import {
 } from './tierScoreParsing'
 
 export type TankTierScoreBreakdown = {
-  /** Parsed mitigation kit (DR × uptime, shields, heals, Max HP%) — largest tier in composite. */
+  /** Base max HP from wiki stats — dominant layer (~65% of composite). */
+  hpRaw: number
+  /** Weighted defense (def × 6) for log scaling — small stat layer. */
+  defenseRaw: number
+  /** Parsed mitigation kit (DR × uptime, shields, heals, Max HP%) — second layer (~22%). */
   mitigationRaw: number
-  /** HP + weighted defense — middle tier. */
-  coreRaw: number
-  /** Block + evasion — smallest tier. */
+  /** Block + evasion — smallest layer. */
   avoidanceRaw: number
   /** Higher = better tank index (heuristic). */
   score: number
 }
 
 /**
- * Heuristic tank index: ~55% mitigation kit (potency × uptime), ~30% core stats (HP + DEF),
- * ~15% avoidance (block + evasion). Intended for ranking only, not in-game EHP.
+ * Heuristic tank index: ~65% base HP, ~22% mitigation kit (potency × uptime), ~9% weighted defense,
+ * ~4% avoidance. Intended for ranking only, not in-game EHP.
  */
 export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBreakdown {
   const stats = detail.stats
@@ -58,13 +60,14 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
     }
   }
 
-  const coreRaw = hp + def * 6
+  const defenseRaw = def * 6
   const avoidanceRaw = block * 1.15 + eva
 
   const score =
-    0.55 * Math.log1p(mitigationRaw) +
-    0.3 * Math.log1p(coreRaw / 1000) +
-    0.15 * Math.log1p(avoidanceRaw)
+    0.65 * Math.log1p(hp / 1000) +
+    0.22 * Math.log1p(mitigationRaw) +
+    0.09 * Math.log1p(defenseRaw / 1000) +
+    0.04 * Math.log1p(avoidanceRaw)
 
-  return { mitigationRaw, coreRaw, avoidanceRaw, score }
+  return { hpRaw: hp, defenseRaw, mitigationRaw, avoidanceRaw, score }
 }

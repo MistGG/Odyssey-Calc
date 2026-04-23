@@ -1353,16 +1353,20 @@ export function TierListPage() {
                       Parses skill/buff text and numbers, mixes in base stats; used only to order rows.
                     </li>
                     <li>
-                      Mitigation (~55%): damage reduction, shields, heals, Max HP% — each scaled by
-                      estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if duration
-                      missing).
+                      Base HP (~65%): wiki combat max HP — main tankiness signal.
                     </li>
-                    <li>Core (~30%): HP plus weighted Defense.</li>
-                    <li>Avoidance (~15%): block + evasion (down-weighted).</li>
+                    <li>
+                      Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills — each
+                      scaled by estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if
+                      duration missing).
+                    </li>
+                    <li>Defense (~9%): defense × 6, then scaled like HP (log1p(defenseRaw/1000)).</li>
+                    <li>Avoidance (~4%): block + evasion (down-weighted).</li>
                     <li>
                       Combined with <code>log1p</code> so one huge value does not decide everything:{' '}
                       <code>
-                        0.55·log1p(mit) + 0.30·log1p(core/1000) + 0.15·log1p(avoid)
+                        0.65·log1p(HP/1000) + 0.22·log1p(mit) + 0.09·log1p(def×6/1000) +
+                        0.04·log1p(avoid)
                       </code>
                       .
                     </li>
