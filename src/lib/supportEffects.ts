@@ -122,7 +122,7 @@ function normalizeHealOverTimeDisplayLabel(label: string): string {
 }
 
 /** Display label for parsed heals (avoid "restores 2783 HP" prose in the label row). */
-function healEffectLabel(targetRaw: string, _unit: '%' | ''): string {
+function healEffectLabel(targetRaw: string): string {
   const t = targetRaw.trim().toLowerCase().replace(/\s+/g, ' ')
   if (t === 'hp' || (/\bhp\b/.test(t) && !/\bmax\b/.test(t))) return 'Heals HP'
   if (/\bmax\s*hp\b/.test(t)) return 'Heals Max HP'
@@ -273,7 +273,7 @@ export function parseSupportEffects(
     const perUnit = (m[6] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
-      label: healEffectLabel(target, unit),
+      label: healEffectLabel(target),
       base,
       perLevel: per,
       unit,
@@ -293,7 +293,7 @@ export function parseSupportEffects(
     const perUnit = (m[5] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
-      label: healEffectLabel('HP', unit),
+      label: healEffectLabel('HP'),
       base,
       perLevel: per,
       unit,
@@ -460,7 +460,7 @@ export function parseSupportEffects(
     const unit = ((m[3] as '%' | '') || '') as '%' | ''
     const target = m[4].trim()
     out.push({
-      label: healEffectLabel(target, unit),
+      label: healEffectLabel(target),
       base,
       perLevel: 0,
       unit,

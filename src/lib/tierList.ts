@@ -176,8 +176,8 @@ export const HEALER_TIER_CATEGORY_ORDER: readonly HealerTierCategoryKey[] = [
 export const HEALER_TIER_MATRIX_COLUMN_LABELS: Record<HealerTierCategoryKey, string> = {
   general: 'Overall',
   healing: 'Healing (HPS)',
-  shielding: 'Shielding (HPS)',
-  buffing: 'Buffing (eff. %)',
+  shielding: 'Shielding (SPS)',
+  buffing: 'Buffing (uptime sum)',
   int: 'INT',
 }
 

@@ -1,23 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { Link } from 'react-router-dom'
-import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
+import { fetchDigimonDetail } from '../api/digimonService'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC, computeDpsSpecializedScore } from '../lib/dpsTierScore'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
 import { computeHealerTierScore } from '../lib/healerTierScore'
 import { computeTankTierScore } from '../lib/tankTierScore'
-import { digimonPortraitUrl } from '../lib/digimonImage'
-import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
-import {
-  contentStatusLabel,
-  getDigimonContentStatus,
-  type DigimonContentStatus,
-} from '../lib/contentStatus'
+import { getDigimonContentStatus, type DigimonContentStatus } from '../lib/contentStatus'
 import {
   buildTierGroups,
   createEmptyTierListCache,
-  DPS_TIER_CATEGORY_ORDER,
   DPS_TIER_MATRIX_COLUMN_LABELS,
   loadTierListCache,
   saveTierListCache,
@@ -37,400 +29,34 @@ import {
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonListItem } from '../types/wikiApi'
+import {
+  buildTierListUpdateSummary,
+  COOLDOWN_EVERY_N_REQUESTS,
+  fetchAllDigimonIndex,
+  levelMapForSkills,
+  loadTierUpdateSummaryFromStorage,
+  RATE_LIMIT_COOLDOWN_MS,
+  readDpsTierCategory,
+  readTierListMode,
+  readTierUpdatePanelMinimized,
+  REQUEST_DELAY_MS,
+  saveTierUpdateSummaryToStorage,
+  sleep,
+  writeDpsTierCategory,
+  writeTierListMode,
+  writeTierUpdatePanelMinimized,
+  type TierListUpdateSummary,
+  type TierListUpdateSummaryTabKey,
+} from './tierList/tierListModel'
+import { TierListMatrixTable } from './tierList/TierListMatrixTable'
+import { TierListModeHeader } from './tierList/TierListModeHeader'
+import { TierListScoringNotes } from './tierList/TierListScoringNotes'
+import { TierListUpdateControls } from './tierList/TierListUpdateControls'
+import { TierListUpdateSummaryPanel } from './tierList/TierListUpdateSummaryPanel'
 
 const WIKI_ATTR_STRINGS = WIKI_ATTRIBUTE_OPTIONS as readonly string[]
 const WIKI_EL_STRINGS = WIKI_ELEMENT_OPTIONS as readonly string[]
 const WIKI_FAMILY_STRINGS = WIKI_FAMILY_OPTIONS as readonly string[]
-
-const REQUEST_DELAY_MS = 700
-const COOLDOWN_EVERY_N_REQUESTS = 50
-/** Proactive pause every N requests and backoff after HTTP 429 (tier list detail fetches). */
-const RATE_LIMIT_COOLDOWN_MS = 10_000
-
-const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'
-const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
-const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
-const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
-const TIER_DPS_CHANGE_EPS = 0.05
-const TIER_TANK_SCORE_CHANGE_EPS = 0.02
-const TIER_HEALER_SCORE_CHANGE_EPS = 0.02
-
-type TierListUpdateSummary = {
-  finishedAt: string
-  mode: 'incremental' | 'force'
-  refreshedCount: number
-  dpsUp: Array<{
-    id: string
-    name: string
-    role: string
-    before: number
-    after: number
-    delta: number
-  }>
-  dpsDown: Array<{
-    id: string
-    name: string
-    role: string
-    before: number
-    after: number
-    delta: number
-  }>
-  dpsNew: Array<{ id: string; name: string; role: string; after: number }>
-  statusChanges: Array<{
-    id: string
-    name: string
-    role: string
-    from: DigimonContentStatus | undefined
-    to: DigimonContentStatus
-  }>
-  tankUp: Array<{
-    id: string
-    name: string
-    role: string
-    before: number
-    after: number
-    delta: number
-  }>
-  tankDown: Array<{
-    id: string
-    name: string
-    role: string
-    before: number
-    after: number
-    delta: number
-  }>
-  tankNew: Array<{ id: string; name: string; role: string; after: number }>
-  healerUp: Array<{
-    id: string
-    name: string
-    role: string
-    before: number
-    after: number
-    delta: number
-  }>
-  healerDown: Array<{
-    id: string
-    name: string
-    role: string
-    before: number
-    after: number
-    delta: number
-  }>
-  healerNew: Array<{ id: string; name: string; role: string; after: number }>
-}
-
-type TierListUpdateSummaryTabKey = 'dps' | 'tank' | 'healer' | 'status'
-
-function readTierUpdatePanelMinimized(): boolean {
-  try {
-    return localStorage.getItem(TIER_UPDATE_PANEL_MINIMIZED_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function writeTierUpdatePanelMinimized(minimized: boolean) {
-  try {
-    localStorage.setItem(TIER_UPDATE_PANEL_MINIMIZED_KEY, minimized ? '1' : '0')
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
-
-function readTierListMode(): TierListMode {
-  try {
-    const v = localStorage.getItem(TIER_LIST_MODE_KEY)
-    if (v === 'tank') return 'tank'
-    if (v === 'healer') return 'healer'
-  } catch {
-    /* ignore */
-  }
-  return 'dps'
-}
-
-function writeTierListMode(mode: TierListMode) {
-  try {
-    localStorage.setItem(TIER_LIST_MODE_KEY, mode)
-  } catch {
-    /* ignore */
-  }
-}
-
-function readDpsTierCategory(): DpsTierCategoryKey {
-  try {
-    const v = localStorage.getItem(TIER_DPS_CATEGORY_KEY)
-    if (v === 'sustained' || v === 'burst' || v === 'specialized' || v === 'aoe') {
-      return v
-    }
-    if (v === 'aoe_general' || v === 'aoe_damage' || v === 'aoe_cooldown' || v === 'aoe_radius') {
-      return 'aoe'
-    }
-  } catch {
-    /* ignore */
-  }
-  return 'sustained'
-}
-
-function writeDpsTierCategory(cat: DpsTierCategoryKey) {
-  try {
-    localStorage.setItem(TIER_DPS_CATEGORY_KEY, cat)
-  } catch {
-    /* ignore */
-  }
-}
-
-function isTierListUpdateSummary(v: unknown): v is TierListUpdateSummary {
-  if (!v || typeof v !== 'object') return false
-  const o = v as Record<string, unknown>
-  return (
-    typeof o.finishedAt === 'string' &&
-    (o.mode === 'incremental' || o.mode === 'force') &&
-    typeof o.refreshedCount === 'number' &&
-    Array.isArray(o.dpsUp) &&
-    Array.isArray(o.dpsDown) &&
-    Array.isArray(o.dpsNew) &&
-    Array.isArray(o.statusChanges)
-  )
-}
-
-function normalizeTierUpdateSummary(parsed: TierListUpdateSummary): TierListUpdateSummary {
-  return {
-    ...parsed,
-    tankUp: Array.isArray(parsed.tankUp) ? parsed.tankUp : [],
-    tankDown: Array.isArray(parsed.tankDown) ? parsed.tankDown : [],
-    tankNew: Array.isArray(parsed.tankNew) ? parsed.tankNew : [],
-    healerUp: Array.isArray(parsed.healerUp) ? parsed.healerUp : [],
-    healerDown: Array.isArray(parsed.healerDown) ? parsed.healerDown : [],
-    healerNew: Array.isArray(parsed.healerNew) ? parsed.healerNew : [],
-  }
-}
-
-function loadTierUpdateSummaryFromStorage(): TierListUpdateSummary | null {
-  try {
-    const raw = localStorage.getItem(TIER_UPDATE_SUMMARY_STORAGE_KEY)
-    if (!raw) return null
-    const parsed: unknown = JSON.parse(raw)
-    return isTierListUpdateSummary(parsed) ? normalizeTierUpdateSummary(parsed) : null
-  } catch {
-    return null
-  }
-}
-
-function saveTierUpdateSummaryToStorage(summary: TierListUpdateSummary | null) {
-  try {
-    if (!summary) {
-      localStorage.removeItem(TIER_UPDATE_SUMMARY_STORAGE_KEY)
-      return
-    }
-    localStorage.setItem(TIER_UPDATE_SUMMARY_STORAGE_KEY, JSON.stringify(summary))
-  } catch {
-    /* ignore */
-  }
-}
-
-function formatTierStatus(s: DigimonContentStatus | undefined) {
-  if (!s) return 'Pending'
-  return contentStatusLabel(s)
-}
-
-function labHrefForTierEntry(id: string) {
-  return `/lab?digimonId=${encodeURIComponent(id)}&duration=${DEFAULT_ROTATION_SIM_DURATION_SEC}`
-}
-
-function buildTierListUpdateSummary(
-  mode: 'incremental' | 'force',
-  snapshotBefore: Record<
-    string,
-    { dps: number; tankScore?: number; healerScore?: number; status?: DigimonContentStatus }
-  >,
-  entriesAfter: Record<string, SustainedDpsEntry>,
-  refreshedIds: Set<string>,
-): TierListUpdateSummary {
-  const dpsUp: TierListUpdateSummary['dpsUp'] = []
-  const dpsDown: TierListUpdateSummary['dpsDown'] = []
-  const dpsNew: TierListUpdateSummary['dpsNew'] = []
-  const tankUp: TierListUpdateSummary['tankUp'] = []
-  const tankDown: TierListUpdateSummary['tankDown'] = []
-  const tankNew: TierListUpdateSummary['tankNew'] = []
-  const healerUp: TierListUpdateSummary['healerUp'] = []
-  const healerDown: TierListUpdateSummary['healerDown'] = []
-  const healerNew: TierListUpdateSummary['healerNew'] = []
-  const statusChanges: TierListUpdateSummary['statusChanges'] = []
-
-  for (const id of refreshedIds) {
-    const after = entriesAfter[id]
-    if (!after) continue
-    const before = snapshotBefore[id]
-    const roleTrim = (after.role || '').trim()
-    if (before === undefined) {
-      dpsNew.push({ id, name: after.name, role: after.role, after: after.dps })
-      if (roleTrim === 'Tank') {
-        tankNew.push({
-          id,
-          name: after.name,
-          role: after.role,
-          after: after.tankScore ?? 0,
-        })
-      }
-      if (roleTrim === 'Support') {
-        healerNew.push({
-          id,
-          name: after.name,
-          role: after.role,
-          after: after.healerScore ?? 0,
-        })
-      }
-    } else {
-      const delta = after.dps - before.dps
-      if (delta > TIER_DPS_CHANGE_EPS) {
-        dpsUp.push({
-          id,
-          name: after.name,
-          role: after.role,
-          before: before.dps,
-          after: after.dps,
-          delta,
-        })
-      } else if (delta < -TIER_DPS_CHANGE_EPS) {
-        dpsDown.push({
-          id,
-          name: after.name,
-          role: after.role,
-          before: before.dps,
-          after: after.dps,
-          delta,
-        })
-      }
-
-      if (roleTrim === 'Tank') {
-        const ta = after.tankScore ?? 0
-        const tb = before.tankScore ?? 0
-        const tDelta = ta - tb
-        if (tDelta > TIER_TANK_SCORE_CHANGE_EPS) {
-          tankUp.push({
-            id,
-            name: after.name,
-            role: after.role,
-            before: tb,
-            after: ta,
-            delta: tDelta,
-          })
-        } else if (tDelta < -TIER_TANK_SCORE_CHANGE_EPS) {
-          tankDown.push({
-            id,
-            name: after.name,
-            role: after.role,
-            before: tb,
-            after: ta,
-            delta: tDelta,
-          })
-        }
-      }
-
-      if (roleTrim === 'Support') {
-        const ha = after.healerScore ?? 0
-        const hb = before.healerScore ?? 0
-        const hDelta = ha - hb
-        if (hDelta > TIER_HEALER_SCORE_CHANGE_EPS) {
-          healerUp.push({
-            id,
-            name: after.name,
-            role: after.role,
-            before: hb,
-            after: ha,
-            delta: hDelta,
-          })
-        } else if (hDelta < -TIER_HEALER_SCORE_CHANGE_EPS) {
-          healerDown.push({
-            id,
-            name: after.name,
-            role: after.role,
-            before: hb,
-            after: ha,
-            delta: hDelta,
-          })
-        }
-      }
-    }
-    const prevStatus = before?.status
-    const nextStatus = after.status
-    if (nextStatus !== undefined && prevStatus !== nextStatus) {
-      statusChanges.push({
-        id,
-        name: after.name,
-        role: after.role,
-        from: prevStatus,
-        to: nextStatus,
-      })
-    }
-  }
-
-  dpsUp.sort((a, b) => b.delta - a.delta)
-  dpsDown.sort((a, b) => a.delta - b.delta)
-  tankUp.sort((a, b) => b.delta - a.delta)
-  tankDown.sort((a, b) => a.delta - b.delta)
-  healerUp.sort((a, b) => b.delta - a.delta)
-  healerDown.sort((a, b) => a.delta - b.delta)
-  statusChanges.sort((a, b) => a.name.localeCompare(b.name))
-
-  return {
-    finishedAt: new Date().toISOString(),
-    mode,
-    refreshedCount: refreshedIds.size,
-    dpsUp,
-    dpsDown,
-    dpsNew,
-    tankUp,
-    tankDown,
-    tankNew,
-    healerUp,
-    healerDown,
-    healerNew,
-    statusChanges,
-  }
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-function listSignature(d: WikiDigimonListItem) {
-  return [
-    d.id,
-    d.name,
-    d.model_id,
-    d.stage,
-    d.attribute,
-    d.element,
-    d.role,
-    d.rank,
-    d.hp,
-    d.attack,
-    (d.family_types ?? []).join(','),
-  ].join('|')
-}
-
-async function fetchAllDigimonIndex() {
-  const first = await fetchDigimonPage(0, 500)
-  const all = [...first.data]
-  for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
-    const next = await fetchDigimonPage(p - 1, 500)
-    all.push(...next.data)
-  }
-  const meta: Record<string, WikiDigimonListItem> = {}
-  const signatures: Record<string, string> = {}
-  all.forEach((d) => {
-    meta[d.id] = d
-    signatures[d.id] = listSignature(d)
-  })
-  return { all, meta, signatures }
-}
-
-function levelMapForSkills(skills: { id: string; max_level: number }[]) {
-  const map: Record<string, number> = {}
-  for (const s of skills) map[s.id] = Math.max(1, Math.min(25, s.max_level || 25))
-  return map
-}
 
 export function TierListPage() {
   const [cache, setCache] = useState<TierListCache | null>(null)
@@ -449,7 +75,8 @@ export function TierListPage() {
   const [showProgressBar, setShowProgressBar] = useState(true)
   const [fadeProgressBar, setFadeProgressBar] = useState(false)
   const sawIncompleteProgress = useRef(false)
-  const buildRunRef = useRef<{ total: number } | null>(null)
+  /** Planned queue length for the in-flight tier build (for progress UI; cleared when build ends). */
+  const [tierBuildQueueTotal, setTierBuildQueueTotal] = useState<number | null>(null)
   const [updateSummary, setUpdateSummary] = useState<TierListUpdateSummary | null>(
     loadTierUpdateSummaryFromStorage,
   )
@@ -533,7 +160,7 @@ export function TierListPage() {
     setBuilding(true)
     setBuildMode(mode)
     setError(null)
-    let working: TierListCache = {
+    const working: TierListCache = {
       ...cache,
       queue: [...cache.queue],
       entries: { ...cache.entries },
@@ -599,9 +226,8 @@ export function TierListPage() {
           : [...new Set([...carryOverQueue, ...changedOrMissing])]
 
       working.queue = plannedQueue
-      buildRunRef.current = {
-        total: plannedQueue.length,
-      }
+      const initialBuildQueueTotal = plannedQueue.length
+      setTierBuildQueueTotal(initialBuildQueueTotal > 0 ? initialBuildQueueTotal : null)
       if (mode === 'force' || hadPriorSignatures) {
         working.listSignatures = signatures
       }
@@ -616,7 +242,7 @@ export function TierListPage() {
 
       if (working.queue.length === 0) {
         setStatus('Tier list is already up to date. No changed Digimon found.')
-        buildRunRef.current = null
+        setTierBuildQueueTotal(null)
         return
       }
 
@@ -625,17 +251,20 @@ export function TierListPage() {
       while (working.queue.length > 0) {
         const id = working.queue[0]
         const meta = listMeta[id]
-        const run = buildRunRef.current
         const runDone =
-          run && run.total > 0 ? Math.min(run.total, run.total - working.queue.length) : 0
+          initialBuildQueueTotal > 0
+            ? Math.min(initialBuildQueueTotal, initialBuildQueueTotal - working.queue.length)
+            : 0
+        const runTotalForMsg =
+          initialBuildQueueTotal > 0 ? initialBuildQueueTotal : working.queue.length
         setStatus(
           mode === 'force'
-            ? `Force checking all… ${runDone}/${run?.total ?? working.queue.length} (checking ${meta?.name ?? id})`
-            : `Updating tier list… ${runDone}/${run?.total ?? working.queue.length} (checking ${meta?.name ?? id})`,
+            ? `Force checking all… ${runDone}/${runTotalForMsg} (checking ${meta?.name ?? id})`
+            : `Updating tier list… ${runDone}/${runTotalForMsg} (checking ${meta?.name ?? id})`,
         )
 
         if (backoffMs > 0) {
-          const runTotal = run?.total ?? working.queue.length
+          const runTotal = runTotalForMsg
           setStatus(
             `Rate limit cooldown (${Math.ceil(backoffMs / 1000)}s)… then resuming at ${runDone}/${runTotal || 1}.`,
           )
@@ -743,10 +372,12 @@ export function TierListPage() {
           processed % COOLDOWN_EVERY_N_REQUESTS === 0 &&
           working.queue.length > 0
         ) {
-          const run = buildRunRef.current
-          const cdTotal = run && run.total > 0 ? run.total : working.queue.length
+          const cdTotal =
+            initialBuildQueueTotal > 0 ? initialBuildQueueTotal : working.queue.length
           const cdDone =
-            run && run.total > 0 ? Math.min(run.total, run.total - working.queue.length) : 0
+            initialBuildQueueTotal > 0
+              ? Math.min(initialBuildQueueTotal, initialBuildQueueTotal - working.queue.length)
+              : 0
           setStatus(
             `Cooling down for ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s to avoid rate limits… (${cdDone}/${cdTotal || 1})`,
           )
@@ -778,22 +409,22 @@ export function TierListPage() {
     } finally {
       setBuilding(false)
       setBuildMode('incremental')
-      buildRunRef.current = null
+      setTierBuildQueueTotal(null)
     }
   }
 
   const checkedCount = cache ? Object.keys(cache.entries).length : 0
   const total = cache?.total ?? 0
-  const run = buildRunRef.current
-  /** Ref is set only after the index fetch, before the detail queue runs; avoid checkedCount/total then. */
-  const hasActiveBuildRun = Boolean(building && run && run.total > 0)
+  const runTotal = tierBuildQueueTotal
+  /** Set when a build has a non-empty planned queue; pairs with `cache.queue` for the bar. */
+  const hasActiveBuildRun = Boolean(building && runTotal !== null && runTotal > 0)
   const progressNumerator = hasActiveBuildRun
-    ? Math.min(run!.total, run!.total - (cache?.queue.length ?? run!.total))
+    ? Math.min(runTotal!, runTotal! - (cache?.queue.length ?? runTotal!))
     : building
       ? 0
       : checkedCount
   const progressDenominator = hasActiveBuildRun
-    ? run!.total
+    ? runTotal!
     : building
       ? Math.max(1, total || 1)
       : total
@@ -1045,994 +676,85 @@ export function TierListPage() {
       window.clearTimeout(t)
     }
   }, [cache, tierBuildComplete, total])
+  const matrixHeading = useMemo(() => {
+    if (tierMode === 'dps') {
+      return dpsTierCategory === 'aoe'
+        ? 'DPS tier list — AoE (General / Damage / Cooldown / Radius)'
+        : `DPS tier list — ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
+    }
+    if (tierMode === 'tank') return 'Tank tier list'
+    return 'Healer tier list'
+  }, [tierMode, dpsTierCategory])
 
   return (
     <div className="lab tier-page">
-      <div className="tier-page-head">
-        <h1>Tier lists</h1>
-        <div className="tier-page-head-controls">
-          <div className="tier-mode-tabs" role="tablist" aria-label="Tier list type">
-            <button
-              type="button"
-              role="tab"
-              className="tier-mode-tab"
-              aria-selected={tierMode === 'dps'}
-              onClick={() => setTierModePersist('dps')}
-            >
-              DPS (all roles)
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className="tier-mode-tab"
-              aria-selected={tierMode === 'tank'}
-              onClick={() => setTierModePersist('tank')}
-            >
-              Tank
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className="tier-mode-tab"
-              aria-selected={tierMode === 'healer'}
-              onClick={() => setTierModePersist('healer')}
-            >
-              Healer
-            </button>
-          </div>
-          {tierMode === 'dps' ? (
-            <div
-              className="tier-mode-tabs tier-submode-tabs"
-              role="tablist"
-              aria-label="DPS ranking metric"
-            >
-              {DPS_TIER_CATEGORY_ORDER.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  className="tier-mode-tab"
-                  aria-selected={dpsTierCategory === key}
-                  onClick={() => setDpsTierCategoryPersist(key)}
-                >
-                  {DPS_TIER_MATRIX_COLUMN_LABELS[key]}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <section className="lab-result">
-        <h3>Update tier list</h3>
-        <p className="muted">{status}</p>
-        <p>
-          Progress:{' '}
-          <strong>
-            {progressNumerator}/{progressDenominator || '…'} ({progress.toFixed(1)}%)
-          </strong>
-        </p>
-        {showProgressBar && (
-          <div className={`tier-progress ${fadeProgressBar ? 'tier-progress-fade' : ''}`}>
-            <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
-          </div>
-        )}
-        <p className="muted">
-          Last checked:{' '}
-          {cache?.lastCheckedAt
-            ? new Date(cache.lastCheckedAt).toLocaleString()
-            : 'Never'}
-        </p>
-        <button
-          type="button"
-          className="tier-update-btn"
-          disabled={initializing || building || !cache}
-          onClick={() => void updateTierList('incremental')}
-        >
-          {building && buildMode === 'incremental'
-            ? 'Updating changed Digimon…'
-            : 'Update tier list'}
-        </button>
-        <button
-          type="button"
-          className="tier-update-btn tier-update-btn-secondary"
-          disabled={initializing || building || !cache}
-          onClick={() => void updateTierList('force')}
-        >
-          {building && buildMode === 'force' ? 'Force checking all…' : 'Force check all'}
-        </button>
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
-      </section>
-
-      {updateSummary && (
-        <section
-          className="lab-result tier-update-summary"
-          aria-label="Last tier list update summary"
-        >
-          <div className="tier-update-summary-head">
-            <div className="tier-update-summary-head-text">
-              <h3>Last update</h3>
-              {!updatePanelMinimized && (
-                <p className="muted tier-update-summary-meta">
-                  {new Date(updateSummary.finishedAt).toLocaleString()}
-                  {' · '}
-                  {updateSummary.mode === 'force' ? 'Force check' : 'Incremental update'}
-                  {' · '}
-                  {updateSummary.refreshedCount} Digimon refreshed
-                </p>
-              )}
-            </div>
-            <div className="tier-update-summary-actions">
-              <button
-                type="button"
-                className="tier-update-summary-btn"
-                onClick={toggleUpdatePanelMinimized}
-                aria-expanded={!updatePanelMinimized}
-              >
-                {updatePanelMinimized ? 'Expand' : 'Minimize'}
-              </button>
-              <button
-                type="button"
-                className="tier-update-summary-btn tier-update-summary-btn-dismiss"
-                onClick={() => {
-                  setUpdateSummary(null)
-                  saveTierUpdateSummaryToStorage(null)
-                }}
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-          {updatePanelMinimized ? (
-            <div className="tier-update-summary-collapsed">
-              <p className="tier-update-summary-collapsed-time muted">
-                {new Date(updateSummary.finishedAt).toLocaleString()}
-              </p>
-              <div className="tier-update-summary-stat-chips" role="list" aria-label="Score changes by type">
-                <span className="tier-update-summary-stat-chip" role="listitem">
-                  DPS
-                  <span className="tier-update-summary-stat-chip-delta" aria-label="DPS up, down, new">
-                    {updateSummary.dpsUp.length}↑ {updateSummary.dpsDown.length}↓ · {updateSummary.dpsNew.length}{' '}
-                    new
-                  </span>
-                </span>
-                <span className="tier-update-summary-stat-chip" role="listitem">
-                  Tank
-                  <span className="tier-update-summary-stat-chip-delta" aria-label="Tank up, down, new">
-                    {updateSummary.tankUp.length}↑ {updateSummary.tankDown.length}↓ · {updateSummary.tankNew.length}{' '}
-                    new
-                  </span>
-                </span>
-                <span className="tier-update-summary-stat-chip" role="listitem">
-                  Healer
-                  <span className="tier-update-summary-stat-chip-delta" aria-label="Healer up, down, new">
-                    {updateSummary.healerUp.length}↑ {updateSummary.healerDown.length}↓ ·{' '}
-                    {updateSummary.healerNew.length} new
-                  </span>
-                </span>
-                {updateSummary.statusChanges.length > 0 ? (
-                  <span className="tier-update-summary-stat-chip" role="listitem">
-                    Status
-                    <span className="tier-update-summary-stat-chip-delta">
-                      {updateSummary.statusChanges.length} change
-                      {updateSummary.statusChanges.length === 1 ? '' : 's'}
-                    </span>
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <div className="tier-update-summary-body">
-              {updateSummary.dpsUp.length === 0 &&
-              updateSummary.dpsDown.length === 0 &&
-              updateSummary.dpsNew.length === 0 &&
-              updateSummary.tankUp.length === 0 &&
-              updateSummary.tankDown.length === 0 &&
-              updateSummary.tankNew.length === 0 &&
-              updateSummary.healerUp.length === 0 &&
-              updateSummary.healerDown.length === 0 &&
-              updateSummary.healerNew.length === 0 &&
-              updateSummary.statusChanges.length === 0 ? (
-                <p className="muted">
-                  No DPS, tank, or healer score shifts above thresholds and no content status changes
-                  among refreshed Digimon.
-                </p>
-              ) : (
-                <>
-                  {updateSummarySections.length > 1 ? (
-                    <div
-                      className="tier-update-summary-tabs"
-                      role="tablist"
-                      aria-label="Update breakdown by score type"
-                    >
-                      {updateSummarySections.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={effectiveUpdateSummaryTab === s.id}
-                          aria-controls="tier-update-summary-panel"
-                          id={`tier-update-tab-${s.id}`}
-                          className="tier-update-summary-tab"
-                          onClick={() => setUpdateSummaryTab(s.id)}
-                        >
-                          <span className="tier-update-summary-tab-label">{s.shortLabel}</span>
-                          <span className="tier-update-summary-tab-badge">{s.count}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  <div
-                    className="tier-update-summary-tab-panel tier-update-summary-tab-panel-scroll"
-                    role="tabpanel"
-                    id="tier-update-summary-panel"
-                    aria-labelledby={
-                      updateSummarySections.length > 1
-                        ? `tier-update-tab-${effectiveUpdateSummaryTab}`
-                        : undefined
-                    }
-                  >
-                    {effectiveUpdateSummaryTab === 'dps' && (
-                      <div className="tier-update-summary-block">
-                  <h4 className="tier-update-summary-subhead">DPS ({DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained)</h4>
-                  {updateSummary.dpsUp.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Increased</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Before</th>
-                            <th>After</th>
-                            <th>Δ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.dpsUp.map((r) => (
-                            <tr key={`up-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.before.toFixed(1)}</td>
-                              <td>{r.after.toFixed(1)}</td>
-                              <td className="tier-update-summary-delta-pos">+{r.delta.toFixed(1)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {updateSummary.dpsDown.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Decreased</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Before</th>
-                            <th>After</th>
-                            <th>Δ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.dpsDown.map((r) => (
-                            <tr key={`dn-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.before.toFixed(1)}</td>
-                              <td>{r.after.toFixed(1)}</td>
-                              <td className="tier-update-summary-delta-neg">{r.delta.toFixed(1)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {updateSummary.dpsNew.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Newly calculated</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>DPS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.dpsNew.map((r) => (
-                            <tr key={`nw-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.after.toFixed(1)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {effectiveUpdateSummaryTab === 'tank' && (
-                <div className="tier-update-summary-block">
-                  <h4 className="tier-update-summary-subhead">Tank score (heuristic)</h4>
-                  {updateSummary.tankUp.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Increased</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Before</th>
-                            <th>After</th>
-                            <th>Δ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.tankUp.map((r) => (
-                            <tr key={`tup-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.before.toFixed(2)}</td>
-                              <td>{r.after.toFixed(2)}</td>
-                              <td className="tier-update-summary-delta-pos">+{r.delta.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {updateSummary.tankDown.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Decreased</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Before</th>
-                            <th>After</th>
-                            <th>Δ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.tankDown.map((r) => (
-                            <tr key={`tdn-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.before.toFixed(2)}</td>
-                              <td>{r.after.toFixed(2)}</td>
-                              <td className="tier-update-summary-delta-neg">{r.delta.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {updateSummary.tankNew.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Newly calculated</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Score</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.tankNew.map((r) => (
-                            <tr key={`tnw-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.after.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {effectiveUpdateSummaryTab === 'healer' && (
-                <div className="tier-update-summary-block">
-                  <h4 className="tier-update-summary-subhead">Healer score (Support role, heuristic)</h4>
-                  {updateSummary.healerUp.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Increased</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Before</th>
-                            <th>After</th>
-                            <th>Δ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.healerUp.map((r) => (
-                            <tr key={`hup-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.before.toFixed(2)}</td>
-                              <td>{r.after.toFixed(2)}</td>
-                              <td className="tier-update-summary-delta-pos">+{r.delta.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {updateSummary.healerDown.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Decreased</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Before</th>
-                            <th>After</th>
-                            <th>Δ</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.healerDown.map((r) => (
-                            <tr key={`hdn-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.before.toFixed(2)}</td>
-                              <td>{r.after.toFixed(2)}</td>
-                              <td className="tier-update-summary-delta-neg">{r.delta.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {updateSummary.healerNew.length > 0 && (
-                    <div className="tier-update-summary-subblock">
-                      <p className="tier-update-summary-label">Newly calculated</p>
-                      <table className="tier-update-summary-table">
-                        <thead>
-                          <tr>
-                            <th>Digimon</th>
-                            <th>Role</th>
-                            <th>Score</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {updateSummary.healerNew.map((r) => (
-                            <tr key={`hnw-${r.id}`}>
-                              <td>
-                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                              </td>
-                              <td>{r.role}</td>
-                              <td>{r.after.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {effectiveUpdateSummaryTab === 'status' && (
-                <div className="tier-update-summary-block">
-                  <h4 className="tier-update-summary-subhead">Content status</h4>
-                  <table className="tier-update-summary-table">
-                    <thead>
-                      <tr>
-                        <th>Digimon</th>
-                        <th>Role</th>
-                        <th>Was</th>
-                        <th>Now</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {updateSummary.statusChanges.map((r) => (
-                        <tr key={`st-${r.id}`}>
-                          <td>
-                            <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
-                          </td>
-                          <td>{r.role}</td>
-                          <td>{formatTierStatus(r.from)}</td>
-                          <td>{formatTierStatus(r.to)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-
-      {cache && !initializing && checkedCount > 0 && (
+      <TierListModeHeader
+        tierMode={tierMode}
+        setTierModePersist={setTierModePersist}
+        dpsTierCategory={dpsTierCategory}
+        setDpsTierCategoryPersist={setDpsTierCategoryPersist}
+      />
+      <TierListUpdateControls
+        status={status}
+        progressNumerator={progressNumerator}
+        progressDenominator={progressDenominator}
+        progress={progress}
+        showProgressBar={showProgressBar}
+        fadeProgressBar={fadeProgressBar}
+        lastCheckedAt={cache?.lastCheckedAt}
+        initializing={initializing}
+        building={building}
+        buildMode={buildMode}
+        cache={cache}
+        error={error}
+        onUpdateIncremental={() => void updateTierList('incremental')}
+        onUpdateForce={() => void updateTierList('force')}
+      />
+      {updateSummary ? (
+        <TierListUpdateSummaryPanel
+          updateSummary={updateSummary}
+          updatePanelMinimized={updatePanelMinimized}
+          toggleUpdatePanelMinimized={toggleUpdatePanelMinimized}
+          onDismiss={() => {
+            setUpdateSummary(null)
+            saveTierUpdateSummaryToStorage(null)
+          }}
+          updateSummarySections={updateSummarySections}
+          effectiveUpdateSummaryTab={effectiveUpdateSummaryTab}
+          setUpdateSummaryTab={setUpdateSummaryTab}
+        />
+      ) : null}
+      {cache && !initializing && checkedCount > 0 ? (
         <section className="lab-result tier-matrix-section">
-          <h3>
-            {tierMode === 'dps'
-              ? dpsTierCategory === 'aoe'
-                ? 'DPS tier list — AoE (General / Damage / Cooldown / Radius)'
-                : `DPS tier list — ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
-              : tierMode === 'tank'
-                ? 'Tank tier list'
-                : 'Healer tier list'}
-          </h3>
-          {tierMode === 'dps' ? (
-            <>
-              <p className="tier-wip-note" role="status">
-                DPS sims and specialized heuristics are a <strong>work in progress</strong>.
-              </p>
-              <details className="tier-score-explainer">
-                <summary>DPS Scoring</summary>
-                <div className="tier-score-explainer-body">
-                  <ul className="tier-score-explainer-list">
-                    <li>
-                      <strong>Sustained:</strong> same simulation as Lab default — greedy rotation over{' '}
-                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s, Hybrid uses best stance.
-                    </li>
-                    <li>
-                      <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
-                      horizon (openers / short burst bias).
-                    </li>
-                    <li>
-                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
-                      (General, Damage, Cooldown, Radius). Only skills with wiki <code>radius</code> &gt; 0 (same as
-                      the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
-                      per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                      <code>1 / (cast + cooldown)</code>; <strong>Radius</strong>: <code>log1p</code> of summed
-                      radius. <strong>General</strong> is the average of those three scores (equal weight).
-                    </li>
-                    <li>
-                      <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
-                      buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0
-                      and/or party/allies/group-style wording in skill or buff text.
-                    </li>
-                  </ul>
-                </div>
-              </details>
-              {dpsScoresStale && (
-                <p className="tier-stale-note" role="status">
-                  Some rows are missing DPS category scores. Run <strong>Update tier list</strong> (or{' '}
-                  <strong>Force check all</strong>) to recalculate.
-                </p>
-              )}
-            </>
-          ) : null}
-          {tierMode === 'tank' ? (
-            <>
-              <p className="tier-wip-note" role="status">
-                Tank tier list is a <strong>very large work in progress</strong>; scores and ordering can
-                change substantially as formulas and parsing improve.
-              </p>
-              <details className="tier-score-explainer">
-                <summary>Tank Scoring</summary>
-                <div className="tier-score-explainer-body">
-                  <ul className="tier-score-explainer-list">
-                    <li>
-                      Parses skill/buff text and numbers, mixes in base stats; used only to order rows.
-                    </li>
-                    <li>
-                      Base HP (~65%): wiki combat max HP — main tankiness signal.
-                    </li>
-                    <li>
-                      Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills — each
-                      scaled by estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if
-                      duration missing).
-                    </li>
-                    <li>Defense (~9%): defense × 6, then scaled like HP (log1p(defenseRaw/1000)).</li>
-                    <li>Avoidance (~4%): block + evasion (down-weighted).</li>
-                    <li>
-                      Combined with <code>log1p</code> so one huge value does not decide everything:{' '}
-                      <code>
-                        0.65·log1p(HP/1000) + 0.22·log1p(mit) + 0.09·log1p(def×6/1000) +
-                        0.04·log1p(avoid)
-                      </code>
-                      .
-                    </li>
-                    <li>
-                      S/A/B/C: same cutoffs as DPS (~10% / ~20% / ~30% / rest) within each column among
-                      filtered Tanks (order differs per column).
-                    </li>
-                    <li>
-                      <strong>Overall</strong> is a calculation of all parameters.{' '}
-                      <strong>Effective HP / Defense / Evasion / Block</strong> columns show wiki base plus
-                      uptime-weighted parsed buffs to that stat (same linear sum the column sort is derived
-                      from, before <code>log1p</code>).
-                    </li>
-                    <li>
-                      Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
-                      Refresh scores after wiki changes via Update tier list.
-                    </li>
-                  </ul>
-                </div>
-              </details>
-              {tankScoresStale && (
-                <p className="tier-stale-note" role="status">
-                  Some rows are missing tank scores. Run <strong>Update tier list</strong> (or{' '}
-                  <strong>Force check all</strong>) to recalculate.
-                </p>
-              )}
-            </>
-          ) : null}
-          {tierMode === 'healer' ? (
-            <>
-              <p className="tier-wip-note" role="status">
-                Healer tier list is a <strong>very large work in progress</strong>; scores and ordering can
-                change substantially as formulas and parsing improve.
-              </p>
-              <details className="tier-score-explainer">
-                <summary>Healer Scoring</summary>
-                <div className="tier-score-explainer-body">
-                  <ul className="tier-score-explainer-list">
-                    <li>
-                      Healing (~74%): Each skill with heal text contributes HP per cast ÷ (cooldown +
-                      cast, min 0.75s). Per cast: % lines use this Digimon&apos;s max HP as the scale;
-                      flat lines use the number as-is. Those rates are summed across heal skills
-                      (simple sustain, not a full rotation solver).
-                    </li>
-                    <li>
-                      Shields and damage reduction (~16%): barriers and DR only (healing not counted
-                      again here), still using buff uptime vs cooldown.
-                    </li>
-                    <li>
-                      Damage buffs (~7%): skill damage, ATK%, crit, attack speed, flat ATK × uptime.
-                    </li>
-                    <li>INT (~3%): small tie-breaker from wiki combat stats.</li>
-                    <li>
-                      Blend with <code>log1p</code>:{' '}
-                      <code>
-                        0.74·log1p(heal/s) + 0.16·log1p(mit) + 0.07·log1p(buff) + 0.03·log1p(INT)
-                      </code>
-                      .
-                    </li>
-                    <li>
-                      S/A/B/C: same cutoffs as DPS within each column among filtered Support rows (order
-                      differs per column).
-                    </li>
-                    <li>
-                      <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong>{' '}
-                      and <strong>Shielding</strong> show modeled HP/s (barrier strength per second for
-                      shields). <strong>Buffing</strong> shows summed %-uptime (plus scaled flat ATK) from
-                      offensive buff lines — a rough &quot;how much damage buff&quot; footprint, not in-game
-                      DPS. <strong>INT</strong> is wiki combat INT.
-                    </li>
-                    <li>
-                      Limits: adding all heal skills can overstate if they share one GCD; HoTs, targets,
-                      DS heals, passives not modeled; odd skill text may parse wrong.
-                    </li>
-                  </ul>
-                </div>
-              </details>
-              {healerScoresStale && (
-                <p className="tier-stale-note" role="status">
-                  Some rows are missing healer scores. Run <strong>Update tier list</strong> (or{' '}
-                  <strong>Force check all</strong>) to recalculate.
-                </p>
-              )}
-            </>
-          ) : null}
-          <div className="tier-status-legend" role="note" aria-label="Status criteria">
-            <span className="tier-status-legend-item">
-              <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
-              <span>{contentStatusLabel('complete')}</span>
-            </span>
-            <span className="tier-status-legend-item">
-              <span className="tier-status-dot tier-status-dot-incomplete" aria-hidden="true" />
-              <span>{contentStatusLabel('incomplete')}</span>
-            </span>
-            <span className="muted">
-              Incomplete if skills &lt; 5 or any skill name contains “placeholder”.
-            </span>
-          </div>
-          <div className="tier-filter-panel">
-            <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-stage-label">
-              <span className="tier-filter-label" id="tier-filter-stage-label">
-                Stage
-              </span>
-              <div className="stage-tabs tier-filter-chips">
-                {stageOptions.map((s) => {
-                  const selected =
-                    s === 'All' ? selectedStages.length === 0 : selectedStages.includes(s)
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className="stage-tab"
-                      style={digimonStageTierFilterStyle(s, selected)}
-                      onClick={() => toggleMultiFilter(s, setSelectedStages)}
-                      aria-pressed={selected}
-                    >
-                      {s}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-type-label">
-              <span className="tier-filter-label" id="tier-filter-type-label">
-                Type
-              </span>
-              <div className="stage-tabs tier-filter-chips">
-                {attributeOptions.map((s) => {
-                  const selected =
-                    s === 'All' ? selectedAttributes.length === 0 : selectedAttributes.includes(s)
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className="stage-tab tier-facet-tab"
-                      onClick={() => toggleMultiFilter(s, setSelectedAttributes)}
-                      aria-pressed={selected}
-                    >
-                      {s}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-element-label">
-              <span className="tier-filter-label" id="tier-filter-element-label">
-                Element
-              </span>
-              <div className="stage-tabs tier-filter-chips">
-                {elementOptions.map((s) => {
-                  const selected =
-                    s === 'All' ? selectedElements.length === 0 : selectedElements.includes(s)
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className="stage-tab tier-facet-tab"
-                      onClick={() => toggleMultiFilter(s, setSelectedElements)}
-                      aria-pressed={selected}
-                    >
-                      {s}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-family-label">
-              <span className="tier-filter-label" id="tier-filter-family-label">
-                Family
-              </span>
-              <div className="stage-tabs tier-filter-chips">
-                {familyOptions.map((s) => {
-                  const selected =
-                    s === 'All' ? selectedFamilies.length === 0 : selectedFamilies.includes(s)
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      className="stage-tab tier-facet-tab"
-                      onClick={() => toggleMultiFilter(s, setSelectedFamilies)}
-                      aria-pressed={selected}
-                    >
-                      {s}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-          {roles.length === 0 ? (
-            <p className="muted tier-matrix-empty">
-              No Digimon match this view. Try clearing filters
-              {tierMode === 'tank'
-                ? ' or note that only wiki role “Tank” appears here.'
-                : tierMode === 'healer'
-                  ? ' or note that only wiki role “Support” appears here.'
-                  : '.'}
-            </p>
-          ) : (
-            <div
-              className={`tier-matrix-wrap${
-                tierMode === 'tank' || tierMode === 'healer' || (tierMode === 'dps' && dpsTierCategory === 'aoe')
-                  ? ' tier-matrix-wrap--category-matrix'
-                  : ''
-              }`}
-            >
-              <table
-                className={`tier-matrix${
-                  tierMode === 'tank' || tierMode === 'healer' || (tierMode === 'dps' && dpsTierCategory === 'aoe')
-                    ? ' tier-matrix--category-matrix'
-                    : ''
-                }`}
-              >
-                <colgroup>
-                  <col className="tier-matrix-col-rank" />
-                  {roles.map((r) => (
-                    <col key={r} className="tier-matrix-col-role" />
-                  ))}
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th className="tier-matrix-th-rank">Tier</th>
-                    {roles.map((r) => (
-                      <th key={r}>{r}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(['S', 'A', 'B', 'C'] as const).map((tier) => (
-                    <tr key={`row-${tier}`}>
-                      <td className={`tier-row-label tier-${tier.toLowerCase()}`}>{tier}</td>
-                      {roles.map((role) => {
-                        const columnGroup = byRole[role]
-                        const entries = columnGroup?.tiers[tier] ?? []
-                        return (
-                          <td key={`${tier}-${role}`} className={`tier-cell tier-${tier.toLowerCase()}`}>
-                            <div className="tier-cell-content">
-                              {entries.length === 0 ? (
-                                <span className="muted">—</span>
-                              ) : (
-                                <ul className="tier-entry-list">
-                                  {entries.map((e) => {
-                                    const modelId = listMeta[e.id]?.model_id ?? ''
-                                    const status = e.status ?? 'unknown'
-                                    const icon = modelId
-                                      ? digimonPortraitUrl(modelId, e.id, e.name)
-                                      : undefined
-                                    const scoreLabel =
-                                      tierMode === 'dps' && dpsTierCategory === 'aoe' && columnGroup?.aoeSortKey
-                                        ? (() => {
-                                            const k = columnGroup.aoeSortKey
-                                            const s = e.aoeCategoryScores
-                                            const v = s?.[k]
-                                            return v != null ? v.toFixed(2) : '…'
-                                          })()
-                                        : tierMode === 'dps' && dpsTierCategory !== 'aoe'
-                                          ? (() => {
-                                              const k = dpsTierCategory
-                                              const s = e.dpsCategoryScores
-                                              const v =
-                                                k === 'sustained'
-                                                  ? (s?.sustained ?? e.dps)
-                                                  : k === 'burst'
-                                                    ? s?.burst
-                                                    : k === 'specialized'
-                                                      ? s?.specialized
-                                                      : undefined
-                                              if (v == null) return '…'
-                                              return k === 'specialized' ? v.toFixed(2) : v.toFixed(1)
-                                            })()
-                                        : tierMode === 'tank' && columnGroup?.tankSortKey
-                                          ? (() => {
-                                              const k = columnGroup.tankSortKey
-                                              if (k === 'overall') {
-                                                const v =
-                                                  e.tankCategoryScores?.overall ?? e.tankScore
-                                                return v != null ? v.toFixed(2) : '…'
-                                              }
-                                              const d = e.tankEffectiveDisplay
-                                              if (!d) return '…'
-                                              if (k === 'hp')
-                                                return Math.round(d.hp).toLocaleString()
-                                              if (k === 'defense')
-                                                return Math.round(d.defense).toLocaleString()
-                                              if (k === 'evasion')
-                                                return Math.round(d.evasion).toLocaleString()
-                                              if (k === 'block')
-                                                return Math.round(d.block).toLocaleString()
-                                              return '…'
-                                            })()
-                                          : tierMode === 'healer' && columnGroup?.healerSortKey
-                                            ? (() => {
-                                                const k = columnGroup.healerSortKey
-                                                if (k === 'general') {
-                                                  const v =
-                                                    e.healerCategoryScores?.general ??
-                                                    e.healerScore
-                                                  return v != null ? v.toFixed(2) : '…'
-                                                }
-                                                const m = e.healerDisplayMetrics
-                                                if (!m) return '…'
-                                                if (k === 'healing') return m.healHps.toFixed(1)
-                                                if (k === 'shielding')
-                                                  return m.shieldHps.toFixed(1)
-                                                if (k === 'buffing')
-                                                  return m.buffPctEquiv.toFixed(0)
-                                                if (k === 'int')
-                                                  return Math.round(m.intTotal).toLocaleString()
-                                                return '…'
-                                              })()
-                                            : e.dps.toFixed(1)
-                                    return (
-                                      <li
-                                        key={`${tier}-${role}-${e.id}`}
-                                        className={`tier-entry ${
-                                          status === 'incomplete'
-                                            ? 'tier-entry-incomplete'
-                                            : status === 'complete'
-                                              ? 'tier-entry-complete'
-                                              : 'tier-entry-unknown'
-                                        }`}
-                                        style={{ borderColor: digimonStageBorderColor(e.stage) }}
-                                      >
-                                        <Link
-                                          to={`/digimon/${encodeURIComponent(e.id)}`}
-                                          className="tier-entry-link"
-                                        >
-                                          {icon ? (
-                                            <span className="tier-entry-thumb-wrap">
-                                              <img src={icon} alt="" loading="lazy" />
-                                            </span>
-                                          ) : (
-                                            <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
-                                          )}
-                                          <span className="tier-entry-name">{e.name}</span>
-                                          <span className="tier-entry-dps-wrap">
-                                            <span className="tier-entry-dps">{scoreLabel}</span>
-                                            <span
-                                              className={`tier-status-dot ${
-                                                status === 'incomplete'
-                                                  ? 'tier-status-dot-incomplete'
-                                                  : status === 'complete'
-                                                    ? 'tier-status-dot-complete'
-                                                    : 'tier-status-dot-unknown'
-                                              }`}
-                                              title={
-                                                status === 'unknown'
-                                                  ? 'Status pending (run Update tier list)'
-                                                  : contentStatusLabel(status)
-                                              }
-                                              aria-label={
-                                                status === 'unknown'
-                                                  ? 'Status pending (run Update tier list)'
-                                                  : contentStatusLabel(status)
-                                              }
-                                            />
-                                          </span>
-                                        </Link>
-                                      </li>
-                                    )
-                                  })}
-                                </ul>
-                              )}
-                            </div>
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <h3>{matrixHeading}</h3>
+          <TierListScoringNotes
+            tierMode={tierMode}
+            dpsScoresStale={dpsScoresStale}
+            tankScoresStale={tankScoresStale}
+            healerScoresStale={healerScoresStale}
+          />
+          <TierListMatrixTable
+            tierMode={tierMode}
+            dpsTierCategory={dpsTierCategory}
+            roles={roles}
+            byRole={byRole}
+            listMeta={listMeta}
+            stageOptions={stageOptions}
+            attributeOptions={attributeOptions}
+            elementOptions={elementOptions}
+            familyOptions={familyOptions}
+            selectedStages={selectedStages}
+            selectedAttributes={selectedAttributes}
+            selectedElements={selectedElements}
+            selectedFamilies={selectedFamilies}
+            toggleMultiFilter={toggleMultiFilter}
+            setSelectedStages={setSelectedStages}
+            setSelectedAttributes={setSelectedAttributes}
+            setSelectedElements={setSelectedElements}
+            setSelectedFamilies={setSelectedFamilies}
+          />
         </section>
-      )}
+      ) : null}
     </div>
   )
 }

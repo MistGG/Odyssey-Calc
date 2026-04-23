@@ -96,7 +96,10 @@ export type HealerTierScoreBreakdown = {
   intStat: number
   /** Modeled shield absorption rate (barrier HP per second). */
   shieldSustainHps: number
-  /** Sum of %-uptime (and scaled flat ATK) contributions from offensive buff lines — display only. */
+  /**
+   * Matrix “Buffing” cell: sum over offensive buff lines of (wiki value × uptime). %-buffs use value as %-points;
+   * flat ATK uses `value * 0.02 * uptime`. Not party DPS%; see tier list Healer explainer.
+   */
   buffDmgGainDisplay: number
   score: number
   categoryScores: HealerTierCategoryScores

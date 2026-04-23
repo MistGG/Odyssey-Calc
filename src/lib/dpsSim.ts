@@ -570,7 +570,7 @@ function runGreedyUntilWall(
           flatPct +
           buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
         const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-        let autoDmg =
+        const autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
@@ -629,7 +629,7 @@ function runGreedyUntilWall(
           flatPct +
           buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
         const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-        let autoDmg =
+        const autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
@@ -828,7 +828,7 @@ function runRotationSim(
           flatPct +
           buffCritMarginalDamagePct(baseCritRateStat, activeCritRatePct, activeCritDamagePct)
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
-        let autoDmg =
+        const autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
         m.totalDamage += autoDmg
         m.damageCastCount += 1
@@ -883,7 +883,7 @@ function runRotationSim(
           flatPct +
           buffCritMarginalDamagePct(baseCritRateStat, activeCritRatePct, activeCritDamagePct)
         const autoBase = Math.max(0, baseAttack + activeFlatAtk)
-        let autoDmg =
+        const autoDmg =
           autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
         m.totalDamage += autoDmg
         m.damageCastCount += 1

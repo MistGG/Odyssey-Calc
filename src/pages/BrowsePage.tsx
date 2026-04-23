@@ -91,8 +91,6 @@ export function BrowsePage() {
     peekBrowseFullListCache(),
   )
   const [totalPages, setTotalPages] = useState(0)
-  /** Server-reported total rows for the current API query (unused when full cache is active). */
-  const [_apiTotalRows, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -147,7 +145,6 @@ export function BrowsePage() {
         if (cancelled) return
         setItems(data.data)
         setTotalPages(data.total_pages)
-        setTotal(data.total)
         // If this page includes the whole dataset, use local filtering from now on.
         if (
           page === 0 &&

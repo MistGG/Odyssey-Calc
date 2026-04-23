@@ -2548,10 +2548,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   z-index: 1;
 }
 
-.detail-header-textonly {
-  grid-template-columns: 1fr;
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
