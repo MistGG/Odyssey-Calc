@@ -994,9 +994,13 @@ export function TierListPage() {
               {' · '}
               Healer: {updateSummary.healerUp.length}↑ {updateSummary.healerDown.length}↓,{' '}
               {updateSummary.healerNew.length} new
-              {' · '}
-              Status: {updateSummary.statusChanges.length} change
-              {updateSummary.statusChanges.length === 1 ? '' : 's'}
+              {updateSummary.statusChanges.length > 0 ? (
+                <>
+                  {' · '}
+                  Status: {updateSummary.statusChanges.length} change
+                  {updateSummary.statusChanges.length === 1 ? '' : 's'}
+                </>
+              ) : null}
             </p>
           ) : (
             <div className="tier-update-summary-body">
