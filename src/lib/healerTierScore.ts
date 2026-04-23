@@ -38,8 +38,41 @@ function damageBuffRawFromEffect(e: ParsedSupportEffect, uptime: number): number
   return pts * uptime
 }
 
+/** Sum of %-points × uptime (and flat ATK scaled) for matrix display — not the same units as `damageBuffRaw`. */
+function damageBuffDisplayPctFromEffect(e: ParsedSupportEffect, uptime: number): number {
+  const label = e.label.toLowerCase()
+  const v = e.valueAtLevel
+  const u = e.unit
+  if (u === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) return v * uptime
+  if (u === '%' && /(\bcritical damage\b|\bcrit damage\b|\bcd\b)/.test(label)) return v * uptime
+  if (u === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) return v * uptime
+  if (u === '%' && /\battack speed\b/.test(label)) return v * uptime
+  if (
+    u === '%' &&
+    /\battack( power)?\b/.test(label) &&
+    !/\battack speed\b/.test(label)
+  ) {
+    return v * uptime
+  }
+  if (
+    u === '' &&
+    /\battack( power)?\b/.test(label) &&
+    !/\battack speed\b/.test(label)
+  ) {
+    return Math.max(0, v) * 0.02 * uptime
+  }
+  return 0
+}
+
 /** HP healed per cast for one parsed line (% of caster max HP, or flat HP). */
 function healHpPerCast(e: ParsedSupportEffect, casterMaxHp: number): number {
+  const v = e.valueAtLevel
+  if (e.unit === '%') return Math.max(0, v / 100) * casterMaxHp
+  return Math.max(0, v)
+}
+
+/** Barrier HP per cast (% of max HP or flat), aligned with heal parsing. */
+function shieldHpPerCast(e: ParsedSupportEffect, casterMaxHp: number): number {
   const v = e.valueAtLevel
   if (e.unit === '%') return Math.max(0, v / 100) * casterMaxHp
   return Math.max(0, v)
@@ -61,6 +94,10 @@ export type HealerTierScoreBreakdown = {
   damageBuffRaw: number
   /** INT from combat stats (smallest layer). */
   intStat: number
+  /** Modeled shield absorption rate (barrier HP per second). */
+  shieldSustainHps: number
+  /** Sum of %-uptime (and scaled flat ATK) contributions from offensive buff lines — display only. */
+  buffDmgGainDisplay: number
   score: number
   categoryScores: HealerTierCategoryScores
 }
@@ -75,10 +112,12 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
   const intStat = Math.max(0, stats?.int ?? 0)
 
   let healSustainHps = 0
+  let shieldSustainHps = 0
   let mitigationRaw = 0
   let shieldMitRaw = 0
   let drMitRaw = 0
   let damageBuffRaw = 0
+  let buffDmgGainDisplay = 0
 
   for (const skill of detail.skills) {
     const level = tierListSkillLevel(skill)
@@ -94,6 +133,17 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
     if (healPerCast > 0) {
       const periodSec = Math.max(0.75, skill.cooldown_sec + skill.cast_time_sec)
       healSustainHps += healPerCast / periodSec
+    }
+
+    let shieldPerCast = 0
+    for (const e of effects) {
+      if (!isShieldLabel(e.label)) continue
+      const ticks = healOverTimeTicksDuringBuff(e, skill)
+      shieldPerCast += shieldHpPerCast(e, hp) * ticks
+    }
+    if (shieldPerCast > 0) {
+      const periodSec = Math.max(0.75, skill.cooldown_sec + skill.cast_time_sec)
+      shieldSustainHps += shieldPerCast / periodSec
     }
 
     for (const e of effects) {
@@ -131,6 +181,7 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
 
       const db = damageBuffRawFromEffect(e, uptime)
       if (db > 0) damageBuffRaw += db
+      buffDmgGainDisplay += damageBuffDisplayPctFromEffect(e, uptime)
     }
   }
 
@@ -150,10 +201,12 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
 
   return {
     healSustainHps,
+    shieldSustainHps,
     mitigationRaw,
     shieldMitRaw,
     drMitRaw,
     damageBuffRaw,
+    buffDmgGainDisplay,
     intStat,
     score,
     categoryScores,

@@ -24,6 +24,13 @@ export type TankTierScoreBreakdown = {
   score: number
   /** Sort keys for tier sub-modes (overall = `score`). */
   categoryScores: TankTierCategoryScores
+  /** Wiki base stat + uptime-weighted skill contributions (matrix display). */
+  effectiveDisplay: {
+    hp: number
+    defense: number
+    evasion: number
+    block: number
+  }
 }
 
 /**
@@ -104,5 +111,20 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
     block: Math.log1p((block + blockBuffFromSkills) / 1000),
   }
 
-  return { hpRaw: hp, defenseRaw, mitigationRaw, avoidanceRaw, score, categoryScores }
+  const effectiveDisplay = {
+    hp: hp + hpBuffFromSkills,
+    defense: def + defBuffFromSkills,
+    evasion: eva + evaBuffFromSkills,
+    block: block + blockBuffFromSkills,
+  }
+
+  return {
+    hpRaw: hp,
+    defenseRaw,
+    mitigationRaw,
+    avoidanceRaw,
+    score,
+    categoryScores,
+    effectiveDisplay,
+  }
 }

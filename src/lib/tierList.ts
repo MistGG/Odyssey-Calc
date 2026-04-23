@@ -10,7 +10,7 @@ export const TIER_ENTRY_STALE_MS = 7 * 24 * 60 * 60 * 1000
  * (e.g. HoT labels, tick intervals, new effect buckets). Entries with a mismatch are re-queued on
  * incremental tier list update so cached tank/healer scores are not stuck on an old algorithm.
  */
-export const TIER_SUPPORT_SCORE_REVISION = 3
+export const TIER_SUPPORT_SCORE_REVISION = 4
 
 export function tierEntryIsStaleForDetailFetch(
   entry: SustainedDpsEntry | undefined,
@@ -85,6 +85,20 @@ export type SustainedDpsEntry = {
   /** Per–sub-mode tank ranks (refresh tier list after scoring changes). */
   tankCategoryScores?: TankTierCategoryScores
   healerCategoryScores?: HealerTierCategoryScores
+  /** Wiki base + uptime-weighted buffs for tank matrix cells (HP / def / eva / block). */
+  tankEffectiveDisplay?: {
+    hp: number
+    defense: number
+    evasion: number
+    block: number
+  }
+  /** Human-readable healer matrix cells (HPS, buff %-uptime sum, INT). */
+  healerDisplayMetrics?: {
+    healHps: number
+    shieldHps: number
+    buffPctEquiv: number
+    intTotal: number
+  }
   status?: DigimonContentStatus
   checkedAt: string
   /** Fingerprint of skill stats last time detail was fetched (see tierSkillsSignature). */
@@ -161,9 +175,9 @@ export const HEALER_TIER_CATEGORY_ORDER: readonly HealerTierCategoryKey[] = [
 
 export const HEALER_TIER_MATRIX_COLUMN_LABELS: Record<HealerTierCategoryKey, string> = {
   general: 'Overall',
-  healing: 'Healing',
-  shielding: 'Shielding',
-  buffing: 'Buffing',
+  healing: 'Healing (HPS)',
+  shielding: 'Shielding (HPS)',
+  buffing: 'Buffing (eff. %)',
   int: 'INT',
 }
 

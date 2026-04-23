@@ -690,8 +690,15 @@ export function TierListPage() {
             aoeCategoryScores: aoeScores,
             tankScore: tank.score,
             tankCategoryScores: tank.categoryScores,
+            tankEffectiveDisplay: tank.effectiveDisplay,
             healerScore: healer.score,
             healerCategoryScores: healer.categoryScores,
+            healerDisplayMetrics: {
+              healHps: healer.healSustainHps,
+              shieldHps: healer.shieldSustainHps,
+              buffPctEquiv: healer.buffDmgGainDisplay,
+              intTotal: healer.intStat,
+            },
             status: getDigimonContentStatus(detail.skills),
             checkedAt: new Date().toISOString(),
             skillsSignature: tierSkillsSignature(detail.skills),
@@ -927,14 +934,20 @@ export function TierListPage() {
   const tankScoresStale = useMemo(() => {
     if (tierMode !== 'tank') return false
     return Object.values(entriesForMatrix).some(
-      (e) => e.tankScore == null || e.tankCategoryScores == null,
+      (e) =>
+        e.tankScore == null ||
+        e.tankCategoryScores == null ||
+        e.tankEffectiveDisplay == null,
     )
   }, [tierMode, entriesForMatrix])
 
   const healerScoresStale = useMemo(() => {
     if (tierMode !== 'healer') return false
     return Object.values(entriesForMatrix).some(
-      (e) => e.healerScore == null || e.healerCategoryScores == null,
+      (e) =>
+        e.healerScore == null ||
+        e.healerCategoryScores == null ||
+        e.healerDisplayMetrics == null,
     )
   }, [tierMode, entriesForMatrix])
 
@@ -1653,6 +1666,12 @@ export function TierListPage() {
                       filtered Tanks (order differs per column).
                     </li>
                     <li>
+                      <strong>Overall</strong> is a calculation of all parameters.{' '}
+                      <strong>Effective HP / Defense / Evasion / Block</strong> columns show wiki base plus
+                      uptime-weighted parsed buffs to that stat (same linear sum the column sort is derived
+                      from, before <code>log1p</code>).
+                    </li>
+                    <li>
                       Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
                       Refresh scores after wiki changes via Update tier list.
                     </li>
@@ -1701,6 +1720,13 @@ export function TierListPage() {
                     <li>
                       S/A/B/C: same cutoffs as DPS within each column among filtered Support rows (order
                       differs per column).
+                    </li>
+                    <li>
+                      <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong>{' '}
+                      and <strong>Shielding</strong> show modeled HP/s (barrier strength per second for
+                      shields). <strong>Buffing</strong> shows summed %-uptime (plus scaled flat ATK) from
+                      offensive buff lines — a rough &quot;how much damage buff&quot; footprint, not in-game
+                      DPS. <strong>INT</strong> is wiki combat INT.
                     </li>
                     <li>
                       Limits: adding all heal skills can overstate if they share one GCD; HoTs, targets,
@@ -1905,16 +1931,42 @@ export function TierListPage() {
                                         : tierMode === 'tank' && columnGroup?.tankSortKey
                                           ? (() => {
                                               const k = columnGroup.tankSortKey
-                                              const s = e.tankCategoryScores
-                                              const v = s && k ? s[k] : e.tankScore
-                                              return v != null ? v.toFixed(2) : '…'
+                                              if (k === 'overall') {
+                                                const v =
+                                                  e.tankCategoryScores?.overall ?? e.tankScore
+                                                return v != null ? v.toFixed(2) : '…'
+                                              }
+                                              const d = e.tankEffectiveDisplay
+                                              if (!d) return '…'
+                                              if (k === 'hp')
+                                                return Math.round(d.hp).toLocaleString()
+                                              if (k === 'defense')
+                                                return Math.round(d.defense).toLocaleString()
+                                              if (k === 'evasion')
+                                                return Math.round(d.evasion).toLocaleString()
+                                              if (k === 'block')
+                                                return Math.round(d.block).toLocaleString()
+                                              return '…'
                                             })()
                                           : tierMode === 'healer' && columnGroup?.healerSortKey
                                             ? (() => {
                                                 const k = columnGroup.healerSortKey
-                                                const s = e.healerCategoryScores
-                                                const v = s && k ? s[k] : e.healerScore
-                                                return v != null ? v.toFixed(2) : '…'
+                                                if (k === 'general') {
+                                                  const v =
+                                                    e.healerCategoryScores?.general ??
+                                                    e.healerScore
+                                                  return v != null ? v.toFixed(2) : '…'
+                                                }
+                                                const m = e.healerDisplayMetrics
+                                                if (!m) return '…'
+                                                if (k === 'healing') return m.healHps.toFixed(1)
+                                                if (k === 'shielding')
+                                                  return m.shieldHps.toFixed(1)
+                                                if (k === 'buffing')
+                                                  return m.buffPctEquiv.toFixed(0)
+                                                if (k === 'int')
+                                                  return Math.round(m.intTotal).toLocaleString()
+                                                return '…'
                                               })()
                                             : e.dps.toFixed(1)
                                     return (
