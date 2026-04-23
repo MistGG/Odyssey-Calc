@@ -15,12 +15,16 @@ export function tierEntryIsStaleForDetailFetch(
 
 export type TierBucket = 'S' | 'A' | 'B' | 'C'
 
+export type TierListMode = 'dps' | 'tank'
+
 export type SustainedDpsEntry = {
   id: string
   name: string
   role: string
   stage: string
   dps: number
+  /** Heuristic tank index from stats + parsed mitigation (see tankTierScore). */
+  tankScore?: number
   status?: DigimonContentStatus
   checkedAt: string
   /** Fingerprint of skill stats last time detail was fetched (see tierSkillsSignature). */
@@ -28,7 +32,7 @@ export type SustainedDpsEntry = {
 }
 
 export type TierListCache = {
-  version: 2
+  version: 3
   total: number
   queue: string[]
   entries: Record<string, SustainedDpsEntry>
@@ -62,12 +66,16 @@ export function loadTierListCache(): TierListCache | null {
     const parsed = JSON.parse(raw) as
       | TierListCache
       | (Omit<TierListCache, 'version' | 'listSignatures'> & { version: 1 })
+      | (Omit<TierListCache, 'version'> & { version: 2 })
     if (!parsed) return null
-    if (parsed.version === 2) return parsed
+    if (parsed.version === 3) return parsed
+    if (parsed.version === 2) {
+      return { ...parsed, version: 3 }
+    }
     if (parsed.version === 1) {
       return {
         ...parsed,
-        version: 2,
+        version: 3,
         listSignatures: {},
       }
     }
@@ -83,7 +91,7 @@ export function saveTierListCache(cache: TierListCache) {
 
 export function createEmptyTierListCache(ids: string[]): TierListCache {
   return {
-    version: 2,
+    version: 3,
     total: ids.length,
     queue: [...ids],
     entries: {},
@@ -91,17 +99,26 @@ export function createEmptyTierListCache(ids: string[]): TierListCache {
   }
 }
 
-export function buildTierGroups(entriesMap: Record<string, SustainedDpsEntry>) {
+function tierSortValue(entry: SustainedDpsEntry, mode: TierListMode): number {
+  if (mode === 'tank') return entry.tankScore ?? -1
+  return entry.dps
+}
+
+export function buildTierGroups(
+  entriesMap: Record<string, SustainedDpsEntry>,
+  mode: TierListMode = 'dps',
+) {
   const byRole = new Map<string, SustainedDpsEntry[]>()
   for (const e of Object.values(entriesMap)) {
     const role = e.role || 'Unknown'
+    if (mode === 'tank' && role !== 'Tank') continue
     if (!byRole.has(role)) byRole.set(role, [])
     byRole.get(role)!.push(e)
   }
 
   const groups: TierGroup[] = []
   for (const [role, list] of byRole.entries()) {
-    list.sort((a, b) => b.dps - a.dps)
+    list.sort((a, b) => tierSortValue(b, mode) - tierSortValue(a, mode))
     const n = list.length
     const sCount = Math.max(1, Math.ceil(n * 0.1))
     const aCount = Math.ceil(n * 0.2)

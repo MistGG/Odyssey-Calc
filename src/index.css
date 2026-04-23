@@ -411,6 +411,69 @@ code {
   margin-bottom: 1.2rem;
 }
 
+.tier-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.tier-page-head h1 {
+  margin: 0;
+}
+
+.tier-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.tier-mode-tab {
+  border: none;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-soft);
+  background: transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.tier-mode-tab:hover {
+  color: var(--text);
+}
+
+.tier-mode-tab[aria-selected='true'] {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.35) 0%, rgba(34, 211, 238, 0.22) 100%);
+  color: #e0f2fe;
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
+}
+
+.tier-stale-note {
+  margin: 0.35rem 0 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #fde68a;
+}
+
+.tier-matrix-empty {
+  margin: 0.75rem 0 0;
+}
+
 .tier-progress {
   width: 100%;
   height: 10px;
@@ -583,13 +646,6 @@ code {
 .tier-update-summary-delta-neg {
   color: #fca5a5;
   font-weight: 600;
-}
-
-.tier-filter-intro {
-  margin: 0.35rem 0 0.5rem;
-  font-size: 0.8rem;
-  line-height: 1.45;
-  max-width: 52rem;
 }
 
 .tier-filter-panel {
