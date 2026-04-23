@@ -13,6 +13,21 @@ function toNum(v: string) {
   return Number.isFinite(n) ? n : 0
 }
 
+/** True when the same clause continues with "+ N [per skill level|per Lv]" scaling. */
+function hasPlusPerSkillLevelAfter(description: string, matchEndIndex: number) {
+  const tail = description.slice(matchEndIndex)
+  return (
+    /^\s*\+\s*\d+(?:\.\d+)?\s*(?:%?)\s+per\s+(?:skill\s+level|Lv)\b/i.test(tail) ||
+    /^\s*\(\s*\+?\s*\d+(?:\.\d+)?\s*(?:%?)\s*(?:\/\s*)?\s*per\s+skill\s+level\b/i.test(tail)
+  )
+}
+
+/** "Attack Power +647 (+32/Lv)" — skip the flat "+647" when slash-Lv scaling follows. */
+function hasShortSlashLvScaleAfter(description: string, matchEndIndex: number) {
+  const tail = description.slice(matchEndIndex)
+  return /^\s*\(\s*\+\s*\d+(?:\.\d+)?\s*(?:%?)\s*\/\s*Lv\)/i.test(tail)
+}
+
 function normalizeEffectLabel(raw: string) {
   const text = raw.trim().replace(/\s+/g, ' ')
   if (/^AT$/i.test(text)) return 'Attack Power'
@@ -22,6 +37,47 @@ function normalizeEffectLabel(raw: string) {
   if (/^dmg\s*reduction$/i.test(text)) return 'Damage Reduction'
   if (/^max\s*hp$/i.test(text)) return 'Max HP'
   return text
+}
+
+/** Display label for parsed heals (avoid "restores 2783 HP" prose in the label row). */
+function healEffectLabel(targetRaw: string, _unit: '%' | ''): string {
+  const t = targetRaw.trim().toLowerCase().replace(/\s+/g, ' ')
+  if (t === 'hp' || (/\bhp\b/.test(t) && !/\bmax\b/.test(t))) return 'Heals HP'
+  if (/\bmax\s*hp\b/.test(t)) return 'Heals Max HP'
+  if (/\bds\b/.test(t)) return 'Restores DS'
+  return `Heals ${normalizeEffectLabel(targetRaw)}`
+}
+
+/** Stat fragment before by/of/worth in generic +per-level matches — skip flavor / gerund clauses. */
+function shouldSkipGenericScaleSubject(rawTarget: string): boolean {
+  const s = rawTarget.trim()
+  if (s.length > 46) return true
+  if (
+    /\b(restores?|restored|restoring|heals?|healing|recovers?|recovering|recovered)\b/i.test(s)
+  ) {
+    return true
+  }
+  if (
+    /\b(increasing|decreasing|raising|boosting|releasing|releases?|gently)\b/i.test(s)
+  ) {
+    return true
+  }
+  return false
+}
+
+function isGerundStatTarget(target: string): boolean {
+  return /^(increasing|decreasing|raising|boosting)\s+/i.test(target.trim())
+}
+
+function isJunkSupportLabel(label: string): boolean {
+  const t = label.trim()
+  if (/^Increases (increasing|decreasing|raising|boosting|restoring|releasing|Releases)\b/.test(t)) {
+    return true
+  }
+  if (/^Increases and\b/i.test(t)) return true
+  if (/^Recovers restoring\b/i.test(t)) return true
+  if (/^Increases restoring\b/i.test(t)) return true
+  return false
 }
 
 export function parseSupportEffects(
@@ -58,8 +114,10 @@ export function parseSupportEffects(
   for (const m of description.matchAll(flatRe)) {
     const phrase = m[0]
     if (/at\s+Lv1,\s+increasing\s+by/i.test(phrase)) continue
+    if (m.index !== undefined && hasPlusPerSkillLevelAfter(description, m.index + phrase.length)) continue
     const action = m[1]
     const target = m[2].trim()
+    if (isGerundStatTarget(target)) continue
     const base = toNum(m[3])
     const unit = ((m[4] as '%' | '') || '') as '%' | ''
     out.push({
@@ -75,7 +133,6 @@ export function parseSupportEffects(
   const healPlusScaleRe =
     /(Recovers|Restores|Heals)\s+(\d+(?:\.\d+)?)\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*?)\s*\+\s*(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b/gi
   for (const m of description.matchAll(healPlusScaleRe)) {
-    const action = m[1]
     const target = m[4].trim()
     const base = toNum(m[2])
     const baseUnit = (m[3] as '%' | '') || ''
@@ -83,7 +140,43 @@ export function parseSupportEffects(
     const perUnit = (m[6] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
-      label: `${action} ${target}`,
+      label: healEffectLabel(target, unit),
+      base,
+      perLevel: per,
+      unit,
+      valueAtLevel: base + per * (L - 1),
+    })
+  }
+
+  // Example: "absorbs 4120 + 180 per skill level", "blocking 3000 + 150 per Lv"
+  const absorbPlusScaleRe =
+    /\b(absorb(?:s|ing)?|block(?:s|ing)?)\s+(?:up\s+to\s+)?(\d+(?:\.\d+)?)\s*(%?)\s*(?:HP\b)?\s*\+\s*(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b/gi
+  for (const m of description.matchAll(absorbPlusScaleRe)) {
+    const base = toNum(m[2])
+    const baseUnit = (m[3] as '%' | '') || ''
+    const per = toNum(m[4])
+    const perUnit = (m[5] as '%' | '') || baseUnit
+    const unit = baseUnit || perUnit
+    out.push({
+      label: 'Absorbs damage (shield)',
+      base,
+      perLevel: per,
+      unit,
+      valueAtLevel: base + per * (L - 1),
+    })
+  }
+
+  // "grants a Shield of 4245 (+212 per Skill Level)" (buff lines; distinct from "by X (+Y per …)")
+  const shieldOfParenScaleRe =
+    /\b(?:grant(?:s|ing)\s+(?:a\s+)?)?shield\s+of\s+(\d+(?:\.\d+)?)\s*(%?)\s*(?:HP\b)?\s*\(\s*\+?\s*(\d+(?:\.\d+)?)\s*(%?)\s*\/?\s*per\s+skill\s+level\)/gi
+  for (const m of description.matchAll(shieldOfParenScaleRe)) {
+    const base = toNum(m[1])
+    const baseUnit = (m[2] as '%' | '') || ''
+    const per = toNum(m[3])
+    const perUnit = (m[4] as '%' | '') || baseUnit
+    const unit = baseUnit || perUnit
+    out.push({
+      label: 'Shield',
       base,
       perLevel: per,
       unit,
@@ -92,11 +185,15 @@ export function parseSupportEffects(
   }
 
   // Example: "granting a shield of 3859 HP + 192 per skill level"
+  // Example: "sanctuary worth 4120 HP + 180 per skill level"
   // Example: "reduces incoming damage by 6% + 0.4% per skill level"
   const genericPlusScaleRe =
-    /([A-Za-z][A-Za-z0-9\s/%'()-]*?)\s+(?:by|of)\s+(\d+(?:\.\d+)?)\s*(%?)\s*\+\s*(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b/gi
+    /([A-Za-z][A-Za-z0-9\s/%'()-]*?)\s+(?:by|of|worth)\s+(\d+(?:\.\d+)?)\s*(%?)\s*(?:HP\b|DS\b)?\s*\+\s*(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b/gi
   for (const m of description.matchAll(genericPlusScaleRe)) {
     const rawTarget = m[1].trim().replace(/\s+/g, ' ')
+    // Avoid matching a long clause that already includes a numeric heal (e.g. "… restores 2783 HP of 2783 + …").
+    if (/\d/.test(rawTarget)) continue
+    if (shouldSkipGenericScaleSubject(rawTarget)) continue
     // Prefer semantic labels so later bucketing can classify mitigation/heal effects.
     const label = /\b(reduce|decreas|incoming damage|damage taken)\b/i.test(rawTarget)
       ? `Reduces ${rawTarget}`
@@ -123,12 +220,12 @@ export function parseSupportEffects(
   for (const m of description.matchAll(healDirectRe)) {
     const phrase = m[0]
     if (/\+\s*\d+(?:\.\d+)?\s*(?:%?)\s*per\s+(?:skill\s+level|Lv)\b/i.test(phrase)) continue
-    const action = m[1]
+    if (m.index !== undefined && hasPlusPerSkillLevelAfter(description, m.index + phrase.length)) continue
     const base = toNum(m[2])
     const unit = ((m[3] as '%' | '') || '') as '%' | ''
     const target = m[4].trim()
     out.push({
-      label: `${action} ${target}`,
+      label: healEffectLabel(target, unit),
       base,
       perLevel: 0,
       unit,
@@ -142,6 +239,7 @@ export function parseSupportEffects(
   for (const m of description.matchAll(parenScaleRe)) {
     const action = m[1]
     const target = m[2].trim()
+    if (isGerundStatTarget(target)) continue
     const base = toNum(m[3])
     const baseUnit = (m[4] as '%' | '') || ''
     const per = toNum(m[5])
@@ -162,6 +260,7 @@ export function parseSupportEffects(
     /(?:^|\sand\s)([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\+(\d+(?:\.\d+)?)\s*(%?)\s*\/?\s*per\s+skill\s+level\)/gi
   for (const m of description.matchAll(clauseScaleRe)) {
     const target = m[1].trim()
+    if (isGerundStatTarget(target)) continue
     const base = toNum(m[2])
     const baseUnit = (m[3] as '%' | '') || ''
     const per = toNum(m[4])
@@ -201,6 +300,8 @@ export function parseSupportEffects(
   const shortFlatRe =
     /([A-Za-z][A-Za-z0-9\s/-]*?)\s*([+-])\s*(\d+(?:\.\d+)?)\s*(%?)(?:\s*\(\d+\s*s\))?/gi
   for (const m of description.matchAll(shortFlatRe)) {
+    const phrase = m[0]
+    if (m.index !== undefined && hasShortSlashLvScaleAfter(description, m.index + phrase.length)) continue
     const target = normalizeEffectLabel(m[1])
     const sign = m[2] === '-' ? -1 : 1
     const base = sign * toNum(m[3])
@@ -291,6 +392,20 @@ export function supportEffectParseText(skill: Pick<WikiSkill, 'description' | 'b
   return skill.description?.trim() ?? ''
 }
 
+/** Parse buff lines and skill flavor (when different) so heals/shields in flavor are not dropped. */
+export function parseSupportEffectsFromSkill(
+  skill: Pick<WikiSkill, 'description' | 'buff'>,
+  level: number,
+): ParsedSupportEffect[] {
+  const L = Math.max(1, Math.floor(level))
+  const buffDesc = skill.buff?.description?.trim()
+  const skillDesc = skill.description?.trim()
+  const fromBuff = buffDesc ? parseSupportEffects(buffDesc, L) : []
+  const fromSkill =
+    skillDesc && skillDesc !== buffDesc ? parseSupportEffects(skillDesc, L) : []
+  return preferBuffStatBuckets(fromBuff, fromSkill)
+}
+
 function effectStatBucket(e: ParsedSupportEffect): string {
   const l = e.label.toLowerCase()
   const u = e.unit
@@ -304,8 +419,10 @@ function effectStatBucket(e: ParsedSupportEffect): string {
     return `dmg_red|${u}`
   }
   if (/\bmax\s*hp\b/i.test(l)) return `max_hp|${u}`
-  if (/\bhp\b/i.test(l) && !/max/.test(l)) return `hp|${u}`
+  if ((/\bhp\b/i.test(l) || /^heals\b/i.test(l)) && !/max/.test(l)) return `hp|${u}`
   if (/\bds\b/i.test(l)) return `ds|${u}`
+  if (/\babsorb\b/i.test(l) && /\bshield\b/i.test(l)) return `shield|${u}`
+  if (/\bshield\b|\bbarrier\b/i.test(l)) return `shield|${u}`
   if (
     /\battack\s*power\b/i.test(l) ||
     /\battack\s*pct\b/i.test(l) ||
@@ -318,10 +435,33 @@ function effectStatBucket(e: ParsedSupportEffect): string {
   return `other|${l}|${u}`
 }
 
+/**
+ * When structured buff text exists, prefer its numeric effects per stat bucket so flavor text
+ * (e.g. outdated shield HP) does not override wiki buff lines.
+ */
+function preferBuffStatBuckets(
+  buffEffects: ParsedSupportEffect[],
+  skillEffects: ParsedSupportEffect[],
+): ParsedSupportEffect[] {
+  if (buffEffects.length === 0) return skillEffects
+  const buffBuckets = new Set<string>()
+  for (const e of buffEffects) {
+    buffBuckets.add(effectStatBucket(e))
+  }
+  const fromSkill = skillEffects.filter((e) => {
+    const b = effectStatBucket(e)
+    if (b.startsWith('other|')) return true
+    return !buffBuckets.has(b)
+  })
+  return [...buffEffects, ...fromSkill]
+}
+
 function labelStyleRank(label: string): number {
   const t = label.trim().toLowerCase()
   if (t.startsWith('increases ') || t.startsWith('decreases ')) return 3
   if (t.startsWith('reduces ') || t.startsWith('recovers ') || t.startsWith('restores ')) return 3
+  if (t.startsWith('heals ')) return 3
+  if (t === 'shield') return 3
   if (t.startsWith('raises ') || t.startsWith('boosts ')) return 2
   return 1
 }
@@ -349,10 +489,45 @@ export function dedupeSupportEffectsByStat(effects: ParsedSupportEffect[]): Pars
   return [...map.values()]
 }
 
+/**
+ * Drop flat rows whose Lv1 value matches a scaled row's base in the same stat bucket (duplicate
+ * parses: "by 647" vs "647 (+32/lvl)", buff line + flavor). Secondary flats with a different amount
+ * (e.g. bonus tick heal) are kept.
+ */
+function mergeFlatWhenScaledExists(effects: ParsedSupportEffect[]): ParsedSupportEffect[] {
+  const scaledBasesByBucket = new Map<string, Set<number>>()
+  for (const e of effects) {
+    if (e.perLevel <= 0) continue
+    const b = effectStatBucket(e)
+    if (b.startsWith('other|')) continue
+    let set = scaledBasesByBucket.get(b)
+    if (!set) {
+      set = new Set()
+      scaledBasesByBucket.set(b, set)
+    }
+    set.add(e.base)
+  }
+  if (scaledBasesByBucket.size === 0) return effects
+  return effects.filter((e) => {
+    if (e.perLevel !== 0) return true
+    const b = effectStatBucket(e)
+    if (b.startsWith('other|')) return true
+    const bases = scaledBasesByBucket.get(b)
+    if (!bases || bases.size === 0) return true
+    return !bases.has(e.base)
+  })
+}
+
+function filterJunkSupportEffects(effects: ParsedSupportEffect[]): ParsedSupportEffect[] {
+  return effects.filter((e) => !isJunkSupportLabel(e.label))
+}
+
 /** Parsed lines for display and sim: buff text (preferred) + numeric buff fields, deduped. */
 export function buildSupportSkillEffects(skill: WikiSkill, level: number): ParsedSupportEffect[] {
   const L = Math.max(1, Math.floor(level))
-  const fromText = parseSupportEffects(supportEffectParseText(skill), L)
+  const fromText = parseSupportEffectsFromSkill(skill, L)
   const fromNums = parseBuffNumericEffects(skill.buff, L)
-  return dedupeSupportEffectsByStat([...fromText, ...fromNums])
+  return mergeFlatWhenScaledExists(
+    filterJunkSupportEffects(dedupeSupportEffectsByStat([...fromText, ...fromNums])),
+  )
 }

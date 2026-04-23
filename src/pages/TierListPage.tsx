@@ -23,11 +23,16 @@ import {
   type TierListMode,
 } from '../lib/tierList'
 import { tierSkillsSignature } from '../lib/tierSkillsSignature'
-import { WIKI_ATTRIBUTE_OPTIONS, WIKI_ELEMENT_OPTIONS } from '../lib/wikiListFacetOptions'
+import {
+  WIKI_ATTRIBUTE_OPTIONS,
+  WIKI_ELEMENT_OPTIONS,
+  WIKI_FAMILY_OPTIONS,
+} from '../lib/wikiListFacetOptions'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
 const WIKI_ATTR_STRINGS = WIKI_ATTRIBUTE_OPTIONS as readonly string[]
 const WIKI_EL_STRINGS = WIKI_ELEMENT_OPTIONS as readonly string[]
+const WIKI_FAMILY_STRINGS = WIKI_FAMILY_OPTIONS as readonly string[]
 
 const REQUEST_DELAY_MS = 700
 const COOLDOWN_EVERY_N_REQUESTS = 50
@@ -406,6 +411,7 @@ export function TierListPage() {
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([])
   const [selectedElements, setSelectedElements] = useState<string[]>([])
+  const [selectedFamilies, setSelectedFamilies] = useState<string[]>([])
   const [showProgressBar, setShowProgressBar] = useState(true)
   const [fadeProgressBar, setFadeProgressBar] = useState(false)
   const sawIncompleteProgress = useRef(false)
@@ -756,6 +762,21 @@ export function TierListPage() {
     return ['All', ...preferred, ...rest]
   }, [tierEntryIds, listMeta])
 
+  const familyOptions = useMemo(() => {
+    const found = new Set<string>()
+    for (const id of tierEntryIds) {
+      for (const ft of listMeta[id]?.family_types ?? []) {
+        const t = ft.trim()
+        if (t) found.add(t)
+      }
+    }
+    const preferred = WIKI_FAMILY_STRINGS.filter((x) => found.has(x))
+    const rest = [...found]
+      .filter((x) => !WIKI_FAMILY_STRINGS.includes(x))
+      .sort((a, b) => a.localeCompare(b))
+    return ['All', ...preferred, ...rest]
+  }, [tierEntryIds, listMeta])
+
   const filteredEntries = useMemo(() => {
     const all = cache?.entries ?? {}
     const out: Record<string, SustainedDpsEntry> = {}
@@ -770,10 +791,24 @@ export function TierListPage() {
         const el = meta?.element?.trim()
         if (!el || !selectedElements.includes(el)) continue
       }
+      if (selectedFamilies.length > 0) {
+        const families = meta?.family_types ?? []
+        const match = families.some(
+          (ft) => ft.trim() && selectedFamilies.includes(ft.trim()),
+        )
+        if (!match) continue
+      }
       out[id] = e
     }
     return out
-  }, [cache?.entries, listMeta, selectedStages, selectedAttributes, selectedElements])
+  }, [
+    cache?.entries,
+    listMeta,
+    selectedStages,
+    selectedAttributes,
+    selectedElements,
+    selectedFamilies,
+  ])
 
   const entriesForMatrix = useMemo(() => {
     if (tierMode === 'dps') return filteredEntries
@@ -1530,6 +1565,28 @@ export function TierListPage() {
                 })}
               </div>
             </div>
+            <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-family-label">
+              <span className="tier-filter-label" id="tier-filter-family-label">
+                Family
+              </span>
+              <div className="stage-tabs tier-filter-chips">
+                {familyOptions.map((s) => {
+                  const selected =
+                    s === 'All' ? selectedFamilies.length === 0 : selectedFamilies.includes(s)
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className="stage-tab tier-facet-tab"
+                      onClick={() => toggleMultiFilter(s, setSelectedFamilies)}
+                      aria-pressed={selected}
+                    >
+                      {s}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
           {roles.length === 0 ? (
             <p className="muted tier-matrix-empty">
@@ -1607,7 +1664,7 @@ export function TierListPage() {
                                         style={{ borderColor: digimonStageBorderColor(e.stage) }}
                                       >
                                         <Link
-                                          to={`/lab?digimonId=${encodeURIComponent(e.id)}&duration=${DEFAULT_ROTATION_SIM_DURATION_SEC}`}
+                                          to={`/digimon/${encodeURIComponent(e.id)}`}
                                           className="tier-entry-link"
                                         >
                                           {icon ? (

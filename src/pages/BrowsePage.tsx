@@ -1,10 +1,15 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { fetchDigimonPage } from '../api/digimonService'
 import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
+import { peekBrowseFullListCache, storeBrowseFullListCache } from '../lib/browseFullListCache'
 import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
-import { WIKI_ATTRIBUTE_OPTIONS, WIKI_ELEMENT_OPTIONS } from '../lib/wikiListFacetOptions'
+import {
+  WIKI_ATTRIBUTE_OPTIONS,
+  WIKI_ELEMENT_OPTIONS,
+  WIKI_FAMILY_OPTIONS,
+} from '../lib/wikiListFacetOptions'
 import { WIKI_RANK_LABELS, wikiRankLabelFromNumber } from '../lib/wikiRank'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
@@ -30,21 +35,6 @@ const STAGE_OPTIONS = [
 const ELEMENT_OPTIONS = WIKI_ELEMENT_OPTIONS
 const ATTRIBUTE_OPTIONS = WIKI_ATTRIBUTE_OPTIONS
 
-/** Distinct family types present in the current wiki dataset (Digimon may belong to several). */
-const FAMILY_OPTIONS = [
-  'Dark Area',
-  'Deep Savers',
-  "Dragon's Roar",
-  'Jungle Troopers',
-  'Metal Empire',
-  'Nature Spirits',
-  'Nightmare Soldiers',
-  'TBD',
-  'Unknown',
-  'Virus Busters',
-  'Wind Guardians',
-] as const
-
 type BrowseFilters = {
   role: string
   stage: string
@@ -54,13 +44,24 @@ type BrowseFilters = {
   rank: string
 }
 
-const EMPTY_FILTERS: BrowseFilters = {
-  role: '',
-  stage: '',
-  element: '',
-  attribute: '',
-  family: '',
-  rank: '',
+const FILTER_PARAM_KEYS = [
+  'role',
+  'stage',
+  'element',
+  'attribute',
+  'family',
+  'rank',
+] as const satisfies readonly (keyof BrowseFilters)[]
+
+function browseFiltersFromSearchParams(sp: URLSearchParams): BrowseFilters {
+  return {
+    role: sp.get('role') ?? '',
+    stage: sp.get('stage') ?? '',
+    element: sp.get('element') ?? '',
+    attribute: sp.get('attribute') ?? '',
+    family: sp.get('family') ?? '',
+    rank: sp.get('rank') ?? '',
+  }
 }
 
 function matchesFilters(item: WikiDigimonListItem, q: string, f: BrowseFilters) {
@@ -76,20 +77,49 @@ function matchesFilters(item: WikiDigimonListItem, q: string, f: BrowseFilters) 
 }
 
 export function BrowsePage() {
-  const [page, setPage] = useState(0)
-  const [query, setQuery] = useState('')
-  const [appliedQuery, setAppliedQuery] = useState('')
-  const [filters, setFilters] = useState<BrowseFilters>(EMPTY_FILTERS)
-  const [appliedFilters, setAppliedFilters] = useState<BrowseFilters>(EMPTY_FILTERS)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const page = Math.max(0, parseInt(searchParams.get('page') || '0', 10) || 0)
+  const appliedQuery = searchParams.get('q') ?? ''
+  const filters = useMemo(
+    () => browseFiltersFromSearchParams(searchParams),
+    [searchParams],
+  )
+
+  const [queryInput, setQueryInput] = useState(appliedQuery)
   const [items, setItems] = useState<WikiDigimonListItem[]>([])
-  const [allDigimonCache, setAllDigimonCache] = useState<WikiDigimonListItem[] | null>(
-    null,
+  const [allDigimonCache, setAllDigimonCache] = useState<WikiDigimonListItem[] | null>(() =>
+    peekBrowseFullListCache(),
   )
   const [totalPages, setTotalPages] = useState(0)
   /** Server-reported total rows for the current API query (unused when full cache is active). */
   const [_apiTotalRows, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useLayoutEffect(() => {
+    setQueryInput(appliedQuery)
+  }, [appliedQuery])
+
+  useEffect(() => {
+    storeBrowseFullListCache(allDigimonCache)
+  }, [allDigimonCache])
+
+  function patchSearchParams(
+    mutator: (next: URLSearchParams) => void,
+    resetPage = false,
+  ) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        mutator(next)
+        if (resetPage) {
+          next.delete('page')
+        }
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   useEffect(() => {
     if (allDigimonCache) {
@@ -105,12 +135,12 @@ export function BrowsePage() {
       WIKI_DIGIMON_PER_PAGE,
       appliedQuery || undefined,
       {
-        role: appliedFilters.role || undefined,
-        stage: appliedFilters.stage || undefined,
-        element: appliedFilters.element || undefined,
-        attribute: appliedFilters.attribute || undefined,
-        family: appliedFilters.family || undefined,
-        rank: appliedFilters.rank || undefined,
+        role: filters.role || undefined,
+        stage: filters.stage || undefined,
+        element: filters.element || undefined,
+        attribute: filters.attribute || undefined,
+        family: filters.family || undefined,
+        rank: filters.rank || undefined,
       },
     )
       .then((data) => {
@@ -122,12 +152,12 @@ export function BrowsePage() {
         if (
           page === 0 &&
           !appliedQuery &&
-          !appliedFilters.role &&
-          !appliedFilters.stage &&
-          !appliedFilters.element &&
-          !appliedFilters.attribute &&
-          !appliedFilters.family &&
-          !appliedFilters.rank &&
+          !filters.role &&
+          !filters.stage &&
+          !filters.element &&
+          !filters.attribute &&
+          !filters.family &&
+          !filters.rank &&
           data.total <= WIKI_DIGIMON_PER_PAGE
         ) {
           setAllDigimonCache(data.data)
@@ -143,36 +173,59 @@ export function BrowsePage() {
     return () => {
       cancelled = true
     }
-  }, [allDigimonCache, page, appliedQuery, appliedFilters])
+  }, [allDigimonCache, page, appliedQuery, filters])
 
   function onSearch(e: React.FormEvent) {
     e.preventDefault()
-    setPage(0)
-    if (allDigimonCache) return
-    setAppliedQuery(query)
-    setAppliedFilters(filters)
+    patchSearchParams((n) => {
+      const t = queryInput.trim()
+      if (t) n.set('q', t)
+      else n.delete('q')
+    }, true)
+    if (!allDigimonCache) {
+      // Server mode: applied query updates only on submit (already patched URL above).
+    }
   }
 
-  /** Dropdowns update `filters` immediately; when not using the full local cache, sync API params too. */
+  /** Dropdowns: write through to URL. */
   function applyFilterPatch(patch: Partial<BrowseFilters>) {
-    setFilters((f) => ({ ...f, ...patch }))
-    if (!allDigimonCache) {
-      setAppliedFilters((f) => ({ ...f, ...patch }))
-    }
-    setPage(0)
+    patchSearchParams((n) => {
+      for (const key of FILTER_PARAM_KEYS) {
+        if (!(key in patch)) continue
+        const v = patch[key] ?? ''
+        if (v) n.set(key, v)
+        else n.delete(key)
+      }
+    }, true)
   }
 
   function clearFilters() {
-    setFilters(EMPTY_FILTERS)
-    setAppliedQuery('')
-    setAppliedFilters(EMPTY_FILTERS)
-    setPage(0)
+    setQueryInput('')
+    setSearchParams(new URLSearchParams(), { replace: true })
+  }
+
+  function setPageUrl(nextPage: number) {
+    patchSearchParams((n) => {
+      if (nextPage <= 0) n.delete('page')
+      else n.set('page', String(nextPage))
+    })
+  }
+
+  function onQueryInputChange(v: string) {
+    setQueryInput(v)
+    if (allDigimonCache) {
+      patchSearchParams((n) => {
+        const t = v.trim()
+        if (t) n.set('q', t)
+        else n.delete('q')
+      }, true)
+    }
   }
 
   const filteredList = useMemo(() => {
     const source = allDigimonCache ?? items
-    return source.filter((d) => matchesFilters(d, query, filters))
-  }, [allDigimonCache, items, query, filters])
+    return source.filter((d) => matchesFilters(d, queryInput, filters))
+  }, [allDigimonCache, items, queryInput, filters])
 
   const visibleItems = useMemo(() => {
     if (allDigimonCache) {
@@ -189,7 +242,7 @@ export function BrowsePage() {
 
   useEffect(() => {
     if (!allDigimonCache) return
-    if (page > effectiveTotalPages - 1) setPage(0)
+    if (page > effectiveTotalPages - 1) setPageUrl(0)
   }, [effectiveTotalPages, allDigimonCache, page])
 
   return (
@@ -200,11 +253,8 @@ export function BrowsePage() {
           <input
             type="search"
             placeholder="Search..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              if (allDigimonCache) setPage(0)
-            }}
+            value={queryInput}
+            onChange={(e) => onQueryInputChange(e.target.value)}
             aria-label="Search by name"
           />
           <button type="submit">Search</button>
@@ -291,7 +341,7 @@ export function BrowsePage() {
               }}
             >
               <option value="">Any</option>
-              {FAMILY_OPTIONS.map((v) => (
+              {WIKI_FAMILY_OPTIONS.map((v) => (
                 <option key={v} value={v}>
                   {v}
                 </option>
@@ -359,7 +409,7 @@ export function BrowsePage() {
         <button
           type="button"
           disabled={page <= 0 || loading}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          onClick={() => setPageUrl(page - 1)}
         >
           Previous
         </button>
@@ -369,7 +419,7 @@ export function BrowsePage() {
         <button
           type="button"
           disabled={loading || page >= effectiveTotalPages - 1 || effectiveTotalPages === 0}
-          onClick={() => setPage((p) => p + 1)}
+          onClick={() => setPageUrl(page + 1)}
         >
           Next
         </button>

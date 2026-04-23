@@ -6,7 +6,10 @@ import {
   normalizeWikiRole,
   type HybridStance,
 } from './digimonRoleSkills'
-import { buildSupportSkillEffects, parseSupportEffects, supportEffectParseText } from './supportEffects'
+import {
+  buildSupportSkillEffects,
+  parseSupportEffectsFromSkill,
+} from './supportEffects'
 
 /** One line in a timeline buff tooltip (how that +% was derived). */
 export type BuffContribution = {
@@ -178,7 +181,7 @@ function supportProfiles(
 export function estimateSupportAttackBuffPct(supportSkills: WikiSkill[], level: number) {
   let total = 0
   for (const s of supportSkills) {
-    const effects = parseSupportEffects(supportEffectParseText(s), level)
+    const effects = parseSupportEffectsFromSkill(s, level)
     const attackPct = effects
       .filter(
         (e) =>
