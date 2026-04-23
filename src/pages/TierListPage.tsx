@@ -1396,8 +1396,8 @@ export function TierListPage() {
                 <div className="tier-score-explainer-body">
                   <ul className="tier-score-explainer-list">
                     <li>
-                      Healing (~50%): HP recover/heal lines (% or flat; flat normalized vs this
-                      Digimon&apos;s HP) × uptime (same duration/cooldown idea as tank).
+                      Healing (~50%): HP recover/heal lines — % of HP and flat amounts; flat values use
+                      the number as-is (bigger = better), each × uptime.
                     </li>
                     <li>
                       Shields and damage reduction (~28%): barriers and DR only (healing not counted

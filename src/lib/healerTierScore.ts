@@ -73,7 +73,8 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
 
       if (isHealHpLabel(lab)) {
         if (unit === '%') healingRaw += (v / 100) * uptime * 160
-        else healingRaw += Math.min(4, (v / hp) * uptime * 52)
+        /* Flat HP: larger parsed amount = stronger (no normalization vs this Digimon's max HP). */
+        else healingRaw += Math.max(0, v) * uptime * 0.08
         continue
       }
 
