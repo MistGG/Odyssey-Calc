@@ -1525,9 +1525,15 @@ export function TierListPage() {
           ) : (
             <div className="tier-matrix-wrap">
               <table className="tier-matrix">
+                <colgroup>
+                  <col className="tier-matrix-col-rank" />
+                  {roles.map((r) => (
+                    <col key={r} className="tier-matrix-col-role" />
+                  ))}
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>Tier</th>
+                    <th className="tier-matrix-th-rank">Tier</th>
                     {roles.map((r) => (
                       <th key={r}>{r}</th>
                     ))}

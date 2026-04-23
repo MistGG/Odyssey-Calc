@@ -849,6 +849,15 @@ code {
   table-layout: fixed;
 }
 
+.tier-matrix col.tier-matrix-col-rank {
+  width: 2rem;
+  max-width: 2.25rem;
+}
+
+.tier-matrix col.tier-matrix-col-role {
+  width: auto;
+}
+
 .tier-matrix th,
 .tier-matrix td {
   border: 1px solid var(--border);
@@ -863,11 +872,26 @@ code {
   color: var(--text-soft);
 }
 
+.tier-matrix thead th.tier-matrix-th-rank {
+  width: 2rem;
+  max-width: 2.25rem;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .tier-row-label {
-  width: 42px;
+  width: 2rem;
+  max-width: 2.25rem;
+  box-sizing: border-box;
+  padding: 0.35rem 0.2rem;
   text-align: center;
   font-weight: 700;
-  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  line-height: 1.2;
 }
 
 .tier-cell {
