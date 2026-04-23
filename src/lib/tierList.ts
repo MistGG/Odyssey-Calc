@@ -143,7 +143,7 @@ export const HEALER_TIER_CATEGORY_ORDER: readonly HealerTierCategoryKey[] = [
 ]
 
 export const HEALER_TIER_MATRIX_COLUMN_LABELS: Record<HealerTierCategoryKey, string> = {
-  general: 'General',
+  general: 'Overall',
   healing: 'Healing',
   shielding: 'Shielding',
   buffing: 'Buffing',

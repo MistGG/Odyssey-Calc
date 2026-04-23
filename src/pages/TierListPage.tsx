@@ -1466,12 +1466,6 @@ export function TierListPage() {
           </h3>
           {tierMode === 'dps' ? (
             <>
-              <p className="muted">
-                Columns are wiki roles (Melee / Ranged / Caster / Hybrid / Tank / Support). Use the sub-tabs
-                above to switch the ranking metric and the number shown: {DEFAULT_ROTATION_SIM_DURATION_SEC}s
-                sustained, {BURST_DPS_WINDOW_SEC}s burst, or Specialized. S/A/B/C cutoffs apply{' '}
-                <em>within each role column</em> among Digimon matching your filters.
-              </p>
               <p className="tier-wip-note" role="status">
                 DPS sims and specialized heuristics are a <strong>work in progress</strong>.
               </p>
@@ -1505,12 +1499,6 @@ export function TierListPage() {
           ) : null}
           {tierMode === 'tank' ? (
             <>
-              <p className="muted">
-                Tank wiki role only. Each column is its own ranking (Overall composite, or Effective
-                HP/Defense/Evasion/Block: wiki stat plus uptime-weighted matching buffs). S/A/B/C apply within
-                each column.
-                Not in-game EHP.
-              </p>
               <p className="tier-wip-note" role="status">
                 Tank tier list is a <strong>very large work in progress</strong>; scores and ordering can
                 change substantially as formulas and parsing improve.
@@ -1561,11 +1549,6 @@ export function TierListPage() {
           ) : null}
           {tierMode === 'healer' ? (
             <>
-              <p className="muted">
-                Support wiki role only. Each column ranks by that lens (General = old composite; other
-                columns use healing, shields only, damage buffs only, or INT from the same parsed skills).
-                S/A/B/C apply within each column.
-              </p>
               <p className="tier-wip-note" role="status">
                 Healer tier list is a <strong>very large work in progress</strong>; scores and ordering can
                 change substantially as formulas and parsing improve.
