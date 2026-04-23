@@ -746,6 +746,7 @@ function effectStatBucket(e: ParsedSupportEffect): string {
   if (/\bhit\s*rate\b/i.test(l)) return `hit_rate|${u}`
   if (/\bdefense\b|\bdefence\b|\bde\b|\bdp\b/i.test(l)) return `def|${u}`
   if (/\bevasion\b/i.test(l)) return `eva|${u}`
+  if (/\bblock\s*rate\b/i.test(l)) return `block|${u}`
   if (/\bdamage\s*reduction\b|\bdmg\s*reduction\b|\bincoming\s*damage\b|\bdamage\s*taken\b/i.test(l)) {
     return `dmg_red|${u}`
   }
@@ -765,6 +766,11 @@ function effectStatBucket(e: ParsedSupportEffect): string {
     return `atk|${u}`
   }
   return `other|${l}|${u}`
+}
+
+/** Exposed for tier scoring (tank stat subcategories). */
+export function supportEffectStatBucket(e: ParsedSupportEffect): string {
+  return effectStatBucket(e)
 }
 
 /**

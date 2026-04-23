@@ -1,5 +1,6 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
-import { buildSupportSkillEffects } from './supportEffects'
+import { buildSupportSkillEffects, supportEffectStatBucket } from './supportEffects'
+import type { TankTierCategoryScores } from './tierList'
 import {
   healOverTimeTicksDuringBuff,
   isDamageReductionLabel,
@@ -21,11 +22,16 @@ export type TankTierScoreBreakdown = {
   avoidanceRaw: number
   /** Higher = better tank index (heuristic). */
   score: number
+  /** Sort keys for tier sub-modes (overall = `score`). */
+  categoryScores: TankTierCategoryScores
 }
 
 /**
  * Heuristic tank index: ~65% base HP, ~22% mitigation kit (potency × uptime), ~9% weighted defense,
  * ~4% avoidance. Intended for ranking only, not in-game EHP.
+ *
+ * Category scores add wiki base stat + uptime-weighted parsed buffs to the same stat (Max HP, DE,
+ * Evasion, Block Rate), then `log1p(value/1000)` for sorting.
  */
 export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBreakdown {
   const stats = detail.stats
@@ -35,6 +41,10 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
   const eva = Math.max(0, stats?.evasion ?? 0)
 
   let mitigationRaw = 0
+  let hpBuffFromSkills = 0
+  let defBuffFromSkills = 0
+  let evaBuffFromSkills = 0
+  let blockBuffFromSkills = 0
 
   for (const skill of detail.skills) {
     const level = tierListSkillLevel(skill)
@@ -45,6 +55,21 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
       const lab = e.label
       const v = e.valueAtLevel
       const unit = e.unit
+      const bucket = supportEffectStatBucket(e)
+
+      if (bucket.startsWith('max_hp|')) {
+        if (unit === '%') hpBuffFromSkills += hp * (v / 100) * uptime
+        else hpBuffFromSkills += Math.max(0, v) * uptime
+      } else if (bucket.startsWith('def|')) {
+        if (unit === '%') defBuffFromSkills += def * (v / 100) * uptime
+        else defBuffFromSkills += Math.max(0, v) * uptime
+      } else if (bucket.startsWith('eva|')) {
+        if (unit === '%') evaBuffFromSkills += eva * (v / 100) * uptime
+        else evaBuffFromSkills += Math.max(0, v) * uptime
+      } else if (bucket.startsWith('block|')) {
+        if (unit === '%') blockBuffFromSkills += block * (v / 100) * uptime
+        else blockBuffFromSkills += Math.max(0, v) * uptime
+      }
 
       if (isDamageReductionLabel(lab)) {
         if (unit === '%') mitigationRaw += (v / 100) * uptime * 120
@@ -71,5 +96,13 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
     0.09 * Math.log1p(defenseRaw / 1000) +
     0.04 * Math.log1p(avoidanceRaw)
 
-  return { hpRaw: hp, defenseRaw, mitigationRaw, avoidanceRaw, score }
+  const categoryScores: TankTierCategoryScores = {
+    overall: score,
+    hp: Math.log1p((hp + hpBuffFromSkills) / 1000),
+    defense: Math.log1p((def + defBuffFromSkills) / 1000),
+    evasion: Math.log1p((eva + evaBuffFromSkills) / 1000),
+    block: Math.log1p((block + blockBuffFromSkills) / 1000),
+  }
+
+  return { hpRaw: hp, defenseRaw, mitigationRaw, avoidanceRaw, score, categoryScores }
 }

@@ -628,7 +628,9 @@ export function TierListPage() {
             stage: detail.stage,
             dps: sim.dps,
             tankScore: tank.score,
+            tankCategoryScores: tank.categoryScores,
             healerScore: healer.score,
+            healerCategoryScores: healer.categoryScores,
             status: getDigimonContentStatus(detail.skills),
             checkedAt: new Date().toISOString(),
             skillsSignature: tierSkillsSignature(detail.skills),
@@ -858,12 +860,16 @@ export function TierListPage() {
 
   const tankScoresStale = useMemo(() => {
     if (tierMode !== 'tank') return false
-    return Object.values(entriesForMatrix).some((e) => e.tankScore == null)
+    return Object.values(entriesForMatrix).some(
+      (e) => e.tankScore == null || e.tankCategoryScores == null,
+    )
   }, [tierMode, entriesForMatrix])
 
   const healerScoresStale = useMemo(() => {
     if (tierMode !== 'healer') return false
-    return Object.values(entriesForMatrix).some((e) => e.healerScore == null)
+    return Object.values(entriesForMatrix).some(
+      (e) => e.healerScore == null || e.healerCategoryScores == null,
+    )
   }, [tierMode, entriesForMatrix])
 
   useEffect(() => {
@@ -1371,11 +1377,7 @@ export function TierListPage() {
       {cache && !initializing && checkedCount > 0 && (
         <section className="lab-result tier-matrix-section">
           <h3>
-            {tierMode === 'dps'
-              ? 'Sustained DPS'
-              : tierMode === 'tank'
-                ? 'Tank tier list'
-                : 'Healer tier list'}
+            {tierMode === 'dps' ? 'Sustained DPS' : tierMode === 'tank' ? 'Tank tier list' : 'Healer tier list'}
           </h3>
           {tierMode === 'dps' ? (
             <p className="muted">
@@ -1386,7 +1388,10 @@ export function TierListPage() {
           {tierMode === 'tank' ? (
             <>
               <p className="muted">
-                Tank wiki role only. Score is a heuristic for sorting this list, not in-game EHP.
+                Tank wiki role only. Each column is its own ranking (Overall composite, or Effective
+                HP/Defense/Evasion/Block: wiki stat plus uptime-weighted matching buffs). S/A/B/C apply within
+                each column.
+                Not in-game EHP.
               </p>
               <p className="tier-wip-note" role="status">
                 Tank tier list is a <strong>very large work in progress</strong>; scores and ordering can
@@ -1418,8 +1423,8 @@ export function TierListPage() {
                       .
                     </li>
                     <li>
-                      S/A/B/C: same cutoffs as DPS (~10% / ~20% / ~30% / rest), but only among Tanks
-                      after your filters.
+                      S/A/B/C: same cutoffs as DPS (~10% / ~20% / ~30% / rest) within each column among
+                      filtered Tanks (order differs per column).
                     </li>
                     <li>
                       Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
@@ -1439,8 +1444,9 @@ export function TierListPage() {
           {tierMode === 'healer' ? (
             <>
               <p className="muted">
-                Support wiki role only. Ranking is driven by modeled sustained healing (HP/s from wiki
-                cooldowns, same 180s spirit as DPS tiers), then mitigation, buffs, and INT.
+                Support wiki role only. Each column ranks by that lens (General = old composite; other
+                columns use healing, shields only, damage buffs only, or INT from the same parsed skills).
+                S/A/B/C apply within each column.
               </p>
               <p className="tier-wip-note" role="status">
                 Healer tier list is a <strong>very large work in progress</strong>; scores and ordering can
@@ -1471,7 +1477,10 @@ export function TierListPage() {
                       </code>
                       .
                     </li>
-                    <li>S/A/B/C: same cutoffs as DPS, only among Support rows after filters.</li>
+                    <li>
+                      S/A/B/C: same cutoffs as DPS within each column among filtered Support rows (order
+                      differs per column).
+                    </li>
                     <li>
                       Limits: adding all heal skills can overstate if they share one GCD; HoTs, targets,
                       DS heals, passives not modeled; odd skill text may parse wrong.
@@ -1603,12 +1612,12 @@ export function TierListPage() {
           ) : (
             <div
               className={`tier-matrix-wrap${
-                tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix-wrap--single-role' : ''
+                tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix-wrap--category-matrix' : ''
               }`}
             >
               <table
                 className={`tier-matrix${
-                  tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix--single-role' : ''
+                  tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix--category-matrix' : ''
                 }`}
               >
                 <colgroup>
@@ -1630,7 +1639,8 @@ export function TierListPage() {
                     <tr key={`row-${tier}`}>
                       <td className={`tier-row-label tier-${tier.toLowerCase()}`}>{tier}</td>
                       {roles.map((role) => {
-                        const entries = byRole[role]?.tiers[tier] ?? []
+                        const columnGroup = byRole[role]
+                        const entries = columnGroup?.tiers[tier] ?? []
                         return (
                           <td key={`${tier}-${role}`} className={`tier-cell tier-${tier.toLowerCase()}`}>
                             <div className="tier-cell-content">
@@ -1645,14 +1655,20 @@ export function TierListPage() {
                                       ? digimonPortraitUrl(modelId, e.id, e.name)
                                       : undefined
                                     const scoreLabel =
-                                      tierMode === 'tank'
-                                        ? e.tankScore != null
-                                          ? e.tankScore.toFixed(2)
-                                          : '…'
-                                        : tierMode === 'healer'
-                                          ? e.healerScore != null
-                                            ? e.healerScore.toFixed(2)
-                                            : '…'
+                                      tierMode === 'tank' && columnGroup?.tankSortKey
+                                        ? (() => {
+                                            const k = columnGroup.tankSortKey
+                                            const s = e.tankCategoryScores
+                                            const v = s && k ? s[k] : e.tankScore
+                                            return v != null ? v.toFixed(2) : '…'
+                                          })()
+                                        : tierMode === 'healer' && columnGroup?.healerSortKey
+                                          ? (() => {
+                                              const k = columnGroup.healerSortKey
+                                              const s = e.healerCategoryScores
+                                              const v = s && k ? s[k] : e.healerScore
+                                              return v != null ? v.toFixed(2) : '…'
+                                            })()
                                           : e.dps.toFixed(1)
                                     return (
                                       <li

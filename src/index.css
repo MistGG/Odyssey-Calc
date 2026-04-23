@@ -459,6 +459,11 @@ code {
   box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
 }
 
+/* Tank / healer: multiple category columns — keep table scrollable on small viewports */
+.tier-matrix-wrap--category-matrix .tier-matrix.tier-matrix--category-matrix {
+  min-width: 52rem;
+}
+
 .tier-stale-note {
   margin: 0.35rem 0 0.5rem;
   padding: 0.55rem 0.75rem;
@@ -2370,9 +2375,8 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* Tier WIP / stale callouts live in .lab-result; reset lab-result strong sizing */
-.tier-page .tier-wip-note strong,
-.tier-page .tier-stale-note strong {
+/* Tier list lives in .lab-result: never use the large display strong from lab pages */
+.tier-page .lab-result strong {
   font-size: inherit;
   font-weight: 600;
   font-variant-numeric: normal;

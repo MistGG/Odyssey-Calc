@@ -1,5 +1,6 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
 import { buildSupportSkillEffects, type ParsedSupportEffect } from './supportEffects'
+import type { HealerTierCategoryScores } from './tierList'
 import {
   healOverTimeTicksDuringBuff,
   isDamageReductionLabel,
@@ -50,13 +51,18 @@ export type HealerTierScoreBreakdown = {
    * Min interval 0.75s. Units: HP/s (same sustained spirit as the 180s DPS tier list window).
    */
   healSustainHps: number
-  /** Damage reduction + shields/barriers only (second layer). */
+  /** Damage reduction + shields/barriers (combined, for the general composite). */
   mitigationRaw: number
+  /** Shield contribution only (for shielding sub-mode). */
+  shieldMitRaw: number
+  /** Damage reduction contribution only. */
+  drMitRaw: number
   /** Offensive support (ATK%, skill dmg, crit, ASPD, flat ATK) × uptime. */
   damageBuffRaw: number
   /** INT from combat stats (smallest layer). */
   intStat: number
   score: number
+  categoryScores: HealerTierCategoryScores
 }
 
 /**
@@ -70,6 +76,8 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
 
   let healSustainHps = 0
   let mitigationRaw = 0
+  let shieldMitRaw = 0
+  let drMitRaw = 0
   let damageBuffRaw = 0
 
   for (const skill of detail.skills) {
@@ -96,14 +104,28 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
       if (isHealHpLabel(lab)) continue
 
       if (isDamageReductionLabel(lab)) {
-        if (unit === '%') mitigationRaw += (v / 100) * uptime * 120
-        else mitigationRaw += Math.max(0, v) * 0.02 * uptime
+        if (unit === '%') {
+          const add = (v / 100) * uptime * 120
+          mitigationRaw += add
+          drMitRaw += add
+        } else {
+          const add = Math.max(0, v) * 0.02 * uptime
+          mitigationRaw += add
+          drMitRaw += add
+        }
         continue
       }
 
       if (isShieldLabel(lab)) {
-        if (unit === '%') mitigationRaw += (v / 100) * uptime * 100
-        else mitigationRaw += Math.min(3, (v / hp) * uptime * 28)
+        if (unit === '%') {
+          const add = (v / 100) * uptime * 100
+          mitigationRaw += add
+          shieldMitRaw += add
+        } else {
+          const add = Math.min(3, (v / hp) * uptime * 28)
+          mitigationRaw += add
+          shieldMitRaw += add
+        }
         continue
       }
 
@@ -118,11 +140,22 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
     0.07 * Math.log1p(damageBuffRaw) +
     0.03 * Math.log1p(intStat)
 
+  const categoryScores: HealerTierCategoryScores = {
+    general: score,
+    healing: Math.log1p(Math.max(0, healSustainHps)),
+    shielding: Math.log1p(Math.max(0, shieldMitRaw)),
+    buffing: Math.log1p(Math.max(0, damageBuffRaw)),
+    int: Math.log1p(Math.max(0, intStat)),
+  }
+
   return {
     healSustainHps,
     mitigationRaw,
+    shieldMitRaw,
+    drMitRaw,
     damageBuffRaw,
     intStat,
     score,
+    categoryScores,
   }
 }
