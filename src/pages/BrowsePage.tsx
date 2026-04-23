@@ -4,6 +4,7 @@ import { fetchDigimonPage } from '../api/digimonService'
 import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
 import { digimonPortraitUrl, rankSpriteStyle } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
+import { WIKI_ATTRIBUTE_OPTIONS, WIKI_ELEMENT_OPTIONS } from '../lib/wikiListFacetOptions'
 import { WIKI_RANK_LABELS, wikiRankLabelFromNumber } from '../lib/wikiRank'
 import type { WikiDigimonListItem } from '../types/wikiApi'
 
@@ -26,20 +27,8 @@ const STAGE_OPTIONS = [
   'Armor',
   'Spirit',
 ] as const
-const ELEMENT_OPTIONS = [
-  'Fire',
-  'Water',
-  'Wind',
-  'Earth',
-  'Light',
-  'Darkness',
-  'Steel',
-  'Wood',
-  'Thunder',
-  'Ice',
-  'Neutral',
-] as const
-const ATTRIBUTE_OPTIONS = ['Vaccine', 'Data', 'Virus', 'Free', 'None'] as const
+const ELEMENT_OPTIONS = WIKI_ELEMENT_OPTIONS
+const ATTRIBUTE_OPTIONS = WIKI_ATTRIBUTE_OPTIONS
 
 /** Distinct family types present in the current wiki dataset (Digimon may belong to several). */
 const FAMILY_OPTIONS = [
