@@ -71,10 +71,32 @@ export function parseSupportEffects(
     })
   }
 
+  // Example: "Recovers 2783 HP + 167 per skill level"
+  const healPlusScaleRe =
+    /(Recovers|Restores|Heals)\s+(\d+(?:\.\d+)?)\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*?)\s*\+\s*(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b/gi
+  for (const m of description.matchAll(healPlusScaleRe)) {
+    const action = m[1]
+    const target = m[4].trim()
+    const base = toNum(m[2])
+    const baseUnit = (m[3] as '%' | '') || ''
+    const per = toNum(m[5])
+    const perUnit = (m[6] as '%' | '') || baseUnit
+    const unit = baseUnit || perUnit
+    out.push({
+      label: `${action} ${target}`,
+      base,
+      perLevel: per,
+      unit,
+      valueAtLevel: base + per * (L - 1),
+    })
+  }
+
   // Example: "Recovers 15% HP", "Heals 1200 HP"
   const healDirectRe =
     /(Recovers|Restores|Heals)\s+(\d+(?:\.\d+)?)\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*)/gi
   for (const m of description.matchAll(healDirectRe)) {
+    const phrase = m[0]
+    if (/\+\s*\d+(?:\.\d+)?\s*(?:%?)\s*per\s+(?:skill\s+level|Lv)\b/i.test(phrase)) continue
     const action = m[1]
     const base = toNum(m[2])
     const unit = ((m[3] as '%' | '') || '') as '%' | ''
