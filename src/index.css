@@ -470,6 +470,18 @@ code {
   color: #fde68a;
 }
 
+.tier-wip-note {
+  margin: 0.35rem 0 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.18);
+  color: #fecaca;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  max-width: 48rem;
+}
+
 .tier-matrix-empty {
   margin: 0.75rem 0 0;
 }
@@ -2356,6 +2368,15 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   color: var(--cyan);
   font-size: 1.35rem;
   font-variant-numeric: tabular-nums;
+}
+
+/* Tier WIP / stale callouts live in .lab-result; reset lab-result strong sizing */
+.tier-page .tier-wip-note strong,
+.tier-page .tier-stale-note strong {
+  font-size: inherit;
+  font-weight: 600;
+  font-variant-numeric: normal;
+  color: var(--cyan);
 }
 
 .thumb-placeholder {

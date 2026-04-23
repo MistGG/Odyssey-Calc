@@ -23,7 +23,8 @@ export function isDamageReductionLabel(label: string): boolean {
   return (
     /damage reduction|dmg reduction/.test(l) ||
     /reduces\s+all\s+damage/.test(l) ||
-    /reduces\s+damage\s+taken/.test(l)
+    /reduces\s+damage\s+taken/.test(l) ||
+    /incoming\s+damage/.test(l)
   )
 }
 

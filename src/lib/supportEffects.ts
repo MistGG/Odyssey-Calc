@@ -91,6 +91,32 @@ export function parseSupportEffects(
     })
   }
 
+  // Example: "granting a shield of 3859 HP + 192 per skill level"
+  // Example: "reduces incoming damage by 6% + 0.4% per skill level"
+  const genericPlusScaleRe =
+    /([A-Za-z][A-Za-z0-9\s/%'()-]*?)\s+(?:by|of)\s+(\d+(?:\.\d+)?)\s*(%?)\s*\+\s*(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b/gi
+  for (const m of description.matchAll(genericPlusScaleRe)) {
+    const rawTarget = m[1].trim().replace(/\s+/g, ' ')
+    // Prefer semantic labels so later bucketing can classify mitigation/heal effects.
+    const label = /\b(reduce|decreas|incoming damage|damage taken)\b/i.test(rawTarget)
+      ? `Reduces ${rawTarget}`
+      : /\b(recover|restore|heal)\b/i.test(rawTarget)
+        ? `Recovers ${rawTarget}`
+        : `Increases ${rawTarget}`
+    const base = toNum(m[2])
+    const baseUnit = (m[3] as '%' | '') || ''
+    const per = toNum(m[4])
+    const perUnit = (m[5] as '%' | '') || baseUnit
+    const unit = baseUnit || perUnit
+    out.push({
+      label,
+      base,
+      perLevel: per,
+      unit,
+      valueAtLevel: base + per * (L - 1),
+    })
+  }
+
   // Example: "Recovers 15% HP", "Heals 1200 HP"
   const healDirectRe =
     /(Recovers|Restores|Heals)\s+(\d+(?:\.\d+)?)\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*)/gi
@@ -274,7 +300,9 @@ function effectStatBucket(e: ParsedSupportEffect): string {
   if (/\bcritical\s*rate\b|\bcrit\s*rate\b|\bct\b/i.test(l)) return `crit_rate|${u}`
   if (/\bhit\s*rate\b/i.test(l)) return `hit_rate|${u}`
   if (/\bdefense\b|\bdefence\b/i.test(l)) return `def|${u}`
-  if (/\bdamage\s*reduction\b|\bdmg\s*reduction\b/i.test(l)) return `dmg_red|${u}`
+  if (/\bdamage\s*reduction\b|\bdmg\s*reduction\b|\bincoming\s*damage\b|\bdamage\s*taken\b/i.test(l)) {
+    return `dmg_red|${u}`
+  }
   if (/\bmax\s*hp\b/i.test(l)) return `max_hp|${u}`
   if (/\bhp\b/i.test(l) && !/max/.test(l)) return `hp|${u}`
   if (/\bds\b/i.test(l)) return `ds|${u}`

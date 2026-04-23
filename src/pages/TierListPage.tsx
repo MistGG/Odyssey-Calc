@@ -587,8 +587,9 @@ export function TierListPage() {
         )
 
         if (backoffMs > 0) {
+          const runTotal = run?.total ?? working.queue.length
           setStatus(
-            `Rate limit cooldown (${Math.ceil(backoffMs / 1000)}s)… then resuming at ${Object.keys(working.entries).length}/${working.total}.`,
+            `Rate limit cooldown (${Math.ceil(backoffMs / 1000)}s)… then resuming at ${runDone}/${runTotal || 1}.`,
           )
           await sleep(backoffMs)
           backoffMs = 0
@@ -663,8 +664,12 @@ export function TierListPage() {
           processed % COOLDOWN_EVERY_N_REQUESTS === 0 &&
           working.queue.length > 0
         ) {
+          const run = buildRunRef.current
+          const cdTotal = run && run.total > 0 ? run.total : working.queue.length
+          const cdDone =
+            run && run.total > 0 ? Math.min(run.total, run.total - working.queue.length) : 0
           setStatus(
-            `Cooling down for ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s to avoid rate limits… (${Object.keys(working.entries).length}/${working.total})`,
+            `Cooling down for ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s to avoid rate limits… (${cdDone}/${cdTotal || 1})`,
           )
           await sleep(RATE_LIMIT_COOLDOWN_MS)
         } else {
@@ -1345,6 +1350,10 @@ export function TierListPage() {
               <p className="muted">
                 Tank wiki role only. Score is a heuristic for sorting this list, not in-game EHP.
               </p>
+              <p className="tier-wip-note" role="status">
+                Tank tier list is a <strong>very large work in progress</strong>; scores and ordering can
+                change substantially as formulas and parsing improve.
+              </p>
               <details className="tier-score-explainer">
                 <summary>Tank score (how it&apos;s calculated)</summary>
                 <div className="tier-score-explainer-body">
@@ -1394,6 +1403,10 @@ export function TierListPage() {
               <p className="muted">
                 Support wiki role only. Ranking is driven by modeled sustained healing (HP/s from wiki
                 cooldowns, same 180s spirit as DPS tiers), then mitigation, buffs, and INT.
+              </p>
+              <p className="tier-wip-note" role="status">
+                Healer tier list is a <strong>very large work in progress</strong>; scores and ordering can
+                change substantially as formulas and parsing improve.
               </p>
               <details className="tier-score-explainer">
                 <summary>Healer score (how it&apos;s calculated)</summary>
