@@ -18,13 +18,16 @@ export function skillBuffUptime(skill: WikiSkill): number {
   return Math.min(1, dur / cd)
 }
 
+/** Matches wiki DR lines and the canonical display label from `normalizeDamageReductionDisplayLabel`. */
 export function isDamageReductionLabel(label: string): boolean {
-  const l = label.toLowerCase()
+  const l = label.trim().toLowerCase()
+  if (l === 'damage reduction') return true
   return (
-    /damage reduction|dmg reduction/.test(l) ||
-    /reduces\s+all\s+damage/.test(l) ||
-    /reduces\s+damage\s+taken/.test(l) ||
-    /incoming\s+damage/.test(l)
+    /\bdmg\s*reduction\b/.test(l) ||
+    /\bdamage\s+reduction\b/.test(l) ||
+    /\breduces\s+all\s+damage\b/.test(l) ||
+    /\breduces\s+damage\s+taken\b/.test(l) ||
+    /\b(?:reduces|decreases)\s+incoming\s+damage\b/.test(l)
   )
 }
 
@@ -33,9 +36,34 @@ export function isShieldLabel(label: string): boolean {
 }
 
 export function isHealHpLabel(label: string): boolean {
+  if (label.trim().toLowerCase() === 'heal over time') return true
   const l = label.toLowerCase()
-  if (!/(recovers|restores|heals)/.test(l)) return false
-  return /\bhp\b/.test(l) || /\bhealth\b/.test(l)
+  if (!/(recovers|restores|heals|regenerat|over time)/.test(l)) return false
+  return /\bhp\b/.test(l) || /\bhealth\b/.test(l) || /over time/.test(l)
+}
+
+/**
+ * Tick count during buff (or cooldown fallback). Prefers `hotIntervalSec` from parsed regen lines;
+ * otherwise parses `every Ns` from legacy display labels.
+ */
+export function healOverTimeTicksDuringBuff(
+  e: { label: string; hotIntervalSec?: number },
+  skill: WikiSkill,
+): number {
+  let interval: number | undefined
+  if (typeof e.hotIntervalSec === 'number' && e.hotIntervalSec > 0) {
+    interval = e.hotIntervalSec
+  } else if (/over time/i.test(e.label)) {
+    const m = e.label.match(/\bevery\s+(\d+(?:\.\d+)?)\s*s\b/i)
+    if (m) interval = Number(m[1])
+  }
+  if (interval === undefined || !Number.isFinite(interval) || interval <= 0) return 1
+  const intervalClamped = Math.max(0.5, interval)
+  const dur =
+    typeof skill.buff?.duration === 'number' && skill.buff.duration > 0
+      ? skill.buff.duration
+      : Math.max(1, skill.cooldown_sec)
+  return Math.max(1, Math.floor(dur / intervalClamped))
 }
 
 export function isMaxHpPctLabel(label: string, unit: '%' | ''): boolean {

@@ -18,6 +18,7 @@ import {
   loadTierListCache,
   saveTierListCache,
   tierEntryIsStaleForDetailFetch,
+  TIER_SUPPORT_SCORE_REVISION,
   type SustainedDpsEntry,
   type TierListCache,
   type TierListMode,
@@ -547,7 +548,8 @@ export function TierListPage() {
             (hadPriorSignatures && working.listSignatures[id] !== signatures[id]) ||
             !entry ||
             !entry.status ||
-            tierEntryIsStaleForDetailFetch(entry)
+            tierEntryIsStaleForDetailFetch(entry) ||
+            entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION
           )
         })
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
@@ -630,6 +632,7 @@ export function TierListPage() {
             status: getDigimonContentStatus(detail.skills),
             checkedAt: new Date().toISOString(),
             skillsSignature: tierSkillsSignature(detail.skills),
+            supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
           }
           working.entries[id] = entry
           refreshedIds.add(id)

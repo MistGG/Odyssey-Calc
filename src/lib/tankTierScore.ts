@@ -1,6 +1,7 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
 import { buildSupportSkillEffects } from './supportEffects'
 import {
+  healOverTimeTicksDuringBuff,
   isDamageReductionLabel,
   isHealHpLabel,
   isMaxHpPctLabel,
@@ -38,7 +39,7 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
   for (const skill of detail.skills) {
     const level = tierListSkillLevel(skill)
     const uptime = skillBuffUptime(skill)
-    const effects = buildSupportSkillEffects(skill, level)
+    const effects = buildSupportSkillEffects(skill, level, hp)
 
     for (const e of effects) {
       const lab = e.label
@@ -52,8 +53,9 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
         if (unit === '%') mitigationRaw += (v / 100) * uptime * 100
         else mitigationRaw += Math.min(3, (v / hp) * uptime * 28)
       } else if (isHealHpLabel(lab)) {
-        if (unit === '%') mitigationRaw += (v / 100) * uptime * 90
-        else mitigationRaw += Math.min(3, (v / hp) * uptime * 36)
+        const ticks = healOverTimeTicksDuringBuff(e, skill)
+        if (unit === '%') mitigationRaw += (v / 100) * uptime * 90 * ticks
+        else mitigationRaw += Math.min(3, (v / hp) * uptime * 36) * ticks
       } else if (isMaxHpPctLabel(lab, unit)) {
         mitigationRaw += (v / 100) * uptime * 70
       }

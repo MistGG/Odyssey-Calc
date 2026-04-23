@@ -1,6 +1,7 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
 import { buildSupportSkillEffects, type ParsedSupportEffect } from './supportEffects'
 import {
+  healOverTimeTicksDuringBuff,
   isDamageReductionLabel,
   isHealHpLabel,
   isShieldLabel,
@@ -73,12 +74,14 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
 
   for (const skill of detail.skills) {
     const level = tierListSkillLevel(skill)
-    const effects = buildSupportSkillEffects(skill, level)
+    const effects = buildSupportSkillEffects(skill, level, hp)
     const uptime = skillBuffUptime(skill)
 
     let healPerCast = 0
     for (const e of effects) {
-      if (isHealHpLabel(e.label)) healPerCast += healHpPerCast(e, hp)
+      if (!isHealHpLabel(e.label)) continue
+      const ticks = healOverTimeTicksDuringBuff(e, skill)
+      healPerCast += healHpPerCast(e, hp) * ticks
     }
     if (healPerCast > 0) {
       const periodSec = Math.max(0.75, skill.cooldown_sec + skill.cast_time_sec)

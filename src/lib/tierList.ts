@@ -5,6 +5,13 @@ export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v1'
 /** Re-fetch detail (skills + stats) after this long even if the index row is unchanged. */
 export const TIER_ENTRY_STALE_MS = 7 * 24 * 60 * 60 * 1000
 
+/**
+ * Bump when tank/healer tier scoring or support-effect parsing used by those scores changes
+ * (e.g. HoT labels, tick intervals, new effect buckets). Entries with a mismatch are re-queued on
+ * incremental tier list update so cached tank/healer scores are not stuck on an old algorithm.
+ */
+export const TIER_SUPPORT_SCORE_REVISION = 1
+
 export function tierEntryIsStaleForDetailFetch(
   entry: SustainedDpsEntry | undefined,
   nowMs = Date.now(),
@@ -31,6 +38,8 @@ export type SustainedDpsEntry = {
   checkedAt: string
   /** Fingerprint of skill stats last time detail was fetched (see tierSkillsSignature). */
   skillsSignature?: string
+  /** Last detail fetch used this revision of tank/healer scoring + support parsing (see TIER_SUPPORT_SCORE_REVISION). */
+  supportScoreRevision?: number
 }
 
 export type TierListCache = {

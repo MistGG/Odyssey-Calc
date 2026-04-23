@@ -97,6 +97,8 @@ export function DigimonDetailPage() {
     )
   if (!data) return null
 
+  const wikiMaxHp = Math.max(1, data.stats?.hp ?? data.hp ?? 1)
+
   const portraitSrc = digimonPortraitUrl(data.model_id, data.id, data.name)
   const showPortrait = portraitSrc && !portraitBroken
   const status = getDigimonContentStatus(data.skills)
@@ -245,7 +247,7 @@ export function DigimonDetailPage() {
               cap,
             )
             const support = skillIsSupportOnly(s.base_dmg, s.scaling)
-            const supportEffects = support ? buildSupportSkillEffects(s, L) : []
+            const supportEffects = support ? buildSupportSkillEffects(s, L, wikiMaxHp) : []
             return (
               <li
                 key={s.id}
