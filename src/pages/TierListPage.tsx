@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
+import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC, computeDpsSpecializedScore } from '../lib/dpsTierScore'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
 import { computeHealerTierScore } from '../lib/healerTierScore'
@@ -20,6 +21,7 @@ import {
   DPS_TIER_MATRIX_COLUMN_LABELS,
   loadTierListCache,
   saveTierListCache,
+  tierEntryDpsCategoryScoresComplete,
   tierEntryIsStaleForDetailFetch,
   TIER_SUPPORT_SCORE_REVISION,
   type BuildTierGroupsOptions,
@@ -157,7 +159,12 @@ function writeTierListMode(mode: TierListMode) {
 function readDpsTierCategory(): DpsTierCategoryKey {
   try {
     const v = localStorage.getItem(TIER_DPS_CATEGORY_KEY)
-    if (v === 'sustained' || v === 'burst' || v === 'specialized') return v
+    if (v === 'sustained' || v === 'burst' || v === 'specialized' || v === 'aoe') {
+      return v
+    }
+    if (v === 'aoe_general' || v === 'aoe_damage' || v === 'aoe_cooldown' || v === 'aoe_radius') {
+      return 'aoe'
+    }
   } catch {
     /* ignore */
   }
@@ -666,6 +673,7 @@ export function TierListPage() {
             },
           )
           const specializedScore = computeDpsSpecializedScore(detail)
+          const aoeScores = computeDpsAoeCategoryScores(detail)
           const tank = computeTankTierScore(detail)
           const healer = computeHealerTierScore(detail)
           const entry: SustainedDpsEntry = {
@@ -679,6 +687,7 @@ export function TierListPage() {
               burst: simBurst.dps,
               specialized: specializedScore,
             },
+            aoeCategoryScores: aoeScores,
             tankScore: tank.score,
             tankCategoryScores: tank.categoryScores,
             healerScore: healer.score,
@@ -931,7 +940,7 @@ export function TierListPage() {
 
   const dpsScoresStale = useMemo(() => {
     if (tierMode !== 'dps') return false
-    return Object.values(entriesForMatrix).some((e) => e.dpsCategoryScores == null)
+    return Object.values(entriesForMatrix).some((e) => !tierEntryDpsCategoryScoresComplete(e))
   }, [tierMode, entriesForMatrix])
 
   const updateSummarySections = useMemo(() => {
@@ -1560,7 +1569,9 @@ export function TierListPage() {
         <section className="lab-result tier-matrix-section">
           <h3>
             {tierMode === 'dps'
-              ? `DPS tier list — ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
+              ? dpsTierCategory === 'aoe'
+                ? 'DPS tier list — AoE (General / Damage / Cooldown / Radius)'
+                : `DPS tier list — ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
               : tierMode === 'tank'
                 ? 'Tank tier list'
                 : 'Healer tier list'}
@@ -1586,6 +1597,14 @@ export function TierListPage() {
                       <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
                       buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0
                       and/or party/allies/group-style wording in skill or buff text.
+                    </li>
+                    <li>
+                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
+                      (General, Damage, Cooldown, Radius). Only skills with wiki <code>radius</code> &gt; 0 (same as
+                      the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
+                      per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
+                      <code>1 / (cast + cooldown)</code>; <strong>Radius</strong>: <code>log1p</code> of summed
+                      radius. <strong>General</strong> is the average of those three scores (equal weight).
                     </li>
                   </ul>
                 </div>
@@ -1814,14 +1833,16 @@ export function TierListPage() {
           ) : (
             <div
               className={`tier-matrix-wrap${
-                tierMode === 'tank' || tierMode === 'healer'
+                tierMode === 'tank' || tierMode === 'healer' || (tierMode === 'dps' && dpsTierCategory === 'aoe')
                   ? ' tier-matrix-wrap--category-matrix'
                   : ''
               }`}
             >
               <table
                 className={`tier-matrix${
-                  tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix--category-matrix' : ''
+                  tierMode === 'tank' || tierMode === 'healer' || (tierMode === 'dps' && dpsTierCategory === 'aoe')
+                    ? ' tier-matrix--category-matrix'
+                    : ''
                 }`}
               >
                 <colgroup>
@@ -1859,14 +1880,28 @@ export function TierListPage() {
                                       ? digimonPortraitUrl(modelId, e.id, e.name)
                                       : undefined
                                     const scoreLabel =
-                                      tierMode === 'dps'
+                                      tierMode === 'dps' && dpsTierCategory === 'aoe' && columnGroup?.aoeSortKey
                                         ? (() => {
-                                            const k = dpsTierCategory
-                                            const s = e.dpsCategoryScores
-                                            const v = s?.[k] ?? (k === 'sustained' ? e.dps : undefined)
-                                            if (v == null) return '…'
-                                            return k === 'specialized' ? v.toFixed(2) : v.toFixed(1)
+                                            const k = columnGroup.aoeSortKey
+                                            const s = e.aoeCategoryScores
+                                            const v = s?.[k]
+                                            return v != null ? v.toFixed(2) : '…'
                                           })()
+                                        : tierMode === 'dps' && dpsTierCategory !== 'aoe'
+                                          ? (() => {
+                                              const k = dpsTierCategory
+                                              const s = e.dpsCategoryScores
+                                              const v =
+                                                k === 'sustained'
+                                                  ? (s?.sustained ?? e.dps)
+                                                  : k === 'burst'
+                                                    ? s?.burst
+                                                    : k === 'specialized'
+                                                      ? s?.specialized
+                                                      : undefined
+                                              if (v == null) return '…'
+                                              return k === 'specialized' ? v.toFixed(2) : v.toFixed(1)
+                                            })()
                                         : tierMode === 'tank' && columnGroup?.tankSortKey
                                           ? (() => {
                                               const k = columnGroup.tankSortKey

@@ -46,14 +46,27 @@ export type HealerTierCategoryScores = {
 
 export type HealerTierCategoryKey = keyof HealerTierCategoryScores
 
-/** DPS tier matrix columns (see `simulateRotation` + specialized heuristic). */
-export type DpsTierCategoryScores = {
+/** Rotation DPS sub-tabs (wiki role columns): sustained / burst / specialized. */
+export type DpsRotationCategoryScores = {
   sustained: number
   burst: number
   specialized: number
 }
 
-export type DpsTierCategoryKey = keyof DpsTierCategoryScores
+export type DpsRotationCategoryKey = keyof DpsRotationCategoryScores
+
+/** AoE matrix columns when the DPS sub-tab “AoE” is selected (wiki `radius` skills). */
+export type AoeTierCategoryScores = {
+  general: number
+  damage: number
+  cooldown: number
+  radius: number
+}
+
+export type AoeTierCategoryKey = keyof AoeTierCategoryScores
+
+/** DPS sub-tab: rotation lenses, or `aoe` for the four-column AoE matrix. */
+export type DpsTierCategoryKey = DpsRotationCategoryKey | 'aoe'
 
 export type SustainedDpsEntry = {
   id: string
@@ -61,8 +74,10 @@ export type SustainedDpsEntry = {
   role: string
   stage: string
   dps: number
-  /** Burst / sustained / specialized sort keys for the DPS tier matrix (`sustained` matches `dps`). */
-  dpsCategoryScores?: DpsTierCategoryScores
+  /** Sustained / burst / specialized (`sustained` matches `dps`). */
+  dpsCategoryScores?: DpsRotationCategoryScores
+  /** AoE kit heuristics (see `computeDpsAoeCategoryScores`); used only for the AoE matrix. */
+  aoeCategoryScores?: AoeTierCategoryScores
   /** Heuristic tank index from stats + parsed mitigation (see tankTierScore); equals categoryScores.overall. */
   tankScore?: number
   /** Heuristic support/healer index (see healerTierScore); equals categoryScores.general. */
@@ -88,13 +103,15 @@ export type TierListCache = {
 }
 
 export type TierGroup = {
-  /** Column header (DPS = wiki role; tank/healer = category label). */
+  /** Column header (DPS rotation = wiki role; DPS AoE / tank / healer = category label). */
   role: string
   tiers: Record<TierBucket, SustainedDpsEntry[]>
   /** When set, matrix shows this tank category score in the column. */
   tankSortKey?: TankTierCategoryKey
   /** When set, matrix shows this healer category score in the column. */
   healerSortKey?: HealerTierCategoryKey
+  /** When set (DPS AoE matrix), matrix shows this AoE score in the column. */
+  aoeSortKey?: AoeTierCategoryKey
 }
 
 /** Optional sort/display lens for DPS tier list (`buildTierGroups(..., 'dps', opts)`). */
@@ -150,12 +167,70 @@ export const HEALER_TIER_MATRIX_COLUMN_LABELS: Record<HealerTierCategoryKey, str
   int: 'INT',
 }
 
-export const DPS_TIER_CATEGORY_ORDER: readonly DpsTierCategoryKey[] = ['sustained', 'burst', 'specialized']
+/** DPS header sub-tabs (first row). Selecting `aoe` switches the matrix to AoE columns. */
+export const DPS_TIER_CATEGORY_ORDER: readonly DpsTierCategoryKey[] = [
+  'sustained',
+  'burst',
+  'specialized',
+  'aoe',
+]
 
 export const DPS_TIER_MATRIX_COLUMN_LABELS: Record<DpsTierCategoryKey, string> = {
   sustained: 'Sustained DPS',
   burst: 'Burst DPS (10s)',
   specialized: 'Specialized',
+  aoe: 'AoE',
+}
+
+export const AOE_TIER_CATEGORY_ORDER: readonly AoeTierCategoryKey[] = [
+  'general',
+  'damage',
+  'cooldown',
+  'radius',
+]
+
+export const AOE_TIER_MATRIX_COLUMN_LABELS: Record<AoeTierCategoryKey, string> = {
+  general: 'General',
+  damage: 'Damage',
+  cooldown: 'Cooldown',
+  radius: 'Radius',
+}
+
+function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
+  const raw = entry.dpsCategoryScores as unknown
+  if (!raw || typeof raw !== 'object' || entry.aoeCategoryScores) return entry
+  const d = raw as Record<string, number>
+  if (typeof d.aoe_general !== 'number') return entry
+  return {
+    ...entry,
+    dpsCategoryScores: {
+      sustained: typeof d.sustained === 'number' ? d.sustained : entry.dps,
+      burst: typeof d.burst === 'number' ? d.burst : entry.dps,
+      specialized: typeof d.specialized === 'number' ? d.specialized : 0,
+    },
+    aoeCategoryScores: {
+      general: d.aoe_general,
+      damage: d.aoe_damage,
+      cooldown: d.aoe_cooldown,
+      radius: d.aoe_radius,
+    },
+  }
+}
+
+/** True when rotation + AoE scores are present (prompt tier list refresh if false). */
+export function tierEntryDpsCategoryScoresComplete(entry: SustainedDpsEntry): boolean {
+  const d = entry.dpsCategoryScores
+  const a = entry.aoeCategoryScores
+  if (!d || !a) return false
+  for (const k of ['sustained', 'burst', 'specialized'] as const) {
+    const v = d[k]
+    if (typeof v !== 'number' || !Number.isFinite(v)) return false
+  }
+  for (const k of AOE_TIER_CATEGORY_ORDER) {
+    const v = a[k]
+    if (typeof v !== 'number' || !Number.isFinite(v)) return false
+  }
+  return true
 }
 
 export function loadTierListCache(): TierListCache | null {
@@ -167,7 +242,13 @@ export function loadTierListCache(): TierListCache | null {
       | (Omit<TierListCache, 'version' | 'listSignatures'> & { version: 1 })
       | (Omit<TierListCache, 'version'> & { version: 2 })
     if (!parsed) return null
-    if (parsed.version === 3) return parsed
+    if (parsed.version === 3) {
+      const entries: Record<string, SustainedDpsEntry> = {}
+      for (const [id, e] of Object.entries(parsed.entries)) {
+        entries[id] = migrateEntryDpsAoeShape(e)
+      }
+      return { ...parsed, entries }
+    }
     if (parsed.version === 2) {
       return { ...parsed, version: 3 }
     }
@@ -219,11 +300,15 @@ function healerCategorySortValue(entry: SustainedDpsEntry, key: HealerTierCatego
   return entry.healerCategoryScores?.[key] ?? entry.healerScore ?? -1
 }
 
-function dpsCategorySortValue(entry: SustainedDpsEntry, key: DpsTierCategoryKey): number {
+function dpsRotationSortValue(entry: SustainedDpsEntry, key: DpsRotationCategoryKey): number {
   const s = entry.dpsCategoryScores
   if (s && key in s) return s[key]
   if (key === 'sustained') return entry.dps ?? -1
   return -1
+}
+
+function aoeCategorySortValue(entry: SustainedDpsEntry, key: AoeTierCategoryKey): number {
+  return entry.aoeCategoryScores?.[key] ?? -1
 }
 
 export function buildTierGroups(
@@ -268,7 +353,25 @@ export function buildTierGroups(
   }
 
   if (mode === 'dps') {
-    const lens = options?.dpsCategory ?? 'sustained'
+    const lens: DpsTierCategoryKey = options?.dpsCategory ?? 'sustained'
+
+    if (lens === 'aoe') {
+      const pool = Object.values(entriesMap)
+      const groups: TierGroup[] = []
+      for (const key of AOE_TIER_CATEGORY_ORDER) {
+        const list = [...pool].sort(
+          (a, b) => aoeCategorySortValue(b, key) - aoeCategorySortValue(a, key),
+        )
+        groups.push({
+          role: AOE_TIER_MATRIX_COLUMN_LABELS[key],
+          tiers: assignTierBuckets(list),
+          aoeSortKey: key,
+        })
+      }
+      return groups
+    }
+
+    const rotLens = lens
     const byRole = new Map<string, SustainedDpsEntry[]>()
     for (const e of Object.values(entriesMap)) {
       const role = e.role || 'Unknown'
@@ -279,7 +382,7 @@ export function buildTierGroups(
     const groups: TierGroup[] = []
     for (const [role, list] of byRole.entries()) {
       list.sort(
-        (a, b) => dpsCategorySortValue(b, lens) - dpsCategorySortValue(a, lens),
+        (a, b) => dpsRotationSortValue(b, rotLens) - dpsRotationSortValue(a, rotLens),
       )
       groups.push({ role, tiers: assignTierBuckets(list) })
     }
