@@ -13,7 +13,6 @@ export function Layout() {
           <Link to="/">Browse</Link>
           <Link to="/lab">Lab</Link>
           <Link to="/tier-list">Tier list</Link>
-          <Link to="/local">Local</Link>
           <a
             className="nav-link-official"
             href="https://thedigitalodyssey.com/"
@@ -24,14 +23,6 @@ export function Layout() {
           </a>
         </nav>
       </header>
-      {import.meta.env.DEV && (
-        <div className="dev-local-strip" role="status">
-          <span>
-            Local dev · wiki API proxied at <code>/api/wiki</code>
-          </span>
-          <Link to="/local">Run locally guide</Link>
-        </div>
-      )}
       <main className="main">
         <Outlet />
       </main>
