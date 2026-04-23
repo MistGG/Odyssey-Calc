@@ -1470,7 +1470,7 @@ export function TierListPage() {
                 DPS sims and specialized heuristics are a <strong>work in progress</strong>.
               </p>
               <details className="tier-score-explainer">
-                <summary>DPS metrics (what the sub-tabs change)</summary>
+                <summary>DPS Scoring</summary>
                 <div className="tier-score-explainer-body">
                   <ul className="tier-score-explainer-list">
                     <li>
@@ -1504,7 +1504,7 @@ export function TierListPage() {
                 change substantially as formulas and parsing improve.
               </p>
               <details className="tier-score-explainer">
-                <summary>Tank score (how it&apos;s calculated)</summary>
+                <summary>Tank Scoring</summary>
                 <div className="tier-score-explainer-body">
                   <ul className="tier-score-explainer-list">
                     <li>
@@ -1554,7 +1554,7 @@ export function TierListPage() {
                 change substantially as formulas and parsing improve.
               </p>
               <details className="tier-score-explainer">
-                <summary>Healer score (how it&apos;s calculated)</summary>
+                <summary>Healer Scoring</summary>
                 <div className="tier-score-explainer-body">
                   <ul className="tier-score-explainer-list">
                     <li>
