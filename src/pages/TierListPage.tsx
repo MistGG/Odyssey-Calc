@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
+import { BURST_DPS_WINDOW_SEC, computeDpsSpecializedScore } from '../lib/dpsTierScore'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
 import { computeHealerTierScore } from '../lib/healerTierScore'
 import { computeTankTierScore } from '../lib/tankTierScore'
@@ -15,10 +16,14 @@ import {
 import {
   buildTierGroups,
   createEmptyTierListCache,
+  DPS_TIER_CATEGORY_ORDER,
+  DPS_TIER_MATRIX_COLUMN_LABELS,
   loadTierListCache,
   saveTierListCache,
   tierEntryIsStaleForDetailFetch,
   TIER_SUPPORT_SCORE_REVISION,
+  type BuildTierGroupsOptions,
+  type DpsTierCategoryKey,
   type SustainedDpsEntry,
   type TierListCache,
   type TierListMode,
@@ -43,6 +48,7 @@ const RATE_LIMIT_COOLDOWN_MS = 10_000
 const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'
 const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
 const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
+const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 const TIER_DPS_CHANGE_EPS = 0.05
 const TIER_TANK_SCORE_CHANGE_EPS = 0.02
 const TIER_HEALER_SCORE_CHANGE_EPS = 0.02
@@ -141,6 +147,24 @@ function readTierListMode(): TierListMode {
 function writeTierListMode(mode: TierListMode) {
   try {
     localStorage.setItem(TIER_LIST_MODE_KEY, mode)
+  } catch {
+    /* ignore */
+  }
+}
+
+function readDpsTierCategory(): DpsTierCategoryKey {
+  try {
+    const v = localStorage.getItem(TIER_DPS_CATEGORY_KEY)
+    if (v === 'sustained' || v === 'burst' || v === 'specialized') return v
+  } catch {
+    /* ignore */
+  }
+  return 'sustained'
+}
+
+function writeDpsTierCategory(cat: DpsTierCategoryKey) {
+  try {
+    localStorage.setItem(TIER_DPS_CATEGORY_KEY, cat)
   } catch {
     /* ignore */
   }
@@ -422,10 +446,16 @@ export function TierListPage() {
   )
   const [updatePanelMinimized, setUpdatePanelMinimized] = useState(readTierUpdatePanelMinimized)
   const [tierMode, setTierMode] = useState<TierListMode>(readTierListMode)
+  const [dpsTierCategory, setDpsTierCategory] = useState<DpsTierCategoryKey>(readDpsTierCategory)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
     writeTierListMode(next)
+  }
+
+  function setDpsTierCategoryPersist(next: DpsTierCategoryKey) {
+    setDpsTierCategory(next)
+    writeDpsTierCategory(next)
   }
 
   useEffect(() => {
@@ -619,6 +649,20 @@ export function TierListPage() {
               hybridStance: 'best',
             },
           )
+          const simBurst = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+            },
+          )
+          const specializedScore = computeDpsSpecializedScore(detail)
           const tank = computeTankTierScore(detail)
           const healer = computeHealerTierScore(detail)
           const entry: SustainedDpsEntry = {
@@ -627,6 +671,11 @@ export function TierListPage() {
             role: detail.role,
             stage: detail.stage,
             dps: sim.dps,
+            dpsCategoryScores: {
+              sustained: sim.dps,
+              burst: simBurst.dps,
+              specialized: specializedScore,
+            },
             tankScore: tank.score,
             tankCategoryScores: tank.categoryScores,
             healerScore: healer.score,
@@ -845,9 +894,14 @@ export function TierListPage() {
     })
   }
 
+  const tierGroupOptions = useMemo<BuildTierGroupsOptions | undefined>(
+    () => (tierMode === 'dps' ? { dpsCategory: dpsTierCategory } : undefined),
+    [tierMode, dpsTierCategory],
+  )
+
   const groups = useMemo(
-    () => buildTierGroups(entriesForMatrix, tierMode),
-    [entriesForMatrix, tierMode],
+    () => buildTierGroups(entriesForMatrix, tierMode, tierGroupOptions),
+    [entriesForMatrix, tierMode, tierGroupOptions],
   )
   const roles = useMemo(() => groups.map((g) => g.role), [groups])
   const byRole = useMemo(() => {
@@ -870,6 +924,11 @@ export function TierListPage() {
     return Object.values(entriesForMatrix).some(
       (e) => e.healerScore == null || e.healerCategoryScores == null,
     )
+  }, [tierMode, entriesForMatrix])
+
+  const dpsScoresStale = useMemo(() => {
+    if (tierMode !== 'dps') return false
+    return Object.values(entriesForMatrix).some((e) => e.dpsCategoryScores == null)
   }, [tierMode, entriesForMatrix])
 
   useEffect(() => {
@@ -916,34 +975,56 @@ export function TierListPage() {
     <div className="lab tier-page">
       <div className="tier-page-head">
         <h1>Tier lists</h1>
-        <div className="tier-mode-tabs" role="tablist" aria-label="Tier list type">
-          <button
-            type="button"
-            role="tab"
-            className="tier-mode-tab"
-            aria-selected={tierMode === 'dps'}
-            onClick={() => setTierModePersist('dps')}
-          >
-            DPS (all roles)
-          </button>
-          <button
-            type="button"
-            role="tab"
-            className="tier-mode-tab"
-            aria-selected={tierMode === 'tank'}
-            onClick={() => setTierModePersist('tank')}
-          >
-            Tank
-          </button>
-          <button
-            type="button"
-            role="tab"
-            className="tier-mode-tab"
-            aria-selected={tierMode === 'healer'}
-            onClick={() => setTierModePersist('healer')}
-          >
-            Healer
-          </button>
+        <div className="tier-page-head-controls">
+          <div className="tier-mode-tabs" role="tablist" aria-label="Tier list type">
+            <button
+              type="button"
+              role="tab"
+              className="tier-mode-tab"
+              aria-selected={tierMode === 'dps'}
+              onClick={() => setTierModePersist('dps')}
+            >
+              DPS (all roles)
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className="tier-mode-tab"
+              aria-selected={tierMode === 'tank'}
+              onClick={() => setTierModePersist('tank')}
+            >
+              Tank
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className="tier-mode-tab"
+              aria-selected={tierMode === 'healer'}
+              onClick={() => setTierModePersist('healer')}
+            >
+              Healer
+            </button>
+          </div>
+          {tierMode === 'dps' ? (
+            <div
+              className="tier-mode-tabs tier-submode-tabs"
+              role="tablist"
+              aria-label="DPS ranking metric"
+            >
+              {DPS_TIER_CATEGORY_ORDER.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  className="tier-mode-tab"
+                  aria-selected={dpsTierCategory === key}
+                  onClick={() => setDpsTierCategoryPersist(key)}
+                >
+                  {DPS_TIER_MATRIX_COLUMN_LABELS[key]}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -1377,13 +1458,50 @@ export function TierListPage() {
       {cache && !initializing && checkedCount > 0 && (
         <section className="lab-result tier-matrix-section">
           <h3>
-            {tierMode === 'dps' ? 'Sustained DPS' : tierMode === 'tank' ? 'Tank tier list' : 'Healer tier list'}
+            {tierMode === 'dps'
+              ? `DPS tier list — ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
+              : tierMode === 'tank'
+                ? 'Tank tier list'
+                : 'Healer tier list'}
           </h3>
           {tierMode === 'dps' ? (
-            <p className="muted">
-              Ranking criteria per role (sorted by {DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained DPS,
-              single target): S = top 10%, A = next 20%, B = next 30%, C = remaining.
-            </p>
+            <>
+              <p className="muted">
+                Columns are wiki roles (Melee / Ranged / Caster / Hybrid / Tank / Support). Use the sub-tabs
+                above to switch the ranking metric and the number shown: {DEFAULT_ROTATION_SIM_DURATION_SEC}s
+                sustained, {BURST_DPS_WINDOW_SEC}s burst, or Specialized. S/A/B/C cutoffs apply{' '}
+                <em>within each role column</em> among Digimon matching your filters.
+              </p>
+              <p className="tier-wip-note" role="status">
+                DPS sims and specialized heuristics are a <strong>work in progress</strong>.
+              </p>
+              <details className="tier-score-explainer">
+                <summary>DPS metrics (what the sub-tabs change)</summary>
+                <div className="tier-score-explainer-body">
+                  <ul className="tier-score-explainer-list">
+                    <li>
+                      <strong>Sustained:</strong> same simulation as Lab default — greedy rotation over{' '}
+                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s, Hybrid uses best stance.
+                    </li>
+                    <li>
+                      <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
+                      horizon (openers / short burst bias).
+                    </li>
+                    <li>
+                      <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
+                      buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0
+                      and/or party/allies/group-style wording in skill or buff text.
+                    </li>
+                  </ul>
+                </div>
+              </details>
+              {dpsScoresStale && (
+                <p className="tier-stale-note" role="status">
+                  Some rows are missing DPS category scores. Run <strong>Update tier list</strong> (or{' '}
+                  <strong>Force check all</strong>) to recalculate.
+                </p>
+              )}
+            </>
           ) : null}
           {tierMode === 'tank' ? (
             <>
@@ -1612,7 +1730,9 @@ export function TierListPage() {
           ) : (
             <div
               className={`tier-matrix-wrap${
-                tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix-wrap--category-matrix' : ''
+                tierMode === 'tank' || tierMode === 'healer'
+                  ? ' tier-matrix-wrap--category-matrix'
+                  : ''
               }`}
             >
               <table
@@ -1655,21 +1775,29 @@ export function TierListPage() {
                                       ? digimonPortraitUrl(modelId, e.id, e.name)
                                       : undefined
                                     const scoreLabel =
-                                      tierMode === 'tank' && columnGroup?.tankSortKey
+                                      tierMode === 'dps'
                                         ? (() => {
-                                            const k = columnGroup.tankSortKey
-                                            const s = e.tankCategoryScores
-                                            const v = s && k ? s[k] : e.tankScore
-                                            return v != null ? v.toFixed(2) : '…'
+                                            const k = dpsTierCategory
+                                            const s = e.dpsCategoryScores
+                                            const v = s?.[k] ?? (k === 'sustained' ? e.dps : undefined)
+                                            if (v == null) return '…'
+                                            return k === 'specialized' ? v.toFixed(2) : v.toFixed(1)
                                           })()
-                                        : tierMode === 'healer' && columnGroup?.healerSortKey
+                                        : tierMode === 'tank' && columnGroup?.tankSortKey
                                           ? (() => {
-                                              const k = columnGroup.healerSortKey
-                                              const s = e.healerCategoryScores
-                                              const v = s && k ? s[k] : e.healerScore
+                                              const k = columnGroup.tankSortKey
+                                              const s = e.tankCategoryScores
+                                              const v = s && k ? s[k] : e.tankScore
                                               return v != null ? v.toFixed(2) : '…'
                                             })()
-                                          : e.dps.toFixed(1)
+                                          : tierMode === 'healer' && columnGroup?.healerSortKey
+                                            ? (() => {
+                                                const k = columnGroup.healerSortKey
+                                                const s = e.healerCategoryScores
+                                                const v = s && k ? s[k] : e.healerScore
+                                                return v != null ? v.toFixed(2) : '…'
+                                              })()
+                                            : e.dps.toFixed(1)
                                     return (
                                       <li
                                         key={`${tier}-${role}-${e.id}`}

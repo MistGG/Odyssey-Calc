@@ -424,6 +424,23 @@ code {
   margin: 0;
 }
 
+.tier-page-head-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.tier-submode-tabs {
+  font-size: 0.72rem;
+  padding: 0.12rem;
+}
+
+.tier-submode-tabs .tier-mode-tab {
+  padding: 0.35rem 0.65rem;
+  font-size: inherit;
+}
+
 .tier-mode-tabs {
   display: flex;
   flex-wrap: wrap;
