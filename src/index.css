@@ -474,6 +474,60 @@ code {
   margin: 0.75rem 0 0;
 }
 
+.tier-score-explainer {
+  margin: 0.5rem 0 0.85rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(15, 23, 42, 0.45);
+  max-width: 52rem;
+}
+
+.tier-score-explainer summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #bae6fd;
+  list-style: none;
+}
+
+.tier-score-explainer summary::-webkit-details-marker {
+  display: none;
+}
+
+.tier-score-explainer summary::before {
+  content: '▸ ';
+  display: inline-block;
+  margin-right: 0.25rem;
+  transition: transform 0.15s ease;
+}
+
+.tier-score-explainer[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.tier-score-explainer-body {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.45);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.tier-score-explainer-body p {
+  margin: 0 0 0.55rem;
+}
+
+.tier-score-explainer-body p:last-child {
+  margin-bottom: 0;
+}
+
+.tier-score-explainer-body code {
+  font-size: 0.78em;
+  color: #fde68a;
+}
+
 .tier-progress {
   width: 100%;
   height: 10px;

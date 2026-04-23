@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail, fetchDigimonPage } from '../api/digimonService'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
+import { computeHealerTierScore } from '../lib/healerTierScore'
 import { computeTankTierScore } from '../lib/tankTierScore'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
@@ -38,6 +39,7 @@ const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
 const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
 const TIER_DPS_CHANGE_EPS = 0.05
 const TIER_TANK_SCORE_CHANGE_EPS = 0.02
+const TIER_HEALER_SCORE_CHANGE_EPS = 0.02
 
 type TierListUpdateSummary = {
   finishedAt: string
@@ -84,6 +86,23 @@ type TierListUpdateSummary = {
     delta: number
   }>
   tankNew: Array<{ id: string; name: string; role: string; after: number }>
+  healerUp: Array<{
+    id: string
+    name: string
+    role: string
+    before: number
+    after: number
+    delta: number
+  }>
+  healerDown: Array<{
+    id: string
+    name: string
+    role: string
+    before: number
+    after: number
+    delta: number
+  }>
+  healerNew: Array<{ id: string; name: string; role: string; after: number }>
 }
 
 function readTierUpdatePanelMinimized(): boolean {
@@ -106,6 +125,7 @@ function readTierListMode(): TierListMode {
   try {
     const v = localStorage.getItem(TIER_LIST_MODE_KEY)
     if (v === 'tank') return 'tank'
+    if (v === 'healer') return 'healer'
   } catch {
     /* ignore */
   }
@@ -140,6 +160,9 @@ function normalizeTierUpdateSummary(parsed: TierListUpdateSummary): TierListUpda
     tankUp: Array.isArray(parsed.tankUp) ? parsed.tankUp : [],
     tankDown: Array.isArray(parsed.tankDown) ? parsed.tankDown : [],
     tankNew: Array.isArray(parsed.tankNew) ? parsed.tankNew : [],
+    healerUp: Array.isArray(parsed.healerUp) ? parsed.healerUp : [],
+    healerDown: Array.isArray(parsed.healerDown) ? parsed.healerDown : [],
+    healerNew: Array.isArray(parsed.healerNew) ? parsed.healerNew : [],
   }
 }
 
@@ -179,7 +202,7 @@ function buildTierListUpdateSummary(
   mode: 'incremental' | 'force',
   snapshotBefore: Record<
     string,
-    { dps: number; tankScore?: number; status?: DigimonContentStatus }
+    { dps: number; tankScore?: number; healerScore?: number; status?: DigimonContentStatus }
   >,
   entriesAfter: Record<string, SustainedDpsEntry>,
   refreshedIds: Set<string>,
@@ -190,20 +213,34 @@ function buildTierListUpdateSummary(
   const tankUp: TierListUpdateSummary['tankUp'] = []
   const tankDown: TierListUpdateSummary['tankDown'] = []
   const tankNew: TierListUpdateSummary['tankNew'] = []
+  const healerUp: TierListUpdateSummary['healerUp'] = []
+  const healerDown: TierListUpdateSummary['healerDown'] = []
+  const healerNew: TierListUpdateSummary['healerNew'] = []
   const statusChanges: TierListUpdateSummary['statusChanges'] = []
 
   for (const id of refreshedIds) {
     const after = entriesAfter[id]
     if (!after) continue
     const before = snapshotBefore[id]
+    const roleTrim = (after.role || '').trim()
     if (before === undefined) {
       dpsNew.push({ id, name: after.name, role: after.role, after: after.dps })
-      tankNew.push({
-        id,
-        name: after.name,
-        role: after.role,
-        after: after.tankScore ?? 0,
-      })
+      if (roleTrim === 'Tank') {
+        tankNew.push({
+          id,
+          name: after.name,
+          role: after.role,
+          after: after.tankScore ?? 0,
+        })
+      }
+      if (roleTrim === 'Support') {
+        healerNew.push({
+          id,
+          name: after.name,
+          role: after.role,
+          after: after.healerScore ?? 0,
+        })
+      }
     } else {
       const delta = after.dps - before.dps
       if (delta > TIER_DPS_CHANGE_EPS) {
@@ -226,27 +263,54 @@ function buildTierListUpdateSummary(
         })
       }
 
-      const ta = after.tankScore ?? 0
-      const tb = before.tankScore ?? 0
-      const tDelta = ta - tb
-      if (tDelta > TIER_TANK_SCORE_CHANGE_EPS) {
-        tankUp.push({
-          id,
-          name: after.name,
-          role: after.role,
-          before: tb,
-          after: ta,
-          delta: tDelta,
-        })
-      } else if (tDelta < -TIER_TANK_SCORE_CHANGE_EPS) {
-        tankDown.push({
-          id,
-          name: after.name,
-          role: after.role,
-          before: tb,
-          after: ta,
-          delta: tDelta,
-        })
+      if (roleTrim === 'Tank') {
+        const ta = after.tankScore ?? 0
+        const tb = before.tankScore ?? 0
+        const tDelta = ta - tb
+        if (tDelta > TIER_TANK_SCORE_CHANGE_EPS) {
+          tankUp.push({
+            id,
+            name: after.name,
+            role: after.role,
+            before: tb,
+            after: ta,
+            delta: tDelta,
+          })
+        } else if (tDelta < -TIER_TANK_SCORE_CHANGE_EPS) {
+          tankDown.push({
+            id,
+            name: after.name,
+            role: after.role,
+            before: tb,
+            after: ta,
+            delta: tDelta,
+          })
+        }
+      }
+
+      if (roleTrim === 'Support') {
+        const ha = after.healerScore ?? 0
+        const hb = before.healerScore ?? 0
+        const hDelta = ha - hb
+        if (hDelta > TIER_HEALER_SCORE_CHANGE_EPS) {
+          healerUp.push({
+            id,
+            name: after.name,
+            role: after.role,
+            before: hb,
+            after: ha,
+            delta: hDelta,
+          })
+        } else if (hDelta < -TIER_HEALER_SCORE_CHANGE_EPS) {
+          healerDown.push({
+            id,
+            name: after.name,
+            role: after.role,
+            before: hb,
+            after: ha,
+            delta: hDelta,
+          })
+        }
       }
     }
     const prevStatus = before?.status
@@ -266,6 +330,8 @@ function buildTierListUpdateSummary(
   dpsDown.sort((a, b) => a.delta - b.delta)
   tankUp.sort((a, b) => b.delta - a.delta)
   tankDown.sort((a, b) => a.delta - b.delta)
+  healerUp.sort((a, b) => b.delta - a.delta)
+  healerDown.sort((a, b) => a.delta - b.delta)
   statusChanges.sort((a, b) => a.name.localeCompare(b.name))
 
   return {
@@ -278,6 +344,9 @@ function buildTierListUpdateSummary(
     tankUp,
     tankDown,
     tankNew,
+    healerUp,
+    healerDown,
+    healerNew,
     statusChanges,
   }
 }
@@ -427,10 +496,20 @@ export function TierListPage() {
     try {
       const snapshotBefore: Record<
         string,
-        { dps: number; tankScore?: number; status?: DigimonContentStatus }
+        {
+          dps: number
+          tankScore?: number
+          healerScore?: number
+          status?: DigimonContentStatus
+        }
       > = {}
       for (const [id, e] of Object.entries(cache.entries)) {
-        snapshotBefore[id] = { dps: e.dps, tankScore: e.tankScore, status: e.status }
+        snapshotBefore[id] = {
+          dps: e.dps,
+          tankScore: e.tankScore,
+          healerScore: e.healerScore,
+          status: e.status,
+        }
       }
       const refreshedIds = new Set<string>()
 
@@ -532,6 +611,7 @@ export function TierListPage() {
             },
           )
           const tank = computeTankTierScore(detail)
+          const healer = computeHealerTierScore(detail)
           const entry: SustainedDpsEntry = {
             id: detail.id,
             name: detail.name,
@@ -539,6 +619,7 @@ export function TierListPage() {
             stage: detail.stage,
             dps: sim.dps,
             tankScore: tank.score,
+            healerScore: healer.score,
             status: getDigimonContentStatus(detail.skills),
             checkedAt: new Date().toISOString(),
             skillsSignature: tierSkillsSignature(detail.skills),
@@ -693,7 +774,9 @@ export function TierListPage() {
     if (tierMode === 'dps') return filteredEntries
     const out: Record<string, SustainedDpsEntry> = {}
     for (const [id, e] of Object.entries(filteredEntries)) {
-      if ((e.role || '').trim() === 'Tank') out[id] = e
+      const r = (e.role || '').trim()
+      if (tierMode === 'tank' && r === 'Tank') out[id] = e
+      if (tierMode === 'healer' && r === 'Support') out[id] = e
     }
     return out
   }, [filteredEntries, tierMode])
@@ -733,6 +816,11 @@ export function TierListPage() {
   const tankScoresStale = useMemo(() => {
     if (tierMode !== 'tank') return false
     return Object.values(entriesForMatrix).some((e) => e.tankScore == null)
+  }, [tierMode, entriesForMatrix])
+
+  const healerScoresStale = useMemo(() => {
+    if (tierMode !== 'healer') return false
+    return Object.values(entriesForMatrix).some((e) => e.healerScore == null)
   }, [tierMode, entriesForMatrix])
 
   useEffect(() => {
@@ -797,6 +885,15 @@ export function TierListPage() {
             onClick={() => setTierModePersist('tank')}
           >
             Tank
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className="tier-mode-tab"
+            aria-selected={tierMode === 'healer'}
+            onClick={() => setTierModePersist('healer')}
+          >
+            Healer
           </button>
         </div>
       </div>
@@ -895,6 +992,9 @@ export function TierListPage() {
               Tank: {updateSummary.tankUp.length}↑ {updateSummary.tankDown.length}↓, {updateSummary.tankNew.length}{' '}
               new
               {' · '}
+              Healer: {updateSummary.healerUp.length}↑ {updateSummary.healerDown.length}↓,{' '}
+              {updateSummary.healerNew.length} new
+              {' · '}
               Status: {updateSummary.statusChanges.length} change
               {updateSummary.statusChanges.length === 1 ? '' : 's'}
             </p>
@@ -906,10 +1006,13 @@ export function TierListPage() {
               updateSummary.tankUp.length === 0 &&
               updateSummary.tankDown.length === 0 &&
               updateSummary.tankNew.length === 0 &&
+              updateSummary.healerUp.length === 0 &&
+              updateSummary.healerDown.length === 0 &&
+              updateSummary.healerNew.length === 0 &&
               updateSummary.statusChanges.length === 0 ? (
                 <p className="muted">
-                  No DPS or tank score shifts above thresholds and no content status changes among
-                  refreshed Digimon.
+                  No DPS, tank, or healer score shifts above thresholds and no content status changes
+                  among refreshed Digimon.
                 </p>
               ) : null}
 
@@ -1095,6 +1198,97 @@ export function TierListPage() {
                 </div>
               )}
 
+              {(updateSummary.healerUp.length > 0 ||
+                updateSummary.healerDown.length > 0 ||
+                updateSummary.healerNew.length > 0) && (
+                <div className="tier-update-summary-block">
+                  <h4 className="tier-update-summary-subhead">Healer score (Support role, heuristic)</h4>
+                  {updateSummary.healerUp.length > 0 && (
+                    <div className="tier-update-summary-subblock">
+                      <p className="tier-update-summary-label">Increased</p>
+                      <table className="tier-update-summary-table">
+                        <thead>
+                          <tr>
+                            <th>Digimon</th>
+                            <th>Role</th>
+                            <th>Before</th>
+                            <th>After</th>
+                            <th>Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {updateSummary.healerUp.map((r) => (
+                            <tr key={`hup-${r.id}`}>
+                              <td>
+                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                              </td>
+                              <td>{r.role}</td>
+                              <td>{r.before.toFixed(2)}</td>
+                              <td>{r.after.toFixed(2)}</td>
+                              <td className="tier-update-summary-delta-pos">+{r.delta.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {updateSummary.healerDown.length > 0 && (
+                    <div className="tier-update-summary-subblock">
+                      <p className="tier-update-summary-label">Decreased</p>
+                      <table className="tier-update-summary-table">
+                        <thead>
+                          <tr>
+                            <th>Digimon</th>
+                            <th>Role</th>
+                            <th>Before</th>
+                            <th>After</th>
+                            <th>Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {updateSummary.healerDown.map((r) => (
+                            <tr key={`hdn-${r.id}`}>
+                              <td>
+                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                              </td>
+                              <td>{r.role}</td>
+                              <td>{r.before.toFixed(2)}</td>
+                              <td>{r.after.toFixed(2)}</td>
+                              <td className="tier-update-summary-delta-neg">{r.delta.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {updateSummary.healerNew.length > 0 && (
+                    <div className="tier-update-summary-subblock">
+                      <p className="tier-update-summary-label">Newly calculated</p>
+                      <table className="tier-update-summary-table">
+                        <thead>
+                          <tr>
+                            <th>Digimon</th>
+                            <th>Role</th>
+                            <th>Score</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {updateSummary.healerNew.map((r) => (
+                            <tr key={`hnw-${r.id}`}>
+                              <td>
+                                <Link to={labHrefForTierEntry(r.id)}>{r.name}</Link>
+                              </td>
+                              <td>{r.role}</td>
+                              <td>{r.after.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {updateSummary.statusChanges.length > 0 && (
                 <div className="tier-update-summary-block">
                   <h4 className="tier-update-summary-subhead">Content status</h4>
@@ -1129,20 +1323,74 @@ export function TierListPage() {
 
       {cache && !initializing && checkedCount > 0 && (
         <section className="lab-result tier-matrix-section">
-          <h3>{tierMode === 'dps' ? 'Sustained DPS' : 'Tank tier list'}</h3>
+          <h3>
+            {tierMode === 'dps'
+              ? 'Sustained DPS'
+              : tierMode === 'tank'
+                ? 'Tank tier list'
+                : 'Healer tier list'}
+          </h3>
           {tierMode === 'dps' ? (
             <p className="muted">
               Ranking criteria per role (sorted by {DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained DPS,
               single target): S = top 10%, A = next 20%, B = next 30%, C = remaining.
             </p>
-          ) : (
+          ) : null}
+          {tierMode === 'tank' ? (
             <>
               <p className="muted">
-                Tank role only. Heuristic score weights mitigation (damage reduction, shields/barriers,
-                heals, Max HP% from support text, scaled by buff uptime vs cooldown) highest, then HP +
-                Defense, then block + evasion. S/A/B/C use the same percentile buckets as DPS, within
-                Tanks only.
+                <strong>Tank</strong> wiki role only. Ranks use a composite <em>tank index</em> (not
+                in-game EHP or official formulas). Higher score ≈ more of what we measure below.
               </p>
+              <details className="tier-score-explainer">
+                <summary>How the tank score works (read this for why S/A/B/C look the way they do)</summary>
+                <div className="tier-score-explainer-body">
+                  <p>
+                    <strong>Why a single number?</strong> The game does not expose a full mitigation
+                    simulator here, so we rank Tanks with a transparent heuristic: parse support skill
+                    text (and structured buff numbers), estimate how often those buffs are up, then mix
+                    that with base stats. The number is only for <em>ordering</em> Digimon in this list.
+                  </p>
+                  <p>
+                    <strong>Layer 1 — Mitigation kit (~55% of the composite):</strong> From each
+                    skill we read effects like damage reduction, barriers/shields, HP recovery, and Max
+                    HP bonuses. Each effect is turned into a raw strength, then multiplied by an{' '}
+                    <strong>uptime</strong> guess: buff duration divided by cooldown+cast time (capped at
+                    100%). If the wiki omits duration, we assume partial coverage. That is why two
+                    Digimon with similar text can rank differently if cooldowns differ.
+                  </p>
+                  <p>
+                    <strong>Layer 2 — Core stats (~30%):</strong> HP plus weighted Defense (Defense is
+                    multiplied before being combined with HP so it matters but does not dwarf HP).
+                  </p>
+                  <p>
+                    <strong>Layer 3 — Avoidance (~15%):</strong> Block rate and Evasion. These are
+                    down-weighted because many games soften or cap them and we do not model enemy
+                    accuracy here.
+                  </p>
+                  <p>
+                    <strong>Final mix:</strong> We apply <code>log1p</code> to each layer so one
+                    extreme stat or one huge shield line does not automatically win every matchup.
+                    Formula:{' '}
+                    <code>
+                      0.55·log1p(mitigationRaw) + 0.30·log1p(coreRaw/1000) + 0.15·log1p(avoidanceRaw)
+                    </code>
+                    .
+                  </p>
+                  <p>
+                    <strong>Tier letters (S/A/B/C):</strong> The same percentile buckets as DPS lists
+                    (top ~10% S, next ~20% A, next ~30% B, rest C), but computed only among{' '}
+                    <strong>Tanks</strong> after filters — so an S here is “top of Tanks in this view,”
+                    not “best in the whole game.”
+                  </p>
+                  <p>
+                    <strong>Limits:</strong> Regex parsing misses unusual wording; self-target vs party
+                    is not distinguished; overheal, shields on allies, and enemy damage types are not
+                    modeled. When wiki data changes, run <strong>Update tier list</strong> so scores
+                    refresh.
+                  </p>
+                </div>
+              </details>
               {tankScoresStale && (
                 <p className="tier-stale-note" role="status">
                   Some rows are missing tank scores. Run <strong>Update tier list</strong> (or{' '}
@@ -1150,7 +1398,73 @@ export function TierListPage() {
                 </p>
               )}
             </>
-          )}
+          ) : null}
+          {tierMode === 'healer' ? (
+            <>
+              <p className="muted">
+                <strong>Support</strong> wiki role only (healers). Ranks use a composite{' '}
+                <em>healer index</em> prioritizing healing output from skills, then defensive support,
+                then offensive buffs, then INT.
+              </p>
+              <details className="tier-score-explainer">
+                <summary>
+                  How the healer score works (read this for why S/A/B/C look the way they do)
+                </summary>
+                <div className="tier-score-explainer-body">
+                  <p>
+                    <strong>Design goal:</strong> Healers are judged mainly on how much effective
+                    healing and sustain they bring through skills, then on how much they reduce damage
+                    or add barriers, then on party damage buffs, with INT as a small tie-breaker for
+                    scaling. This is not HPS metering, mana/DS, or overheal modeling.
+                  </p>
+                  <p>
+                    <strong>Layer 1 — Healing (~50%):</strong> Lines that recover/restore/heal{' '}
+                    <strong>HP</strong> (% or flat) are parsed from each skill. Flat heals are scaled
+                    against the Digimon&apos;s own HP as a rough normalization. Everything is multiplied
+                    by the same <strong>uptime</strong> estimate as tanks (duration vs cooldown+cast).
+                  </p>
+                  <p>
+                    <strong>Layer 2 — Shields &amp; damage reduction (~28%):</strong> Barriers/shields
+                    and damage reduction only (healing is not double-counted here). Helps capture
+                    defensive support kits.
+                  </p>
+                  <p>
+                    <strong>Layer 3 — Damage buffs (~12%):</strong> Party-style offensive stats parsed
+                    the same way as the Lab DPS sim cares about: Skill Damage%, Attack Power%, crit rate,
+                    crit damage, attack speed, and flat attack. Each contribution is scaled by uptime.
+                  </p>
+                  <p>
+                    <strong>Layer 4 — INT (~10%):</strong> Combat stat <code>int</code> from the wiki
+                    detail — a light nudge because many healers scale healing with INT even when text
+                    does not repeat it.
+                  </p>
+                  <p>
+                    <strong>Final mix:</strong>{' '}
+                    <code>
+                      0.50·log1p(healingRaw) + 0.28·log1p(mitigationRaw) + 0.12·log1p(damageBuffRaw) +
+                      0.10·log1p(INT)
+                    </code>
+                    . <code>log1p</code> keeps one huge heal line from automatically dominating every
+                    rank.
+                  </p>
+                  <p>
+                    <strong>Tier letters:</strong> Same percentile buckets as DPS, but only among{' '}
+                    <strong>Support</strong> rows in the current filters.
+                  </p>
+                  <p>
+                    <strong>Limits:</strong> HoT vs burst, number of targets, DS healing, cleanses, and
+                    passive regen are not modeled separately. Parsing can miss non-standard skill text.
+                  </p>
+                </div>
+              </details>
+              {healerScoresStale && (
+                <p className="tier-stale-note" role="status">
+                  Some rows are missing healer scores. Run <strong>Update tier list</strong> (or{' '}
+                  <strong>Force check all</strong>) to recalculate.
+                </p>
+              )}
+            </>
+          ) : null}
           <div className="tier-status-legend" role="note" aria-label="Status criteria">
             <span className="tier-status-legend-item">
               <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
@@ -1236,7 +1550,11 @@ export function TierListPage() {
           {roles.length === 0 ? (
             <p className="muted tier-matrix-empty">
               No Digimon match this view. Try clearing filters
-              {tierMode === 'tank' ? ' or note that only wiki role “Tank” appears here.' : '.'}
+              {tierMode === 'tank'
+                ? ' or note that only wiki role “Tank” appears here.'
+                : tierMode === 'healer'
+                  ? ' or note that only wiki role “Support” appears here.'
+                  : '.'}
             </p>
           ) : (
             <div className="tier-matrix-wrap">
@@ -1273,7 +1591,11 @@ export function TierListPage() {
                                         ? e.tankScore != null
                                           ? e.tankScore.toFixed(2)
                                           : '…'
-                                        : e.dps.toFixed(1)
+                                        : tierMode === 'healer'
+                                          ? e.healerScore != null
+                                            ? e.healerScore.toFixed(2)
+                                            : '…'
+                                          : e.dps.toFixed(1)
                                     return (
                                       <li
                                         key={`${tier}-${role}-${e.id}`}

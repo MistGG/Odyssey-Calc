@@ -15,7 +15,7 @@ export function tierEntryIsStaleForDetailFetch(
 
 export type TierBucket = 'S' | 'A' | 'B' | 'C'
 
-export type TierListMode = 'dps' | 'tank'
+export type TierListMode = 'dps' | 'tank' | 'healer'
 
 export type SustainedDpsEntry = {
   id: string
@@ -25,6 +25,8 @@ export type SustainedDpsEntry = {
   dps: number
   /** Heuristic tank index from stats + parsed mitigation (see tankTierScore). */
   tankScore?: number
+  /** Heuristic support/healer index (see healerTierScore). */
+  healerScore?: number
   status?: DigimonContentStatus
   checkedAt: string
   /** Fingerprint of skill stats last time detail was fetched (see tierSkillsSignature). */
@@ -101,6 +103,7 @@ export function createEmptyTierListCache(ids: string[]): TierListCache {
 
 function tierSortValue(entry: SustainedDpsEntry, mode: TierListMode): number {
   if (mode === 'tank') return entry.tankScore ?? -1
+  if (mode === 'healer') return entry.healerScore ?? -1
   return entry.dps
 }
 
@@ -112,6 +115,7 @@ export function buildTierGroups(
   for (const e of Object.values(entriesMap)) {
     const role = e.role || 'Unknown'
     if (mode === 'tank' && role !== 'Tank') continue
+    if (mode === 'healer' && role !== 'Support') continue
     if (!byRole.has(role)) byRole.set(role, [])
     byRole.get(role)!.push(e)
   }

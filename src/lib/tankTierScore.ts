@@ -1,46 +1,13 @@
-import type { WikiDigimonDetail, WikiSkill } from '../types/wikiApi'
+import type { WikiDigimonDetail } from '../types/wikiApi'
 import { buildSupportSkillEffects } from './supportEffects'
-
-/** Skill level assumed for tier list rows (matches tier list detail fetch). */
-function tierListSkillLevel(skill: Pick<WikiSkill, 'max_level'>): number {
-  return Math.max(1, Math.min(25, skill.max_level || 25))
-}
-
-/**
- * Rough uptime for buff-style effects: buff duration vs effective cooldown.
- * When duration is missing, assume partial coverage over the cooldown window.
- */
-function mitigationUptime(skill: WikiSkill): number {
-  const cd = Math.max(0.5, skill.cooldown_sec + skill.cast_time_sec)
-  const dur =
-    typeof skill.buff?.duration === 'number' && skill.buff.duration > 0
-      ? skill.buff.duration
-      : cd * 0.4
-  return Math.min(1, dur / cd)
-}
-
-function isDamageReductionLabel(label: string): boolean {
-  const l = label.toLowerCase()
-  return (
-    /damage reduction|dmg reduction/.test(l) ||
-    /reduces\s+all\s+damage/.test(l) ||
-    /reduces\s+damage\s+taken/.test(l)
-  )
-}
-
-function isShieldLabel(label: string): boolean {
-  return /\b(barrier|shield|aegis|ward)\b/i.test(label)
-}
-
-function isHealHpLabel(label: string): boolean {
-  const l = label.toLowerCase()
-  if (!/(recovers|restores|heals)/.test(l)) return false
-  return /\bhp\b/.test(l) || /\bhealth\b/.test(l)
-}
-
-function isMaxHpPctLabel(label: string, unit: '%' | ''): boolean {
-  return /\bmax\s*hp\b/i.test(label) && unit === '%'
-}
+import {
+  isDamageReductionLabel,
+  isHealHpLabel,
+  isMaxHpPctLabel,
+  isShieldLabel,
+  skillBuffUptime,
+  tierListSkillLevel,
+} from './tierScoreParsing'
 
 export type TankTierScoreBreakdown = {
   /** Parsed mitigation kit (DR × uptime, shields, heals, Max HP%) — largest tier in composite. */
@@ -68,7 +35,7 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
 
   for (const skill of detail.skills) {
     const level = tierListSkillLevel(skill)
-    const uptime = mitigationUptime(skill)
+    const uptime = skillBuffUptime(skill)
     const effects = buildSupportSkillEffects(skill, level)
 
     for (const e of effects) {
