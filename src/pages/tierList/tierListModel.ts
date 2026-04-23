@@ -124,7 +124,13 @@ export function readDpsTierCategory(): DpsTierCategoryKey {
     if (v === 'sustained' || v === 'burst' || v === 'specialized' || v === 'aoe') {
       return v
     }
-    if (v === 'aoe_general' || v === 'aoe_damage' || v === 'aoe_cooldown' || v === 'aoe_radius') {
+    if (
+      v === 'aoe_general' ||
+      v === 'aoe_damage' ||
+      v === 'aoe_cooldown' ||
+      v === 'aoe_farming' ||
+      v === 'aoe_radius'
+    ) {
       return 'aoe'
     }
   } catch {

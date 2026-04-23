@@ -60,7 +60,7 @@ export type AoeTierCategoryScores = {
   general: number
   damage: number
   cooldown: number
-  radius: number
+  farming: number
 }
 
 export type AoeTierCategoryKey = keyof AoeTierCategoryScores
@@ -200,14 +200,14 @@ export const AOE_TIER_CATEGORY_ORDER: readonly AoeTierCategoryKey[] = [
   'general',
   'damage',
   'cooldown',
-  'radius',
+  'farming',
 ]
 
 export const AOE_TIER_MATRIX_COLUMN_LABELS: Record<AoeTierCategoryKey, string> = {
   general: 'General',
   damage: 'Damage',
   cooldown: 'Cooldown',
-  radius: 'Radius',
+  farming: 'Farming (8s)',
 }
 
 function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
@@ -222,13 +222,27 @@ function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
       burst: typeof d.burst === 'number' ? d.burst : entry.dps,
       specialized: typeof d.specialized === 'number' ? d.specialized : 0,
     },
-    aoeCategoryScores: {
-      general: d.aoe_general,
-      damage: d.aoe_damage,
-      cooldown: d.aoe_cooldown,
-      radius: d.aoe_radius,
-    },
+    aoeCategoryScores:
+      typeof d.aoe_farming === 'number'
+        ? {
+            general: d.aoe_general,
+            damage: d.aoe_damage,
+            cooldown: d.aoe_cooldown,
+            farming: d.aoe_farming,
+          }
+        : undefined,
   }
+}
+
+/** Old caches stored a fourth AoE key `radius`; farming uses a new formula — clear so users refresh tier list. */
+function migrateLegacyAoeRadiusToFarming(entry: SustainedDpsEntry): SustainedDpsEntry {
+  const a = entry.aoeCategoryScores as (AoeTierCategoryScores & { radius?: number }) | undefined
+  if (!a) return entry
+  if (typeof a.farming === 'number' && Number.isFinite(a.farming)) return entry
+  if ('radius' in a) {
+    return { ...entry, aoeCategoryScores: undefined }
+  }
+  return entry
 }
 
 /** True when rotation + AoE scores are present (prompt tier list refresh if false). */
@@ -259,12 +273,16 @@ export function loadTierListCache(): TierListCache | null {
     if (parsed.version === 3) {
       const entries: Record<string, SustainedDpsEntry> = {}
       for (const [id, e] of Object.entries(parsed.entries)) {
-        entries[id] = migrateEntryDpsAoeShape(e)
+        entries[id] = migrateLegacyAoeRadiusToFarming(migrateEntryDpsAoeShape(e))
       }
       return { ...parsed, entries }
     }
     if (parsed.version === 2) {
-      return { ...parsed, version: 3 }
+      const entries: Record<string, SustainedDpsEntry> = {}
+      for (const [id, e] of Object.entries(parsed.entries ?? {})) {
+        entries[id] = migrateLegacyAoeRadiusToFarming(migrateEntryDpsAoeShape(e as SustainedDpsEntry))
+      }
+      return { ...parsed, version: 3, entries }
     }
     if (parsed.version === 1) {
       return {
