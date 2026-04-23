@@ -6,7 +6,14 @@ export function Layout() {
       <div className="app-shell-bg" aria-hidden="true" />
       <header className="header">
         <Link to="/" className="brand">
-          <span className="brand-mark" aria-hidden="true" />
+          <img
+            className="brand-logo"
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt=""
+            width={44}
+            height={44}
+            decoding="async"
+          />
           <span className="brand-text">Odyssey Calc</span>
         </Link>
         <nav className="nav">
