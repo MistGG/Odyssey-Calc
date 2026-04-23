@@ -1523,8 +1523,16 @@ export function TierListPage() {
                   : '.'}
             </p>
           ) : (
-            <div className="tier-matrix-wrap">
-              <table className="tier-matrix">
+            <div
+              className={`tier-matrix-wrap${
+                tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix-wrap--single-role' : ''
+              }`}
+            >
+              <table
+                className={`tier-matrix${
+                  tierMode === 'tank' || tierMode === 'healer' ? ' tier-matrix--single-role' : ''
+                }`}
+              >
                 <colgroup>
                   <col className="tier-matrix-col-rank" />
                   {roles.map((r) => (

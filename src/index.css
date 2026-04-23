@@ -902,12 +902,50 @@ code {
   min-height: 120px;
 }
 
+/* Tank / healer: keep table readable — narrow rank strip, cap width, pack entries */
+.tier-matrix-wrap--single-role {
+  max-width: min(36rem, 100%);
+  margin-inline: auto;
+}
+
+.tier-matrix--single-role col.tier-matrix-col-rank {
+  width: 1.25rem;
+  max-width: 1.35rem;
+}
+
+.tier-matrix--single-role thead th.tier-matrix-th-rank,
+.tier-matrix--single-role .tier-row-label {
+  width: 1.25rem;
+  max-width: 1.35rem;
+  padding: 0.28rem 0.12rem;
+  font-size: 0.72rem;
+}
+
+.tier-matrix--single-role thead th.tier-matrix-th-rank {
+  font-size: 0.58rem;
+}
+
 .tier-entry-list {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
   gap: 0.35rem;
+}
+
+.tier-matrix-wrap--single-role .tier-entry-list {
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  align-items: start;
+}
+
+.tier-matrix-wrap--single-role .tier-entry {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tier-matrix-wrap--single-role .tier-entry-link {
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 0.3rem;
 }
 
 .tier-entry {
