@@ -1607,17 +1607,17 @@ export function TierListPage() {
                       horizon (openers / short burst bias).
                     </li>
                     <li>
-                      <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
-                      buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0
-                      and/or party/allies/group-style wording in skill or buff text.
-                    </li>
-                    <li>
                       <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
                       (General, Damage, Cooldown, Radius). Only skills with wiki <code>radius</code> &gt; 0 (same as
                       the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                       per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
                       <code>1 / (cast + cooldown)</code>; <strong>Radius</strong>: <code>log1p</code> of summed
                       radius. <strong>General</strong> is the average of those three scores (equal weight).
+                    </li>
+                    <li>
+                      <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
+                      buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0
+                      and/or party/allies/group-style wording in skill or buff text.
                     </li>
                   </ul>
                 </div>

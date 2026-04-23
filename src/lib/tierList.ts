@@ -181,12 +181,12 @@ export const HEALER_TIER_MATRIX_COLUMN_LABELS: Record<HealerTierCategoryKey, str
   int: 'INT',
 }
 
-/** DPS header sub-tabs (first row). Selecting `aoe` switches the matrix to AoE columns. */
+/** DPS header sub-tabs (first row): sustained, burst, AoE, specialized. Selecting `aoe` switches the matrix to AoE columns. */
 export const DPS_TIER_CATEGORY_ORDER: readonly DpsTierCategoryKey[] = [
   'sustained',
   'burst',
-  'specialized',
   'aoe',
+  'specialized',
 ]
 
 export const DPS_TIER_MATRIX_COLUMN_LABELS: Record<DpsTierCategoryKey, string> = {
