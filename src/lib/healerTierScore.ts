@@ -36,9 +36,19 @@ function damageBuffRawFromEffect(e: ParsedSupportEffect, uptime: number): number
   return pts * uptime
 }
 
+/** HP healed per cast for one parsed line (% of caster max HP, or flat HP). */
+function healHpPerCast(e: ParsedSupportEffect, casterMaxHp: number): number {
+  const v = e.valueAtLevel
+  if (e.unit === '%') return Math.max(0, v / 100) * casterMaxHp
+  return Math.max(0, v)
+}
+
 export type HealerTierScoreBreakdown = {
-  /** Parsed HP healing (% and flat), × uptime — dominant layer. */
-  healingRaw: number
+  /**
+   * Modeled sustained healing: sum over skills of (HP healed per cast ÷ (cooldown + cast)).
+   * Min interval 0.75s. Units: HP/s (same sustained spirit as the 180s DPS tier list window).
+   */
+  healSustainHps: number
   /** Damage reduction + shields/barriers only (second layer). */
   mitigationRaw: number
   /** Offensive support (ATK%, skill dmg, crit, ASPD, flat ATK) × uptime. */
@@ -49,34 +59,38 @@ export type HealerTierScoreBreakdown = {
 }
 
 /**
- * Heuristic support/healer index: healing highest, then DR + shields, then damage buffs, then INT.
- * log1p layers keep stat ranges comparable. Not a model of throughput, HPS, or overheal.
+ * Support/healer index dominated by modeled heal sustain (HP/s), then mitigation, buffs, INT.
+ * Healing uses wiki cooldown+cast: each heal skill adds (heal per cast) / (cooldown + cast).
  */
 export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierScoreBreakdown {
   const stats = detail.stats
   const hp = Math.max(1, stats?.hp ?? detail.hp ?? 1)
   const intStat = Math.max(0, stats?.int ?? 0)
 
-  let healingRaw = 0
+  let healSustainHps = 0
   let mitigationRaw = 0
   let damageBuffRaw = 0
 
   for (const skill of detail.skills) {
     const level = tierListSkillLevel(skill)
-    const uptime = skillBuffUptime(skill)
     const effects = buildSupportSkillEffects(skill, level)
+    const uptime = skillBuffUptime(skill)
+
+    let healPerCast = 0
+    for (const e of effects) {
+      if (isHealHpLabel(e.label)) healPerCast += healHpPerCast(e, hp)
+    }
+    if (healPerCast > 0) {
+      const periodSec = Math.max(0.75, skill.cooldown_sec + skill.cast_time_sec)
+      healSustainHps += healPerCast / periodSec
+    }
 
     for (const e of effects) {
       const lab = e.label
       const v = e.valueAtLevel
       const unit = e.unit
 
-      if (isHealHpLabel(lab)) {
-        if (unit === '%') healingRaw += (v / 100) * uptime * 160
-        /* Flat HP: larger parsed amount = stronger (no normalization vs this Digimon's max HP). */
-        else healingRaw += Math.max(0, v) * uptime * 0.08
-        continue
-      }
+      if (isHealHpLabel(lab)) continue
 
       if (isDamageReductionLabel(lab)) {
         if (unit === '%') mitigationRaw += (v / 100) * uptime * 120
@@ -96,10 +110,16 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
   }
 
   const score =
-    0.5 * Math.log1p(healingRaw) +
-    0.28 * Math.log1p(mitigationRaw) +
-    0.12 * Math.log1p(damageBuffRaw) +
-    0.1 * Math.log1p(intStat)
+    0.74 * Math.log1p(healSustainHps) +
+    0.16 * Math.log1p(mitigationRaw) +
+    0.07 * Math.log1p(damageBuffRaw) +
+    0.03 * Math.log1p(intStat)
 
-  return { healingRaw, mitigationRaw, damageBuffRaw, intStat, score }
+  return {
+    healSustainHps,
+    mitigationRaw,
+    damageBuffRaw,
+    intStat,
+    score,
+  }
 }

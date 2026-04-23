@@ -1388,37 +1388,38 @@ export function TierListPage() {
           {tierMode === 'healer' ? (
             <>
               <p className="muted">
-                Support wiki role only. Score favors healing, then shields/DR, then damage buffs, then
-                INT — for sorting only, not real HPS.
+                Support wiki role only. Ranking is driven by modeled sustained healing (HP/s from wiki
+                cooldowns, same 180s spirit as DPS tiers), then mitigation, buffs, and INT.
               </p>
               <details className="tier-score-explainer">
                 <summary>Healer score (how it&apos;s calculated)</summary>
                 <div className="tier-score-explainer-body">
                   <ul className="tier-score-explainer-list">
                     <li>
-                      Healing (~50%): HP recover/heal lines — % of HP and flat amounts; flat values use
-                      the number as-is (bigger = better), each × uptime.
+                      Healing (~74%): Each skill with heal text contributes HP per cast ÷ (cooldown +
+                      cast, min 0.75s). Per cast: % lines use this Digimon&apos;s max HP as the scale;
+                      flat lines use the number as-is. Those rates are summed across heal skills
+                      (simple sustain, not a full rotation solver).
                     </li>
                     <li>
-                      Shields and damage reduction (~28%): barriers and DR only (healing not counted
-                      again here).
+                      Shields and damage reduction (~16%): barriers and DR only (healing not counted
+                      again here), still using buff uptime vs cooldown.
                     </li>
                     <li>
-                      Damage buffs (~12%): skill damage, ATK%, crit, attack speed, flat ATK × uptime
-                      (same idea as Lab offensive support).
+                      Damage buffs (~7%): skill damage, ATK%, crit, attack speed, flat ATK × uptime.
                     </li>
-                    <li>INT (~10%): small tie-breaker from wiki combat stats.</li>
+                    <li>INT (~3%): small tie-breaker from wiki combat stats.</li>
                     <li>
                       Blend with <code>log1p</code>:{' '}
                       <code>
-                        0.50·log1p(heal) + 0.28·log1p(mit) + 0.12·log1p(buff) + 0.10·log1p(INT)
+                        0.74·log1p(heal/s) + 0.16·log1p(mit) + 0.07·log1p(buff) + 0.03·log1p(INT)
                       </code>
                       .
                     </li>
                     <li>S/A/B/C: same cutoffs as DPS, only among Support rows after filters.</li>
                     <li>
-                      Limits: no HoT vs burst, target count, DS heals, or passives; odd skill text may
-                      parse wrong.
+                      Limits: adding all heal skills can overstate if they share one GCD; HoTs, targets,
+                      DS heals, passives not modeled; odd skill text may parse wrong.
                     </li>
                   </ul>
                 </div>
