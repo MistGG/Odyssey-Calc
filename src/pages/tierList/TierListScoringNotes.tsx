@@ -36,10 +36,10 @@ export function TierListScoringNotes({
                 </li>
                 <li>
                   <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
-                  (General, Damage, Cooldown, Farming (8s)). Only skills with wiki <code>radius</code> &gt; 0 (same
+                  (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same
                   as the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                   per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                  <code>1 / (cast + cooldown)</code>. <strong>Farming (8s)</strong> assumes packs respawn about every
+                  <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> assumes packs respawn about every
                   8s: each AoE line contributes damage (plus a small cast-density bonus) times a{' '}
                   <strong>respawn fit</strong> weight <code>exp(-max(0, period - 8) / 8)</code> for{' '}
                   <code>period = cast + cooldown</code>, times a light <code>log1p(radius)</code> coverage factor.

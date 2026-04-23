@@ -1244,11 +1244,15 @@ export function TierListPage() {
                     </li>
                     <li>
                       <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
-                      (General, Damage, Cooldown, Radius). Only skills with wiki <code>radius</code> &gt; 0 (same as
+                      (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same as
                       the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                       per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                      <code>1 / (cast + cooldown)</code>; <strong>Radius</strong>: <code>log1p</code> of summed
-                      radius. <strong>General</strong> is the average of those three scores (equal weight).
+                      <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> assumes packs respawn about every
+                      8s: each AoE line contributes damage (plus a small cast-density bonus) times a{' '}
+                      <strong>respawn fit</strong> weight <code>exp(-max(0, period - 8) / 8)</code> for{' '}
+                      <code>period = cast + cooldown</code>, times a light <code>log1p(radius)</code> coverage factor.
+                      Support-only AoE uses a smaller area+cadence term instead of damage. <strong>General</strong> is
+                      the average of Damage, Cooldown, and Farming (equal weight).
                     </li>
                     <li>
                       <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group

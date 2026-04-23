@@ -207,7 +207,7 @@ export const AOE_TIER_MATRIX_COLUMN_LABELS: Record<AoeTierCategoryKey, string> =
   general: 'General',
   damage: 'Damage',
   cooldown: 'Cooldown',
-  farming: 'Farming (8s)',
+  farming: 'Farming',
 }
 
 function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
