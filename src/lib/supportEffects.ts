@@ -60,7 +60,7 @@ function displayStatVerb(action: string): string {
 }
 
 function statClauseLabel(action: string, target: string) {
-  return `${displayStatVerb(action)} ${target.trim()}`
+  return `${displayStatVerb(action)} ${normalizeEffectLabel(target.trim())}`
 }
 
 /**
@@ -98,8 +98,19 @@ function normalizeEffectLabel(raw: string) {
   if (/^DE$/i.test(text)) return 'DE'
   if (/^dmg\s*reduction$/i.test(text)) return 'Damage Reduction'
   if (/^max\s*hp$/i.test(text)) return 'Max HP'
+  if (/^ev$/i.test(text)) return 'Evasion'
   if (/^hot$/i.test(text)) return HEAL_OVER_TIME_LABEL
   return text
+}
+
+/** ShortFlat/shortScale may capture "Increases EV +325"; strip the verb so we do not emit "Increases Increases …". */
+function normalizeShortStatPhrase(captured: string): string {
+  return normalizeEffectLabel(
+    captured.replace(
+      /^(increases|decreases|reduces|raises|boosts|recovers|restores|heals)\s+/i,
+      '',
+    ),
+  )
 }
 
 function normalizeHealOverTimeDisplayLabel(label: string): string {
@@ -138,6 +149,11 @@ function shouldSkipGenericScaleSubject(rawTarget: string): boolean {
 
 function isGerundStatTarget(target: string): boolean {
   return /^(increasing|decreasing|raising|boosting)\s+/i.test(target.trim())
+}
+
+/** " and increases EV by … (+N per …)" — capture group wrongly includes the verb; full line is handled by parenScaleRe. */
+function isVerbLedClauseSubject(target: string): boolean {
+  return /^(increases|reduces|decreases|raises|boosts|recovers|restores|heals)\s+/i.test(target.trim())
 }
 
 function isJunkSupportLabel(label: string): boolean {
@@ -479,14 +495,14 @@ export function parseSupportEffects(
     /(?:^|\sand\s)(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\+(\d+(?:\.\d+)?)\s*(%?)\s*\/?\s*per\s+skill\s+level\)/gi
   for (const m of description.matchAll(clauseScaleRe)) {
     const target = m[1].trim()
-    if (isGerundStatTarget(target)) continue
+    if (isGerundStatTarget(target) || isVerbLedClauseSubject(target)) continue
     const base = toNum(m[2])
     const baseUnit = (m[3] as '%' | '') || ''
     const per = toNum(m[4])
     const perUnit = (m[5] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
-      label: `Increases ${target}`,
+      label: `Increases ${normalizeEffectLabel(target)}`,
       base,
       perLevel: per,
       unit,
@@ -498,14 +514,14 @@ export function parseSupportEffects(
     /(?:^|\sand\s)(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\s*\+?\s*(\d+(?:\.\d+)?)\s*(%?)\s*\/\s*skill\s+level\s*\)/gi
   for (const m of description.matchAll(clauseSlashSkillLevelRe)) {
     const target = m[1].trim()
-    if (isGerundStatTarget(target)) continue
+    if (isGerundStatTarget(target) || isVerbLedClauseSubject(target)) continue
     const base = toNum(m[2])
     const baseUnit = (m[3] as '%' | '') || ''
     const per = toNum(m[4])
     const perUnit = (m[5] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
-      label: `Increases ${target}`,
+      label: `Increases ${normalizeEffectLabel(target)}`,
       base,
       perLevel: per,
       unit,
@@ -518,7 +534,7 @@ export function parseSupportEffects(
   const shortScaleRe =
     /([A-Za-z][A-Za-z0-9\s/-]*?)\s*\+(\d+(?:\.\d+)?)\s*(%?)\s*\(\+(\d+(?:\.\d+)?)\s*(%?)\s*\/\s*Lv\)/gi
   for (const m of description.matchAll(shortScaleRe)) {
-    const target = normalizeEffectLabel(m[1])
+    const target = normalizeShortStatPhrase(m[1])
     const base = toNum(m[2])
     const baseUnit = (m[3] as '%' | '') || ''
     const per = toNum(m[4])
@@ -545,7 +561,7 @@ export function parseSupportEffects(
       const tail = description.slice(m.index + phrase.length)
       if (/^\s*per\s+(?:skill\s+level|(?:extra\s+)?level|Lv)\b/i.test(tail)) continue
     }
-    const target = normalizeEffectLabel(m[1])
+    const target = normalizeShortStatPhrase(m[1])
     const sign = m[2] === '-' ? -1 : 1
     const base = sign * toNum(m[3])
     const unit = ((m[4] as '%' | '') || '') as '%' | ''
