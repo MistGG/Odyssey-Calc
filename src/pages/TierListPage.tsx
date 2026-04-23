@@ -117,6 +117,8 @@ type TierListUpdateSummary = {
   healerNew: Array<{ id: string; name: string; role: string; after: number }>
 }
 
+type TierListUpdateSummaryTabKey = 'dps' | 'tank' | 'healer' | 'status'
+
 function readTierUpdatePanelMinimized(): boolean {
   try {
     return localStorage.getItem(TIER_UPDATE_PANEL_MINIMIZED_KEY) === '1'
@@ -445,6 +447,7 @@ export function TierListPage() {
     loadTierUpdateSummaryFromStorage,
   )
   const [updatePanelMinimized, setUpdatePanelMinimized] = useState(readTierUpdatePanelMinimized)
+  const [updateSummaryTab, setUpdateSummaryTab] = useState<TierListUpdateSummaryTabKey>('dps')
   const [tierMode, setTierMode] = useState<TierListMode>(readTierListMode)
   const [dpsTierCategory, setDpsTierCategory] = useState<DpsTierCategoryKey>(readDpsTierCategory)
 
@@ -931,6 +934,56 @@ export function TierListPage() {
     return Object.values(entriesForMatrix).some((e) => e.dpsCategoryScores == null)
   }, [tierMode, entriesForMatrix])
 
+  const updateSummarySections = useMemo(() => {
+    if (!updateSummary) return []
+    const u = updateSummary
+    const sections: {
+      id: TierListUpdateSummaryTabKey
+      label: string
+      shortLabel: string
+      count: number
+    }[] = [
+      {
+        id: 'dps',
+        label: `DPS (${DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained)`,
+        shortLabel: 'DPS',
+        count: u.dpsUp.length + u.dpsDown.length + u.dpsNew.length,
+      },
+      {
+        id: 'tank',
+        label: 'Tank score (heuristic)',
+        shortLabel: 'Tank',
+        count: u.tankUp.length + u.tankDown.length + u.tankNew.length,
+      },
+      {
+        id: 'healer',
+        label: 'Healer score (Support role, heuristic)',
+        shortLabel: 'Healer',
+        count: u.healerUp.length + u.healerDown.length + u.healerNew.length,
+      },
+      {
+        id: 'status',
+        label: 'Content status',
+        shortLabel: 'Status',
+        count: u.statusChanges.length,
+      },
+    ]
+    return sections.filter((s) => s.count > 0)
+  }, [updateSummary])
+
+  const effectiveUpdateSummaryTab = useMemo((): TierListUpdateSummaryTabKey => {
+    if (updateSummarySections.length === 0) return 'dps'
+    if (updateSummarySections.length === 1) return updateSummarySections[0].id
+    return updateSummaryTab
+  }, [updateSummarySections, updateSummaryTab])
+
+  useEffect(() => {
+    if (updateSummarySections.length === 0) return
+    setUpdateSummaryTab((prev) =>
+      updateSummarySections.some((s) => s.id === prev) ? prev : updateSummarySections[0].id,
+    )
+  }, [updateSummarySections])
+
   useEffect(() => {
     if (autoStarted || initializing || building || !cache) return
     if (Object.keys(cache.entries).length === 0 && cache.queue.length > 0) {
@@ -1113,25 +1166,43 @@ export function TierListPage() {
             </div>
           </div>
           {updatePanelMinimized ? (
-            <p className="tier-update-summary-collapsed-line muted">
-              {new Date(updateSummary.finishedAt).toLocaleString()}
-              {' — '}
-              DPS: {updateSummary.dpsUp.length}↑ {updateSummary.dpsDown.length}↓, {updateSummary.dpsNew.length}{' '}
-              new
-              {' · '}
-              Tank: {updateSummary.tankUp.length}↑ {updateSummary.tankDown.length}↓, {updateSummary.tankNew.length}{' '}
-              new
-              {' · '}
-              Healer: {updateSummary.healerUp.length}↑ {updateSummary.healerDown.length}↓,{' '}
-              {updateSummary.healerNew.length} new
-              {updateSummary.statusChanges.length > 0 ? (
-                <>
-                  {' · '}
-                  Status: {updateSummary.statusChanges.length} change
-                  {updateSummary.statusChanges.length === 1 ? '' : 's'}
-                </>
-              ) : null}
-            </p>
+            <div className="tier-update-summary-collapsed">
+              <p className="tier-update-summary-collapsed-time muted">
+                {new Date(updateSummary.finishedAt).toLocaleString()}
+              </p>
+              <div className="tier-update-summary-stat-chips" role="list" aria-label="Score changes by type">
+                <span className="tier-update-summary-stat-chip" role="listitem">
+                  DPS
+                  <span className="tier-update-summary-stat-chip-delta" aria-label="DPS up, down, new">
+                    {updateSummary.dpsUp.length}↑ {updateSummary.dpsDown.length}↓ · {updateSummary.dpsNew.length}{' '}
+                    new
+                  </span>
+                </span>
+                <span className="tier-update-summary-stat-chip" role="listitem">
+                  Tank
+                  <span className="tier-update-summary-stat-chip-delta" aria-label="Tank up, down, new">
+                    {updateSummary.tankUp.length}↑ {updateSummary.tankDown.length}↓ · {updateSummary.tankNew.length}{' '}
+                    new
+                  </span>
+                </span>
+                <span className="tier-update-summary-stat-chip" role="listitem">
+                  Healer
+                  <span className="tier-update-summary-stat-chip-delta" aria-label="Healer up, down, new">
+                    {updateSummary.healerUp.length}↑ {updateSummary.healerDown.length}↓ ·{' '}
+                    {updateSummary.healerNew.length} new
+                  </span>
+                </span>
+                {updateSummary.statusChanges.length > 0 ? (
+                  <span className="tier-update-summary-stat-chip" role="listitem">
+                    Status
+                    <span className="tier-update-summary-stat-chip-delta">
+                      {updateSummary.statusChanges.length} change
+                      {updateSummary.statusChanges.length === 1 ? '' : 's'}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
+            </div>
           ) : (
             <div className="tier-update-summary-body">
               {updateSummary.dpsUp.length === 0 &&
@@ -1148,12 +1219,43 @@ export function TierListPage() {
                   No DPS, tank, or healer score shifts above thresholds and no content status changes
                   among refreshed Digimon.
                 </p>
-              ) : null}
-
-              {(updateSummary.dpsUp.length > 0 ||
-                updateSummary.dpsDown.length > 0 ||
-                updateSummary.dpsNew.length > 0) && (
-                <div className="tier-update-summary-block">
+              ) : (
+                <>
+                  {updateSummarySections.length > 1 ? (
+                    <div
+                      className="tier-update-summary-tabs"
+                      role="tablist"
+                      aria-label="Update breakdown by score type"
+                    >
+                      {updateSummarySections.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={effectiveUpdateSummaryTab === s.id}
+                          aria-controls="tier-update-summary-panel"
+                          id={`tier-update-tab-${s.id}`}
+                          className="tier-update-summary-tab"
+                          onClick={() => setUpdateSummaryTab(s.id)}
+                        >
+                          <span className="tier-update-summary-tab-label">{s.shortLabel}</span>
+                          <span className="tier-update-summary-tab-badge">{s.count}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div
+                    className="tier-update-summary-tab-panel tier-update-summary-tab-panel-scroll"
+                    role="tabpanel"
+                    id="tier-update-summary-panel"
+                    aria-labelledby={
+                      updateSummarySections.length > 1
+                        ? `tier-update-tab-${effectiveUpdateSummaryTab}`
+                        : undefined
+                    }
+                  >
+                    {effectiveUpdateSummaryTab === 'dps' && (
+                      <div className="tier-update-summary-block">
                   <h4 className="tier-update-summary-subhead">DPS ({DEFAULT_ROTATION_SIM_DURATION_SEC}s sustained)</h4>
                   {updateSummary.dpsUp.length > 0 && (
                     <div className="tier-update-summary-subblock">
@@ -1241,9 +1343,7 @@ export function TierListPage() {
                 </div>
               )}
 
-              {(updateSummary.tankUp.length > 0 ||
-                updateSummary.tankDown.length > 0 ||
-                updateSummary.tankNew.length > 0) && (
+              {effectiveUpdateSummaryTab === 'tank' && (
                 <div className="tier-update-summary-block">
                   <h4 className="tier-update-summary-subhead">Tank score (heuristic)</h4>
                   {updateSummary.tankUp.length > 0 && (
@@ -1332,9 +1432,7 @@ export function TierListPage() {
                 </div>
               )}
 
-              {(updateSummary.healerUp.length > 0 ||
-                updateSummary.healerDown.length > 0 ||
-                updateSummary.healerNew.length > 0) && (
+              {effectiveUpdateSummaryTab === 'healer' && (
                 <div className="tier-update-summary-block">
                   <h4 className="tier-update-summary-subhead">Healer score (Support role, heuristic)</h4>
                   {updateSummary.healerUp.length > 0 && (
@@ -1423,7 +1521,7 @@ export function TierListPage() {
                 </div>
               )}
 
-              {updateSummary.statusChanges.length > 0 && (
+              {effectiveUpdateSummaryTab === 'status' && (
                 <div className="tier-update-summary-block">
                   <h4 className="tier-update-summary-subhead">Content status</h4>
                   <table className="tier-update-summary-table">
@@ -1449,6 +1547,9 @@ export function TierListPage() {
                     </tbody>
                   </table>
                 </div>
+              )}
+                  </div>
+                </>
               )}
             </div>
           )}
