@@ -1309,7 +1309,9 @@ export function TierListPage() {
                       <strong>Overall</strong> is a calculation of all parameters.{' '}
                       <strong>Effective HP / Defense / Evasion / Block</strong> columns show wiki base plus
                       uptime-weighted parsed buffs to that stat (same linear sum the column sort is derived
-                      from, before <code>log1p</code>).
+                      from, before <code>log1p</code>). <strong>Effective HP</strong> also adds self-shields:
+                      parsed barrier size per cast (with tick counts for multi-tick shields) times the same
+                      estimated buff uptime.
                     </li>
                     <li>
                       Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.

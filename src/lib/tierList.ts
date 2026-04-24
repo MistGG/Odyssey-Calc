@@ -10,7 +10,7 @@ export const TIER_ENTRY_STALE_MS = 7 * 24 * 60 * 60 * 1000
  * (e.g. HoT labels, tick intervals, new effect buckets). Entries with a mismatch are re-queued on
  * incremental tier list update so cached tank/healer scores are not stuck on an old algorithm.
  */
-export const TIER_SUPPORT_SCORE_REVISION = 4
+export const TIER_SUPPORT_SCORE_REVISION = 5
 
 export function tierEntryIsStaleForDetailFetch(
   entry: SustainedDpsEntry | undefined,

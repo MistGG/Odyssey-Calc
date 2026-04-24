@@ -10,6 +10,14 @@ import {
   skillBuffUptime,
   tierListSkillLevel,
 } from './tierScoreParsing'
+import type { ParsedSupportEffect } from './supportEffects'
+
+/** Barrier HP per cast (% of max HP or flat), aligned with `healerTierScore` shield parsing. */
+function shieldHpPerCast(e: ParsedSupportEffect, casterMaxHp: number): number {
+  const v = e.valueAtLevel
+  if (e.unit === '%') return Math.max(0, v / 100) * casterMaxHp
+  return Math.max(0, v)
+}
 
 export type TankTierScoreBreakdown = {
   /** Base max HP from wiki stats — dominant layer (~65% of composite). */
@@ -24,7 +32,10 @@ export type TankTierScoreBreakdown = {
   score: number
   /** Sort keys for tier sub-modes (overall = `score`). */
   categoryScores: TankTierCategoryScores
-  /** Wiki base stat + uptime-weighted skill contributions (matrix display). */
+  /**
+   * Wiki base stat + uptime-weighted skill contributions (matrix display).
+   * `hp` includes temporary Max HP buffs and modeled self-shields (barrier per cast × buff uptime).
+   */
   effectiveDisplay: {
     hp: number
     defense: number
@@ -38,7 +49,8 @@ export type TankTierScoreBreakdown = {
  * ~4% avoidance. Intended for ranking only, not in-game EHP.
  *
  * Category scores add wiki base stat + uptime-weighted parsed buffs to the same stat (Max HP, DE,
- * Evasion, Block Rate), then `log1p(value/1000)` for sorting.
+ * Evasion, Block Rate), then `log1p(value/1000)` for sorting. Effective HP also adds self-shields:
+ * sum of (barrier HP per skill cast, including HoT-style tick counts) × that skill’s buff uptime.
  */
 export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBreakdown {
   const stats = detail.stats
@@ -49,6 +61,7 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
 
   let mitigationRaw = 0
   let hpBuffFromSkills = 0
+  let shieldEhpFromSkills = 0
   let defBuffFromSkills = 0
   let evaBuffFromSkills = 0
   let blockBuffFromSkills = 0
@@ -57,6 +70,16 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
     const level = tierListSkillLevel(skill)
     const uptime = skillBuffUptime(skill)
     const effects = buildSupportSkillEffects(skill, level, hp)
+
+    let shieldPerCast = 0
+    for (const e of effects) {
+      if (!isShieldLabel(e.label)) continue
+      const ticks = healOverTimeTicksDuringBuff(e, skill)
+      shieldPerCast += shieldHpPerCast(e, hp) * ticks
+    }
+    if (shieldPerCast > 0) {
+      shieldEhpFromSkills += shieldPerCast * uptime
+    }
 
     for (const e of effects) {
       const lab = e.label
@@ -103,16 +126,18 @@ export function computeTankTierScore(detail: WikiDigimonDetail): TankTierScoreBr
     0.09 * Math.log1p(defenseRaw / 1000) +
     0.04 * Math.log1p(avoidanceRaw)
 
+  const hpEffective = hp + hpBuffFromSkills + shieldEhpFromSkills
+
   const categoryScores: TankTierCategoryScores = {
     overall: score,
-    hp: Math.log1p((hp + hpBuffFromSkills) / 1000),
+    hp: Math.log1p(hpEffective / 1000),
     defense: Math.log1p((def + defBuffFromSkills) / 1000),
     evasion: Math.log1p((eva + evaBuffFromSkills) / 1000),
     block: Math.log1p((block + blockBuffFromSkills) / 1000),
   }
 
   const effectiveDisplay = {
-    hp: hp + hpBuffFromSkills,
+    hp: hpEffective,
     defense: def + defBuffFromSkills,
     evasion: eva + evaBuffFromSkills,
     block: block + blockBuffFromSkills,
