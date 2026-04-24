@@ -148,8 +148,9 @@ export function TierListScoringNotes({
                 </li>
                 <li>
                   <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong> shows
-                  modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier strength per second).{' '}
-                  <strong>INT</strong> is wiki combat INT.
+                  modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier HP per cast ÷ cooldown+cast,
+                  summed across shield skills — same number used to sort that column). <strong>INT</strong> is wiki
+                  combat INT.
                 </li>
                 <li>
                   <strong>Buffing</strong> column (the integer in the matrix): for each offensive buff line we

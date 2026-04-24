@@ -1365,8 +1365,9 @@ export function TierListPage() {
                     </li>
                     <li>
                       <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong>{' '}
-                      shows modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier strength per
-                      second). <strong>Buffing</strong> shows summed %-uptime (plus scaled flat ATK) from
+                      shows modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier HP per cast ÷
+                      cooldown+cast, summed across shield skills — same value used to sort that column).{' '}
+                      <strong>Buffing</strong> shows summed %-uptime (plus scaled flat ATK) from
                       offensive buff lines — a rough &quot;how much damage buff&quot; footprint, not in-game
                       DPS. <strong>INT</strong> is wiki combat INT.
                     </li>

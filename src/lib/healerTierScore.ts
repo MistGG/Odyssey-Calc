@@ -197,7 +197,8 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
   const categoryScores: HealerTierCategoryScores = {
     general: score,
     healing: Math.log1p(Math.max(0, healSustainHps)),
-    shielding: Math.log1p(Math.max(0, shieldMitRaw)),
+    /** Matrix “Shielding (SPS)” sorts by this; must match `shieldSustainHps` shown in the UI (not `shieldMitRaw`). */
+    shielding: Math.log1p(Math.max(0, shieldSustainHps)),
     buffing: Math.log1p(Math.max(0, damageBuffRaw)),
     int: Math.log1p(Math.max(0, intStat)),
   }
