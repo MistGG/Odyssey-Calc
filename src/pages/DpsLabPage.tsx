@@ -613,7 +613,7 @@ export function DpsLabPage() {
               <p className="muted">
                 Sustained DPS is total damage for the window divided by time — it already includes skills
                 <strong> and</strong> autos. &quot;DPS from autos&quot; below is only the auto portion of that same
-                total (do not add it to sustained DPS).
+                total.
               </p>
               <p>
                 Auto attacks:{' '}
