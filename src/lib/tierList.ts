@@ -77,6 +77,8 @@ export type SustainedDpsEntry = {
   dps: number
   /** Sustained / burst / specialized (`sustained` matches `dps`). */
   dpsCategoryScores?: DpsRotationCategoryScores
+  /** Same DPS lenses with forced auto-crit scenario (skills still cannot crit). */
+  dpsCategoryScoresAutoCrit?: DpsRotationCategoryScores
   /** AoE kit heuristics (see `computeDpsAoeCategoryScores`); used only for the AoE matrix. */
   aoeCategoryScores?: AoeTierCategoryScores
   /** Heuristic tank index from stats + parsed mitigation (see tankTierScore); equals categoryScores.overall. */
@@ -251,6 +253,11 @@ function migrateLegacyAoeRadiusToFarming(entry: SustainedDpsEntry): SustainedDps
 /** True when rotation + AoE scores are present (prompt tier list refresh if false). */
 export function tierEntryNeedsDpsSimRefresh(entry: SustainedDpsEntry): boolean {
   return (entry.dpsSimRevision ?? 0) !== TIER_DPS_SIM_REVISION
+}
+
+export function tierEntryNeedsAutoCritScores(entry: SustainedDpsEntry): boolean {
+  const s = entry.dpsCategoryScoresAutoCrit
+  return !s || !Number.isFinite(s.sustained) || !Number.isFinite(s.burst) || !Number.isFinite(s.specialized)
 }
 
 export function tierEntryDpsCategoryScoresComplete(entry: SustainedDpsEntry): boolean {

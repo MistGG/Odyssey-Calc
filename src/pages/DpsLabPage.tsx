@@ -2,8 +2,10 @@ import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
-import { skillIconUrl } from '../lib/digimonImage'
+import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
+import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
+import { getGearAttackContribution } from '../lib/gearStats'
 import {
   DIGIMON_ROLE_SKILL_CAST_SEC,
   digimonRoleWikiSkills,
@@ -101,8 +103,17 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
         </div>
       ) : showNumeric ? (
         <p className="buff-breakdown-muted">
-          Combined attack, skill, flat (as % of wiki ATK), plus extra expected damage from buff crit
-          stats only (wiki baseline crit is not counted as a buff):{' '}
+          {e.eventType === 'auto' ? (
+            <>
+              Combined attack, flat (as % of wiki ATK), plus buff crit rate / crit damage as
+              expected extra damage on autos (wiki baseline crit is subtracted in the Crit chip):{' '}
+            </>
+          ) : (
+            <>
+              Combined attack, skill, and flat (as % of wiki ATK). Damage skills never crit in the
+              sim — no crit chip:{' '}
+            </>
+          )}
           <strong>+{e.totalBuffPct.toFixed(1)}%</strong> (see sim code for exact stacking).
         </p>
       ) : (
@@ -179,6 +190,34 @@ function parseHybridStance(v: string | null): HybridStance {
   return 'melee'
 }
 
+type CombatStatsState = {
+  hp: number
+  ds: number
+  attack: number
+  defense: number
+  crit_rate: number
+  atk_speed: number
+  evasion: number
+  hit_rate: number
+  block_rate: number
+  dex: number
+  int: number
+}
+
+const COMBAT_STAT_FIELDS: Array<{ key: keyof CombatStatsState; label: string }> = [
+  { key: 'hp', label: 'HP' },
+  { key: 'ds', label: 'DS' },
+  { key: 'attack', label: 'Attack' },
+  { key: 'defense', label: 'Defense' },
+  { key: 'crit_rate', label: 'Crit rate' },
+  { key: 'atk_speed', label: 'ATK speed' },
+  { key: 'dex', label: 'DEX' },
+  { key: 'int', label: 'INT' },
+  { key: 'evasion', label: 'Evasion' },
+  { key: 'hit_rate', label: 'Hit rate' },
+  { key: 'block_rate', label: 'Block rate' },
+]
+
 export function DpsLabPage() {
   const { search } = useLocation()
   const params = useMemo(() => new URLSearchParams(search), [search])
@@ -203,6 +242,8 @@ export function DpsLabPage() {
   const [durationSec, setDurationSec] = useState(() =>
     durationFromUrl ?? DEFAULT_ROTATION_SIM_DURATION_SEC,
   )
+  const [portraitBroken, setPortraitBroken] = useState(false)
+  const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
 
   useEffect(() => {
     if (durationFromUrl != null) setDurationSec(durationFromUrl)
@@ -222,6 +263,30 @@ export function DpsLabPage() {
   useEffect(() => {
     setHybridStance(parseHybridStance(new URLSearchParams(search).get('hybrid')))
   }, [search])
+
+  useEffect(() => {
+    setPortraitBroken(false)
+  }, [digimonId])
+
+  useEffect(() => {
+    if (!data?.stats) {
+      setCombatStats(null)
+      return
+    }
+    setCombatStats({
+      hp: Math.max(0, Math.floor(data.stats.hp ?? 0)),
+      ds: Math.max(0, Math.floor(data.stats.ds ?? 0)),
+      attack: Math.max(0, Math.floor(data.attack ?? data.stats.attack ?? 0)),
+      defense: Math.max(0, Math.floor(data.stats.defense ?? 0)),
+      crit_rate: Math.max(0, Math.floor(data.stats.crit_rate ?? 0)),
+      atk_speed: Math.max(0, Math.floor(data.stats.atk_speed ?? 0)),
+      evasion: Math.max(0, Math.floor(data.stats.evasion ?? 0)),
+      hit_rate: Math.max(0, Math.floor(data.stats.hit_rate ?? 0)),
+      block_rate: Math.max(0, Math.floor(data.stats.block_rate ?? 0)),
+      dex: Math.max(0, Math.floor(data.stats.dex ?? 0)),
+      int: Math.max(0, Math.floor(data.stats.int ?? 0)),
+    })
+  }, [data])
 
   useEffect(() => {
     if (!digimonId) {
@@ -262,6 +327,11 @@ export function DpsLabPage() {
 
   const roleNorm = useMemo(() => normalizeWikiRole(data?.role), [data?.role])
   const isHybridRole = roleNorm === 'hybrid'
+  const gearAttack = useMemo(() => getGearAttackContribution(), [])
+  const simBaseAttack = useMemo(
+    () => (combatStats ? combatStats.attack + gearAttack.totalAttack : 0),
+    [combatStats, gearAttack.totalAttack],
+  )
 
   const digimonRoleWikiSkillsForRole = useMemo(
     () =>
@@ -279,15 +349,15 @@ export function DpsLabPage() {
       skillLevels,
       secs,
       Math.max(1, targets),
-      data.attack,
-      data.stats?.atk_speed ?? 0,
-      data.stats?.crit_rate ?? 0,
+      simBaseAttack,
+      combatStats?.atk_speed ?? data.stats?.atk_speed ?? 0,
+      combatStats?.crit_rate ?? data.stats?.crit_rate ?? 0,
       {
         role: data.role,
         hybridStance: isHybridRole ? hybridStance : 'best',
       },
     )
-  }, [data, durationSec, skillLevels, targets, isHybridRole, hybridStance])
+  }, [data, durationSec, skillLevels, targets, isHybridRole, hybridStance, simBaseAttack, combatStats])
 
   const breakdown = useMemo(() => {
     if (!sim) return []
@@ -408,6 +478,29 @@ export function DpsLabPage() {
     return lines
   }, [breakdown, data, sim, skillLevels, digimonRoleWikiSkillsForRole])
 
+  const combatStatRows = useMemo(
+    () =>
+      combatStats
+        ? COMBAT_STAT_FIELDS.map((field) => ({
+            key: field.key,
+            label: field.label,
+            value: combatStats[field.key],
+          }))
+        : [],
+    [combatStats],
+  )
+
+  const updateCombatStat = (key: keyof CombatStatsState, raw: string) => {
+    const n = Number(raw)
+    const next = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0
+    setCombatStats((prev) => (prev ? { ...prev, [key]: next } : prev))
+  }
+  const portraitSrc = useMemo(
+    () => (data ? digimonPortraitUrl(data.model_id, data.id, data.name) : undefined),
+    [data],
+  )
+  const showLabPortrait = Boolean(portraitSrc && !portraitBroken)
+
   return (
     <div className="lab lab-page">
       <div className="lab-page-head">
@@ -419,27 +512,21 @@ export function DpsLabPage() {
         )}
       </div>
       <p className="muted">
-        This lab runs a timed rotation using your Digimon&apos;s wiki skills plus
-        Digimon role skills (passives tied to wiki role; not tamer skills). Same cast
-        times and cooldowns as in-game. Supports
-        are interpreted for buff durations and effects; when a support is off cooldown
-        and its buff isn&apos;t already active, we cast it. Damage skills scale with
-        whatever buffs are currently up. Between skills we fill with auto attacks
-        until something else is ready. If attack-speed buffs make autos fast enough,
-        we may weave an auto instead of casting a ready damage skill when the
-        skill&apos;s damage per cast-time second is lower than the current auto rate
-        (autos still use ATK% / flat / crit from buffs, not skill damage %).
+        This lab simulates a timed rotation using your Digimon&apos;s wiki skills plus
+        wiki role skills (not tamer skills), with in-game cast times and cooldowns.
+        Support skills are cast when ready if their buff is not already active.
+        Damage skills use current buffs. Between casts, the sim fills with auto
+        attacks. If attack-speed buffs make autos stronger per second than a ready
+        damage skill, it weaves an auto instead. Damage skills never crit. Only
+        auto attacks use wiki crit rate, base +50% crit damage, and buff crit stats.
       </p>
       <p className="muted">
-        Whenever you could press a damage skill, we peek a few seconds ahead and
-        compare three choices: cast the hardest-hitting skill first (best damage
-        per second of cast time); cast another damage skill instead as filler; or
-        skip your biggest hit for that short window—only autos and supports—to
-        see if waiting lines up better with buffs. We pick whichever option dealt
-        the most damage in that preview slice (then apply the auto-vs-skill rate
-        check above before actually casting). Preview length is capped (about twelve
-        seconds at most), so this is smart timing, not a perfect solve for the entire
-        fight.
+        When a damage skill is available, the sim previews a short window and
+        compares three options: cast the best DPCT skill now, cast another damage
+        skill as filler, or wait and use only autos/supports to align with buffs.
+        It picks the option with the highest preview damage, then still applies the
+        auto-vs-skill check above. The preview is capped (about 12 seconds), so
+        this is strong short-term decisioning, not a perfect full-fight solver.
       </p>
 
       {!digimonId && (
@@ -453,77 +540,137 @@ export function DpsLabPage() {
 
       {data && (
         <>
-          <section className="lab-summary">
-            <h2>
-              {data.name} <span className="muted">({data.stage})</span>
-            </h2>
-            <p className="muted">
-              {(data.skills ?? []).length} skills loaded. Attack stat:{' '}
-              {data.attack.toLocaleString()}
-            </p>
+          <section className="lab-module lab-module--top" aria-label="Digimon overview and sim controls">
+            <div className="lab-top-grid">
+              <div className="lab-top-identity">
+                <div className="lab-identity-row">
+                  <div
+                    className="lab-identity-art"
+                    style={{ background: digimonStagePortraitGradient(data.stage) }}
+                  >
+                    {showLabPortrait && portraitSrc ? (
+                      <img src={portraitSrc} alt="" onError={() => setPortraitBroken(true)} />
+                    ) : (
+                      <span className="thumb-initial">{data.name.slice(0, 1)}</span>
+                    )}
+                    {data.rank > 0 && (
+                      <span className="lab-identity-rank" aria-hidden="true">
+                        <span style={rankSpriteStyle(data.rank, 0.85)} />
+                      </span>
+                    )}
+                  </div>
+                  <div className="lab-identity-body">
+                    <h2 className="lab-identity-name">
+                      {data.name}{' '}
+                      <span className="muted lab-identity-stage">({data.stage})</span>
+                    </h2>
+                    <div className="lab-identity-pills">
+                      <span className="detail-info-pill detail-info-pill-class">+ {data.role || '—'}</span>
+                      <span className="detail-info-pill detail-info-pill-type">{data.attribute || '—'}</span>
+                      <span className="detail-info-pill detail-info-pill-attrib">{data.element || '—'}</span>
+                    </div>
+                    <p className="muted lab-identity-sub">
+                      {(data.skills ?? []).length} skills · Wiki attack {data.attack.toLocaleString()}
+                      {gearAttack.totalAttack > 0
+                        ? ` · Lab base ATK ${simBaseAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
+                        : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="lab-top-combat">
+                <h3 className="lab-module-heading" id="lab-combat-stats-heading">
+                  Combat stats
+                </h3>
+                <div
+                  className="lab-stats-grid"
+                  role="group"
+                  aria-labelledby="lab-combat-stats-heading"
+                >
+                  {combatStatRows.map((row) => (
+                    <div key={row.key} className="stat-cell">
+                      <span className="stat-label">{row.label}</span>
+                      <input
+                        className="lab-stat-input"
+                        type="number"
+                        min={0}
+                        value={row.value}
+                        onChange={(e) => updateCombatStat(row.key, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="lab-controls-bar">
+              <p className="lab-controls-bar-title">Simulation</p>
+              <div className="lab-controls-fields">
+                <label>
+                  Overall skill level
+                  <input
+                    type="number"
+                    min={1}
+                    max={SKILL_LEVEL_CAP}
+                    value={globalLevel}
+                    onChange={(e) => {
+                      const v = Math.max(1, Math.min(SKILL_LEVEL_CAP, Number(e.target.value) || 1))
+                      setGlobalLevel(v)
+                      setSkillLevels((prev) => {
+                        const next: Record<string, number> = {}
+                        if (!data) return prev
+                        ;(data.skills ?? []).forEach((s) => {
+                          const cap = Math.max(
+                            1,
+                            Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP),
+                          )
+                          next[s.id] = Math.min(cap, v)
+                        })
+                        return next
+                      })
+                    }}
+                  />
+                </label>
+                <label>
+                  Targets hit
+                  <input
+                    type="number"
+                    min={1}
+                    value={targets}
+                    onChange={(e) => setTargets(Math.max(1, Number(e.target.value) || 1))}
+                  />
+                </label>
+                <label>
+                  Simulation seconds
+                  <input
+                    type="number"
+                    min={10}
+                    step={5}
+                    value={durationSec}
+                    onChange={(e) =>
+                      setDurationSec(
+                        Math.max(10, Number(e.target.value) || DEFAULT_ROTATION_SIM_DURATION_SEC),
+                      )
+                    }
+                  />
+                </label>
+              </div>
+            </div>
           </section>
 
-          <div className="lab-panel">
-            <label>
-              Skill level
-              <input
-                type="number"
-                min={1}
-                max={SKILL_LEVEL_CAP}
-                value={globalLevel}
-                onChange={(e) => {
-                  const v = Math.max(1, Math.min(SKILL_LEVEL_CAP, Number(e.target.value) || 1))
-                  setGlobalLevel(v)
-                  setSkillLevels((prev) => {
-                    const next: Record<string, number> = {}
-                    if (!data) return prev
-                    ;(data.skills ?? []).forEach((s) => {
-                      const cap = Math.max(
-                        1,
-                        Math.min(s.max_level || SKILL_LEVEL_CAP, SKILL_LEVEL_CAP),
-                      )
-                      next[s.id] = Math.min(cap, v)
-                    })
-                    return next
-                  })
-                }}
-              />
-            </label>
-            <label>
-              Targets hit
-              <input
-                type="number"
-                min={1}
-                value={targets}
-                onChange={(e) => setTargets(Math.max(1, Number(e.target.value) || 1))}
-              />
-            </label>
-            <label>
-              Simulation seconds
-              <input
-                type="number"
-                min={10}
-                step={5}
-                value={durationSec}
-                onChange={(e) =>
-                  setDurationSec(
-                    Math.max(10, Number(e.target.value) || DEFAULT_ROTATION_SIM_DURATION_SEC),
-                  )
-                }
-              />
-            </label>
-          </div>
-
+          <div
+            className={
+              digimonRoleWikiSkillsForRole.length > 0
+                ? 'lab-dual-modules lab-dual-modules--pair'
+                : 'lab-dual-modules'
+            }
+          >
           {data && digimonRoleWikiSkillsForRole.length > 0 && (
             <section className="lab-result">
               <h3>Digimon role skills ({data.role})</h3>
               <p className="muted">
-                These are passives for the Digimon&apos;s wiki role (tamer role skills are not included yet).
-                All use {DIGIMON_ROLE_SKILL_CAST_SEC}s cast time. Hybrid stances are mutually exclusive in the
-                sim (switching applies the new stance and drops the previous one). Hit rate and intelligence
-                are not applied to DPS yet (in-game INT also affects cooldowns). Skills that only grant those
-                (e.g. Ultimate Accuracy, Magia Code: Omega) are listed here but omitted from the rotation sim
-                until modeled.
+                Role skills only (no tamer skills). {DIGIMON_ROLE_SKILL_CAST_SEC}s casts. Hybrid: one
+                stance at a time. Hit / INT (and skills that only buff those) aren&apos;t in the rotation sim
+                yet—those rows are informational.
               </p>
               {isHybridRole && (
                 <fieldset className="lab-fieldset">
@@ -567,7 +714,7 @@ export function DpsLabPage() {
           )}
 
           <section className="lab-result">
-            <h3>Skill levels (per skill)</h3>
+            <h3>Set skill levels manually</h3>
             <div className="lab-table-wrap">
               <table className="lab-table">
                 <thead>
@@ -620,95 +767,186 @@ export function DpsLabPage() {
               </table>
             </div>
           </section>
+          </div>
 
           {sim && (
-            <section className="lab-result">
-              <h3>Optimal rotation simulation ({sim.durationSec}s)</h3>
-              <p className="muted">
-                DPS-impacting buffs applied: +{sim.totalDpsBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                % (ATK% {sim.attackBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%, Skill DMG%{' '}
-                {sim.skillDamageBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%, Flat ATK{' '}
-                {sim.attackPowerFlat.toLocaleString(undefined, { maximumFractionDigits: 1 })}, Crit Rate{' '}
-                {sim.critRatePct.toLocaleString(undefined, { maximumFractionDigits: 2 })}%, Crit DMG{' '}
-                {sim.critDamagePct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%)
-              </p>
-              <p>
-                Total damage:{' '}
-                <strong>{sim.totalDamage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>
-              </p>
-              <p>
-                Sustained DPS:{' '}
-                <strong>
-                  {sim.dps.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                </strong>{' '}
-                /s
-              </p>
-              <p className="muted">
-                Sustained DPS is total damage for the window divided by time — it already includes skills
-                <strong> and</strong> autos. &quot;DPS from autos&quot; below is only the auto portion of that same
-                total.
-              </p>
-              <p>
-                Auto attacks:{' '}
-                <strong>{sim.autoAttackHits.toLocaleString()}</strong> hits,{' '}
-                <strong>
-                  {sim.autoDamageTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                </strong>{' '}
-                total damage
-                {sim.autoAttackHits > 0 ? (
-                  <>
-                    {' '}
-                    (avg{' '}
-                    <strong>
-                      {sim.autoDamageAvg.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                    </strong>{' '}
-                    per hit)
-                  </>
-                ) : null}
-                ,{' '}
-                <strong>
-                  {sim.autoDps.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                </strong>{' '}
-                DPS from autos
-                {sim.totalDamage > 0 ? (
-                  <span className="muted">
-                    {' '}
-                    (
-                    {((sim.autoDamageTotal / sim.totalDamage) * 100).toFixed(1)}% of total damage)
-                  </span>
-                ) : null}
-                .
-              </p>
-              <p className="muted">Total casts: {sim.casts}</p>
-            </section>
-          )}
-
-          {sim && breakdown.length > 0 && (
-            <section className="lab-result">
-              <h3>Damage breakdown by skill</h3>
-              <div className="lab-table-wrap">
-                <table className="lab-table">
-                  <thead>
-                    <tr>
-                      <th>Skill</th>
-                      <th>Casts</th>
-                      <th>Total damage</th>
-                      <th>% share</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {breakdown.map((r) => (
-                      <tr key={r.name}>
-                        <td>{r.name}</td>
-                        <td>{r.casts}</td>
-                        <td>{r.damage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                        <td>{r.pct.toFixed(1)}%</td>
+            <div
+              className={
+                breakdown.length > 0 ? 'lab-dual-modules lab-dual-modules--pair' : 'lab-dual-modules'
+              }
+            >
+              <section className="lab-result lab-result--sim-summary">
+                <h3>Optimal rotation simulation ({sim.durationSec}s)</h3>
+                <div className="lab-table-wrap lab-kv-table-wrap lab-kv-summary-stack">
+                  <table className="lab-kv-table">
+                    <tbody>
+                      <tr>
+                        <th scope="row">Total damage</th>
+                        <td className="lab-kv-value-emphasis">
+                          {sim.totalDamage.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+                      <tr>
+                        <th scope="row">Sustained DPS</th>
+                        <td className="lab-kv-value-emphasis">
+                          {sim.dps.toLocaleString(undefined, { maximumFractionDigits: 1 })} /s
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Total casts</th>
+                        <td>{sim.casts.toLocaleString()}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <details className="lab-kv-details">
+                    <summary className="lab-kv-details-summary">Buffs counted toward damage</summary>
+                    <div className="lab-kv-details-panel">
+                      <table className="lab-kv-table lab-kv-table--nested">
+                        <tbody>
+                          <tr>
+                            <th scope="row">Combined</th>
+                            <td>
+                              +
+                              {sim.totalDpsBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%
+                            </td>
+                          </tr>
+                          <tr>
+                            <th scope="row">ATK%</th>
+                            <td>
+                              {sim.attackBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%
+                            </td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Skill DMG%</th>
+                            <td>
+                              {sim.skillDamageBuffPct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%
+                            </td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Flat ATK</th>
+                            <td>
+                              {sim.attackPowerFlat.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Crit rate</th>
+                            <td>
+                              {sim.critRatePct.toLocaleString(undefined, { maximumFractionDigits: 2 })}%
+                            </td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Crit DMG%</th>
+                            <td>
+                              {sim.critDamagePct.toLocaleString(undefined, { maximumFractionDigits: 1 })}%
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                  <details className="lab-kv-details">
+                    <summary className="lab-kv-details-summary">Auto attacks</summary>
+                    <div className="lab-kv-details-panel">
+                      <table className="lab-kv-table lab-kv-table--nested">
+                        <tbody>
+                          <tr>
+                            <th scope="row">Hits</th>
+                            <td>{sim.autoAttackHits.toLocaleString()}</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Damage</th>
+                            <td>
+                              {sim.autoDamageTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              {sim.totalDamage > 0 ? (
+                                <span className="lab-kv-suffix">
+                                  {' '}
+                                  ({((sim.autoDamageTotal / sim.totalDamage) * 100).toFixed(1)}% of total)
+                                </span>
+                              ) : null}
+                            </td>
+                          </tr>
+                          {sim.autoAttackHits > 0 ? (
+                            <tr>
+                              <th scope="row">Avg / hit</th>
+                              <td>
+                                {sim.autoDamageAvg.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                              </td>
+                            </tr>
+                          ) : null}
+                          <tr>
+                            <th scope="row">Auto DPS</th>
+                            <td>{sim.autoDps.toLocaleString(undefined, { maximumFractionDigits: 1 })} /s</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                  <details className="lab-kv-details">
+                    <summary className="lab-kv-details-summary">Damage formulas used</summary>
+                    <div className="lab-kv-details-panel">
+                      <div className="lab-formula-block">
+                        <p className="lab-formula-title">Skill hit (skills do not crit)</p>
+                        <code>
+                          skill_hit = skill_base(skill_level, targets) * (1 + (ATK% + Skill% + FlatATK/baseATK) / 100)
+                        </code>
+                      </div>
+                      <div className="lab-formula-block">
+                        <p className="lab-formula-title">Auto hit (can crit)</p>
+                        <code>
+                          auto_hit = (baseATK + flatATK) * (1 + ATK% / 100) * crit_mult
+                        </code>
+                        <code>
+                          crit_mult = 1 + p * (0.5 + buffCritDmg% / 100), p = clamp(baseCrit + buffCrit%, 0..1)
+                        </code>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+                <p className="muted lab-sim-summary-note">
+                  Sustained DPS is total damage ÷ window (skills + autos). Auto DPS is only the damage from auto
+                  hits in that same window.
+                </p>
+                {gearAttack.totalAttack > 0 && (
+                  <p className="muted lab-sim-summary-note">
+                    Gear ATK applied: +{gearAttack.totalAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                    {gearAttack.ringAttack > 0
+                      ? ` (ring +${gearAttack.ringAttack.toLocaleString()}`
+                      : ' ('}
+                    {gearAttack.leftWeightedAttack > 0
+                      ? `${gearAttack.ringAttack > 0 ? ', ' : ''}left +${gearAttack.leftWeightedAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })} @ 60%`
+                      : ''}
+                    ).
+                  </p>
+                )}
+              </section>
+              {breakdown.length > 0 && (
+                <section className="lab-result">
+                  <h3>Damage breakdown by skill</h3>
+                  <div className="lab-table-wrap">
+                    <table className="lab-table">
+                      <thead>
+                        <tr>
+                          <th>Skill</th>
+                          <th>Casts</th>
+                          <th>Total damage</th>
+                          <th>% share</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {breakdown.map((r) => (
+                          <tr key={r.name}>
+                            <td>{r.name}</td>
+                            <td>{r.casts}</td>
+                            <td>{r.damage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td>{r.pct.toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
           )}
 
           {rotationAdvice.length > 0 && (

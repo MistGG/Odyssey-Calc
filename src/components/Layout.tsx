@@ -19,6 +19,7 @@ export function Layout() {
         <nav className="nav">
           <Link to="/">Browse</Link>
           <Link to="/lab">Lab</Link>
+          <Link to="/gear">Gear</Link>
           <Link to="/tier-list">Tier list</Link>
           <a
             className="nav-link-official"

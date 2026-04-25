@@ -13,6 +13,7 @@ export const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.mini
 export const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
 export const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
 export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
+export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
 export const TIER_DPS_CHANGE_EPS = 0.05
 export const TIER_TANK_SCORE_CHANGE_EPS = 0.02
 export const TIER_HEALER_SCORE_CHANGE_EPS = 0.02
@@ -142,6 +143,22 @@ export function readDpsTierCategory(): DpsTierCategoryKey {
 export function writeDpsTierCategory(cat: DpsTierCategoryKey) {
   try {
     localStorage.setItem(TIER_DPS_CATEGORY_KEY, cat)
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readDpsForceAutoCrit(): boolean {
+  try {
+    return localStorage.getItem(TIER_DPS_FORCE_AUTO_CRIT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeDpsForceAutoCrit(on: boolean) {
+  try {
+    localStorage.setItem(TIER_DPS_FORCE_AUTO_CRIT_KEY, on ? '1' : '0')
   } catch {
     /* ignore */
   }

@@ -24,6 +24,7 @@ import {
   loadTierListCache,
   saveTierListCache,
   tierEntryDpsCategoryScoresComplete,
+  tierEntryNeedsAutoCritScores,
   tierEntryIsStaleForDetailFetch,
   tierEntryNeedsDpsSimRefresh,
   TIER_SUPPORT_SCORE_REVISION,
@@ -52,12 +53,14 @@ import {
   loadTierUpdateSummaryFromStorage,
   RATE_LIMIT_COOLDOWN_MS,
   readDpsTierCategory,
+  readDpsForceAutoCrit,
   readTierListMode,
   readTierUpdatePanelMinimized,
   REQUEST_DELAY_MS,
   saveTierUpdateSummaryToStorage,
   sleep,
   writeDpsTierCategory,
+  writeDpsForceAutoCrit,
   writeTierListMode,
   writeTierUpdatePanelMinimized,
   type TierListUpdateSummary,
@@ -94,6 +97,7 @@ export function TierListPage() {
   const [updateSummaryTab, setUpdateSummaryTab] = useState<TierListUpdateSummaryTabKey>('dps')
   const [tierMode, setTierMode] = useState<TierListMode>(readTierListMode)
   const [dpsTierCategory, setDpsTierCategory] = useState<DpsTierCategoryKey>(readDpsTierCategory)
+  const [dpsForceAutoCrit, setDpsForceAutoCrit] = useState<boolean>(readDpsForceAutoCrit)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -103,6 +107,11 @@ export function TierListPage() {
   function setDpsTierCategoryPersist(next: DpsTierCategoryKey) {
     setDpsTierCategory(next)
     writeDpsTierCategory(next)
+  }
+
+  function setDpsForceAutoCritPersist(next: boolean) {
+    setDpsForceAutoCrit(next)
+    writeDpsForceAutoCrit(next)
   }
 
   useEffect(() => {
@@ -227,7 +236,8 @@ export function TierListPage() {
             !entry.status ||
             tierEntryIsStaleForDetailFetch(entry) ||
             entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
-            tierEntryNeedsDpsSimRefresh(entry)
+            tierEntryNeedsDpsSimRefresh(entry) ||
+            tierEntryNeedsAutoCritScores(entry)
           )
         })
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
@@ -312,6 +322,34 @@ export function TierListPage() {
               hybridStance: 'best',
             },
           )
+          const simAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              forceAutoCrit: true,
+            },
+          )
+          const simBurstAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              forceAutoCrit: true,
+            },
+          )
           const specializedScore = computeDpsSpecializedScore(detail)
           const aoeScores = computeDpsAoeCategoryScores(detail)
           const tank = computeTankTierScore(detail)
@@ -325,6 +363,11 @@ export function TierListPage() {
             dpsCategoryScores: {
               sustained: sim.dps,
               burst: simBurst.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresAutoCrit: {
+              sustained: simAutoCrit.dps,
+              burst: simBurstAutoCrit.dps,
               specialized: specializedScore,
             },
             aoeCategoryScores: aoeScores,
@@ -527,7 +570,19 @@ export function TierListPage() {
   ])
 
   const entriesForMatrix = useMemo(() => {
-    if (tierMode === 'dps') return filteredEntries
+    if (tierMode === 'dps') {
+      if (!dpsForceAutoCrit || dpsTierCategory === 'aoe') return filteredEntries
+      const out: Record<string, SustainedDpsEntry> = {}
+      for (const [id, e] of Object.entries(filteredEntries)) {
+        const s = e.dpsCategoryScoresAutoCrit
+        out[id] = {
+          ...e,
+          dps: s?.sustained ?? e.dps,
+          dpsCategoryScores: s ?? e.dpsCategoryScores,
+        }
+      }
+      return out
+    }
     const out: Record<string, SustainedDpsEntry> = {}
     for (const [id, e] of Object.entries(filteredEntries)) {
       const r = (e.role || '').trim()
@@ -535,7 +590,7 @@ export function TierListPage() {
       if (tierMode === 'healer' && r === 'Support') out[id] = e
     }
     return out
-  }, [filteredEntries, tierMode])
+  }, [filteredEntries, tierMode, dpsForceAutoCrit, dpsTierCategory])
 
   function toggleMultiFilter(label: string, setter: Dispatch<SetStateAction<string[]>>) {
     if (label === 'All') {
@@ -597,7 +652,10 @@ export function TierListPage() {
   const dpsScoresStale = useMemo(() => {
     if (tierMode !== 'dps') return false
     return Object.values(entriesForMatrix).some(
-      (e) => !tierEntryDpsCategoryScoresComplete(e) || tierEntryNeedsDpsSimRefresh(e),
+      (e) =>
+        !tierEntryDpsCategoryScoresComplete(e) ||
+        tierEntryNeedsDpsSimRefresh(e) ||
+        tierEntryNeedsAutoCritScores(e),
     )
   }, [tierMode, entriesForMatrix])
 
@@ -795,6 +853,36 @@ export function TierListPage() {
           <p className="error" role="alert">
             {error}
           </p>
+        )}
+      </section>
+
+      <section
+        className="lab-result tier-special-modifiers"
+        aria-labelledby="tier-special-modifiers-heading"
+      >
+        <h3 id="tier-special-modifiers-heading">Special modifiers</h3>
+        {tierMode === 'dps' ? (
+          <>
+            <p className="muted">
+              Optional tweaks for DPS tier simulations. They do not change wiki stats or gear (gear is
+              only used in the Lab).
+            </p>
+            <label
+              className={`tier-auto-crit-toggle${
+                dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={dpsForceAutoCrit}
+                onChange={(e) => setDpsForceAutoCritPersist(e.target.checked)}
+                disabled={dpsTierCategory === 'aoe'}
+              />
+              Guaranteed auto crits (Temporary till cloning is understood)
+            </label>
+          </>
+        ) : (
+          <p className="muted">These options apply when the DPS tier list is selected.</p>
         )}
       </section>
 

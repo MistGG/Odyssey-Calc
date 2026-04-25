@@ -12,6 +12,7 @@ import {
 import { buildSupportSkillEffects } from '../lib/supportEffects'
 import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../lib/dpsSim'
+import { wikiCombatStatRows } from '../lib/wikiCombatStatRows'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 function allSkillsLabHref(digimonId: string) {
@@ -60,25 +61,7 @@ export function DigimonDetailPage() {
 
   const nodes = data?.evolution_tree?.nodes ?? []
 
-  const statRows = useMemo(() => {
-    const s = data?.stats
-    if (!s) return []
-    const critRatePct = s.crit_rate / 1000
-    const atkSpeedVal = s.atk_speed / 1000
-    return [
-      ['HP', s.hp],
-      ['DS', s.ds],
-      ['Attack', s.attack],
-      ['Defense', s.defense],
-      ['Crit rate', `${s.crit_rate.toLocaleString()} (${critRatePct.toFixed(1)}%)`],
-      ['ATK speed', `${s.atk_speed.toLocaleString()} (${atkSpeedVal.toFixed(1)})`],
-      ['DEX', s.dex],
-      ['INT', s.int],
-      ['Evasion', s.evasion],
-      ['Hit rate', s.hit_rate],
-      ['Block rate', s.block_rate],
-    ] as Array<[string, number | string]>
-  }, [data])
+  const statRows = useMemo(() => wikiCombatStatRows(data?.stats), [data?.stats])
 
   if (!id.trim()) {
     return (
