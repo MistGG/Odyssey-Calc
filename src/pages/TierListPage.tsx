@@ -738,6 +738,11 @@ export function TierListPage() {
           ) : null}
         </div>
       </div>
+      <p className="tier-wip-note" role="note">
+        <strong>Disclaimer:</strong> The damage formula is a heavy work in progress. Certain things are
+        still not calculated properly. An investigation is ongoing, and a formula will be published along
+        with additional lab options to assist with calculating DPS better depending on circumstance.
+      </p>
 
       <section className="lab-result">
         <h3>Update tier list</h3>
