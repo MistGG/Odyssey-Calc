@@ -293,7 +293,7 @@ export function DpsLabPage() {
     if (!sim) return []
     const bySkill = new Map<
       string,
-      { name: string; casts: number; damage: number }
+      { skillId: string; name: string; casts: number; damage: number }
     >()
     for (const e of sim.events) {
       if (e.eventType === 'support') continue
@@ -303,6 +303,7 @@ export function DpsLabPage() {
         prev.damage += e.damage
       } else {
         bySkill.set(e.skillId, {
+          skillId: e.skillId,
           name: e.skillName,
           casts: 1,
           damage: e.damage,
@@ -321,15 +322,23 @@ export function DpsLabPage() {
     if (!data || !sim || breakdown.length === 0) return []
     const lines: string[] = []
 
+    const levelOf = (skillId: string) => skillLevels[skillId] ?? 1
     const top = breakdown[0]
-    lines.push(
-      `Prioritize ${top.name}; it contributes ${top.pct.toFixed(1)}% of total damage.`,
-    )
+    if (top.skillId === 'auto-attack') {
+      lines.push(
+        `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window—keep attack-speed and ATK buffs active so autos stay competitive with filler skills.`,
+      )
+    } else {
+      lines.push(
+        `Prioritize ${top.name}; it contributes ${top.pct.toFixed(1)}% of total damage.`,
+      )
+    }
 
     const transitions = new Map<string, { from: string; to: string; count: number }>()
     for (let i = 0; i < sim.events.length - 1; i += 1) {
       const a = sim.events[i]
       const b = sim.events[i + 1]
+      if (a.skillId === b.skillId) continue
       const key = `${a.skillId}->${b.skillId}`
       const prev = transitions.get(key)
       if (prev) prev.count += 1
@@ -338,29 +347,53 @@ export function DpsLabPage() {
     const bestTransition = [...transitions.values()].sort((a, b) => b.count - a.count)[0]
     if (bestTransition && bestTransition.count >= 2) {
       lines.push(
-        `Common follow-up: ${bestTransition.from} -> ${bestTransition.to} (${bestTransition.count} times in this timeline).`,
+        `Common follow-up: ${bestTransition.from} → ${bestTransition.to} (${bestTransition.count} times in this timeline).`,
       )
     }
 
     const supportSkills = (data.skills ?? []).filter((s) =>
       skillIsSupportOnly(s.base_dmg, s.scaling),
     )
-    const supportWithAttackBuff = supportSkills.filter((s) =>
-      buildSupportSkillEffects(s, skillLevels[s.id] ?? 1).some(
-        (e) =>
-          e.unit === '%' &&
-          /(increase|raise|boost).*(\battack\b|\bskill damage\b|\bskill dmg\b)/i.test(
-            e.label,
-          ),
-      ),
-    )
-    if (supportWithAttackBuff.length > 0) {
-      const burstList = breakdown.slice(0, 3).map((b) => b.name).join(', ')
-      const buffNames = supportWithAttackBuff.map((s) => s.name).join(', ')
-      lines.push(
-        `Use ${buffNames} off cooldown; align these DPS buffs before/with burst skills (${burstList}) when possible.`,
+
+    const supportHasAttackSpeed = (s: (typeof supportSkills)[number]) =>
+      buildSupportSkillEffects(s, levelOf(s.id)).some(
+        (e) => e.unit === '%' && /\battack\s*speed\b/i.test(e.label),
       )
-    } else if (supportSkills.length > 0) {
+
+    const supportHasDamageScalingBuff = (s: (typeof supportSkills)[number]) =>
+      buildSupportSkillEffects(s, levelOf(s.id)).some((e) => {
+        if (e.unit !== '%') return false
+        if (/\battack\s*speed\b/i.test(e.label)) return false
+        if (/(\bskill damage\b|\bskill dmg\b)/i.test(e.label)) return true
+        if (/\battack\b/i.test(e.label) && /(increase|raise|boost)/i.test(e.label)) return true
+        return false
+      })
+
+    const atkSpdSupports = supportSkills.filter(supportHasAttackSpeed)
+    const dmgScalingSupports = supportSkills.filter(supportHasDamageScalingBuff)
+
+    const heavyHitters = breakdown
+      .filter((b) => b.skillId !== 'auto-attack')
+      .slice(0, 3)
+      .map((b) => b.name)
+
+    if (atkSpdSupports.length > 0) {
+      const names = atkSpdSupports.map((s) => s.name).join(', ')
+      lines.push(
+        `When attack speed from ${names} is up, prioritize weaving auto attacks—the sim compares auto damage rate to each ready skill and can skip weak filler casts during those windows.`,
+      )
+    }
+
+    if (dmgScalingSupports.length > 0) {
+      const buffNames = dmgScalingSupports.map((s) => s.name).join(', ')
+      const targets =
+        heavyHitters.length > 0 ? heavyHitters.join(', ') : 'your hardest-hitting damage skills'
+      lines.push(
+        `When ${buffNames} buffs attack or skill damage, prioritize ${targets} (line them up inside the buff window when possible).`,
+      )
+    }
+
+    if (atkSpdSupports.length === 0 && dmgScalingSupports.length === 0 && supportSkills.length > 0) {
       const names = supportSkills.map((s) => s.name).join(', ')
       lines.push(`Use support skills (${names}) for utility windows; they are excluded from DPS casts.`)
     }
@@ -368,7 +401,7 @@ export function DpsLabPage() {
     if (digimonRoleWikiSkillsForRole.length > 0) {
       const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
       lines.push(
-        `Digimon role skills (${tn}) are cast when ready like other supports; attack-speed buffs shorten auto spacing and can make autos beat weak filler skills on damage rate. Hover the buff % in the timeline for a per-hit breakdown.`,
+        `Digimon role skills (${tn}) are cast when ready like other supports. Hover buff % on timeline rows for per-hit breakdowns.`,
       )
     }
 
