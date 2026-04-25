@@ -1,4 +1,5 @@
 import type { DigimonContentStatus } from './contentStatus'
+import { TIER_DPS_SIM_REVISION } from './dpsSim'
 
 export const TIER_LIST_CACHE_KEY = 'odysseyCalc.tierList.v1'
 
@@ -105,6 +106,8 @@ export type SustainedDpsEntry = {
   skillsSignature?: string
   /** Last detail fetch used this revision of tank/healer scoring + support parsing (see TIER_SUPPORT_SCORE_REVISION). */
   supportScoreRevision?: number
+  /** Last DPS row used this revision of `simulateRotation` (see `TIER_DPS_SIM_REVISION` in dpsSim). */
+  dpsSimRevision?: number
 }
 
 export type TierListCache = {
@@ -246,6 +249,10 @@ function migrateLegacyAoeRadiusToFarming(entry: SustainedDpsEntry): SustainedDps
 }
 
 /** True when rotation + AoE scores are present (prompt tier list refresh if false). */
+export function tierEntryNeedsDpsSimRefresh(entry: SustainedDpsEntry): boolean {
+  return (entry.dpsSimRevision ?? 0) !== TIER_DPS_SIM_REVISION
+}
+
 export function tierEntryDpsCategoryScoresComplete(entry: SustainedDpsEntry): boolean {
   const d = entry.dpsCategoryScores
   const a = entry.aoeCategoryScores

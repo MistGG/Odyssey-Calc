@@ -67,6 +67,12 @@ export type RotationResult = {
 /** Default window for `simulateRotation` in Lab and tier list (same sim). */
 export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
 
+/**
+ * Bump when rotation DPS sim math changes. Tier list entries store this on refresh; a mismatch
+ * re-queues rows on incremental update so cached `dps` matches the current `simulateRotation`.
+ */
+export const TIER_DPS_SIM_REVISION = 1
+
 function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
 }

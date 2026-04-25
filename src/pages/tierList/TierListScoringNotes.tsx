@@ -56,8 +56,8 @@ export function TierListScoringNotes({
           </details>
           {dpsScoresStale && (
             <p className="tier-stale-note" role="status">
-              Some rows are missing DPS category scores. Run <strong>Update tier list</strong> (or{' '}
-              <strong>Force check all</strong>) to recalculate.
+              Some rows need a DPS refresh (missing category scores or an older rotation sim). Run{' '}
+              <strong>Update tier list</strong> (or <strong>Force check all</strong>) to recalculate.
             </p>
           )}
         </>

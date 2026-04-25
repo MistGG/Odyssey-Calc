@@ -4,7 +4,11 @@ import { Link } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC, computeDpsSpecializedScore } from '../lib/dpsTierScore'
-import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
+import {
+  DEFAULT_ROTATION_SIM_DURATION_SEC,
+  simulateRotation,
+  TIER_DPS_SIM_REVISION,
+} from '../lib/dpsSim'
 import { computeHealerTierScore } from '../lib/healerTierScore'
 import { computeTankTierScore } from '../lib/tankTierScore'
 import {
@@ -21,6 +25,7 @@ import {
   saveTierListCache,
   tierEntryDpsCategoryScoresComplete,
   tierEntryIsStaleForDetailFetch,
+  tierEntryNeedsDpsSimRefresh,
   TIER_SUPPORT_SCORE_REVISION,
   type BuildTierGroupsOptions,
   type DpsTierCategoryKey,
@@ -221,7 +226,8 @@ export function TierListPage() {
             !entry ||
             !entry.status ||
             tierEntryIsStaleForDetailFetch(entry) ||
-            entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION
+            entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
+            tierEntryNeedsDpsSimRefresh(entry)
           )
         })
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
@@ -337,6 +343,7 @@ export function TierListPage() {
             checkedAt: new Date().toISOString(),
             skillsSignature: tierSkillsSignature(detail.skills),
             supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
+            dpsSimRevision: TIER_DPS_SIM_REVISION,
           }
           working.entries[id] = entry
           refreshedIds.add(id)
@@ -589,7 +596,9 @@ export function TierListPage() {
 
   const dpsScoresStale = useMemo(() => {
     if (tierMode !== 'dps') return false
-    return Object.values(entriesForMatrix).some((e) => !tierEntryDpsCategoryScoresComplete(e))
+    return Object.values(entriesForMatrix).some(
+      (e) => !tierEntryDpsCategoryScoresComplete(e) || tierEntryNeedsDpsSimRefresh(e),
+    )
   }, [tierMode, entriesForMatrix])
 
   const updateSummarySections = useMemo(() => {
@@ -1269,8 +1278,8 @@ export function TierListPage() {
               </details>
               {dpsScoresStale && (
                 <p className="tier-stale-note" role="status">
-                  Some rows are missing DPS category scores. Run <strong>Update tier list</strong> (or{' '}
-                  <strong>Force check all</strong>) to recalculate.
+                  Some rows need a DPS refresh (missing category scores or an older rotation sim).
+                  Run <strong>Update tier list</strong> (or <strong>Force check all</strong>) to recalculate.
                 </p>
               )}
             </>
