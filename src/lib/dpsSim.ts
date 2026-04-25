@@ -74,7 +74,7 @@ export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
  * Bump when rotation DPS sim math changes. Tier list entries store this on refresh; a mismatch
  * re-queues rows on incremental update so cached `dps` matches the current `simulateRotation`.
  */
-export const TIER_DPS_SIM_REVISION = 3
+export const TIER_DPS_SIM_REVISION = 4
 
 function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
@@ -474,15 +474,26 @@ type AutoHitSnapshot = {
   activeCritDamagePct: number
 }
 
-function computeAutoHit(ctx: SimCtx, m: SimMutable): AutoHitSnapshot {
+/** Wiki stat + buff crit rate % → auto crit chance (0–1). */
+function naturalAutoCritChance(baseCritRateStat: number, activeCritRatePctFromBuffs: number): number {
+  return Math.max(
+    0,
+    Math.min(1, critRateToChance(baseCritRateStat) + activeCritRatePctFromBuffs / 100),
+  )
+}
+
+/**
+ * `'damage'` applies `forceAutoCrit` (100% crit autos). `'planning'` always uses natural p so
+ * skill-vs-auto and lookahead match the non-forced sim (otherwise inflated rAuto lowers total DPS).
+ */
+function computeAutoHit(ctx: SimCtx, m: SimMutable, purpose: 'damage' | 'planning'): AutoHitSnapshot {
   const step = autoIntervalFor(ctx, m)
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
   const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-  const critChance = ctx.forceAutoCrit
-    ? 1
-    : Math.max(0, Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100))
+  const naturalP = naturalAutoCritChance(ctx.baseCritRateStat, activeCritRatePct)
+  const critChance = ctx.forceAutoCrit && purpose === 'damage' ? 1 : naturalP
   const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
   const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
   const totalBuffPct =
@@ -503,7 +514,7 @@ function computeAutoHit(ctx: SimCtx, m: SimMutable): AutoHitSnapshot {
 }
 
 function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
-  const snap = computeAutoHit(ctx, m)
+  const snap = computeAutoHit(ctx, m, 'damage')
   m.totalDamage += snap.dmg
   m.autoDamageTotal += snap.dmg
   m.autoHitCount += 1
@@ -688,7 +699,7 @@ function runGreedyUntilWall(
     const chosen = available[0]
     const castT = effectiveCastTime(chosen.cast_time_sec)
     const skillDmg = computeDamageSkillHit(ctx, m, chosen)
-    const snap = computeAutoHit(ctx, m)
+    const snap = computeAutoHit(ctx, m, 'planning')
     const rAuto = snap.dmg / snap.step
     const rSkill = skillDmg / castT
     if (rAuto > rSkill + 1e-9) {
@@ -720,7 +731,10 @@ export type RotationSimOptions = {
   role?: string | null
   /** Hybrid only. `'best'` runs all three stances and keeps the highest DPS (tier list default). */
   hybridStance?: HybridStance | 'best'
-  /** Force auto attacks to crit (skills still cannot crit). */
+  /**
+   * Auto attacks always roll as crits for **damage** only. Skill-vs-auto weaving and lookahead use
+   * natural crit chance so the rotation matches the non-forced sim (DPS never drops vs baseline).
+   */
   forceAutoCrit?: boolean
 }
 
@@ -922,7 +936,7 @@ function runRotationSim(
 
     const castTChosen = effectiveCastTime(chosen.cast_time_sec)
     const skillDmgChosen = computeDamageSkillHit(ctx, m, chosen)
-    const snapChosen = computeAutoHit(ctx, m)
+    const snapChosen = computeAutoHit(ctx, m, 'planning')
     const rAutoChosen = snapChosen.dmg / snapChosen.step
     const rSkillChosen = skillDmgChosen / castTChosen
     if (rAutoChosen > rSkillChosen + 1e-9) {
