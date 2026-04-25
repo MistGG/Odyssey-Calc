@@ -368,7 +368,7 @@ export function DpsLabPage() {
     if (digimonRoleWikiSkillsForRole.length > 0) {
       const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
       lines.push(
-        `Digimon role skills (${tn}) are cast when ready like other supports; attack-speed buffs shorten auto-attack spacing. Hover the buff % in the timeline table for a per-hit breakdown.`,
+        `Digimon role skills (${tn}) are cast when ready like other supports; attack-speed buffs shorten auto spacing and can make autos beat weak filler skills on damage rate. Hover the buff % in the timeline for a per-hit breakdown.`,
       )
     }
 
@@ -392,7 +392,10 @@ export function DpsLabPage() {
         are interpreted for buff durations and effects; when a support is off cooldown
         and its buff isn&apos;t already active, we cast it. Damage skills scale with
         whatever buffs are currently up. Between skills we fill with auto attacks
-        until something else is ready.
+        until something else is ready. If attack-speed buffs make autos fast enough,
+        we may weave an auto instead of casting a ready damage skill when the
+        skill&apos;s damage per cast-time second is lower than the current auto rate
+        (autos still use ATK% / flat / crit from buffs, not skill damage %).
       </p>
       <p className="muted">
         Whenever you could press a damage skill, we peek a few seconds ahead and
@@ -400,9 +403,10 @@ export function DpsLabPage() {
         per second of cast time); cast another damage skill instead as filler; or
         skip your biggest hit for that short window—only autos and supports—to
         see if waiting lines up better with buffs. We pick whichever option dealt
-        the most damage in that preview slice. Preview length is capped (about
-        twelve seconds at most), so this is smart timing, not a perfect solve for
-        the entire fight.
+        the most damage in that preview slice (then apply the auto-vs-skill rate
+        check above before actually casting). Preview length is capped (about twelve
+        seconds at most), so this is smart timing, not a perfect solve for the entire
+        fight.
       </p>
 
       {!digimonId && (
@@ -605,6 +609,37 @@ export function DpsLabPage() {
                   {sim.dps.toLocaleString(undefined, { maximumFractionDigits: 1 })}
                 </strong>{' '}
                 /s
+              </p>
+              <p>
+                Auto attacks:{' '}
+                <strong>{sim.autoAttackHits.toLocaleString()}</strong> hits,{' '}
+                <strong>
+                  {sim.autoDamageTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </strong>{' '}
+                total damage
+                {sim.autoAttackHits > 0 ? (
+                  <>
+                    {' '}
+                    (avg{' '}
+                    <strong>
+                      {sim.autoDamageAvg.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                    </strong>{' '}
+                    per hit)
+                  </>
+                ) : null}
+                ,{' '}
+                <strong>
+                  {sim.autoDps.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                </strong>{' '}
+                DPS from autos
+                {sim.totalDamage > 0 ? (
+                  <span className="muted">
+                    {' '}
+                    (
+                    {((sim.autoDamageTotal / sim.totalDamage) * 100).toFixed(1)}% of total damage)
+                  </span>
+                ) : null}
+                .
               </p>
               <p className="muted">Total casts: {sim.casts}</p>
             </section>

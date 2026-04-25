@@ -53,6 +53,14 @@ export type RotationResult = {
   critRatePct: number
   critDamagePct: number
   totalDpsBuffPct: number
+  /** Sum of damage from auto-attack events (excludes skills). */
+  autoDamageTotal: number
+  /** Count of auto-attack hits in the window. */
+  autoAttackHits: number
+  /** Mean damage per auto hit (0 if no autos). */
+  autoDamageAvg: number
+  /** Auto damage divided by sim duration (contribution to sustained DPS). */
+  autoDps: number
   events: RotationEvent[]
 }
 
@@ -258,6 +266,8 @@ type SimMutable = {
   critRateAtDamageCasts: number
   critDamageAtDamageCasts: number
   damageCastCount: number
+  autoDamageTotal: number
+  autoHitCount: number
 }
 
 function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
@@ -385,6 +395,8 @@ function cloneSim(m: SimMutable): SimMutable {
     critRateAtDamageCasts: m.critRateAtDamageCasts,
     critDamageAtDamageCasts: m.critDamageAtDamageCasts,
     damageCastCount: m.damageCastCount,
+    autoDamageTotal: m.autoDamageTotal,
+    autoHitCount: m.autoHitCount,
   }
 }
 
@@ -414,8 +426,8 @@ function availableDamaging(ctx: SimCtx, m: SimMutable, hold: DamageHold | null) 
   return sortDamageByDpct(ctx, list)
 }
 
-function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEvents: boolean) {
-  const castTime = effectiveCastTime(skill.cast_time_sec)
+/** Expected damage for one cast of `skill` with current buffs (no side effects). */
+function computeDamageSkillHit(ctx: SimCtx, m: SimMutable, skill: WikiSkill): number {
   const usedLevel = ctx.skillLevel(skill)
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
@@ -428,15 +440,102 @@ function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEve
   )
   const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
   const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+  return (
+    skillDamagePerCast(skill, usedLevel, ctx.targets) *
+    (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
+    critMult
+  )
+}
+
+type AutoHitSnapshot = {
+  dmg: number
+  totalBuffPct: number
+  step: number
+  activeAttackPct: number
+  activeFlatAtk: number
+  critChance: number
+  activeCritDamagePct: number
+}
+
+function computeAutoHit(ctx: SimCtx, m: SimMutable): AutoHitSnapshot {
+  const step = autoIntervalFor(ctx, m)
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+  const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const critChance = Math.max(
+    0,
+    Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
+  )
+  const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
+  const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+  const totalBuffPct =
+    activeAttackPct +
+    flatPct +
+    buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
+  const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
+  const dmg = autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
+  return {
+    dmg,
+    totalBuffPct,
+    step,
+    activeAttackPct,
+    activeFlatAtk,
+    critChance,
+    activeCritDamagePct,
+  }
+}
+
+function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
+  const snap = computeAutoHit(ctx, m)
+  m.totalDamage += snap.dmg
+  m.autoDamageTotal += snap.dmg
+  m.autoHitCount += 1
+  m.damageCastCount += 1
+  m.attackPctAtDamageCasts += snap.activeAttackPct
+  m.flatAtkAtDamageCasts += snap.activeFlatAtk
+  m.critRateAtDamageCasts += snap.critChance * 100
+  m.critDamageAtDamageCasts += snap.activeCritDamagePct
+  m.skillPctAtDamageCasts += 0
+  m.casts += 1
+  if (recordEvents) {
+    m.events.push({
+      atSec: m.t,
+      skillId: 'auto-attack',
+      skillName: 'Auto Attack',
+      iconId: '',
+      eventType: 'auto',
+      castTimeSec: snap.step,
+      damage: snap.dmg,
+      buffedBy: m.activeBuffs.map((b) => b.skillName),
+      totalBuffPct: snap.totalBuffPct,
+      buffContributions:
+        m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
+      cumulativeDamage: m.totalDamage,
+    })
+  }
+  m.t += snap.step
+  purgeExpiredBuffs(m, m.t)
+}
+
+function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEvents: boolean) {
+  const castTime = effectiveCastTime(skill.cast_time_sec)
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
+  const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
+  const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
+  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const critChance = Math.max(
+    0,
+    Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
+  )
+  const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
   const totalBuffPct =
     activeAttackPct +
     activeSkillPct +
     flatPct +
     buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
-  const dmg =
-    skillDamagePerCast(skill, usedLevel, ctx.targets) *
-    (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
-    critMult
+  const dmg = computeDamageSkillHit(ctx, m, skill)
 
   m.totalDamage += dmg
   m.damageCastCount += 1
@@ -504,6 +603,8 @@ function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProf
 
 /**
  * Greedy timeline without lookahead: supports > damage (DPCT, optional ban) > autos / jump.
+ * When a damage skill is ready, if current auto damage rate (per wiki atk_speed + attack-speed
+ * buffs) exceeds that skill’s damage ÷ cast time, we weave an auto instead of casting that skill.
  * Stops when t >= wallTime or duration ends.
  */
 function runGreedyUntilWall(
@@ -553,51 +654,10 @@ function runGreedyUntilWall(
       m.t < damageBan.until
     ) {
       const holdEnd = Math.min(damageBan.until, wall)
-      while (m.t + autoIntervalFor(ctx, m) <= holdEnd + 1e-9 && m.t < wall - 1e-9) {
+      while (m.t < wall - 1e-9) {
         const step = autoIntervalFor(ctx, m)
-        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-        const critChance = Math.max(
-          0,
-          Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
-        )
-        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
-        const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
-        const totalBuffPct =
-          activeAttackPct +
-          flatPct +
-          buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
-        const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-        const autoDmg =
-          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
-        m.totalDamage += autoDmg
-        m.damageCastCount += 1
-        m.attackPctAtDamageCasts += activeAttackPct
-        m.flatAtkAtDamageCasts += activeFlatAtk
-        m.critRateAtDamageCasts += critChance * 100
-        m.critDamageAtDamageCasts += activeCritDamagePct
-        m.skillPctAtDamageCasts += 0
-        m.casts += 1
-        if (recordEvents) {
-          m.events.push({
-            atSec: m.t,
-            skillId: 'auto-attack',
-            skillName: 'Auto Attack',
-            iconId: '',
-            eventType: 'auto',
-            castTimeSec: step,
-            damage: autoDmg,
-            buffedBy: m.activeBuffs.map((b) => b.skillName),
-            totalBuffPct,
-            buffContributions:
-              m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
-            cumulativeDamage: m.totalDamage,
-          })
-        }
-        m.t += step
-        purgeExpiredBuffs(m, m.t)
+        if (m.t + step > holdEnd + 1e-9) break
+        performAutoAttack(ctx, m, recordEvents)
       }
       m.t = Math.min(Math.max(m.t, holdEnd), wall)
       continue
@@ -612,57 +672,25 @@ function runGreedyUntilWall(
       const nextReady = Number.isFinite(next) ? Math.min(ctx.durationSec, next) : ctx.durationSec
       if (nextReady <= m.t) break
 
-      while (m.t + autoIntervalFor(ctx, m) <= nextReady + 1e-9 && m.t < wall - 1e-9) {
+      while (m.t < wall - 1e-9) {
         const step = autoIntervalFor(ctx, m)
-        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-        const critChance = Math.max(
-          0,
-          Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100),
-        )
-        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
-        const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
-        const totalBuffPct =
-          activeAttackPct +
-          flatPct +
-          buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
-        const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-        const autoDmg =
-          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
-        m.totalDamage += autoDmg
-        m.damageCastCount += 1
-        m.attackPctAtDamageCasts += activeAttackPct
-        m.flatAtkAtDamageCasts += activeFlatAtk
-        m.critRateAtDamageCasts += critChance * 100
-        m.critDamageAtDamageCasts += activeCritDamagePct
-        m.skillPctAtDamageCasts += 0
-        m.casts += 1
-        if (recordEvents) {
-          m.events.push({
-            atSec: m.t,
-            skillId: 'auto-attack',
-            skillName: 'Auto Attack',
-            iconId: '',
-            eventType: 'auto',
-            castTimeSec: step,
-            damage: autoDmg,
-            buffedBy: m.activeBuffs.map((b) => b.skillName),
-            totalBuffPct,
-            buffContributions:
-              m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
-            cumulativeDamage: m.totalDamage,
-          })
-        }
-        m.t += step
-        purgeExpiredBuffs(m, m.t)
+        if (m.t + step > nextReady + 1e-9) break
+        performAutoAttack(ctx, m, recordEvents)
       }
       m.t = Math.max(m.t, Math.min(nextReady, wall))
       continue
     }
 
     const chosen = available[0]
+    const castT = effectiveCastTime(chosen.cast_time_sec)
+    const skillDmg = computeDamageSkillHit(ctx, m, chosen)
+    const snap = computeAutoHit(ctx, m)
+    const rAuto = snap.dmg / snap.step
+    const rSkill = skillDmg / castT
+    if (rAuto > rSkill + 1e-9) {
+      performAutoAttack(ctx, m, recordEvents)
+      continue
+    }
     castDamageSkill(ctx, m, chosen, recordEvents)
   }
 }
@@ -735,6 +763,10 @@ function runRotationSim(
       critRatePct: buffs.critRatePct,
       critDamagePct: buffs.critDamagePct,
       totalDpsBuffPct: buffs.totalDpsBuffPct,
+      autoDamageTotal: 0,
+      autoAttackHits: 0,
+      autoDamageAvg: 0,
+      autoDps: 0,
       events: [],
     }
   }
@@ -766,6 +798,8 @@ function runRotationSim(
     critRateAtDamageCasts: 0,
     critDamageAtDamageCasts: 0,
     damageCastCount: 0,
+    autoDamageTotal: 0,
+    autoHitCount: 0,
   }
 
   let damageHold: DamageHold | null = null
@@ -811,49 +845,10 @@ function runRotationSim(
       m.t < damageHold.until
     ) {
       const holdEnd = Math.min(damageHold.until, durationSec)
-      while (m.t + autoIntervalFor(ctx, m) <= holdEnd + 1e-9 && m.t < durationSec - 1e-9) {
+      while (m.t < durationSec - 1e-9) {
         const step = autoIntervalFor(ctx, m)
-        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-        const critChance = Math.max(
-          0,
-          Math.min(1, critRateToChance(baseCritRateStat) + activeCritRatePct / 100),
-        )
-        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
-        const flatPct = baseAttack > 0 ? (activeFlatAtk / baseAttack) * 100 : 0
-        const totalBuffPct =
-          activeAttackPct +
-          flatPct +
-          buffCritMarginalDamagePct(baseCritRateStat, activeCritRatePct, activeCritDamagePct)
-        const autoBase = Math.max(0, baseAttack + activeFlatAtk)
-        const autoDmg =
-          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
-        m.totalDamage += autoDmg
-        m.damageCastCount += 1
-        m.attackPctAtDamageCasts += activeAttackPct
-        m.flatAtkAtDamageCasts += activeFlatAtk
-        m.critRateAtDamageCasts += critChance * 100
-        m.critDamageAtDamageCasts += activeCritDamagePct
-        m.skillPctAtDamageCasts += 0
-        m.casts += 1
-        m.events.push({
-          atSec: m.t,
-          skillId: 'auto-attack',
-          skillName: 'Auto Attack',
-          iconId: '',
-          eventType: 'auto',
-          castTimeSec: step,
-          damage: autoDmg,
-          buffedBy: m.activeBuffs.map((b) => b.skillName),
-          totalBuffPct,
-          buffContributions:
-            m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
-          cumulativeDamage: m.totalDamage,
-        })
-        m.t += step
-        purgeExpiredBuffs(m, m.t)
+        if (m.t + step > holdEnd + 1e-9) break
+        performAutoAttack(ctx, m, true)
       }
       m.t = Math.min(Math.max(m.t, holdEnd), durationSec)
       continue
@@ -866,49 +861,10 @@ function runRotationSim(
       const nextReady = Number.isFinite(next) ? Math.min(durationSec, next) : durationSec
       if (nextReady <= m.t) break
 
-      while (m.t + autoIntervalFor(ctx, m) <= nextReady + 1e-9 && m.t < durationSec - 1e-9) {
+      while (m.t < durationSec - 1e-9) {
         const step = autoIntervalFor(ctx, m)
-        const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-        const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-        const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-        const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-        const critChance = Math.max(
-          0,
-          Math.min(1, critRateToChance(baseCritRateStat) + activeCritRatePct / 100),
-        )
-        const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
-        const flatPct = baseAttack > 0 ? (activeFlatAtk / baseAttack) * 100 : 0
-        const totalBuffPct =
-          activeAttackPct +
-          flatPct +
-          buffCritMarginalDamagePct(baseCritRateStat, activeCritRatePct, activeCritDamagePct)
-        const autoBase = Math.max(0, baseAttack + activeFlatAtk)
-        const autoDmg =
-          autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, targets)
-        m.totalDamage += autoDmg
-        m.damageCastCount += 1
-        m.attackPctAtDamageCasts += activeAttackPct
-        m.flatAtkAtDamageCasts += activeFlatAtk
-        m.critRateAtDamageCasts += critChance * 100
-        m.critDamageAtDamageCasts += activeCritDamagePct
-        m.skillPctAtDamageCasts += 0
-        m.casts += 1
-        m.events.push({
-          atSec: m.t,
-          skillId: 'auto-attack',
-          skillName: 'Auto Attack',
-          iconId: '',
-          eventType: 'auto',
-          castTimeSec: step,
-          damage: autoDmg,
-          buffedBy: m.activeBuffs.map((b) => b.skillName),
-          totalBuffPct,
-          buffContributions:
-            m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
-          cumulativeDamage: m.totalDamage,
-        })
-        m.t += step
-        purgeExpiredBuffs(m, m.t)
+        if (m.t + step > nextReady + 1e-9) break
+        performAutoAttack(ctx, m, true)
       }
       m.t = Math.max(m.t, nextReady)
       continue
@@ -956,14 +912,30 @@ function runRotationSim(
       }
     }
 
+    const castTChosen = effectiveCastTime(chosen.cast_time_sec)
+    const skillDmgChosen = computeDamageSkillHit(ctx, m, chosen)
+    const snapChosen = computeAutoHit(ctx, m)
+    const rAutoChosen = snapChosen.dmg / snapChosen.step
+    const rSkillChosen = skillDmgChosen / castTChosen
+    if (rAutoChosen > rSkillChosen + 1e-9) {
+      performAutoAttack(ctx, m, true)
+      continue
+    }
     castDamageSkill(ctx, m, chosen, true)
   }
+
+  const autoHits = m.autoHitCount
+  const autoTot = m.autoDamageTotal
 
   return {
     totalDamage: m.totalDamage,
     dps: durationSec > 0 ? m.totalDamage / durationSec : 0,
     casts: m.casts,
     durationSec,
+    autoDamageTotal: autoTot,
+    autoAttackHits: autoHits,
+    autoDamageAvg: autoHits > 0 ? autoTot / autoHits : 0,
+    autoDps: durationSec > 0 ? autoTot / durationSec : 0,
     attackBuffPct:
       m.damageCastCount > 0 ? m.attackPctAtDamageCasts / m.damageCastCount : buffs.attackPct,
     skillDamageBuffPct:
@@ -1000,6 +972,10 @@ function runRotationSim(
       critRatePct: buffs.critRatePct,
       critDamagePct: buffs.critDamagePct,
       totalDpsBuffPct: buffs.totalDpsBuffPct,
+      autoDamageTotal: 0,
+      autoAttackHits: 0,
+      autoDamageAvg: 0,
+      autoDps: 0,
       events: [],
     }
   }
