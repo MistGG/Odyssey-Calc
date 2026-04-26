@@ -1228,7 +1228,9 @@ code {
   line-height: 1.15;
   color: var(--text);
   white-space: normal;
-  overflow-wrap: anywhere;
+  /* `break-word` first tries word boundaries; `anywhere` can split every character in tiny grid cells. */
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .tier-entry-dps {
@@ -3409,47 +3411,13 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     overscroll-behavior-x: contain;
   }
 
-  /* Tier matrix cells: let height follow content (stacked rows per entry). */
+  /* Tier matrix cells: height follows content; table still scrolls horizontally when needed. */
   .tier-cell-content {
     min-height: 0;
   }
 
-  /* Long names: icon column + name row, then DPS/status row (full width of text column). */
   .tier-entry-link {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 1fr);
-    grid-template-rows: auto auto;
-    align-items: start;
-    column-gap: 0.45rem;
-    row-gap: 0.22rem;
-    padding: 0.38rem 0.42rem;
-  }
-
-  .tier-entry-link > :first-child {
-    grid-column: 1;
-    grid-row: 1 / -1;
-    align-self: start;
-  }
-
-  .tier-entry-name {
-    grid-column: 2;
-    grid-row: 1;
-    word-break: break-word;
-    -webkit-hyphens: auto;
-    hyphens: auto;
-    line-height: 1.2;
-  }
-
-  .tier-entry-dps-wrap {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: stretch;
-    width: auto;
-    justify-content: flex-end;
-  }
-
-  .tier-entry {
-    font-size: 0.7rem;
+    min-width: 0;
   }
 
   .tier-matrix-wrap--single-role .tier-entry-list {
