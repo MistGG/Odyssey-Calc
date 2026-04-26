@@ -40,6 +40,10 @@ export type RotationEvent = {
   /** Per-category numbers from active buffs only; see `buildBuffContributionsForDamage`. */
   buffContributions?: BuffContribution[]
   cumulativeDamage: number
+  /** When present, this auto attack was animation-cancelled into the named skill. */
+  cancelledBySkillName?: string
+  /** True when this damage event is the skill cast used to cancel the preceding auto attack. */
+  cancelledFromAuto?: boolean
 }
 
 export type RotationResult = {
@@ -74,16 +78,23 @@ export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
  * Bump when rotation DPS sim math changes. Tier list entries store this on refresh; a mismatch
  * re-queues rows on incremental update so cached `dps` matches the current `simulateRotation`.
  */
-export const TIER_DPS_SIM_REVISION = 4
+export const TIER_DPS_SIM_REVISION = 6
 
 function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
 }
 
-function skillDamagePerCast(skill: WikiSkill, level: number, targets: number) {
+function skillDamagePerCast(
+  skill: WikiSkill,
+  level: number,
+  targets: number,
+  baseAttack: number,
+  perfectAtClone: boolean,
+) {
   const base = skillDamageAtLevel(skill.base_dmg, skill.scaling, level, skill.max_level)
   const targetHits = skill.radius && skill.radius > 0 ? Math.max(1, targets) : 1
-  return base * targetHits
+  if (!perfectAtClone) return base * targetHits
+  return (base * 1.43 + Math.max(0, baseAttack)) * targetHits
 }
 
 type SupportBuffProfile = {
@@ -268,6 +279,8 @@ type SimCtx = {
   baseAttack: number
   baseCritRateStat: number
   forceAutoCrit: boolean
+  perfectAtClone: boolean
+  autoAttackAnimationCancel: boolean
   /** Auto-attack interval from wiki atk_speed stat only (no temporary buffs). */
   baseAutoIntervalSec: number
   skillLevel: (skill: WikiSkill) => number
@@ -291,6 +304,10 @@ type SimMutable = {
   /** Sum of buff crit damage % on each auto hit. */
   autoHitCritBuffDamSum: number
 }
+
+/** Practical midpoint in the observed ~200–500ms cancel window. */
+const AUTO_ANIM_CANCEL_OVERLAP_SEC = 0.3
+const AUTO_ANIM_CANCEL_MAX_WINDOW_SEC = 0.5
 
 function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
   const atkSpdPct = m.activeBuffs.reduce((sum, b) => sum + (b.atkSpeedPct ?? 0), 0)
@@ -434,9 +451,11 @@ function purgeExpiredBuffs(m: SimMutable, t: number) {
 function sortDamageByDpct(ctx: SimCtx, skills: WikiSkill[]) {
   return [...skills].sort((a, b) => {
     const aScore =
-      skillDamagePerCast(a, ctx.skillLevel(a), ctx.targets) / effectiveCastTime(a.cast_time_sec)
+      skillDamagePerCast(a, ctx.skillLevel(a), ctx.targets, ctx.baseAttack, ctx.perfectAtClone) /
+      effectiveCastTime(a.cast_time_sec)
     const bScore =
-      skillDamagePerCast(b, ctx.skillLevel(b), ctx.targets) / effectiveCastTime(b.cast_time_sec)
+      skillDamagePerCast(b, ctx.skillLevel(b), ctx.targets, ctx.baseAttack, ctx.perfectAtClone) /
+      effectiveCastTime(b.cast_time_sec)
     return bScore - aScore
   })
 }
@@ -459,7 +478,7 @@ function computeDamageSkillHit(ctx: SimCtx, m: SimMutable, skill: WikiSkill): nu
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
   return (
-    skillDamagePerCast(skill, usedLevel, ctx.targets) *
+    skillDamagePerCast(skill, usedLevel, ctx.targets, ctx.baseAttack, ctx.perfectAtClone) *
     (1 + (activeAttackPct + activeSkillPct + flatPct) / 100)
   )
 }
@@ -545,7 +564,60 @@ function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
   purgeExpiredBuffs(m, m.t)
 }
 
-function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEvents: boolean) {
+/**
+ * Auto attack animation cancel model:
+ * - only valid when a real damage skill is cast right after the auto
+ * - skill begins after ~300ms overlap window (inside observed 200–500ms range)
+ * - next auto must still wait for the skill cast to finish
+ */
+function performAutoIntoSkillCancel(
+  ctx: SimCtx,
+  m: SimMutable,
+  skill: WikiSkill,
+  recordEvents: boolean,
+) {
+  const snap = computeAutoHit(ctx, m, 'damage')
+  m.totalDamage += snap.dmg
+  m.autoDamageTotal += snap.dmg
+  m.autoHitCount += 1
+  m.damageCastCount += 1
+  m.attackPctAtDamageCasts += snap.activeAttackPct
+  m.flatAtkAtDamageCasts += snap.activeFlatAtk
+  m.autoHitCritChanceSum += snap.critChance
+  m.autoHitCritBuffDamSum += snap.activeCritDamagePct
+  m.skillPctAtDamageCasts += 0
+  m.casts += 1
+  const readyAt = m.readyAt.get(skill.id) ?? 0
+  const waitUntilSkillReady = Math.max(0, readyAt - (m.t + AUTO_ANIM_CANCEL_OVERLAP_SEC))
+  if (recordEvents) {
+    m.events.push({
+      atSec: m.t,
+      skillId: 'auto-attack',
+      skillName: 'Auto Attack',
+      iconId: '',
+      eventType: 'auto',
+      castTimeSec: AUTO_ANIM_CANCEL_OVERLAP_SEC + waitUntilSkillReady,
+      damage: snap.dmg,
+      buffedBy: m.activeBuffs.map((b) => b.skillName),
+      totalBuffPct: snap.totalBuffPct,
+      buffContributions:
+        m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
+      cumulativeDamage: m.totalDamage,
+      cancelledBySkillName: skill.name,
+    })
+  }
+  m.t += AUTO_ANIM_CANCEL_OVERLAP_SEC + waitUntilSkillReady
+  purgeExpiredBuffs(m, m.t)
+  castDamageSkill(ctx, m, skill, recordEvents, true)
+}
+
+function castDamageSkill(
+  ctx: SimCtx,
+  m: SimMutable,
+  skill: WikiSkill,
+  recordEvents: boolean,
+  cancelledFromAuto: boolean = false,
+) {
   const castTime = effectiveCastTime(skill.cast_time_sec)
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
@@ -574,13 +646,48 @@ function castDamageSkill(ctx: SimCtx, m: SimMutable, skill: WikiSkill, recordEve
       buffContributions:
         m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, true) : undefined,
       cumulativeDamage: m.totalDamage,
+      cancelledFromAuto,
     })
   }
   m.readyAt.set(skill.id, m.t + (skill.cooldown_sec || 0))
   m.t += castTime
 }
 
-function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProfile, recordEvents: boolean) {
+function soonReadyDamageWithinCancelWindow(
+  ctx: SimCtx,
+  m: SimMutable,
+  hold: DamageHold | null,
+): WikiSkill | null {
+  const autoNow = computeAutoHit(ctx, m, 'planning')
+  let best: WikiSkill | null = null
+  let bestScore = -Infinity
+  for (const s of ctx.damaging) {
+    if (hold && m.t < hold.until && hold.skillId === s.id) continue
+    const dt = (m.readyAt.get(s.id) ?? 0) - m.t
+    if (dt <= 0 || dt > AUTO_ANIM_CANCEL_MAX_WINDOW_SEC + 1e-9) continue
+    const castT = effectiveCastTime(s.cast_time_sec)
+    const skillStartDt = Math.max(AUTO_ANIM_CANCEL_OVERLAP_SEC, dt)
+    const shadow = cloneSim(m)
+    shadow.t = m.t + skillStartDt
+    purgeExpiredBuffs(shadow, shadow.t)
+    const skillDmgAtStart = computeDamageSkillHit(ctx, shadow, s)
+    // Cancel value uses auto hit now + skill at actual start time (with buff timing).
+    const score = (autoNow.dmg + skillDmgAtStart) / (skillStartDt + castT)
+    if (score > bestScore) {
+      bestScore = score
+      best = s
+    }
+  }
+  return best
+}
+
+function castSupportProfile(
+  _ctx: SimCtx,
+  m: SimMutable,
+  chosen: SupportBuffProfile,
+  recordEvents: boolean,
+  cancelledFromAuto: boolean = false,
+) {
   const castTime = effectiveCastTime(chosen.skill.cast_time_sec)
   m.casts += 1
   if (recordEvents) {
@@ -595,6 +702,7 @@ function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProf
       buffedBy: [],
       totalBuffPct: 0,
       cumulativeDamage: m.totalDamage,
+      cancelledFromAuto,
     })
   }
   m.readyAt.set(chosen.skill.id, m.t + (chosen.skill.cooldown_sec || 0))
@@ -615,6 +723,46 @@ function castSupportProfile(_ctx: SimCtx, m: SimMutable, chosen: SupportBuffProf
   })
   m.t += castTime
 }
+
+function performAutoIntoSupportCancel(
+  ctx: SimCtx,
+  m: SimMutable,
+  chosen: SupportBuffProfile,
+  recordEvents: boolean,
+) {
+  const snap = computeAutoHit(ctx, m, 'damage')
+  m.totalDamage += snap.dmg
+  m.autoDamageTotal += snap.dmg
+  m.autoHitCount += 1
+  m.damageCastCount += 1
+  m.attackPctAtDamageCasts += snap.activeAttackPct
+  m.flatAtkAtDamageCasts += snap.activeFlatAtk
+  m.autoHitCritChanceSum += snap.critChance
+  m.autoHitCritBuffDamSum += snap.activeCritDamagePct
+  m.skillPctAtDamageCasts += 0
+  m.casts += 1
+  if (recordEvents) {
+    m.events.push({
+      atSec: m.t,
+      skillId: 'auto-attack',
+      skillName: 'Auto Attack',
+      iconId: '',
+      eventType: 'auto',
+      castTimeSec: AUTO_ANIM_CANCEL_OVERLAP_SEC,
+      damage: snap.dmg,
+      buffedBy: m.activeBuffs.map((b) => b.skillName),
+      totalBuffPct: snap.totalBuffPct,
+      buffContributions:
+        m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false) : undefined,
+      cumulativeDamage: m.totalDamage,
+      cancelledBySkillName: chosen.skill.name,
+    })
+  }
+  m.t += AUTO_ANIM_CANCEL_OVERLAP_SEC
+  purgeExpiredBuffs(m, m.t)
+  castSupportProfile(ctx, m, chosen, recordEvents, true)
+}
+
 
 /**
  * Greedy timeline without lookahead: supports > damage (DPCT, optional ban) > autos / jump.
@@ -647,6 +795,10 @@ function runGreedyUntilWall(
         const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
         return bScore - aScore
       })
+      if (ctx.autoAttackAnimationCancel) {
+        performAutoIntoSupportCancel(ctx, m, availableSupport[0], recordEvents)
+        continue
+      }
       castSupportProfile(ctx, m, availableSupport[0], recordEvents)
       continue
     }
@@ -679,6 +831,13 @@ function runGreedyUntilWall(
     }
 
     if (available.length === 0) {
+      if (ctx.autoAttackAnimationCancel) {
+        const soon = soonReadyDamageWithinCancelWindow(ctx, m, damageBan)
+        if (soon) {
+          performAutoIntoSkillCancel(ctx, m, soon, recordEvents)
+          continue
+        }
+      }
       const next = Math.min(
         ...[...ctx.damaging, ...ctx.supportBuffs.map((p) => p.skill)].map(
           (s) => m.readyAt.get(s.id) ?? 0,
@@ -702,6 +861,21 @@ function runGreedyUntilWall(
     const snap = computeAutoHit(ctx, m, 'planning')
     const rAuto = snap.dmg / snap.step
     const rSkill = skillDmg / castT
+    const rCancelCombo = (snap.dmg + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castT)
+
+    if (
+      ctx.autoAttackAnimationCancel &&
+      rCancelCombo > rSkill + 1e-9
+    ) {
+      performAutoIntoSkillCancel(ctx, m, chosen, recordEvents)
+      continue
+    }
+    // In animation-cancel mode, avoid uncancelled auto weaving when a skill is ready.
+    // If auto->skill cancel is not better, cast the skill directly.
+    if (ctx.autoAttackAnimationCancel) {
+      castDamageSkill(ctx, m, chosen, recordEvents)
+      continue
+    }
     if (rAuto > rSkill + 1e-9) {
       performAutoAttack(ctx, m, recordEvents)
       continue
@@ -736,12 +910,18 @@ export type RotationSimOptions = {
    * natural crit chance so the rotation matches the non-forced sim (DPS never drops vs baseline).
    */
   forceAutoCrit?: boolean
+  /** Skill hit formula override: `(baseSkillDamage × 1.43) + AT`, then normal buff multipliers. */
+  perfectAtClone?: boolean
+  /** Assume repeated auto animation cancel with skills whenever available. */
+  autoAttackAnimationCancel?: boolean
 }
 
 type RotationSimCoreOpts = {
   roleNorm: string
   hybridStance: HybridStance
   forceAutoCrit: boolean
+  perfectAtClone: boolean
+  autoAttackAnimationCancel: boolean
 }
 
 function runRotationSim(
@@ -803,6 +983,8 @@ function runRotationSim(
     baseAttack,
     baseCritRateStat,
     forceAutoCrit: core.forceAutoCrit,
+    perfectAtClone: core.perfectAtClone,
+    autoAttackAnimationCancel: core.autoAttackAnimationCancel,
     baseAutoIntervalSec,
     skillLevel,
   }
@@ -851,6 +1033,10 @@ function runRotationSim(
         const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
         return bScore - aScore
       })
+      if (ctx.autoAttackAnimationCancel) {
+        performAutoIntoSupportCancel(ctx, m, availableSupport[0], true)
+        continue
+      }
       castSupportProfile(ctx, m, availableSupport[0], true)
       continue
     }
@@ -877,6 +1063,13 @@ function runRotationSim(
     }
 
     if (available.length === 0) {
+      if (ctx.autoAttackAnimationCancel) {
+        const soon = soonReadyDamageWithinCancelWindow(ctx, m, damageHold)
+        if (soon) {
+          performAutoIntoSkillCancel(ctx, m, soon, true)
+          continue
+        }
+      }
       const next = Math.min(
         ...[...damaging, ...supportBuffs.map((p) => p.skill)].map((s) => m.readyAt.get(s.id) ?? 0),
       )
@@ -906,10 +1099,12 @@ function runRotationSim(
 
       const gPrimary = branchDamageGain(ctx, m, branchWall, primary, null)
       const gSecondary = secondary ? branchDamageGain(ctx, m, branchWall, secondary, null) : -Infinity
-      const gDefer = branchDamageGain(ctx, m, branchWall, null, {
-        skillId: primary.id,
-        until: branchWall,
-      })
+      const gDefer = ctx.autoAttackAnimationCancel
+        ? -Infinity
+        : branchDamageGain(ctx, m, branchWall, null, {
+            skillId: primary.id,
+            until: branchWall,
+          })
 
       let best = gPrimary
       let pick: 'primary' | 'secondary' | 'hold' = 'primary'
@@ -939,6 +1134,21 @@ function runRotationSim(
     const snapChosen = computeAutoHit(ctx, m, 'planning')
     const rAutoChosen = snapChosen.dmg / snapChosen.step
     const rSkillChosen = skillDmgChosen / castTChosen
+    const rCancelComboChosen =
+      (snapChosen.dmg + skillDmgChosen) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castTChosen)
+    if (
+      ctx.autoAttackAnimationCancel &&
+      rCancelComboChosen > rSkillChosen + 1e-9
+    ) {
+      performAutoIntoSkillCancel(ctx, m, chosen, true)
+      continue
+    }
+    // In animation-cancel mode, avoid uncancelled auto weaving when a skill is ready.
+    // If auto->skill cancel is not better, cast the skill directly.
+    if (ctx.autoAttackAnimationCancel) {
+      castDamageSkill(ctx, m, chosen, true)
+      continue
+    }
     if (rAutoChosen > rSkillChosen + 1e-9) {
       performAutoAttack(ctx, m, true)
       continue
@@ -1032,7 +1242,13 @@ export function simulateRotation(
         baseAttack,
         attackSpeed,
         baseCritRateStat,
-        { roleNorm, hybridStance: st, forceAutoCrit: options?.forceAutoCrit === true },
+        {
+          roleNorm,
+          hybridStance: st,
+          forceAutoCrit: options?.forceAutoCrit === true,
+          perfectAtClone: options?.perfectAtClone === true,
+          autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+        },
       )
       if (!best || r.dps > best.dps) best = r
     }
@@ -1053,6 +1269,12 @@ export function simulateRotation(
     baseAttack,
     attackSpeed,
     baseCritRateStat,
-    { roleNorm, hybridStance: hybridConcrete, forceAutoCrit: options?.forceAutoCrit === true },
+    {
+      roleNorm,
+      hybridStance: hybridConcrete,
+      forceAutoCrit: options?.forceAutoCrit === true,
+      perfectAtClone: options?.perfectAtClone === true,
+      autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+    },
   )
 }

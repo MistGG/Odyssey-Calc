@@ -24,7 +24,9 @@ import {
   loadTierListCache,
   saveTierListCache,
   tierEntryDpsCategoryScoresComplete,
+  tierEntryNeedsAnimationCancelScores,
   tierEntryNeedsAutoCritScores,
+  tierEntryNeedsPerfectAtCloneScores,
   tierEntryIsStaleForDetailFetch,
   tierEntryNeedsDpsSimRefresh,
   TIER_SUPPORT_SCORE_REVISION,
@@ -53,14 +55,18 @@ import {
   loadTierUpdateSummaryFromStorage,
   RATE_LIMIT_COOLDOWN_MS,
   readDpsTierCategory,
+  readDpsAutoAnimCancel,
   readDpsForceAutoCrit,
+  readDpsPerfectAtClone,
   readTierListMode,
   readTierUpdatePanelMinimized,
   REQUEST_DELAY_MS,
   saveTierUpdateSummaryToStorage,
   sleep,
   writeDpsTierCategory,
+  writeDpsAutoAnimCancel,
   writeDpsForceAutoCrit,
+  writeDpsPerfectAtClone,
   writeTierListMode,
   writeTierUpdatePanelMinimized,
   type TierListUpdateSummary,
@@ -98,6 +104,8 @@ export function TierListPage() {
   const [tierMode, setTierMode] = useState<TierListMode>(readTierListMode)
   const [dpsTierCategory, setDpsTierCategory] = useState<DpsTierCategoryKey>(readDpsTierCategory)
   const [dpsForceAutoCrit, setDpsForceAutoCrit] = useState<boolean>(readDpsForceAutoCrit)
+  const [dpsPerfectAtClone, setDpsPerfectAtClone] = useState<boolean>(readDpsPerfectAtClone)
+  const [dpsAutoAnimCancel, setDpsAutoAnimCancel] = useState<boolean>(readDpsAutoAnimCancel)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -112,6 +120,16 @@ export function TierListPage() {
   function setDpsForceAutoCritPersist(next: boolean) {
     setDpsForceAutoCrit(next)
     writeDpsForceAutoCrit(next)
+  }
+
+  function setDpsPerfectAtClonePersist(next: boolean) {
+    setDpsPerfectAtClone(next)
+    writeDpsPerfectAtClone(next)
+  }
+
+  function setDpsAutoAnimCancelPersist(next: boolean) {
+    setDpsAutoAnimCancel(next)
+    writeDpsAutoAnimCancel(next)
   }
 
   useEffect(() => {
@@ -237,7 +255,9 @@ export function TierListPage() {
             tierEntryIsStaleForDetailFetch(entry) ||
             entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
             tierEntryNeedsDpsSimRefresh(entry) ||
-            tierEntryNeedsAutoCritScores(entry)
+            tierEntryNeedsAutoCritScores(entry) ||
+            tierEntryNeedsPerfectAtCloneScores(entry) ||
+            tierEntryNeedsAnimationCancelScores(entry)
           )
         })
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
@@ -336,6 +356,20 @@ export function TierListPage() {
               forceAutoCrit: true,
             },
           )
+          const simPerfectAtClone = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+            },
+          )
           const simBurstAutoCrit = simulateRotation(
             detail.skills,
             levels,
@@ -347,6 +381,170 @@ export function TierListPage() {
             {
               role: detail.role,
               hybridStance: 'best',
+              forceAutoCrit: true,
+            },
+          )
+          const simBurstPerfectAtClone = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+            },
+          )
+          const simPerfectAtCloneAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+              forceAutoCrit: true,
+            },
+          )
+          const simBurstPerfectAtCloneAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+              forceAutoCrit: true,
+            },
+          )
+          const simAnimationCancel = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              autoAttackAnimationCancel: true,
+            },
+          )
+          const simBurstAnimationCancel = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              autoAttackAnimationCancel: true,
+            },
+          )
+          const simAnimationCancelAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              autoAttackAnimationCancel: true,
+              forceAutoCrit: true,
+            },
+          )
+          const simBurstAnimationCancelAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              autoAttackAnimationCancel: true,
+              forceAutoCrit: true,
+            },
+          )
+          const simPerfectAtCloneAnimationCancel = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+              autoAttackAnimationCancel: true,
+            },
+          )
+          const simBurstPerfectAtCloneAnimationCancel = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+              autoAttackAnimationCancel: true,
+            },
+          )
+          const simPerfectAtCloneAnimationCancelAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            DEFAULT_ROTATION_SIM_DURATION_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+              autoAttackAnimationCancel: true,
+              forceAutoCrit: true,
+            },
+          )
+          const simBurstPerfectAtCloneAnimationCancelAutoCrit = simulateRotation(
+            detail.skills,
+            levels,
+            BURST_DPS_WINDOW_SEC,
+            1,
+            detail.attack,
+            detail.stats?.atk_speed ?? 0,
+            detail.stats?.crit_rate ?? 0,
+            {
+              role: detail.role,
+              hybridStance: 'best',
+              perfectAtClone: true,
+              autoAttackAnimationCancel: true,
               forceAutoCrit: true,
             },
           )
@@ -368,6 +566,36 @@ export function TierListPage() {
             dpsCategoryScoresAutoCrit: {
               sustained: simAutoCrit.dps,
               burst: simBurstAutoCrit.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresPerfectAtClone: {
+              sustained: simPerfectAtClone.dps,
+              burst: simBurstPerfectAtClone.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresPerfectAtCloneAutoCrit: {
+              sustained: simPerfectAtCloneAutoCrit.dps,
+              burst: simBurstPerfectAtCloneAutoCrit.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresAnimationCancel: {
+              sustained: simAnimationCancel.dps,
+              burst: simBurstAnimationCancel.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresAnimationCancelAutoCrit: {
+              sustained: simAnimationCancelAutoCrit.dps,
+              burst: simBurstAnimationCancelAutoCrit.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresPerfectAtCloneAnimationCancel: {
+              sustained: simPerfectAtCloneAnimationCancel.dps,
+              burst: simBurstPerfectAtCloneAnimationCancel.dps,
+              specialized: specializedScore,
+            },
+            dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit: {
+              sustained: simPerfectAtCloneAnimationCancelAutoCrit.dps,
+              burst: simBurstPerfectAtCloneAnimationCancelAutoCrit.dps,
               specialized: specializedScore,
             },
             aoeCategoryScores: aoeScores,
@@ -571,10 +799,23 @@ export function TierListPage() {
 
   const entriesForMatrix = useMemo(() => {
     if (tierMode === 'dps') {
-      if (!dpsForceAutoCrit || dpsTierCategory === 'aoe') return filteredEntries
+      if (dpsTierCategory === 'aoe') return filteredEntries
+      if (!dpsForceAutoCrit && !dpsPerfectAtClone && !dpsAutoAnimCancel) return filteredEntries
       const out: Record<string, SustainedDpsEntry> = {}
       for (const [id, e] of Object.entries(filteredEntries)) {
-        const s = e.dpsCategoryScoresAutoCrit
+        const s = dpsAutoAnimCancel
+          ? dpsPerfectAtClone
+            ? dpsForceAutoCrit
+              ? e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit
+              : e.dpsCategoryScoresPerfectAtCloneAnimationCancel
+            : dpsForceAutoCrit
+              ? e.dpsCategoryScoresAnimationCancelAutoCrit
+              : e.dpsCategoryScoresAnimationCancel
+          : dpsPerfectAtClone
+            ? dpsForceAutoCrit
+              ? e.dpsCategoryScoresPerfectAtCloneAutoCrit
+              : e.dpsCategoryScoresPerfectAtClone
+            : e.dpsCategoryScoresAutoCrit
         out[id] = {
           ...e,
           dps: s?.sustained ?? e.dps,
@@ -590,7 +831,7 @@ export function TierListPage() {
       if (tierMode === 'healer' && r === 'Support') out[id] = e
     }
     return out
-  }, [filteredEntries, tierMode, dpsForceAutoCrit, dpsTierCategory])
+  }, [filteredEntries, tierMode, dpsForceAutoCrit, dpsPerfectAtClone, dpsAutoAnimCancel, dpsTierCategory])
 
   function toggleMultiFilter(label: string, setter: Dispatch<SetStateAction<string[]>>) {
     if (label === 'All') {
@@ -655,7 +896,9 @@ export function TierListPage() {
       (e) =>
         !tierEntryDpsCategoryScoresComplete(e) ||
         tierEntryNeedsDpsSimRefresh(e) ||
-        tierEntryNeedsAutoCritScores(e),
+        tierEntryNeedsAutoCritScores(e) ||
+        tierEntryNeedsPerfectAtCloneScores(e) ||
+        tierEntryNeedsAnimationCancelScores(e),
     )
   }, [tierMode, entriesForMatrix])
 
@@ -805,11 +1048,21 @@ export function TierListPage() {
           ) : null}
         </div>
       </div>
-      <p className="tier-wip-note" role="note">
-        <strong>Disclaimer:</strong> The damage formula is a heavy work in progress. Certain things are
-        still not calculated properly. An investigation is ongoing, and a formula will be published along
-        with additional lab options to assist with calculating DPS better depending on circumstance.
-      </p>
+      <div className="tier-wip-note tier-wip-note-wide" role="note">
+        <p>
+          <strong>Disclaimer:</strong> The damage formula is a heavy work in progress. Certain things are
+          still not calculated properly. An investigation is ongoing, and a formula will be published along
+          with additional lab options to assist with calculating DPS better depending on circumstance.
+        </p>
+        <p>
+          Additionally, special modifiers such as ASB and server latency are not taken into consideration.
+        </p>
+        <p>
+          We have also noticed issues with certain buffs not applying correctly. Notably role skills like
+          Berserker and buffs that enhance Skill Damage. The Tier list assumes everything is working as
+          stated, but due to these issues, the performance of many Digimon will be different in-game.
+        </p>
+      </div>
 
       <section className="lab-result">
         <h3>Update tier list</h3>
@@ -863,23 +1116,48 @@ export function TierListPage() {
         <h3 id="tier-special-modifiers-heading">Special modifiers</h3>
         {tierMode === 'dps' ? (
           <>
-            <p className="muted">
-              Optional tweaks for DPS tier simulations. They do not change wiki stats or gear (gear is
-              only used in the Lab).
-            </p>
-            <label
-              className={`tier-auto-crit-toggle${
-                dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={dpsForceAutoCrit}
-                onChange={(e) => setDpsForceAutoCritPersist(e.target.checked)}
-                disabled={dpsTierCategory === 'aoe'}
-              />
-              Guaranteed auto crits (Temporary till cloning is understood)
-            </label>
+            <p className="muted">Optional tweaks for DPS tier simulations.</p>
+            <div className="tier-special-modifiers-list">
+              <label
+                className={`tier-auto-crit-toggle tier-special-modifier-toggle${
+                  dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={dpsForceAutoCrit}
+                  onChange={(e) => setDpsForceAutoCritPersist(e.target.checked)}
+                  disabled={dpsTierCategory === 'aoe'}
+                />
+                Guaranteed Crit on Auto Attacks (Temporary until more clone research is completed)
+              </label>
+              <label
+                className={`tier-auto-crit-toggle tier-special-modifier-toggle${
+                  dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={dpsPerfectAtClone}
+                  onChange={(e) => setDpsPerfectAtClonePersist(e.target.checked)}
+                  disabled={dpsTierCategory === 'aoe'}
+                />
+                Perfect AT clone
+              </label>
+              <label
+                className={`tier-auto-crit-toggle tier-special-modifier-toggle${
+                  dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={dpsAutoAnimCancel}
+                  onChange={(e) => setDpsAutoAnimCancelPersist(e.target.checked)}
+                  disabled={dpsTierCategory === 'aoe'}
+                />
+                Auto attack animation cancelling (Special thanks to Yvelchrome for bringing this to my attention and testing it!)
+              </label>
+            </div>
           </>
         ) : (
           <p className="muted">These options apply when the DPS tier list is selected.</p>
@@ -1345,7 +1623,7 @@ export function TierListPage() {
                       horizon (openers / short burst bias).
                     </li>
                     <li>
-                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
+                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column Tier List
                       (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same as
                       the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                       per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}

@@ -14,6 +14,8 @@ export const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1
 export const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
 export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
+export const TIER_DPS_PERFECT_AT_CLONE_KEY = 'odysseyCalc.tierList.dpsPerfectAtClone.v1'
+export const TIER_DPS_AUTO_ANIM_CANCEL_KEY = 'odysseyCalc.tierList.dpsAutoAnimCancel.v1'
 export const TIER_DPS_CHANGE_EPS = 0.05
 export const TIER_TANK_SCORE_CHANGE_EPS = 0.02
 export const TIER_HEALER_SCORE_CHANGE_EPS = 0.02
@@ -159,6 +161,38 @@ export function readDpsForceAutoCrit(): boolean {
 export function writeDpsForceAutoCrit(on: boolean) {
   try {
     localStorage.setItem(TIER_DPS_FORCE_AUTO_CRIT_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readDpsPerfectAtClone(): boolean {
+  try {
+    return localStorage.getItem(TIER_DPS_PERFECT_AT_CLONE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeDpsPerfectAtClone(on: boolean) {
+  try {
+    localStorage.setItem(TIER_DPS_PERFECT_AT_CLONE_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readDpsAutoAnimCancel(): boolean {
+  try {
+    return localStorage.getItem(TIER_DPS_AUTO_ANIM_CANCEL_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeDpsAutoAnimCancel(on: boolean) {
+  try {
+    localStorage.setItem(TIER_DPS_AUTO_ANIM_CANCEL_KEY, on ? '1' : '0')
   } catch {
     /* ignore */
   }

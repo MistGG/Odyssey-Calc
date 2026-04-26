@@ -13,21 +13,38 @@ export function skillIsWikiAoe(s: WikiSkill): boolean {
  */
 export const FARM_MONSTER_RESPAWN_SEC = 8
 
-/** Extra signal from cast cadence inside the farming raw sum (damaging AoE). */
-const FARM_INVCD_WEIGHT = 50
+/** Farming blend: cooldown priority first, then damage, then area. */
+const FARM_WEIGHT_COOLDOWN = 0.75
+const FARM_WEIGHT_DAMAGE = 0.2
+const FARM_WEIGHT_RADIUS = 0.05
 
-/** Support-only AoE: weight on `invCd × cadence × log1p(radius)` (pull / tag value). */
-const FARM_SUPPORT_AREA_WEIGHT = 40
+/**
+ * Respawn-fit for farming cooldown priority:
+ * - <=8s: preferred (highest)
+ * - 8–10s: still acceptable
+ * - >10s: penalized quickly
+ */
+function farmRespawnPriority(periodSec: number): number {
+  if (periodSec <= FARM_MONSTER_RESPAWN_SEC) {
+    const headroom = (FARM_MONSTER_RESPAWN_SEC - periodSec) / FARM_MONSTER_RESPAWN_SEC
+    return 1 + 0.22 * Math.max(0, headroom)
+  }
+  if (periodSec <= 10) {
+    const over = (periodSec - FARM_MONSTER_RESPAWN_SEC) / 2
+    return 1 - 0.2 * Math.max(0, Math.min(1, over))
+  }
+  return 0.8 * Math.exp(-(periodSec - 10) / 4)
+}
 
 /**
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: `log1p` of summed per-cast damage at tier-list skill level (support-only AoE = 0 damage).
  * - **Cooldown**: `log1p` of summed `1 / (cast + cooldown)` — faster skills contribute more.
- * - **Farming**: `log1p` of a sum over AoE skills of (damage + cast-density bonus) × **respawn fit** ×
- *   light **area** factor. Respawn fit is `exp(-max(0, period − {@link FARM_MONSTER_RESPAWN_SEC}) / {@link FARM_MONSTER_RESPAWN_SEC})`
- *   with `period = cast + cooldown` (skills at or below the respawn window stay at full weight; slower cycles decay).
- *   Support-only AoE uses a smaller `invCd × fit × log1p(radius)` term instead of damage.
+ * - **Farming**: weighted blend emphasizing low cooldowns that fit respawns.
+ *   - 75% cooldown priority: `invCd × respawnPriority(period)` (target 8s, still okay up to ~10s, then decays fast)
+ *   - 20% damage at tier-list skill level
+ *   - 5% radius
  * - **General**: arithmetic mean of damage, cooldown, and farming (equal weight).
  */
 export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
@@ -38,7 +55,9 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
 } {
   let dmgSum = 0
   let invCdSum = 0
-  let farmSum = 0
+  let farmCooldownRaw = 0
+  let farmDamageRaw = 0
+  let farmRadiusRaw = 0
 
   for (const s of detail.skills ?? []) {
     if (!skillIsWikiAoe(s)) continue
@@ -48,23 +67,26 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
     const invCd = 1 / period
     invCdSum += invCd
 
-    const cadenceFit = Math.exp(
-      -Math.max(0, period - FARM_MONSTER_RESPAWN_SEC) / FARM_MONSTER_RESPAWN_SEC,
-    )
-    const coverage = 1 + 0.22 * Math.log1p(Math.max(0, radius))
+    const fit = farmRespawnPriority(period)
+    farmCooldownRaw += invCd * fit
+    farmRadiusRaw += Math.log1p(Math.max(0, radius)) * fit
 
     if (!skillIsSupportOnly(s.base_dmg, s.scaling)) {
       const dmg = skillDamageAtLevel(s.base_dmg, s.scaling, lv, s.max_level)
       dmgSum += dmg
-      farmSum += (dmg + FARM_INVCD_WEIGHT * invCd) * cadenceFit * coverage
-    } else {
-      farmSum += FARM_SUPPORT_AREA_WEIGHT * invCd * cadenceFit * Math.log1p(Math.max(0, radius))
+      farmDamageRaw += dmg * fit
     }
   }
 
   const damage = Math.log1p(Math.max(0, dmgSum))
   const cooldown = Math.log1p(Math.max(0, invCdSum))
-  const farming = Math.log1p(Math.max(0, farmSum))
+  const farmCooldown = Math.log1p(Math.max(0, farmCooldownRaw * 100))
+  const farmDamage = Math.log1p(Math.max(0, farmDamageRaw))
+  const farmRadius = Math.log1p(Math.max(0, farmRadiusRaw))
+  const farming =
+    FARM_WEIGHT_COOLDOWN * farmCooldown +
+    FARM_WEIGHT_DAMAGE * farmDamage +
+    FARM_WEIGHT_RADIUS * farmRadius
   const general = (damage + cooldown + farming) / 3
 
   return { general, damage, cooldown, farming }

@@ -36,7 +36,7 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
 
   const scheduleClose = () => {
     clearClose()
-    closeTimer.current = setTimeout(() => setOpen(false), 220)
+    closeTimer.current = setTimeout(() => setOpen(false), 120)
   }
 
   const updatePos = useCallback(() => {
@@ -52,12 +52,13 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
   useLayoutEffect(() => {
     if (!open) return
     updatePos()
-    const onScroll = () => updatePos()
+    const onScroll = () => setOpen(false)
+    const onResize = () => setOpen(false)
     window.addEventListener('scroll', onScroll, true)
-    window.addEventListener('resize', onScroll)
+    window.addEventListener('resize', onResize)
     return () => {
       window.removeEventListener('scroll', onScroll, true)
-      window.removeEventListener('resize', onScroll)
+      window.removeEventListener('resize', onResize)
     }
   }, [open, updatePos])
 
@@ -168,7 +169,7 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
               zIndex: 10050,
             }}
             onMouseEnter={clearClose}
-            onMouseLeave={scheduleClose}
+            onMouseLeave={() => setOpen(false)}
           >
             <div className="buff-breakdown-panel">{panelInner}</div>
           </div>,
@@ -242,6 +243,9 @@ export function DpsLabPage() {
   const [durationSec, setDurationSec] = useState(() =>
     durationFromUrl ?? DEFAULT_ROTATION_SIM_DURATION_SEC,
   )
+  const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(false)
+  const [forceAutoCrit, setForceAutoCrit] = useState(false)
+  const [perfectAtClone, setPerfectAtClone] = useState(false)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
 
@@ -355,9 +359,24 @@ export function DpsLabPage() {
       {
         role: data.role,
         hybridStance: isHybridRole ? hybridStance : 'best',
+        autoAttackAnimationCancel: useAutoAnimCancel,
+        forceAutoCrit,
+        perfectAtClone,
       },
     )
-  }, [data, durationSec, skillLevels, targets, isHybridRole, hybridStance, simBaseAttack, combatStats])
+  }, [
+    data,
+    durationSec,
+    skillLevels,
+    targets,
+    isHybridRole,
+    hybridStance,
+    simBaseAttack,
+    combatStats,
+    useAutoAnimCancel,
+    forceAutoCrit,
+    perfectAtClone,
+  ])
 
   const breakdown = useMemo(() => {
     if (!sim) return []
@@ -468,6 +487,34 @@ export function DpsLabPage() {
       lines.push(`Use support skills (${names}) for utility windows; they are excluded from DPS casts.`)
     }
 
+    if (useAutoAnimCancel) {
+      const autoHitEstimate =
+        sim.autoAttackHits > 0 && sim.autoDamageAvg > 0
+          ? sim.autoDamageAvg
+          : (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
+      const cancelCandidates = (data.skills ?? [])
+        .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
+        .map((s) => {
+          const level = levelOf(s.id)
+          const base = s.base_dmg + s.scaling * Math.max(0, level - 1)
+          const cast = Math.max(0.1, s.cast_time_sec || 0)
+          const comboDps = (base + autoHitEstimate) / cast
+          const directDps = base / cast
+          const gain = comboDps - directDps
+          return { name: s.name, comboDps, gain, cast }
+        })
+        .sort((a, b) => b.comboDps - a.comboDps)
+      if (cancelCandidates.length > 0) {
+        const order = cancelCandidates
+          .slice(0, 4)
+          .map((c) => `${c.name} (${c.cast.toFixed(1)}s cast, +${c.gain.toFixed(0)} est DPS)`)
+          .join(' > ')
+        lines.push(
+          `Auto-attack animation cancel priority (best first): ${order}. Prefer shorter cast skills with strong combo DPS when a cancel window opens.`,
+        )
+      }
+    }
+
     if (digimonRoleWikiSkillsForRole.length > 0) {
       const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
       lines.push(
@@ -476,7 +523,16 @@ export function DpsLabPage() {
     }
 
     return lines
-  }, [breakdown, data, sim, skillLevels, digimonRoleWikiSkillsForRole])
+  }, [
+    breakdown,
+    data,
+    sim,
+    skillLevels,
+    digimonRoleWikiSkillsForRole,
+    useAutoAnimCancel,
+    simBaseAttack,
+    combatStats?.crit_rate,
+  ])
 
   const combatStatRows = useMemo(
     () =>
@@ -653,6 +709,37 @@ export function DpsLabPage() {
                     }
                   />
                 </label>
+              </div>
+              <div className="lab-special-modifiers">
+                <p className="lab-controls-bar-title">Special modifiers</p>
+                <div className="lab-special-modifier-list">
+                  <label className="lab-special-modifier-toggle">
+                    <input
+                      type="checkbox"
+                      checked={forceAutoCrit}
+                      onChange={(e) => setForceAutoCrit(e.target.checked)}
+                    />
+                    <span>Guaranteed Crit on Auto Attacks (Temporary until more clone research is completed)</span>
+                  </label>
+                  <label className="lab-special-modifier-toggle">
+                    <input
+                      type="checkbox"
+                      checked={perfectAtClone}
+                      onChange={(e) => setPerfectAtClone(e.target.checked)}
+                    />
+                    <span>Perfect AT clone</span>
+                  </label>
+                  <label className="lab-special-modifier-toggle">
+                    <input
+                      type="checkbox"
+                      checked={useAutoAnimCancel}
+                      onChange={(e) => setUseAutoAnimCancel(e.target.checked)}
+                    />
+                    <span>
+                      Auto attack animation cancelling (Special thanks to Yvelchrome for bringing this to my attention and testing it!)
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
           </section>
@@ -1019,6 +1106,8 @@ export function DpsLabPage() {
                         className={
                           e.eventType === 'support'
                             ? 'lab-row-support'
+                            : e.cancelledFromAuto
+                              ? 'lab-row-cancel-sub'
                             : e.buffedBy.length > 0
                               ? 'lab-row-buffed'
                               : undefined
@@ -1026,19 +1115,32 @@ export function DpsLabPage() {
                       >
                         <td>{e.atSec.toFixed(1)}</td>
                         <td>
-                          {skillIconUrl(e.iconId) && (
-                            <img
-                              className="timeline-row-icon"
-                              src={skillIconUrl(e.iconId)}
-                              alt=""
-                            />
-                          )}
-                          {e.skillName}
+                          <span className={e.cancelledFromAuto ? 'timeline-skill-subline' : undefined}>
+                            {e.cancelledFromAuto ? <span className="timeline-skill-subline-arrow">↳</span> : null}
+                            {skillIconUrl(e.iconId) && (
+                              <img
+                                className="timeline-row-icon"
+                                src={skillIconUrl(e.iconId)}
+                                alt=""
+                              />
+                            )}
+                            {e.skillName}
+                          </span>
                           {e.eventType === 'support' && (
                             <span className="lab-event-tag lab-event-tag-support">Buff</span>
                           )}
-                          {e.eventType === 'auto' && (
-                            <span className="lab-event-tag">Auto</span>
+                          {e.eventType === 'auto' && e.cancelledBySkillName && (
+                            <span className="lab-inline-tooltip-wrap">
+                              <span
+                                className="lab-event-tag lab-event-tag-cancel"
+                                aria-describedby={`ac-tip-${idx}`}
+                              >
+                                AC
+                              </span>
+                              <span id={`ac-tip-${idx}`} role="tooltip" className="lab-inline-tooltip">
+                                Auto attack animation-cancelled into {e.cancelledBySkillName}
+                              </span>
+                            </span>
                           )}
                           <BuffBreakdownBadge e={e} />
                         </td>

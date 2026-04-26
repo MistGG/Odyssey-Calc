@@ -79,6 +79,18 @@ export type SustainedDpsEntry = {
   dpsCategoryScores?: DpsRotationCategoryScores
   /** Same DPS lenses with forced auto-crit scenario (skills still cannot crit). */
   dpsCategoryScoresAutoCrit?: DpsRotationCategoryScores
+  /** Same DPS lenses with Perfect AT clone formula enabled for skills. */
+  dpsCategoryScoresPerfectAtClone?: DpsRotationCategoryScores
+  /** Same DPS lenses with both Perfect AT clone and forced auto-crit enabled. */
+  dpsCategoryScoresPerfectAtCloneAutoCrit?: DpsRotationCategoryScores
+  /** Same DPS lenses with auto-attack animation cancel enabled. */
+  dpsCategoryScoresAnimationCancel?: DpsRotationCategoryScores
+  /** Same DPS lenses with auto-attack animation cancel + forced auto-crit enabled. */
+  dpsCategoryScoresAnimationCancelAutoCrit?: DpsRotationCategoryScores
+  /** Same DPS lenses with Perfect AT clone + auto-attack animation cancel enabled. */
+  dpsCategoryScoresPerfectAtCloneAnimationCancel?: DpsRotationCategoryScores
+  /** Same DPS lenses with Perfect AT clone + auto-attack animation cancel + forced auto-crit enabled. */
+  dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit?: DpsRotationCategoryScores
   /** AoE kit heuristics (see `computeDpsAoeCategoryScores`); used only for the AoE matrix. */
   aoeCategoryScores?: AoeTierCategoryScores
   /** Heuristic tank index from stats + parsed mitigation (see tankTierScore); equals categoryScores.overall. */
@@ -258,6 +270,30 @@ export function tierEntryNeedsDpsSimRefresh(entry: SustainedDpsEntry): boolean {
 export function tierEntryNeedsAutoCritScores(entry: SustainedDpsEntry): boolean {
   const s = entry.dpsCategoryScoresAutoCrit
   return !s || !Number.isFinite(s.sustained) || !Number.isFinite(s.burst) || !Number.isFinite(s.specialized)
+}
+
+export function tierEntryNeedsPerfectAtCloneScores(entry: SustainedDpsEntry): boolean {
+  const p = entry.dpsCategoryScoresPerfectAtClone
+  const pa = entry.dpsCategoryScoresPerfectAtCloneAutoCrit
+  const valid = (s?: DpsRotationCategoryScores) =>
+    !!s &&
+    Number.isFinite(s.sustained) &&
+    Number.isFinite(s.burst) &&
+    Number.isFinite(s.specialized)
+  return !valid(p) || !valid(pa)
+}
+
+export function tierEntryNeedsAnimationCancelScores(entry: SustainedDpsEntry): boolean {
+  const a = entry.dpsCategoryScoresAnimationCancel
+  const aa = entry.dpsCategoryScoresAnimationCancelAutoCrit
+  const ap = entry.dpsCategoryScoresPerfectAtCloneAnimationCancel
+  const apa = entry.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit
+  const valid = (s?: DpsRotationCategoryScores) =>
+    !!s &&
+    Number.isFinite(s.sustained) &&
+    Number.isFinite(s.burst) &&
+    Number.isFinite(s.specialized)
+  return !valid(a) || !valid(aa) || !valid(ap) || !valid(apa)
 }
 
 export function tierEntryDpsCategoryScoresComplete(entry: SustainedDpsEntry): boolean {
