@@ -45,7 +45,7 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font);
-  font-size: 16px;
+    font-size: 16px;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg-deep);
@@ -3284,4 +3284,213 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 .evo-name {
   font-weight: 600;
   color: var(--text);
+}
+
+/* ---------------------------------------------------------------------------
+   Narrow viewports (< 1024px): keep wide tables usable without affecting
+   full-width desktop (min-width: 1024px rules above still apply at 1024+).
+   --------------------------------------------------------------------------- */
+@media (max-width: 1023px) {
+  .lab-table th,
+  .lab-table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .gear-table th,
+  .gear-table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile / small tablets (<= 899px): tighter chrome, stacked controls, and
+   touch-friendly targets. Viewports >= 900px keep the prior desktop layout.
+   --------------------------------------------------------------------------- */
+@media (max-width: 899px) {
+  #root {
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .header {
+    padding-top: max(0.65rem, env(safe-area-inset-top, 0px));
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .brand {
+    font-size: 1.15rem;
+  }
+
+  .nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    padding-bottom: 0.2rem;
+    margin-right: -0.15rem;
+    scrollbar-width: thin;
+  }
+
+  .nav a {
+    flex: 0 0 auto;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8125rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    touch-action: manipulation;
+  }
+
+  .main {
+    padding: 1rem 0 1.5rem;
+  }
+
+  .search input {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .search {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search button {
+    width: 100%;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(132px, 100%), 1fr));
+    gap: 0.75rem;
+  }
+
+  .tier-page-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tier-page-head-controls {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .tier-mode-tabs {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    flex-wrap: nowrap;
+    border-radius: 12px;
+    padding: 0.25rem;
+  }
+
+  .tier-mode-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .tier-matrix-wrap,
+  .tier-matrix-wrap--category-matrix,
+  .lab-table-wrap,
+  .gear-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .tier-cell-content {
+    min-height: 92px;
+  }
+
+  .tier-update-btn {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .tier-update-btn + .tier-update-btn {
+    margin-left: 0;
+    margin-top: 0.45rem;
+  }
+
+  .tier-wip-note,
+  .tier-score-explainer {
+    max-width: none;
+  }
+
+  .pager {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+    padding: 0 0.25rem;
+  }
+
+  .pager button {
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    touch-action: manipulation;
+  }
+
+  .detail-summary-name {
+    font-size: clamp(1.25rem, 6vw, 1.65rem);
+  }
+
+  .lab-result {
+    padding: 0.95rem 1rem;
+    font-size: 0.98rem;
+  }
+
+  .lab-kv-table th[scope='row'] {
+    white-space: normal;
+    padding-right: 0.5rem;
+    max-width: 52%;
+  }
+
+  .lab-controls-fields {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .lab-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-level-input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .lab-table {
+    font-size: 0.78rem;
+  }
+
+  .lab-table th,
+  .lab-table td {
+    padding: 0.4rem 0.35rem;
+  }
+
+  .timeline-skill-subline {
+    margin-left: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .timeline-sequence {
+    padding: 0.5rem 0.45rem;
+  }
+
+  .gear-page {
+    padding-inline: max(0.5rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    max-width: 100%;
+  }
 }
