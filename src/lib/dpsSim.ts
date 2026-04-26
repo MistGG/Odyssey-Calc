@@ -78,13 +78,29 @@ export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
  * Bump when rotation DPS sim math changes. Tier list entries store this on refresh; a mismatch
  * re-queues rows on incremental update so cached `dps` matches the current `simulateRotation`.
  */
-export const TIER_DPS_SIM_REVISION = 6
+export const TIER_DPS_SIM_REVISION = 7
+
+/**
+ * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
+ * If every skill is already due (`readyAt <= m.t`), returns `cap` so the caller can idle
+ * forward with autos until the window end — never use `Math.min` of past ready times,
+ * which can be `<= m.t` and incorrectly abort the sim early.
+ */
+function nextSkillReadyAfter(m: { t: number; readyAt: Map<string, number> }, skills: WikiSkill[], cap: number) {
+  let best = cap
+  for (const s of skills) {
+    const r = m.readyAt.get(s.id) ?? 0
+    if (r > m.t + 1e-9 && r < best) best = r
+  }
+  return best
+}
 
 function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
 }
 
-function skillDamagePerCast(
+/** Wiki skill line damage per cast (no buff bracket); used in sim and Lab rotation hints. */
+export function skillDamagePerCast(
   skill: WikiSkill,
   level: number,
   targets: number,
@@ -305,8 +321,8 @@ type SimMutable = {
   autoHitCritBuffDamSum: number
 }
 
-/** Practical midpoint in the observed ~200–500ms cancel window. */
-const AUTO_ANIM_CANCEL_OVERLAP_SEC = 0.3
+/** Practical midpoint in the observed ~200–500ms cancel window (Lab notes use the same value). */
+export const AUTO_ANIM_CANCEL_OVERLAP_SEC = 0.3
 const AUTO_ANIM_CANCEL_MAX_WINDOW_SEC = 0.5
 
 function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
@@ -838,13 +854,11 @@ function runGreedyUntilWall(
           continue
         }
       }
-      const next = Math.min(
-        ...[...ctx.damaging, ...ctx.supportBuffs.map((p) => p.skill)].map(
-          (s) => m.readyAt.get(s.id) ?? 0,
-        ),
+      const nextReady = nextSkillReadyAfter(
+        m,
+        [...ctx.damaging, ...ctx.supportBuffs.map((p) => p.skill)],
+        wall,
       )
-      const nextReady = Number.isFinite(next) ? Math.min(ctx.durationSec, next) : ctx.durationSec
-      if (nextReady <= m.t) break
 
       while (m.t < wall - 1e-9) {
         const step = autoIntervalFor(ctx, m)
@@ -1070,11 +1084,11 @@ function runRotationSim(
           continue
         }
       }
-      const next = Math.min(
-        ...[...damaging, ...supportBuffs.map((p) => p.skill)].map((s) => m.readyAt.get(s.id) ?? 0),
+      const nextReady = nextSkillReadyAfter(
+        m,
+        [...damaging, ...supportBuffs.map((p) => p.skill)],
+        durationSec,
       )
-      const nextReady = Number.isFinite(next) ? Math.min(durationSec, next) : durationSec
-      if (nextReady <= m.t) break
 
       while (m.t < durationSec - 1e-9) {
         const step = autoIntervalFor(ctx, m)

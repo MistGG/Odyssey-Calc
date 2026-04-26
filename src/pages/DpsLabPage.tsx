@@ -4,7 +4,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
-import { DEFAULT_ROTATION_SIM_DURATION_SEC, simulateRotation } from '../lib/dpsSim'
+import {
+  AUTO_ANIM_CANCEL_OVERLAP_SEC,
+  DEFAULT_ROTATION_SIM_DURATION_SEC,
+  simulateRotation,
+  skillDamagePerCast,
+} from '../lib/dpsSim'
 import { getGearAttackContribution } from '../lib/gearStats'
 import {
   DIGIMON_ROLE_SKILL_CAST_SEC,
@@ -492,25 +497,31 @@ export function DpsLabPage() {
         sim.autoAttackHits > 0 && sim.autoDamageAvg > 0
           ? sim.autoDamageAvg
           : (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
+      const t = Math.max(1, targets)
+      const atk = Math.max(0, simBaseAttack)
       const cancelCandidates = (data.skills ?? [])
         .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
         .map((s) => {
           const level = levelOf(s.id)
-          const base = s.base_dmg + s.scaling * Math.max(0, level - 1)
           const cast = Math.max(0.1, s.cast_time_sec || 0)
-          const comboDps = (base + autoHitEstimate) / cast
-          const directDps = base / cast
-          const gain = comboDps - directDps
-          return { name: s.name, comboDps, gain, cast }
+          const skillDmg = skillDamagePerCast(s, level, t, atk, perfectAtClone)
+          const directDps = skillDmg / cast
+          const comboDps =
+            (autoHitEstimate + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + cast)
+          const deltaVsDirect = comboDps - directDps
+          return { name: s.name, comboDps, directDps, deltaVsDirect, cast }
         })
         .sort((a, b) => b.comboDps - a.comboDps)
       if (cancelCandidates.length > 0) {
         const order = cancelCandidates
           .slice(0, 4)
-          .map((c) => `${c.name} (${c.cast.toFixed(1)}s cast, +${c.gain.toFixed(0)} est DPS)`)
+          .map(
+            (c) =>
+              `${c.name} (${c.cast.toFixed(1)}s cast, ${c.comboDps.toFixed(0)} combo DPS, +${c.deltaVsDirect.toFixed(0)} vs direct)`,
+          )
           .join(' > ')
         lines.push(
-          `Auto-attack animation cancel priority (best first): ${order}. Prefer shorter cast skills with strong combo DPS when a cancel window opens.`,
+          `Auto-attack animation cancel priority (best combo DPS first; uses wiki skill damage, ${AUTO_ANIM_CANCEL_OVERLAP_SEC}s cancel overlap + full cast, same shape as the sim): ${order}. Buffs can still change the live timeline order.`,
         )
       }
     }
@@ -532,6 +543,8 @@ export function DpsLabPage() {
     useAutoAnimCancel,
     simBaseAttack,
     combatStats?.crit_rate,
+    targets,
+    perfectAtClone,
   ])
 
   const combatStatRows = useMemo(
