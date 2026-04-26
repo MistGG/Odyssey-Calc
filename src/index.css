@@ -3409,8 +3409,51 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     overscroll-behavior-x: contain;
   }
 
+  /* Tier matrix cells: let height follow content (stacked rows per entry). */
   .tier-cell-content {
-    min-height: 92px;
+    min-height: 0;
+  }
+
+  /* Long names: icon column + name row, then DPS/status row (full width of text column). */
+  .tier-entry-link {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: start;
+    column-gap: 0.45rem;
+    row-gap: 0.22rem;
+    padding: 0.38rem 0.42rem;
+  }
+
+  .tier-entry-link > :first-child {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: start;
+  }
+
+  .tier-entry-name {
+    grid-column: 2;
+    grid-row: 1;
+    word-break: break-word;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+    line-height: 1.2;
+  }
+
+  .tier-entry-dps-wrap {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: stretch;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .tier-entry {
+    font-size: 0.7rem;
+  }
+
+  .tier-matrix-wrap--single-role .tier-entry-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .tier-update-btn {

@@ -208,6 +208,7 @@ export function TierListMatrixTable({
                                     <Link
                                       to={`/digimon/${encodeURIComponent(e.id)}`}
                                       className="tier-entry-link"
+                                      title={e.name}
                                     >
                                       {icon ? (
                                         <span className="tier-entry-thumb-wrap">
