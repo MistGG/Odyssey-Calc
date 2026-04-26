@@ -8,7 +8,6 @@ import {
   AUTO_ANIM_CANCEL_OVERLAP_SEC,
   DEFAULT_ROTATION_SIM_DURATION_SEC,
   simulateRotation,
-  skillDamagePerCast,
 } from '../lib/dpsSim'
 import { getGearAttackContribution } from '../lib/gearStats'
 import {
@@ -17,11 +16,19 @@ import {
   normalizeWikiRole,
   type HybridStance,
 } from '../lib/digimonRoleSkills'
-import { SKILL_LEVEL_CAP } from '../lib/skillDamage'
-import { skillIsSupportOnly } from '../lib/skillDamage'
+import { SKILL_LEVEL_CAP, skillDamageAtLevel, skillIsSupportOnly } from '../lib/skillDamage'
 import { buildSupportSkillEffects } from '../lib/supportEffects'
 import type { RotationEvent } from '../lib/dpsSim'
 import type { WikiDigimonDetail } from '../types/wikiApi'
+
+/** One line of text, or a titled block with sub-bullets (e.g. animation-cancel priority). */
+type LabRotationAdviceItem =
+  | string
+  | {
+      kind: 'anim-cancel-priority'
+      title: string
+      bullets: string[]
+    }
 
 /** Table-only: one buff strength value; hover opens a themed breakdown popover. */
 function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
@@ -412,15 +419,16 @@ export function DpsLabPage() {
       .sort((a, b) => b.damage - a.damage)
   }, [sim])
 
-  const rotationAdvice = useMemo(() => {
+  const rotationAdvice = useMemo((): LabRotationAdviceItem[] => {
     if (!data || !sim || breakdown.length === 0) return []
-    const lines: string[] = []
+    const lines: LabRotationAdviceItem[] = []
 
     const levelOf = (skillId: string) => skillLevels[skillId] ?? 1
     const top = breakdown[0]
     if (top.skillId === 'auto-attack') {
       lines.push(
-        `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window—keep attack-speed and ATK buffs active so autos stay competitive with filler skills.`,
+        `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window.`,
+        `Keep attack-speed and ATK buffs active so autos stay competitive with filler skills.`,
       )
     } else {
       lines.push(
@@ -474,7 +482,8 @@ export function DpsLabPage() {
     if (atkSpdSupports.length > 0) {
       const names = atkSpdSupports.map((s) => s.name).join(', ')
       lines.push(
-        `When attack speed from ${names} is up, prioritize weaving auto attacks—the sim compares auto damage rate to each ready skill and can skip weak filler casts during those windows.`,
+        `When attack speed from ${names} is up, prioritize weaving auto attacks.`,
+        `The sim compares auto damage rate to each ready skill and can skip weak filler casts during those windows.`,
       )
     }
 
@@ -483,7 +492,8 @@ export function DpsLabPage() {
       const targets =
         heavyHitters.length > 0 ? heavyHitters.join(', ') : 'your hardest-hitting damage skills'
       lines.push(
-        `When ${buffNames} buffs attack or skill damage, prioritize ${targets} (line them up inside the buff window when possible).`,
+        `When ${buffNames} buffs attack or skill damage, prioritize ${targets}.`,
+        `Line them up inside the buff window when possible.`,
       )
     }
 
@@ -497,39 +507,49 @@ export function DpsLabPage() {
         sim.autoAttackHits > 0 && sim.autoDamageAvg > 0
           ? sim.autoDamageAvg
           : (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
-      const t = Math.max(1, targets)
-      const atk = Math.max(0, simBaseAttack)
+      const overlap = AUTO_ANIM_CANCEL_OVERLAP_SEC
+      const flatBuffPct = simBaseAttack > 0 ? (sim.attackPowerFlat / simBaseAttack) * 100 : 0
+      const skillBuffMult =
+        1 + (sim.attackBuffPct + sim.skillDamageBuffPct + flatBuffPct) / 100
       const cancelCandidates = (data.skills ?? [])
         .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
         .map((s) => {
           const level = levelOf(s.id)
+          const rawBase = skillDamageAtLevel(s.base_dmg, s.scaling, level, s.max_level)
+          const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
+          const baseSkillDmg = perfectAtClone
+            ? (rawBase * 1.43 + Math.max(0, simBaseAttack)) * targetHits
+            : rawBase * targetHits
+          const skillDmgEst = baseSkillDmg * skillBuffMult
           const cast = Math.max(0.1, s.cast_time_sec || 0)
-          const skillDmg = skillDamagePerCast(s, level, t, atk, perfectAtClone)
-          const directDps = skillDmg / cast
-          const comboDps =
-            (autoHitEstimate + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + cast)
-          const deltaVsDirect = comboDps - directDps
-          return { name: s.name, comboDps, directDps, deltaVsDirect, cast }
+          const cd = Math.max(0, s.cooldown_sec || 0)
+          const period = cast + cd
+          const cancelSnapshotDps = (autoHitEstimate + skillDmgEst) / (overlap + cast)
+          return { name: s.name, cast, period, cancelSnapshotDps }
         })
-        .sort((a, b) => b.comboDps - a.comboDps)
+        .sort((a, b) => {
+          if (Math.abs(b.cancelSnapshotDps - a.cancelSnapshotDps) > 1e-6)
+            return b.cancelSnapshotDps - a.cancelSnapshotDps
+          if (Math.abs(a.cast - b.cast) > 1e-6) return a.cast - b.cast
+          return a.period - b.period
+        })
       if (cancelCandidates.length > 0) {
-        const order = cancelCandidates
-          .slice(0, 4)
-          .map(
+        lines.push({
+          kind: 'anim-cancel-priority',
+          title: 'Animation cancel — DPS priority',
+          bullets: cancelCandidates.slice(0, 4).map(
             (c) =>
-              `${c.name} (${c.cast.toFixed(1)}s cast, ${c.comboDps.toFixed(0)} combo DPS, +${c.deltaVsDirect.toFixed(0)} vs direct)`,
-          )
-          .join(' > ')
-        lines.push(
-          `Auto-attack animation cancel priority (best combo DPS first; uses wiki skill damage, ${AUTO_ANIM_CANCEL_OVERLAP_SEC}s cancel overlap + full cast, same shape as the sim): ${order}. Buffs can still change the live timeline order.`,
-        )
+              `${c.name} — ${c.cast.toFixed(1)}s cast · ${c.period.toFixed(1)}s cast+CD · ~${c.cancelSnapshotDps.toFixed(0)} DPS`,
+          ),
+        })
       }
     }
 
     if (digimonRoleWikiSkillsForRole.length > 0) {
       const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
       lines.push(
-        `Digimon role skills (${tn}) are cast when ready like other supports. Hover buff % on timeline rows for per-hit breakdowns.`,
+        `Digimon role skills (${tn}) are cast when ready like other supports.`,
+        `Hover buff % on timeline rows for per-hit breakdowns.`,
       )
     }
 
@@ -543,8 +563,8 @@ export function DpsLabPage() {
     useAutoAnimCancel,
     simBaseAttack,
     combatStats?.crit_rate,
-    targets,
     perfectAtClone,
+    targets,
   ])
 
   const combatStatRows = useMemo(
@@ -1053,9 +1073,27 @@ export function DpsLabPage() {
             <section className="lab-result">
               <h3>Rotation Notes</h3>
               <ul className="lab-advice-list">
-                {rotationAdvice.map((line, i) => (
-                  <li key={i}>{line}</li>
-                ))}
+                {rotationAdvice.map((entry, i) =>
+                  typeof entry === 'string' ? (
+                    <li key={i} className="lab-advice-item">
+                      {entry}
+                    </li>
+                  ) : (
+                    <li key={i} className="lab-advice-item lab-advice-item--with-sublist">
+                      <div className="lab-advice-sublist-head" id={`rotation-advice-nested-${i}`}>
+                        {entry.title}
+                      </div>
+                      <ul
+                        className="lab-advice-sublist"
+                        aria-labelledby={`rotation-advice-nested-${i}`}
+                      >
+                        {entry.bullets.map((b, j) => (
+                          <li key={j}>{b}</li>
+                        ))}
+                      </ul>
+                    </li>
+                  ),
+                )}
               </ul>
             </section>
           )}

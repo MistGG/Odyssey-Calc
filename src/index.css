@@ -3142,16 +3142,49 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   line-height: 1.35;
 }
 
-.lab-advice-list {
-  margin: 0.4rem 0 0;
-  padding-left: 1.1rem;
+/* Rotation notes: shared type scale, spacing, and visible hierarchy (outer + nested) */
+.lab-result .lab-advice-list {
+  margin: 0.45rem 0 0;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+  list-style-position: outside;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: min(56rem, 100%);
+  font-size: 0.94rem;
+  line-height: 1.5;
   color: var(--text-soft);
-  display: grid;
-  gap: 0.4rem;
 }
 
-.lab-advice-list li {
+.lab-advice-list > .lab-advice-item {
+  padding-inline-start: 0.2rem;
+}
+
+.lab-advice-list > .lab-advice-item::marker {
+  color: var(--muted);
+}
+
+.lab-advice-item--with-sublist .lab-advice-sublist-head {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lab-advice-sublist {
+  margin: 0.4rem 0 0;
+  padding: 0.2rem 0 0.1rem 1rem;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.lab-advice-sublist li {
+  margin: 0.28rem 0;
   line-height: 1.45;
+}
+
+.lab-advice-sublist li::marker {
+  color: var(--muted);
+  font-size: 0.9em;
 }
 
 .lab-result strong {

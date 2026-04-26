@@ -78,7 +78,7 @@ export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
  * Bump when rotation DPS sim math changes. Tier list entries store this on refresh; a mismatch
  * re-queues rows on incremental update so cached `dps` matches the current `simulateRotation`.
  */
-export const TIER_DPS_SIM_REVISION = 7
+export const TIER_DPS_SIM_REVISION = 9
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -99,8 +99,7 @@ function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
 }
 
-/** Wiki skill line damage per cast (no buff bracket); used in sim and Lab rotation hints. */
-export function skillDamagePerCast(
+function skillDamagePerCast(
   skill: WikiSkill,
   level: number,
   targets: number,
@@ -321,7 +320,7 @@ type SimMutable = {
   autoHitCritBuffDamSum: number
 }
 
-/** Practical midpoint in the observed ~200–500ms cancel window (Lab notes use the same value). */
+/** Practical midpoint in the observed ~200–500ms cancel window. */
 export const AUTO_ANIM_CANCEL_OVERLAP_SEC = 0.3
 const AUTO_ANIM_CANCEL_MAX_WINDOW_SEC = 0.5
 
