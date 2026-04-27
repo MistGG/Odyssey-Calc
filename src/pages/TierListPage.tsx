@@ -9,6 +9,7 @@ import {
   simulateRotation,
   TIER_DPS_SIM_REVISION,
 } from '../lib/dpsSim'
+import { buildComparableRotationConfig } from '../lib/rotationComparable'
 import { computeHealerTierScore } from '../lib/healerTierScore'
 import { computeTankTierScore } from '../lib/tankTierScore'
 import {
@@ -316,233 +317,82 @@ export function TierListPage() {
         try {
           const detail = await fetchDigimonDetail(id)
           const levels = levelMapForSkills(detail.skills)
-          const sim = simulateRotation(
-            detail.skills,
-            levels,
+          const runComparableSim = (
+            durationSec: number,
+            options?: {
+              forceAutoCrit?: boolean
+              perfectAtClone?: boolean
+              autoAttackAnimationCancel?: boolean
+            },
+          ) => {
+            const cfg = buildComparableRotationConfig(detail, durationSec, 1, options)
+            return simulateRotation(
+              detail.skills,
+              levels,
+              cfg.durationSec,
+              cfg.targets,
+              cfg.baseAttack,
+              cfg.attackSpeed,
+              cfg.baseCritRateStat,
+              cfg.options,
+            )
+          }
+          const sim = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC)
+          const simBurst = runComparableSim(BURST_DPS_WINDOW_SEC)
+          const simAutoCrit = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
+            forceAutoCrit: true,
+          })
+          const simPerfectAtClone = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
+            perfectAtClone: true,
+          })
+          const simBurstAutoCrit = runComparableSim(BURST_DPS_WINDOW_SEC, { forceAutoCrit: true })
+          const simBurstPerfectAtClone = runComparableSim(BURST_DPS_WINDOW_SEC, {
+            perfectAtClone: true,
+          })
+          const simPerfectAtCloneAutoCrit = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
+            perfectAtClone: true,
+            forceAutoCrit: true,
+          })
+          const simBurstPerfectAtCloneAutoCrit = runComparableSim(BURST_DPS_WINDOW_SEC, {
+            perfectAtClone: true,
+            forceAutoCrit: true,
+          })
+          const simAnimationCancel = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
+            autoAttackAnimationCancel: true,
+          })
+          const simBurstAnimationCancel = runComparableSim(BURST_DPS_WINDOW_SEC, {
+            autoAttackAnimationCancel: true,
+          })
+          const simAnimationCancelAutoCrit = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
+            autoAttackAnimationCancel: true,
+            forceAutoCrit: true,
+          })
+          const simBurstAnimationCancelAutoCrit = runComparableSim(BURST_DPS_WINDOW_SEC, {
+            autoAttackAnimationCancel: true,
+            forceAutoCrit: true,
+          })
+          const simPerfectAtCloneAnimationCancel = runComparableSim(
             DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
             {
-              role: detail.role,
-              hybridStance: 'best',
-            },
-          )
-          const simBurst = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-            },
-          )
-          const simAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              forceAutoCrit: true,
-            },
-          )
-          const simPerfectAtClone = simulateRotation(
-            detail.skills,
-            levels,
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              perfectAtClone: true,
-            },
-          )
-          const simBurstAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              forceAutoCrit: true,
-            },
-          )
-          const simBurstPerfectAtClone = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              perfectAtClone: true,
-            },
-          )
-          const simPerfectAtCloneAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              perfectAtClone: true,
-              forceAutoCrit: true,
-            },
-          )
-          const simBurstPerfectAtCloneAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              perfectAtClone: true,
-              forceAutoCrit: true,
-            },
-          )
-          const simAnimationCancel = simulateRotation(
-            detail.skills,
-            levels,
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              autoAttackAnimationCancel: true,
-            },
-          )
-          const simBurstAnimationCancel = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              autoAttackAnimationCancel: true,
-            },
-          )
-          const simAnimationCancelAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              autoAttackAnimationCancel: true,
-              forceAutoCrit: true,
-            },
-          )
-          const simBurstAnimationCancelAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              autoAttackAnimationCancel: true,
-              forceAutoCrit: true,
-            },
-          )
-          const simPerfectAtCloneAnimationCancel = simulateRotation(
-            detail.skills,
-            levels,
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
               perfectAtClone: true,
               autoAttackAnimationCancel: true,
             },
           )
-          const simBurstPerfectAtCloneAnimationCancel = simulateRotation(
-            detail.skills,
-            levels,
-            BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
-            {
-              role: detail.role,
-              hybridStance: 'best',
-              perfectAtClone: true,
-              autoAttackAnimationCancel: true,
-            },
-          )
-          const simPerfectAtCloneAnimationCancelAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
+          const simBurstPerfectAtCloneAnimationCancel = runComparableSim(BURST_DPS_WINDOW_SEC, {
+            perfectAtClone: true,
+            autoAttackAnimationCancel: true,
+          })
+          const simPerfectAtCloneAnimationCancelAutoCrit = runComparableSim(
             DEFAULT_ROTATION_SIM_DURATION_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
             {
-              role: detail.role,
-              hybridStance: 'best',
               perfectAtClone: true,
               autoAttackAnimationCancel: true,
               forceAutoCrit: true,
             },
           )
-          const simBurstPerfectAtCloneAnimationCancelAutoCrit = simulateRotation(
-            detail.skills,
-            levels,
+          const simBurstPerfectAtCloneAnimationCancelAutoCrit = runComparableSim(
             BURST_DPS_WINDOW_SEC,
-            1,
-            detail.attack,
-            detail.stats?.atk_speed ?? 0,
-            detail.stats?.crit_rate ?? 0,
             {
-              role: detail.role,
-              hybridStance: 'best',
               perfectAtClone: true,
               autoAttackAnimationCancel: true,
               forceAutoCrit: true,
@@ -831,7 +681,14 @@ export function TierListPage() {
       if (tierMode === 'healer' && r === 'Support') out[id] = e
     }
     return out
-  }, [filteredEntries, tierMode, dpsForceAutoCrit, dpsPerfectAtClone, dpsAutoAnimCancel, dpsTierCategory])
+  }, [
+    filteredEntries,
+    tierMode,
+    dpsForceAutoCrit,
+    dpsPerfectAtClone,
+    dpsAutoAnimCancel,
+    dpsTierCategory,
+  ])
 
   function toggleMultiFilter(label: string, setter: Dispatch<SetStateAction<string[]>>) {
     if (label === 'All') {
@@ -1616,7 +1473,7 @@ export function TierListPage() {
                   <ul className="tier-score-explainer-list">
                     <li>
                       <strong>Sustained:</strong> same simulation as Lab default — greedy rotation over{' '}
-                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s, Hybrid uses best stance.
+                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s, Hybrid defaults to melee stance.
                     </li>
                     <li>
                       <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
