@@ -75,6 +75,9 @@ import {
   type TierListUpdateSummaryTabKey,
 } from './tierList/tierListModel'
 
+/** After this many ms on one Digimon, append a reassurance line (heavy DPS sims can block the UI). */
+const TIER_UPDATE_SLOW_HINT_MS = 5_000
+
 const WIKI_ATTR_STRINGS = WIKI_ATTRIBUTE_OPTIONS as readonly string[]
 const WIKI_EL_STRINGS = WIKI_ELEMENT_OPTIONS as readonly string[]
 const WIKI_FAMILY_STRINGS = WIKI_FAMILY_OPTIONS as readonly string[]
@@ -321,8 +324,19 @@ export function TierListPage() {
           backoffMs = 0
         }
 
+        const checkingLabel = meta?.name ?? id
+        const slowHintSuffix = ' (Taking longer than expected — please wait.)'
+        const slowStatusLine =
+          mode === 'force'
+            ? `Force checking all… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
+            : `Updating tier list… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
+        const slowHintTimer = window.setTimeout(() => {
+          setStatus(slowStatusLine)
+        }, TIER_UPDATE_SLOW_HINT_MS)
+
         try {
-          const detail = await fetchDigimonDetail(id)
+          try {
+            const detail = await fetchDigimonDetail(id)
           const levels = levelMapForSkills(detail.skills)
           const runComparableSim = (
             durationSec: number,
@@ -507,6 +521,9 @@ export function TierListPage() {
           entries: { ...working.entries },
           listSignatures: { ...working.listSignatures },
         })
+        } finally {
+          window.clearTimeout(slowHintTimer)
+        }
         await sleep(REQUEST_DELAY_MS)
       }
 

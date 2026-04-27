@@ -11,6 +11,7 @@ import {
   MIN_ROTATION_SIM_DURATION_SEC,
   clampRotationDurationSec,
   simulateRotation,
+  type RotationResult,
 } from '../lib/dpsSim'
 import { EditableNumberInput } from '../components/EditableNumberInput'
 import { getGearAttackContribution, getGearStatBonuses } from '../lib/gearStats'
@@ -37,6 +38,9 @@ type LabRotationAdviceItem =
     }
 
 type LabRotationMode = 'auto' | 'custom'
+
+/** Slow-hint delay while a rotation sim is in flight (aligned with tier list updates). */
+const DPS_LAB_SLOW_HINT_MS = 5_000
 
 /** Table-only: one buff strength value; hover opens a themed breakdown popover. */
 function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
@@ -298,6 +302,9 @@ export function DpsLabPage() {
   )
   const [forceAutoCrit, setForceAutoCrit] = useState(() => parseToggleFromParams(params, 'forceAutoCrit'))
   const [perfectAtClone, setPerfectAtClone] = useState(() => parseToggleFromParams(params, 'perfectAtClone'))
+  const [sim, setSim] = useState<RotationResult | null>(null)
+  const [simBusy, setSimBusy] = useState(false)
+  const [simSlowHint, setSimSlowHint] = useState(false)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
@@ -487,29 +494,69 @@ export function DpsLabPage() {
   )
   const customRotationInvalidCount = customRotationResolved.filter((row) => !row.option).length
 
-  const sim = useMemo(() => {
-    if (!data) return null
-    const secs = clampRotationDurationSec(durationSec)
-    return simulateRotation(
-      data.skills ?? [],
-      skillLevels,
-      secs,
-      Math.max(1, targets),
-      simBaseAttack,
-      combatStats?.atk_speed ?? data.stats?.atk_speed ?? 0,
-      combatStats?.crit_rate ?? data.stats?.crit_rate ?? 0,
-      {
-        role: data.role,
-        hybridStance: isHybridRole ? hybridStance : 'best',
-        autoAttackAnimationCancel: useAutoAnimCancel,
-        forceAutoCrit,
-        perfectAtClone,
-        customRotation: rotationMode === 'custom' ? customRotationValidRows : undefined,
-        manualSupportOnly: rotationMode === 'custom',
-      },
-    )
+  useEffect(() => {
+    if (!data || data.id !== digimonId) {
+      setSim(null)
+      setSimBusy(false)
+      setSimSlowHint(false)
+      return
+    }
+
+    let cancelled = false
+    setSimBusy(true)
+    setSimSlowHint(false)
+    const slowTimer = window.setTimeout(() => {
+      if (!cancelled) setSimSlowHint(true)
+    }, DPS_LAB_SLOW_HINT_MS)
+
+    /** Double rAF: let React paint `simBusy` before the synchronous sim blocks the main thread. */
+    let rafBeforePaint = 0
+    let rafRunSim = 0
+    rafBeforePaint = requestAnimationFrame(() => {
+      rafRunSim = requestAnimationFrame(() => {
+        if (cancelled) return
+        try {
+          const secs = clampRotationDurationSec(durationSec)
+          const result = simulateRotation(
+            data.skills ?? [],
+            skillLevels,
+            secs,
+            Math.max(1, targets),
+            simBaseAttack,
+            combatStats?.atk_speed ?? data.stats?.atk_speed ?? 0,
+            combatStats?.crit_rate ?? data.stats?.crit_rate ?? 0,
+            {
+              role: data.role,
+              hybridStance: isHybridRole ? hybridStance : 'best',
+              autoAttackAnimationCancel: useAutoAnimCancel,
+              forceAutoCrit,
+              perfectAtClone,
+              customRotation: rotationMode === 'custom' ? customRotationValidRows : undefined,
+              manualSupportOnly: rotationMode === 'custom',
+            },
+          )
+          if (!cancelled) setSim(result)
+        } finally {
+          window.clearTimeout(slowTimer)
+          if (!cancelled) {
+            setSimBusy(false)
+            setSimSlowHint(false)
+          }
+        }
+      })
+    })
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(rafBeforePaint)
+      cancelAnimationFrame(rafRunSim)
+      window.clearTimeout(slowTimer)
+      setSimBusy(false)
+      setSimSlowHint(false)
+    }
   }, [
     data,
+    digimonId,
     durationSec,
     skillLevels,
     targets,
@@ -824,6 +871,12 @@ export function DpsLabPage() {
       )}
       {loading && <p className="muted">Loading Digimon data…</p>}
       {error && <p className="error">{error}</p>}
+      {simBusy && data && data.id === digimonId && (
+        <p className="muted lab-sim-busy-status" role="status" aria-live="polite">
+          Running rotation simulation…
+          {simSlowHint ? ' (Taking longer than expected — please wait.)' : ''}
+        </p>
+      )}
 
       {data && (
         <>
