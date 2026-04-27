@@ -395,10 +395,23 @@ export function DpsLabPage() {
 
   const roleNorm = useMemo(() => normalizeWikiRole(data?.role), [data?.role])
   const isHybridRole = roleNorm === 'hybrid'
-  const simBaseAttack = useMemo(
-    () => (combatStats ? combatStats.attack + gearAttack.totalAttack : 0),
-    [combatStats, gearAttack.totalAttack],
-  )
+  const simAttackPreview = useMemo(() => {
+    const inputAttack = Math.max(0, combatStats?.attack ?? 0)
+    const gearAttackBonus = Math.max(0, gearAttack.totalAttack)
+    const cloneAttackBonus = perfectAtClone ? Math.round(inputAttack * 1.44) : 0
+    const effectiveAttack = inputAttack + gearAttackBonus + cloneAttackBonus
+    const hasEffectiveOverride = gearAttackBonus > 0 || cloneAttackBonus > 0
+    const simAttack = hasEffectiveOverride ? effectiveAttack : inputAttack
+    return {
+      inputAttack,
+      gearAttackBonus,
+      cloneAttackBonus,
+      effectiveAttack,
+      hasEffectiveOverride,
+      simAttack,
+    }
+  }, [combatStats?.attack, gearAttack.totalAttack, perfectAtClone])
+  const simBaseAttack = simAttackPreview.simAttack
 
   const digimonRoleWikiSkillsForRole = useMemo(
     () =>
@@ -713,12 +726,15 @@ export function DpsLabPage() {
     }),
     [gearAttack.totalAttack],
   )
-  const perfectCloneAttackPreview = useMemo(() => {
-    const baseAttack = Math.max(0, combatStats?.attack ?? 0)
-    const bonusAttack = Math.round(baseAttack * 1.44)
-    const effectiveAttack = baseAttack + bonusAttack
-    return { baseAttack, bonusAttack, effectiveAttack }
-  }, [combatStats?.attack])
+  const perfectCloneAttackPreview = useMemo(
+    () => ({
+      baseAttack: simAttackPreview.inputAttack,
+      bonusAttack: simAttackPreview.cloneAttackBonus,
+      effectiveAttack: simAttackPreview.effectiveAttack,
+      simAttack: simAttackPreview.simAttack,
+    }),
+    [simAttackPreview],
+  )
 
   const updateCombatStat = (key: keyof CombatStatsState, raw: string) => {
     const n = Number(raw)
@@ -852,8 +868,8 @@ export function DpsLabPage() {
                     </div>
                     <p className="muted lab-identity-sub">
                       {(data.skills ?? []).length} skills · Wiki attack {data.attack.toLocaleString()}
-                      {gearAttack.totalAttack > 0
-                        ? ` · Lab base ATK ${simBaseAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
+                      {simAttackPreview.hasEffectiveOverride
+                        ? ` · Effective AT ${simBaseAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })}`
                         : ''}
                     </p>
                   </div>
