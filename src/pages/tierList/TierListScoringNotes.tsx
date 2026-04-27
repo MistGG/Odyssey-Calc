@@ -36,12 +36,13 @@ export function TierListScoringNotes({
                   (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same
                   as the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                   per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                  <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> uses cooldown buckets by{' '}
-                  <code>period = cast + cooldown</code>: first any kit with AoE damage skill in <code>&lt;=8s</code>,
-                  then <code>&lt;=10s</code>, then <code>&lt;=12s</code>, then fallback to a legacy respawn-fit blend.
-                  Inside each of those fast buckets, ordering is <strong>80% damage + 20% radius</strong> (cooldown
-                  treated as equal inside the bucket). <strong>General</strong> is the average of Damage, Cooldown,
-                  and Farming (equal weight).
+                  <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> buckets damaging AoE by{' '}
+                  <code>period = cast + cooldown</code>: <code>&lt;= 8s</code>, then <code>(8, 10]</code>s, then{' '}
+                  <code>(10, 12]</code>s, then <code>&gt; 12s</code> (faster pools outrank slower). Within a pool,
+                  score is <strong>90%</strong> <code>log1p(damage)</code> + <strong>10%</strong>{' '}
+                  <code>log1p(radius)</code> on the best skill in that pool (no cooldown term). Support-only AoE uses a
+                  legacy cadence blend. <strong>General</strong> is the average of Damage, Cooldown, and Farming
+                  (equal weight).
                 </li>
               </ul>
             </div>

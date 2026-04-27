@@ -8,37 +8,28 @@ export function skillIsWikiAoe(s: WikiSkill): boolean {
 }
 
 /**
- * Open-world style pack respawn cadence (seconds).
+ * Open-world style pack respawn cadence (seconds), used only for the support-only / legacy
+ * farming fallback when there is no damaging AoE skill to bucket.
  */
 export const FARM_MONSTER_RESPAWN_SEC = 8
 
-/** Farming intra-bucket blend (requested): damage first, then area. */
-const FARM_BUCKET_WEIGHT_DAMAGE = 0.8
-const FARM_BUCKET_WEIGHT_RADIUS = 0.2
+/** Within each period bucket, farming rank blends per-skill damage and radius only (no CD term). */
+const FARM_BUCKET_WEIGHT_DAMAGE = 0.9
+const FARM_BUCKET_WEIGHT_RADIUS = 0.1
 
-/** Large separators so <=8s pool always outranks <=10s, then <=12s, then legacy fallback. */
-const FARM_BUCKET_BASE_8 = 3000
-const FARM_BUCKET_BASE_10 = 2000
-const FARM_BUCKET_BASE_12 = 1000
+/** Separators so a better period bucket always outranks a slower bucket before comparing in-bucket scores. */
+const FARM_BUCKET_BASE_LE_8 = 3000
+const FARM_BUCKET_BASE_8_10 = 2000
+const FARM_BUCKET_BASE_10_12 = 1000
+const FARM_BUCKET_BASE_GT_12 = 0
 
 /**
- * Respawn-fit for farming cooldown priority:
- * - <=8s: preferred (highest)
- * - 8–10s: still acceptable
- * - >10s: penalized quickly
+ * Cooldown buckets use `period = cast_time_sec + cooldown_sec` on each damaging AoE skill.
+ * - <=8s: fastest pool (always fast enough vs ~8s respawn); score = 90% damage + 10% radius (best skill in pool).
+ * - (8, 10] and (10, 12]: same blend, separate pools for ordering.
+ * - >12s: same blend; slowest pool.
+ * If there is no damaging AoE, fall back to a small legacy respawn/cadence heuristic for support-only AoE.
  */
-function farmRespawnPriority(periodSec: number): number {
-  if (periodSec <= FARM_MONSTER_RESPAWN_SEC) {
-    const headroom = (FARM_MONSTER_RESPAWN_SEC - periodSec) / FARM_MONSTER_RESPAWN_SEC
-    return 1 + 0.22 * Math.max(0, headroom)
-  }
-  if (periodSec <= 10) {
-    const over = (periodSec - FARM_MONSTER_RESPAWN_SEC) / 2
-    return 1 - 0.2 * Math.max(0, Math.min(1, over))
-  }
-  return 0.8 * Math.exp(-(periodSec - 10) / 4)
-}
-
 function farmBucketByPeriod(periodSec: number): 0 | 1 | 2 | 3 {
   if (periodSec <= 8) return 0
   if (periodSec <= 10) return 1
@@ -54,14 +45,27 @@ function farmBucketSkillScore(dmg: number, radius: number): number {
 }
 
 /**
+ * Respawn-fit for legacy fallback (support-only AoE or no damage lines to bucket).
+ */
+function farmRespawnPriority(periodSec: number): number {
+  if (periodSec <= FARM_MONSTER_RESPAWN_SEC) {
+    const headroom = (FARM_MONSTER_RESPAWN_SEC - periodSec) / FARM_MONSTER_RESPAWN_SEC
+    return 1 + 0.22 * Math.max(0, headroom)
+  }
+  if (periodSec <= 10) {
+    const over = (periodSec - FARM_MONSTER_RESPAWN_SEC) / 2
+    return 1 - 0.2 * Math.max(0, Math.min(1, over))
+  }
+  return 0.8 * Math.exp(-(periodSec - 10) / 4)
+}
+
+/**
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: `log1p` of summed per-cast damage at tier-list skill level (support-only AoE = 0 damage).
  * - **Cooldown**: `log1p` of summed `1 / (cast + cooldown)` — faster skills contribute more.
- * - **Farming**:
- *   - Priority pools by `period = cast + cooldown`: `<=8s` first, then `<=10s`, then `<=12s`.
- *   - Inside each of those pools: 80% damage + 20% radius.
- *   - If no AoE damage skill is in `<=12s`, fallback to the legacy respawn-fit blend.
+ * - **Farming**: period buckets on damaging AoE only; inside each bucket `0.9·log1p(dmg) + 0.1·log1p(radius)`
+ *   for the best skill in that bucket; bucket order <=8s > (8,10] > (10,12] > >12s. Legacy blend if no damage AoE.
  * - **General**: arithmetic mean of damage, cooldown, and farming (equal weight).
  */
 export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
@@ -75,9 +79,10 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   let farmCooldownRaw = 0
   let farmDamageRaw = 0
   let farmRadiusRaw = 0
-  let farm8Best = -Infinity
-  let farm10Best = -Infinity
-  let farm12Best = -Infinity
+  let farmLe8Best = -Infinity
+  let farm8To10Best = -Infinity
+  let farm10To12Best = -Infinity
+  let farmGt12Best = -Infinity
 
   for (const s of detail.skills ?? []) {
     if (!skillIsWikiAoe(s)) continue
@@ -96,11 +101,12 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
       dmgSum += dmg
       farmDamageRaw += dmg * fit
 
-      const periodBucket = farmBucketByPeriod(period)
+      const bucket = farmBucketByPeriod(period)
       const bucketScore = farmBucketSkillScore(dmg, radius)
-      if (periodBucket === 0) farm8Best = Math.max(farm8Best, bucketScore)
-      else if (periodBucket === 1) farm10Best = Math.max(farm10Best, bucketScore)
-      else if (periodBucket === 2) farm12Best = Math.max(farm12Best, bucketScore)
+      if (bucket === 0) farmLe8Best = Math.max(farmLe8Best, bucketScore)
+      else if (bucket === 1) farm8To10Best = Math.max(farm8To10Best, bucketScore)
+      else if (bucket === 2) farm10To12Best = Math.max(farm10To12Best, bucketScore)
+      else farmGt12Best = Math.max(farmGt12Best, bucketScore)
     }
   }
 
@@ -110,13 +116,15 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   const farmDamage = Math.log1p(Math.max(0, farmDamageRaw))
   const farmRadius = Math.log1p(Math.max(0, farmRadiusRaw))
   const farmingLegacy = 0.75 * farmCooldown + 0.2 * farmDamage + 0.05 * farmRadius
-  const farming = Number.isFinite(farm8Best)
-    ? FARM_BUCKET_BASE_8 + farm8Best
-    : Number.isFinite(farm10Best)
-      ? FARM_BUCKET_BASE_10 + farm10Best
-      : Number.isFinite(farm12Best)
-        ? FARM_BUCKET_BASE_12 + farm12Best
-        : farmingLegacy
+  const farming = Number.isFinite(farmLe8Best)
+    ? FARM_BUCKET_BASE_LE_8 + farmLe8Best
+    : Number.isFinite(farm8To10Best)
+      ? FARM_BUCKET_BASE_8_10 + farm8To10Best
+      : Number.isFinite(farm10To12Best)
+        ? FARM_BUCKET_BASE_10_12 + farm10To12Best
+        : Number.isFinite(farmGt12Best)
+          ? FARM_BUCKET_BASE_GT_12 + farmGt12Best
+          : farmingLegacy
   const general = (damage + cooldown + farming) / 3
 
   return { general, damage, cooldown, farming }

@@ -1476,12 +1476,14 @@ export function TierListPage() {
                       (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same as
                       the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                       per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                      <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> assumes packs respawn about every
-                      8s: each AoE line contributes damage (plus a small cast-density bonus) times a{' '}
-                      <strong>respawn fit</strong> weight <code>exp(-max(0, period - 8) / 8)</code> for{' '}
-                      <code>period = cast + cooldown</code>, times a light <code>log1p(radius)</code> coverage factor.
-                      Support-only AoE uses a smaller area+cadence term instead of damage. <strong>General</strong> is
-                      the average of Damage, Cooldown, and Farming (equal weight).
+                      <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> uses{' '}
+                      <code>period = cast + cooldown</code> on each <strong>damaging</strong> AoE skill: kits are
+                      ordered into pools <code>&lt;= 8s</code>, then <code>(8, 10]</code>s, then <code>(10, 12]</code>s,
+                      then <code>&gt; 12s</code> (faster pools always outrank slower ones). Within a pool, cooldown is
+                      not part of the score; each Digimon is ranked by the best skill in that pool using{' '}
+                      <strong>90%</strong> <code>log1p(damage)</code> + <strong>10%</strong>{' '}
+                      <code>log1p(radius)</code>. Support-only AoE uses a legacy cadence blend instead of damage.
+                      <strong>General</strong> is the average of Damage, Cooldown, and Farming (equal weight).
                     </li>
                   </ul>
                 </div>
