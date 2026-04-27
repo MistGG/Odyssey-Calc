@@ -144,9 +144,9 @@ function critRateToChance(critRateStat: number) {
 
 /**
  * Bonus damage when a hit crits (before buff "+X% critical damage"), as a fraction of non-crit damage.
- * ~50% matches dummy combat logs (~1.5× crit vs non-crit at the same ATK).
+ * Baseline crit bonus: +100% (crit hit = 2.0× non-crit before buff crit damage).
  */
-const BASE_CRIT_DAMAGE_BONUS = 0.5
+const BASE_CRIT_DAMAGE_BONUS = 1.0
 
 /**
  * Expected damage multiplier vs always non-crit: E = (1 − p) + p × (1 + BASE + buff/100)
@@ -927,6 +927,13 @@ export type RotationSimOptions = {
   perfectAtClone?: boolean
   /** Assume repeated auto animation cancel with skills whenever available. */
   autoAttackAnimationCancel?: boolean
+  /**
+   * Optional fixed cast sequence for Lab custom mode. The sim follows this list in order
+   * (wrapping at the end), waiting/auto-attacking until the next listed skill is ready.
+   */
+  customRotation?: Array<{ skillId: string }>
+  /** When true, support skills are cast only if present in `customRotation`. */
+  manualSupportOnly?: boolean
 }
 
 type RotationSimCoreOpts = {
@@ -935,6 +942,135 @@ type RotationSimCoreOpts = {
   forceAutoCrit: boolean
   perfectAtClone: boolean
   autoAttackAnimationCancel: boolean
+  useCustomRotation: boolean
+  customRotationSkillIds: string[]
+  manualSupportOnly: boolean
+}
+
+function runCustomRotationSequence(
+  ctx: SimCtx,
+  m: SimMutable,
+  durationSec: number,
+  supportBuffs: SupportBuffProfile[],
+  sequenceSkillIds: string[],
+  manualSupportOnly: boolean,
+): void {
+  const supportById = new Map(supportBuffs.map((p) => [p.skill.id, p] as const))
+  const damagingById = new Map(ctx.damaging.map((s) => [s.id, s] as const))
+  const usableIds = sequenceSkillIds.filter(
+    (id) => id === 'auto-attack' || supportById.has(id) || damagingById.has(id),
+  )
+  if (usableIds.length === 0) return
+
+  let seqIdx = 0
+  let stepGuard = 0
+  while (m.t < durationSec - 1e-9) {
+    if (++stepGuard > 250000) {
+      console.error('[dpsSim] runCustomRotationSequence: step limit exceeded, aborting early')
+      break
+    }
+    purgeExpiredBuffs(m, m.t)
+
+    if (!manualSupportOnly) {
+      const availableSupport = supportBuffs.filter((p) => {
+        const ready = (m.readyAt.get(p.skill.id) ?? 0) <= m.t
+        const alreadyUp = m.activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > m.t)
+        return ready && !alreadyUp
+      })
+      if (availableSupport.length > 0) {
+        availableSupport.sort((a, b) => {
+          const aFlat = ctx.baseAttack > 0 ? (a.flatAttack / ctx.baseAttack) * 100 : 0
+          const bFlat = ctx.baseAttack > 0 ? (b.flatAttack / ctx.baseAttack) * 100 : 0
+          const aScore = a.attackPct + a.skillDamagePct + aFlat + a.atkSpeedPct * 0.12
+          const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
+          return bScore - aScore
+        })
+        if (ctx.autoAttackAnimationCancel) {
+          performAutoIntoSupportCancel(ctx, m, availableSupport[0], true)
+          continue
+        }
+        castSupportProfile(ctx, m, availableSupport[0], true)
+        continue
+      }
+    }
+
+    const chosenId = usableIds[seqIdx]
+    if (chosenId === 'auto-attack') {
+      performAutoAttack(ctx, m, true)
+      seqIdx = (seqIdx + 1) % usableIds.length
+      continue
+    }
+    const support = supportById.get(chosenId)
+    const damageSkill = damagingById.get(chosenId)
+    if (!support && !damageSkill) {
+      seqIdx = (seqIdx + 1) % usableIds.length
+      continue
+    }
+
+    if (support) {
+      const ready = (m.readyAt.get(support.skill.id) ?? 0) <= m.t
+      const alreadyUp = m.activeBuffs.some((b) => b.skillId === support.skill.id && b.untilSec > m.t)
+      if (ready && !alreadyUp) {
+        if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, m, support, true)
+        else castSupportProfile(ctx, m, support, true)
+        seqIdx = (seqIdx + 1) % usableIds.length
+        continue
+      }
+      const nextReady = Math.max(m.t, m.readyAt.get(support.skill.id) ?? m.t)
+      while (m.t < durationSec - 1e-9) {
+        const step = autoIntervalFor(ctx, m)
+        if (m.t + step > nextReady + 1e-9) break
+        performAutoAttack(ctx, m, true)
+      }
+      m.t = Math.max(m.t, Math.min(nextReady, durationSec))
+      continue
+    }
+
+    const skill = damageSkill as WikiSkill
+    const readyAt = m.readyAt.get(skill.id) ?? 0
+    if (readyAt > m.t + 1e-9) {
+      const dt = readyAt - m.t
+      if (
+        ctx.autoAttackAnimationCancel &&
+        dt <= AUTO_ANIM_CANCEL_MAX_WINDOW_SEC + 1e-9 &&
+        dt > 0
+      ) {
+        performAutoIntoSkillCancel(ctx, m, skill, true)
+        seqIdx = (seqIdx + 1) % usableIds.length
+        continue
+      }
+      while (m.t < durationSec - 1e-9) {
+        const step = autoIntervalFor(ctx, m)
+        if (m.t + step > readyAt + 1e-9) break
+        performAutoAttack(ctx, m, true)
+      }
+      m.t = Math.max(m.t, Math.min(readyAt, durationSec))
+      continue
+    }
+
+    const castT = effectiveCastTime(skill.cast_time_sec)
+    const skillDmg = computeDamageSkillHit(ctx, m, skill)
+    const snap = computeAutoHit(ctx, m, 'planning')
+    const rAuto = snap.dmg / snap.step
+    const rSkill = skillDmg / castT
+    const rCancelCombo = (snap.dmg + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castT)
+    if (ctx.autoAttackAnimationCancel && rCancelCombo > rSkill + 1e-9) {
+      performAutoIntoSkillCancel(ctx, m, skill, true)
+      seqIdx = (seqIdx + 1) % usableIds.length
+      continue
+    }
+    if (ctx.autoAttackAnimationCancel) {
+      castDamageSkill(ctx, m, skill, true)
+      seqIdx = (seqIdx + 1) % usableIds.length
+      continue
+    }
+    if (rAuto > rSkill + 1e-9) {
+      performAutoAttack(ctx, m, true)
+      continue
+    }
+    castDamageSkill(ctx, m, skill, true)
+    seqIdx = (seqIdx + 1) % usableIds.length
+  }
 }
 
 function runRotationSim(
@@ -1022,6 +1158,16 @@ function runRotationSim(
   let damageHold: DamageHold | null = null
 
   try {
+  if (core.useCustomRotation) {
+    runCustomRotationSequence(
+      ctx,
+      m,
+      durationSec,
+      supportBuffs,
+      core.customRotationSkillIds,
+      core.manualSupportOnly,
+    )
+  } else {
   let stepGuard = 0
   while (m.t < durationSec - 1e-9) {
     if (++stepGuard > 250000) {
@@ -1168,6 +1314,7 @@ function runRotationSim(
     }
     castDamageSkill(ctx, m, chosen, true)
   }
+  }
 
   const autoHits = m.autoHitCount
   const autoTot = m.autoDamageTotal
@@ -1261,6 +1408,9 @@ export function simulateRotation(
           forceAutoCrit: options?.forceAutoCrit === true,
           perfectAtClone: options?.perfectAtClone === true,
           autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+          useCustomRotation: Array.isArray(options?.customRotation),
+          customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
+          manualSupportOnly: options?.manualSupportOnly === true,
         },
       )
       if (!best || r.dps > best.dps) best = r
@@ -1288,6 +1438,9 @@ export function simulateRotation(
       forceAutoCrit: options?.forceAutoCrit === true,
       perfectAtClone: options?.perfectAtClone === true,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+      useCustomRotation: Array.isArray(options?.customRotation),
+      customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
+      manualSupportOnly: options?.manualSupportOnly === true,
     },
   )
 }

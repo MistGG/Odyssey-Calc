@@ -32,6 +32,8 @@ type LabRotationAdviceItem =
       bullets: string[]
     }
 
+type LabRotationMode = 'auto' | 'custom'
+
 /** Table-only: one buff strength value; hover opens a themed breakdown popover. */
 function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -233,6 +235,24 @@ const COMBAT_STAT_FIELDS: Array<{ key: keyof CombatStatsState; label: string }> 
   { key: 'block_rate', label: 'Block rate' },
 ]
 
+function parseToggleFromParams(params: URLSearchParams, key: string): boolean {
+  const raw = (params.get(key) ?? '').trim().toLowerCase()
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
+}
+
+function parseRotationModeFromParams(params: URLSearchParams): LabRotationMode {
+  return params.get('rotationMode')?.trim().toLowerCase() === 'custom' ? 'custom' : 'auto'
+}
+
+function parseCustomRotationFromParams(params: URLSearchParams): string[] {
+  const raw = params.get('rotationSeq')?.trim() ?? ''
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 export function DpsLabPage() {
   const { search } = useLocation()
   const params = useMemo(() => new URLSearchParams(search), [search])
@@ -242,6 +262,11 @@ export function DpsLabPage() {
     const raw = new URLSearchParams(search).get('duration')
     if (raw == null || raw.trim() === '') return null
     return Math.max(10, toInt(raw, DEFAULT_ROTATION_SIM_DURATION_SEC))
+  }, [search])
+  const targetsFromUrl = useMemo(() => {
+    const raw = new URLSearchParams(search).get('targets')
+    if (raw == null || raw.trim() === '') return null
+    return Math.max(1, toInt(raw, 1))
   }, [search])
 
   const [hybridStance, setHybridStance] = useState<HybridStance>(() =>
@@ -253,19 +278,33 @@ export function DpsLabPage() {
   const [error, setError] = useState<string | null>(null)
   const [globalLevel, setGlobalLevel] = useState(initialLevel)
   const [skillLevels, setSkillLevels] = useState<Record<string, number>>({})
-  const [targets, setTargets] = useState(1)
+  const [targets, setTargets] = useState(() => targetsFromUrl ?? 1)
   const [durationSec, setDurationSec] = useState(() =>
     durationFromUrl ?? DEFAULT_ROTATION_SIM_DURATION_SEC,
   )
-  const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(false)
-  const [forceAutoCrit, setForceAutoCrit] = useState(false)
-  const [perfectAtClone, setPerfectAtClone] = useState(false)
+  const [rotationMode, setRotationMode] = useState<LabRotationMode>(() =>
+    parseRotationModeFromParams(params),
+  )
+  const [customRotationSkillIds, setCustomRotationSkillIds] = useState<string[]>(() =>
+    parseCustomRotationFromParams(params),
+  )
+  const [customRotationDraftSkillId, setCustomRotationDraftSkillId] = useState('')
+  const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(() =>
+    parseToggleFromParams(params, 'animCancel'),
+  )
+  const [forceAutoCrit, setForceAutoCrit] = useState(() => parseToggleFromParams(params, 'forceAutoCrit'))
+  const [perfectAtClone, setPerfectAtClone] = useState(() => parseToggleFromParams(params, 'perfectAtClone'))
+  const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
 
   useEffect(() => {
     if (durationFromUrl != null) setDurationSec(durationFromUrl)
   }, [durationFromUrl])
+
+  useEffect(() => {
+    if (targetsFromUrl != null) setTargets(targetsFromUrl)
+  }, [targetsFromUrl])
 
   useEffect(() => {
     setGlobalLevel(initialLevel)
@@ -280,6 +319,15 @@ export function DpsLabPage() {
 
   useEffect(() => {
     setHybridStance(parseHybridStance(new URLSearchParams(search).get('hybrid')))
+  }, [search])
+
+  useEffect(() => {
+    const next = new URLSearchParams(search)
+    setRotationMode(parseRotationModeFromParams(next))
+    setCustomRotationSkillIds(parseCustomRotationFromParams(next))
+    setUseAutoAnimCancel(parseToggleFromParams(next, 'animCancel'))
+    setForceAutoCrit(parseToggleFromParams(next, 'forceAutoCrit'))
+    setPerfectAtClone(parseToggleFromParams(next, 'perfectAtClone'))
   }, [search])
 
   useEffect(() => {
@@ -359,6 +407,60 @@ export function DpsLabPage() {
     [data, roleNorm, isHybridRole, hybridStance],
   )
 
+  const customRotationSkillOptions = useMemo(() => {
+    if (!data) return []
+    const out: Array<{
+      id: string
+      label: string
+      kind: 'damage' | 'support' | 'role-support' | 'auto'
+    }> = [{ id: 'auto-attack', label: 'Auto Attack', kind: 'auto' }]
+    const seen = new Set<string>()
+    for (const s of data.skills ?? []) {
+      if (seen.has(s.id)) continue
+      seen.add(s.id)
+      out.push({
+        id: s.id,
+        label: s.name,
+        kind: skillIsSupportOnly(s.base_dmg, s.scaling) ? 'support' : 'damage',
+      })
+    }
+    for (const s of digimonRoleWikiSkillsForRole) {
+      if (seen.has(s.id)) continue
+      seen.add(s.id)
+      out.push({ id: s.id, label: `${s.name} (Role)`, kind: 'role-support' })
+    }
+    return out
+  }, [data, digimonRoleWikiSkillsForRole])
+
+  useEffect(() => {
+    setCustomRotationSkillIds((prev) =>
+      prev.filter((id) => customRotationSkillOptions.some((opt) => opt.id === id)),
+    )
+  }, [customRotationSkillOptions])
+
+  useEffect(() => {
+    if (!customRotationDraftSkillId) return
+    const stillValid = customRotationSkillOptions.some((opt) => opt.id === customRotationDraftSkillId)
+    if (!stillValid) setCustomRotationDraftSkillId('')
+  }, [customRotationDraftSkillId, customRotationSkillOptions])
+
+  const customRotationResolved = useMemo(
+    () =>
+      customRotationSkillIds.map((id) => ({
+        skillId: id,
+        option: customRotationSkillOptions.find((opt) => opt.id === id),
+      })),
+    [customRotationSkillIds, customRotationSkillOptions],
+  )
+  const customRotationValidRows = useMemo(
+    () =>
+      customRotationResolved
+        .filter((row) => !!row.option)
+        .map((row) => ({ skillId: row.skillId })),
+    [customRotationResolved],
+  )
+  const customRotationInvalidCount = customRotationResolved.filter((row) => !row.option).length
+
   const sim = useMemo(() => {
     if (!data) return null
     const secs = Math.max(10, durationSec)
@@ -376,6 +478,8 @@ export function DpsLabPage() {
         autoAttackAnimationCancel: useAutoAnimCancel,
         forceAutoCrit,
         perfectAtClone,
+        customRotation: rotationMode === 'custom' ? customRotationValidRows : undefined,
+        manualSupportOnly: rotationMode === 'custom',
       },
     )
   }, [
@@ -390,6 +494,8 @@ export function DpsLabPage() {
     useAutoAnimCancel,
     forceAutoCrit,
     perfectAtClone,
+    rotationMode,
+    customRotationValidRows,
   ])
 
   const breakdown = useMemo(() => {
@@ -588,16 +694,63 @@ export function DpsLabPage() {
   )
   const showLabPortrait = Boolean(portraitSrc && !portraitBroken)
 
+  const buildShareUrl = useCallback(() => {
+    const next = new URLSearchParams()
+    if (digimonId) next.set('digimonId', digimonId)
+    next.set('level', String(globalLevel))
+    next.set('duration', String(Math.max(10, durationSec)))
+    next.set('targets', String(Math.max(1, targets)))
+    next.set('hybrid', hybridStance)
+    next.set('rotationMode', rotationMode)
+    if (rotationMode === 'custom' && customRotationSkillIds.length > 0) {
+      next.set('rotationSeq', customRotationSkillIds.join(','))
+    }
+    if (useAutoAnimCancel) next.set('animCancel', '1')
+    if (forceAutoCrit) next.set('forceAutoCrit', '1')
+    if (perfectAtClone) next.set('perfectAtClone', '1')
+    const base = window.location.href.split('#')[0]
+    return `${base}#/lab?${next.toString()}`
+  }, [
+    digimonId,
+    globalLevel,
+    durationSec,
+    targets,
+    hybridStance,
+    rotationMode,
+    customRotationSkillIds,
+    useAutoAnimCancel,
+    forceAutoCrit,
+    perfectAtClone,
+  ])
+
+  const onShareLabUrl = useCallback(async () => {
+    try {
+      const url = buildShareUrl()
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url)
+      else window.prompt('Copy share URL:', url)
+      setShareStatus('Share URL copied.')
+    } catch {
+      setShareStatus('Failed to copy share URL.')
+    }
+    window.setTimeout(() => setShareStatus(null), 2200)
+  }, [buildShareUrl])
+
   return (
     <div className="lab lab-page">
       <div className="lab-page-head">
         <h1 className="lab-page-title">Lab</h1>
-        {data && (
-          <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
-            Go back to {`${data.name}'s page`} →
-          </Link>
-        )}
+        <div className="lab-page-head-actions">
+          <button type="button" className="lab-share-btn" onClick={onShareLabUrl}>
+            Share Lab Sim
+          </button>
+          {data && (
+            <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
+              Go back to {`${data.name}'s page`} →
+            </Link>
+          )}
+        </div>
       </div>
+      {shareStatus ? <p className="muted lab-share-status">{shareStatus}</p> : null}
       <p className="muted">
         This lab simulates a timed rotation using your Digimon&apos;s wiki skills plus
         wiki role skills (not tamer skills), with in-game cast times and cooldowns.
@@ -614,6 +767,10 @@ export function DpsLabPage() {
         then still applies the auto-vs-skill check above. The preview is capped (about 12 seconds or
         35% of time left), so this favors strong short-term decisioning, not a perfect full-fight
         solver.
+      </p>
+      <p className="muted">
+        Rotation mode can be switched to Custom Rotation to run a user-defined fixed sequence. In
+        custom mode, support skills are manual-only (they cast only when included in the sequence).
       </p>
 
       {!digimonId && (
@@ -741,6 +898,145 @@ export function DpsLabPage() {
                   />
                 </label>
               </div>
+              <div className="lab-custom-rotation-mode">
+                <p className="lab-controls-bar-title">Rotation mode</p>
+                <div className="lab-custom-rotation-mode-options" role="tablist" aria-label="Rotation mode">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={rotationMode === 'auto'}
+                    className={
+                      rotationMode === 'auto'
+                        ? 'lab-rotation-mode-btn lab-rotation-mode-btn--active'
+                        : 'lab-rotation-mode-btn'
+                    }
+                    onClick={() => setRotationMode('auto')}
+                  >
+                    Auto
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={rotationMode === 'custom'}
+                    className={
+                      rotationMode === 'custom'
+                        ? 'lab-rotation-mode-btn lab-rotation-mode-btn--active'
+                        : 'lab-rotation-mode-btn'
+                    }
+                    onClick={() => setRotationMode('custom')}
+                  >
+                    Custom Rotation
+                  </button>
+                </div>
+              </div>
+              {rotationMode === 'custom' && (
+                <div className="lab-custom-rotation-card">
+                  <div className="lab-custom-rotation-add">
+                    <select
+                      value={customRotationDraftSkillId}
+                      onChange={(e) => setCustomRotationDraftSkillId(e.target.value)}
+                    >
+                      <option value="">Select skill…</option>
+                      {customRotationSkillOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label} · {opt.kind}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="lab-btn"
+                      onClick={() => {
+                        if (!customRotationDraftSkillId) return
+                        setCustomRotationSkillIds((prev) => [...prev, customRotationDraftSkillId])
+                      }}
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      className="lab-btn lab-btn--ghost"
+                      onClick={() => setCustomRotationSkillIds([])}
+                      disabled={customRotationSkillIds.length === 0}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  {customRotationSkillIds.length === 0 ? (
+                    <p className="lab-custom-rotation-warning">
+                      Add at least one skill to run custom mode.
+                    </p>
+                  ) : null}
+                  {customRotationInvalidCount > 0 ? (
+                    <p className="lab-custom-rotation-warning">
+                      {customRotationInvalidCount} sequence entr
+                      {customRotationInvalidCount === 1 ? 'y is' : 'ies are'} no longer valid for this
+                      Digimon/stance and will be ignored.
+                    </p>
+                  ) : null}
+                  <ol className="lab-custom-rotation-list">
+                    {customRotationResolved.map((row, idx) => (
+                      <li key={`${row.skillId}-${idx}`} className="lab-custom-rotation-row">
+                        <select
+                          value={row.skillId}
+                          onChange={(e) =>
+                            setCustomRotationSkillIds((prev) =>
+                              prev.map((id, i) => (i === idx ? e.target.value : id)),
+                            )
+                          }
+                        >
+                          {customRotationSkillOptions.map((opt) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.label} · {opt.kind}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="lab-custom-rotation-row-actions">
+                          <button
+                            type="button"
+                            className="lab-btn lab-btn--ghost"
+                            onClick={() =>
+                              setCustomRotationSkillIds((prev) => {
+                                if (idx <= 0) return prev
+                                const next = [...prev]
+                                ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
+                                return next
+                              })
+                            }
+                            disabled={idx === 0}
+                          >
+                            Up
+                          </button>
+                          <button
+                            type="button"
+                            className="lab-btn lab-btn--ghost"
+                            onClick={() =>
+                              setCustomRotationSkillIds((prev) => {
+                                if (idx >= prev.length - 1) return prev
+                                const next = [...prev]
+                                ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+                                return next
+                              })
+                            }
+                            disabled={idx >= customRotationSkillIds.length - 1}
+                          >
+                            Down
+                          </button>
+                          <button
+                            type="button"
+                            className="lab-btn lab-btn--danger"
+                            onClick={() =>
+                              setCustomRotationSkillIds((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
               <div className="lab-special-modifiers">
                 <p className="lab-controls-bar-title">Special modifiers</p>
                 <div className="lab-special-modifier-list">
@@ -894,7 +1190,10 @@ export function DpsLabPage() {
               }
             >
               <section className="lab-result lab-result--sim-summary">
-                <h3>Optimal rotation simulation ({sim.durationSec}s)</h3>
+                <h3>
+                  {rotationMode === 'custom' ? 'Custom rotation simulation' : 'Optimal rotation simulation'} (
+                  {sim.durationSec}s)
+                </h3>
                 <div className="lab-table-wrap lab-kv-table-wrap lab-kv-summary-stack">
                   <table className="lab-kv-table">
                     <tbody>
@@ -1014,7 +1313,7 @@ export function DpsLabPage() {
                           auto_hit = (baseATK + flatATK) * (1 + ATK% / 100) * crit_mult
                         </code>
                         <code>
-                          crit_mult = 1 + p * (0.5 + buffCritDmg% / 100), p = clamp(baseCrit + buffCrit%, 0..1)
+                          crit_mult = 1 + p * (1.0 + buffCritDmg% / 100), p = clamp(baseCrit + buffCrit%, 0..1)
                         </code>
                       </div>
                     </div>
