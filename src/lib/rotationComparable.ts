@@ -16,6 +16,18 @@ function floorStat(value: unknown): number {
   return Math.max(0, Math.floor(n))
 }
 
+function comparableBaseAttack(
+  detail: Pick<WikiDigimonDetail, 'attack' | 'stats'>,
+  perfectAtClone: boolean,
+): number {
+  const inputAttack = floorStat(detail.attack ?? detail.stats?.attack ?? 0)
+  if (!perfectAtClone) return inputAttack
+  // Match Lab's effective AT behavior exactly for Perfect AT clone:
+  // clone bonus = round(inputAttack * 1.44), then add to base attack.
+  const cloneAttackBonus = Math.round(inputAttack * 1.44)
+  return inputAttack + cloneAttackBonus
+}
+
 /**
  * Canonical baseline config for Tier/Lab comparable DPS:
  * - wiki/base combat stats only (no gear/seals)
@@ -31,17 +43,18 @@ export function buildComparableRotationConfig(
     'forceAutoCrit' | 'perfectAtClone' | 'autoAttackAnimationCancel'
   >,
 ): ComparableRotationConfig {
+  const perfectAtClone = options?.perfectAtClone === true
   return {
     durationSec,
     targets: Math.max(1, Math.floor(targets)),
-    baseAttack: floorStat(detail.attack ?? detail.stats?.attack ?? 0),
+    baseAttack: comparableBaseAttack(detail, perfectAtClone),
     attackSpeed: floorStat(detail.stats?.atk_speed ?? 0),
     baseCritRateStat: floorStat(detail.stats?.crit_rate ?? 0),
     options: {
       role: detail.role,
       hybridStance: 'melee',
       forceAutoCrit: options?.forceAutoCrit === true,
-      perfectAtClone: options?.perfectAtClone === true,
+      perfectAtClone,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
     },
   }

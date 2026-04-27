@@ -401,8 +401,8 @@ export function DpsLabPage() {
     const gearAttackBonus = Math.max(0, gearAttack.totalAttack)
     const cloneAttackBonus = perfectAtClone ? Math.round(inputAttack * 1.44) : 0
     const effectiveAttack = inputAttack + gearAttackBonus + cloneAttackBonus
-    const hasEffectiveOverride =
-      sealAttackBonus > 0 || gearAttackBonus > 0 || cloneAttackBonus > 0
+    const hasEffectiveOverride = sealAttackBonus > 0 || gearAttackBonus > 0 || cloneAttackBonus > 0
+    // Lab-side Effective AT intentionally includes clone-added attack for preview + sim.
     const simAttack = hasEffectiveOverride ? effectiveAttack : inputAttack
     return {
       inputAttack,
