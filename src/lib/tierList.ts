@@ -47,11 +47,10 @@ export type HealerTierCategoryScores = {
 
 export type HealerTierCategoryKey = keyof HealerTierCategoryScores
 
-/** Rotation DPS sub-tabs (wiki role columns): sustained / burst / specialized. */
+/** Rotation DPS sub-tabs (wiki role columns): sustained / burst. */
 export type DpsRotationCategoryScores = {
   sustained: number
   burst: number
-  specialized: number
 }
 
 export type DpsRotationCategoryKey = keyof DpsRotationCategoryScores
@@ -75,7 +74,7 @@ export type SustainedDpsEntry = {
   role: string
   stage: string
   dps: number
-  /** Sustained / burst / specialized (`sustained` matches `dps`). */
+  /** Sustained / burst (`sustained` matches `dps`). */
   dpsCategoryScores?: DpsRotationCategoryScores
   /** Same DPS lenses with forced auto-crit scenario (skills still cannot crit). */
   dpsCategoryScoresAutoCrit?: DpsRotationCategoryScores
@@ -198,18 +197,12 @@ export const HEALER_TIER_MATRIX_COLUMN_LABELS: Record<HealerTierCategoryKey, str
   int: 'INT',
 }
 
-/** DPS header sub-tabs (first row): sustained, burst, AoE, specialized. Selecting `aoe` switches the matrix to AoE columns. */
-export const DPS_TIER_CATEGORY_ORDER: readonly DpsTierCategoryKey[] = [
-  'sustained',
-  'burst',
-  'aoe',
-  'specialized',
-]
+/** DPS header sub-tabs (first row): sustained, burst, AoE. Selecting `aoe` switches the matrix to AoE columns. */
+export const DPS_TIER_CATEGORY_ORDER: readonly DpsTierCategoryKey[] = ['sustained', 'burst', 'aoe']
 
 export const DPS_TIER_MATRIX_COLUMN_LABELS: Record<DpsTierCategoryKey, string> = {
   sustained: 'Sustained DPS',
   burst: 'Burst DPS (10s)',
-  specialized: 'Specialized',
   aoe: 'AoE',
 }
 
@@ -237,7 +230,6 @@ function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
     dpsCategoryScores: {
       sustained: typeof d.sustained === 'number' ? d.sustained : entry.dps,
       burst: typeof d.burst === 'number' ? d.burst : entry.dps,
-      specialized: typeof d.specialized === 'number' ? d.specialized : 0,
     },
     aoeCategoryScores:
       typeof d.aoe_farming === 'number'
@@ -269,17 +261,14 @@ export function tierEntryNeedsDpsSimRefresh(entry: SustainedDpsEntry): boolean {
 
 export function tierEntryNeedsAutoCritScores(entry: SustainedDpsEntry): boolean {
   const s = entry.dpsCategoryScoresAutoCrit
-  return !s || !Number.isFinite(s.sustained) || !Number.isFinite(s.burst) || !Number.isFinite(s.specialized)
+  return !s || !Number.isFinite(s.sustained) || !Number.isFinite(s.burst)
 }
 
 export function tierEntryNeedsPerfectAtCloneScores(entry: SustainedDpsEntry): boolean {
   const p = entry.dpsCategoryScoresPerfectAtClone
   const pa = entry.dpsCategoryScoresPerfectAtCloneAutoCrit
   const valid = (s?: DpsRotationCategoryScores) =>
-    !!s &&
-    Number.isFinite(s.sustained) &&
-    Number.isFinite(s.burst) &&
-    Number.isFinite(s.specialized)
+    !!s && Number.isFinite(s.sustained) && Number.isFinite(s.burst)
   return !valid(p) || !valid(pa)
 }
 
@@ -289,10 +278,7 @@ export function tierEntryNeedsAnimationCancelScores(entry: SustainedDpsEntry): b
   const ap = entry.dpsCategoryScoresPerfectAtCloneAnimationCancel
   const apa = entry.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit
   const valid = (s?: DpsRotationCategoryScores) =>
-    !!s &&
-    Number.isFinite(s.sustained) &&
-    Number.isFinite(s.burst) &&
-    Number.isFinite(s.specialized)
+    !!s && Number.isFinite(s.sustained) && Number.isFinite(s.burst)
   return !valid(a) || !valid(aa) || !valid(ap) || !valid(apa)
 }
 
@@ -300,7 +286,7 @@ export function tierEntryDpsCategoryScoresComplete(entry: SustainedDpsEntry): bo
   const d = entry.dpsCategoryScores
   const a = entry.aoeCategoryScores
   if (!d || !a) return false
-  for (const k of ['sustained', 'burst', 'specialized'] as const) {
+  for (const k of ['sustained', 'burst'] as const) {
     const v = d[k]
     if (typeof v !== 'number' || !Number.isFinite(v)) return false
   }

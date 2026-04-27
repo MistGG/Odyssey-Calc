@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
-import { BURST_DPS_WINDOW_SEC, computeDpsSpecializedScore } from '../lib/dpsTierScore'
+import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
   DEFAULT_ROTATION_SIM_DURATION_SEC,
   simulateRotation,
@@ -419,7 +419,6 @@ export function TierListPage() {
               forceAutoCrit: true,
             },
           )
-          const specializedScore = computeDpsSpecializedScore(detail)
           const aoeScores = computeDpsAoeCategoryScores(detail)
           const tank = computeTankTierScore(detail)
           const healer = computeHealerTierScore(detail)
@@ -432,42 +431,34 @@ export function TierListPage() {
             dpsCategoryScores: {
               sustained: sim.dps,
               burst: simBurst.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresAutoCrit: {
               sustained: simAutoCrit.dps,
               burst: simBurstAutoCrit.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresPerfectAtClone: {
               sustained: simPerfectAtClone.dps,
               burst: simBurstPerfectAtClone.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresPerfectAtCloneAutoCrit: {
               sustained: simPerfectAtCloneAutoCrit.dps,
               burst: simBurstPerfectAtCloneAutoCrit.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresAnimationCancel: {
               sustained: simAnimationCancel.dps,
               burst: simBurstAnimationCancel.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresAnimationCancelAutoCrit: {
               sustained: simAnimationCancelAutoCrit.dps,
               burst: simBurstAnimationCancelAutoCrit.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresPerfectAtCloneAnimationCancel: {
               sustained: simPerfectAtCloneAnimationCancel.dps,
               burst: simBurstPerfectAtCloneAnimationCancel.dps,
-              specialized: specializedScore,
             },
             dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit: {
               sustained: simPerfectAtCloneAnimationCancelAutoCrit.dps,
               burst: simBurstPerfectAtCloneAnimationCancelAutoCrit.dps,
-              specialized: specializedScore,
             },
             aoeCategoryScores: aoeScores,
             tankScore: tank.score,
@@ -1492,11 +1483,6 @@ export function TierListPage() {
                       Support-only AoE uses a smaller area+cadence term instead of damage. <strong>General</strong> is
                       the average of Damage, Cooldown, and Farming (equal weight).
                     </li>
-                    <li>
-                      <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
-                      buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0
-                      and/or party/allies/group-style wording in skill or buff text.
-                    </li>
                   </ul>
                 </div>
               </details>
@@ -1808,11 +1794,9 @@ export function TierListPage() {
                                                   ? (s?.sustained ?? e.dps)
                                                   : k === 'burst'
                                                     ? s?.burst
-                                                    : k === 'specialized'
-                                                      ? s?.specialized
-                                                      : undefined
+                                                    : undefined
                                               if (v == null) return '…'
-                                              return k === 'specialized' ? v.toFixed(2) : v.toFixed(1)
+                                              return v.toFixed(1)
                                             })()
                                         : tierMode === 'tank' && columnGroup?.tankSortKey
                                           ? (() => {

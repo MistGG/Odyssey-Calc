@@ -124,8 +124,11 @@ export function writeTierListMode(mode: TierListMode) {
 export function readDpsTierCategory(): DpsTierCategoryKey {
   try {
     const v = localStorage.getItem(TIER_DPS_CATEGORY_KEY)
-    if (v === 'sustained' || v === 'burst' || v === 'specialized' || v === 'aoe') {
+    if (v === 'sustained' || v === 'burst' || v === 'aoe') {
       return v
+    }
+    if (v === 'specialized') {
+      return 'sustained'
     }
     if (
       v === 'aoe_general' ||

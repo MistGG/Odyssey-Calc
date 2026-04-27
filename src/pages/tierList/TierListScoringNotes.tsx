@@ -43,11 +43,6 @@ export function TierListScoringNotes({
                   treated as equal inside the bucket). <strong>General</strong> is the average of Damage, Cooldown,
                   and Farming (equal weight).
                 </li>
-                <li>
-                  <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group
-                  buff&quot; signal is any support-only skill (no damage scaling) with wiki radius &gt; 0 and/or
-                  party/allies/group-style wording in skill or buff text.
-                </li>
               </ul>
             </div>
           </details>

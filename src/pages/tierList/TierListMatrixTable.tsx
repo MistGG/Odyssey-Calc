@@ -153,11 +153,9 @@ export function TierListMatrixTable({
                                               ? (s?.sustained ?? e.dps)
                                               : k === 'burst'
                                                 ? s?.burst
-                                                : k === 'specialized'
-                                                  ? s?.specialized
-                                                  : undefined
+                                                : undefined
                                           if (v == null) return '…'
-                                          return k === 'specialized' ? v.toFixed(2) : v.toFixed(1)
+                                          return v.toFixed(1)
                                         })()
                                       : tierMode === 'tank' && columnGroup?.tankSortKey
                                         ? (() => {
