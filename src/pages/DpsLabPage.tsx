@@ -454,10 +454,15 @@ export function DpsLabPage() {
   }, [data, digimonRoleWikiSkillsForRole])
 
   useEffect(() => {
+    // While `data` is still loading, options are empty — do not filter or we'd wipe URL-hydrated
+    // rotation before skill ids can be validated (breaks share links on cold load / live).
+    if (!data || customRotationSkillOptions.length === 0) return
+    // While fetching a new Digimon, `data` can still be the previous entry — skip until ids align.
+    if (data.id !== digimonId) return
     setCustomRotationSkillIds((prev) =>
       prev.filter((id) => customRotationSkillOptions.some((opt) => opt.id === id)),
     )
-  }, [customRotationSkillOptions])
+  }, [data, digimonId, customRotationSkillOptions])
 
   useEffect(() => {
     if (!customRotationDraftSkillId) return
