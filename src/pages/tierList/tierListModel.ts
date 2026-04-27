@@ -5,8 +5,7 @@ import type { DpsTierCategoryKey, SustainedDpsEntry, TierListMode } from '../../
 import type { WikiDigimonListItem } from '../../types/wikiApi'
 
 export const REQUEST_DELAY_MS = 700
-export const COOLDOWN_EVERY_N_REQUESTS = 50
-/** Proactive pause every N requests and backoff after HTTP 429 (tier list detail fetches). */
+/** Backoff after HTTP 429 (tier list detail fetches). No proactive batch pause. */
 export const RATE_LIMIT_COOLDOWN_MS = 10_000
 
 export const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'

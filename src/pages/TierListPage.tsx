@@ -48,7 +48,6 @@ import {
 import type { WikiDigimonListItem } from '../types/wikiApi'
 import {
   buildTierListUpdateSummary,
-  COOLDOWN_EVERY_N_REQUESTS,
   fetchAllDigimonIndex,
   formatTierStatus,
   labHrefForTierEntry,
@@ -508,24 +507,7 @@ export function TierListPage() {
           entries: { ...working.entries },
           listSignatures: { ...working.listSignatures },
         })
-        if (
-          processed > 0 &&
-          processed % COOLDOWN_EVERY_N_REQUESTS === 0 &&
-          working.queue.length > 0
-        ) {
-          const cdTotal =
-            initialBuildQueueTotal > 0 ? initialBuildQueueTotal : working.queue.length
-          const cdDone =
-            initialBuildQueueTotal > 0
-              ? Math.min(initialBuildQueueTotal, initialBuildQueueTotal - working.queue.length)
-              : 0
-          setStatus(
-            `Cooling down for ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s to avoid rate limits… (${cdDone}/${cdTotal || 1})`,
-          )
-          await sleep(RATE_LIMIT_COOLDOWN_MS)
-        } else {
-          await sleep(REQUEST_DELAY_MS)
-        }
+        await sleep(REQUEST_DELAY_MS)
       }
 
       if (working.queue.length === 0) {
