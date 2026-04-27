@@ -1468,9 +1468,6 @@ export function TierListPage() {
           </h3>
           {tierMode === 'dps' ? (
             <>
-              <p className="tier-wip-note" role="status">
-                DPS sims and specialized heuristics are a <strong>work in progress</strong>.
-              </p>
               <details className="tier-score-explainer">
                 <summary>DPS Scoring</summary>
                 <div className="tier-score-explainer-body">
@@ -1513,10 +1510,6 @@ export function TierListPage() {
           ) : null}
           {tierMode === 'tank' ? (
             <>
-              <p className="tier-wip-note" role="status">
-                Tank tier list is a <strong>very large work in progress</strong>; scores and ordering can
-                change substantially as formulas and parsing improve.
-              </p>
               <details className="tier-score-explainer">
                 <summary>Tank Scoring</summary>
                 <div className="tier-score-explainer-body">
@@ -1571,10 +1564,6 @@ export function TierListPage() {
           ) : null}
           {tierMode === 'healer' ? (
             <>
-              <p className="tier-wip-note" role="status">
-                Healer tier list is a <strong>very large work in progress</strong>; scores and ordering can
-                change substantially as formulas and parsing improve.
-              </p>
               <details className="tier-score-explainer">
                 <summary>Healer Scoring</summary>
                 <div className="tier-score-explainer-body">
