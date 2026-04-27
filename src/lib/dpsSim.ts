@@ -75,10 +75,10 @@ export type RotationResult = {
 export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
 
 /**
- * Bump when rotation DPS sim math changes. Tier list entries store this on refresh; a mismatch
- * re-queues rows on incremental update so cached `dps` matches the current `simulateRotation`.
+ * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
+ * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 9
+export const TIER_DPS_SIM_REVISION = 10
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).

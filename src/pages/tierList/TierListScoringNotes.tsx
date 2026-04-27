@@ -39,12 +39,12 @@ export function TierListScoringNotes({
                   (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same
                   as the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
                   per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                  <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> assumes packs respawn about every
-                  8s: each AoE line contributes damage (plus a small cast-density bonus) times a{' '}
-                  <strong>respawn fit</strong> weight <code>exp(-max(0, period - 8) / 8)</code> for{' '}
-                  <code>period = cast + cooldown</code>, times a light <code>log1p(radius)</code> coverage factor.
-                  Support-only AoE uses a smaller area+cadence term instead of damage. <strong>General</strong> is the
-                  average of Damage, Cooldown, and Farming (equal weight).
+                  <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> uses cooldown buckets by{' '}
+                  <code>period = cast + cooldown</code>: first any kit with AoE damage skill in <code>&lt;=8s</code>,
+                  then <code>&lt;=10s</code>, then <code>&lt;=12s</code>, then fallback to a legacy respawn-fit blend.
+                  Inside each of those fast buckets, ordering is <strong>80% damage + 20% radius</strong> (cooldown
+                  treated as equal inside the bucket). <strong>General</strong> is the average of Damage, Cooldown,
+                  and Farming (equal weight).
                 </li>
                 <li>
                   <strong>Specialized:</strong> <code>log1p(DEX/120 + 6×groupBuffSignals)</code>. A &quot;group

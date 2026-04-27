@@ -8,15 +8,18 @@ export function skillIsWikiAoe(s: WikiSkill): boolean {
 }
 
 /**
- * Open-world style pack respawn cadence (seconds). Farming score favors AoE skills whose
- * cast+cooldown cycle aligns with clearing again when packs return.
+ * Open-world style pack respawn cadence (seconds).
  */
 export const FARM_MONSTER_RESPAWN_SEC = 8
 
-/** Farming blend: cooldown priority first, then damage, then area. */
-const FARM_WEIGHT_COOLDOWN = 0.75
-const FARM_WEIGHT_DAMAGE = 0.2
-const FARM_WEIGHT_RADIUS = 0.05
+/** Farming intra-bucket blend (requested): damage first, then area. */
+const FARM_BUCKET_WEIGHT_DAMAGE = 0.8
+const FARM_BUCKET_WEIGHT_RADIUS = 0.2
+
+/** Large separators so <=8s pool always outranks <=10s, then <=12s, then legacy fallback. */
+const FARM_BUCKET_BASE_8 = 3000
+const FARM_BUCKET_BASE_10 = 2000
+const FARM_BUCKET_BASE_12 = 1000
 
 /**
  * Respawn-fit for farming cooldown priority:
@@ -36,15 +39,29 @@ function farmRespawnPriority(periodSec: number): number {
   return 0.8 * Math.exp(-(periodSec - 10) / 4)
 }
 
+function farmBucketByPeriod(periodSec: number): 0 | 1 | 2 | 3 {
+  if (periodSec <= 8) return 0
+  if (periodSec <= 10) return 1
+  if (periodSec <= 12) return 2
+  return 3
+}
+
+function farmBucketSkillScore(dmg: number, radius: number): number {
+  return (
+    FARM_BUCKET_WEIGHT_DAMAGE * Math.log1p(Math.max(0, dmg)) +
+    FARM_BUCKET_WEIGHT_RADIUS * Math.log1p(Math.max(0, radius))
+  )
+}
+
 /**
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: `log1p` of summed per-cast damage at tier-list skill level (support-only AoE = 0 damage).
  * - **Cooldown**: `log1p` of summed `1 / (cast + cooldown)` — faster skills contribute more.
- * - **Farming**: weighted blend emphasizing low cooldowns that fit respawns.
- *   - 75% cooldown priority: `invCd × respawnPriority(period)` (target 8s, still okay up to ~10s, then decays fast)
- *   - 20% damage at tier-list skill level
- *   - 5% radius
+ * - **Farming**:
+ *   - Priority pools by `period = cast + cooldown`: `<=8s` first, then `<=10s`, then `<=12s`.
+ *   - Inside each of those pools: 80% damage + 20% radius.
+ *   - If no AoE damage skill is in `<=12s`, fallback to the legacy respawn-fit blend.
  * - **General**: arithmetic mean of damage, cooldown, and farming (equal weight).
  */
 export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
@@ -58,6 +75,9 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   let farmCooldownRaw = 0
   let farmDamageRaw = 0
   let farmRadiusRaw = 0
+  let farm8Best = -Infinity
+  let farm10Best = -Infinity
+  let farm12Best = -Infinity
 
   for (const s of detail.skills ?? []) {
     if (!skillIsWikiAoe(s)) continue
@@ -75,6 +95,12 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
       const dmg = skillDamageAtLevel(s.base_dmg, s.scaling, lv, s.max_level)
       dmgSum += dmg
       farmDamageRaw += dmg * fit
+
+      const periodBucket = farmBucketByPeriod(period)
+      const bucketScore = farmBucketSkillScore(dmg, radius)
+      if (periodBucket === 0) farm8Best = Math.max(farm8Best, bucketScore)
+      else if (periodBucket === 1) farm10Best = Math.max(farm10Best, bucketScore)
+      else if (periodBucket === 2) farm12Best = Math.max(farm12Best, bucketScore)
     }
   }
 
@@ -83,10 +109,14 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   const farmCooldown = Math.log1p(Math.max(0, farmCooldownRaw * 100))
   const farmDamage = Math.log1p(Math.max(0, farmDamageRaw))
   const farmRadius = Math.log1p(Math.max(0, farmRadiusRaw))
-  const farming =
-    FARM_WEIGHT_COOLDOWN * farmCooldown +
-    FARM_WEIGHT_DAMAGE * farmDamage +
-    FARM_WEIGHT_RADIUS * farmRadius
+  const farmingLegacy = 0.75 * farmCooldown + 0.2 * farmDamage + 0.05 * farmRadius
+  const farming = Number.isFinite(farm8Best)
+    ? FARM_BUCKET_BASE_8 + farm8Best
+    : Number.isFinite(farm10Best)
+      ? FARM_BUCKET_BASE_10 + farm10Best
+      : Number.isFinite(farm12Best)
+        ? FARM_BUCKET_BASE_12 + farm12Best
+        : farmingLegacy
   const general = (damage + cooldown + farming) / 3
 
   return { general, damage, cooldown, farming }
