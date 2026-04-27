@@ -916,17 +916,12 @@ export function TierListPage() {
       </div>
       <div className="tier-wip-note tier-wip-note-wide" role="note">
         <p>
-          <strong>Disclaimer:</strong> The damage formula is a heavy work in progress. Certain things are
-          still not calculated properly. An investigation is ongoing, and a formula will be published along
-          with additional lab options to assist with calculating DPS better depending on circumstance.
+          <strong>Disclaimer:</strong> The tier list is now in a stable state as DPS formulas should be more accurate and automatic
+          rotations have been further optimized with feedback.
         </p>
         <p>
-          Additionally, special modifiers such as ASB and server latency are not taken into consideration.
-        </p>
-        <p>
-          We have also noticed issues with certain buffs not applying correctly. Notably role skills like
-          Berserker and buffs that enhance Skill Damage. The Tier list assumes everything is working as
-          stated, but due to these issues, the performance of many Digimon will be different in-game.
+          ASB, Attributes, Variance damage and latency are not considered at this time. If you feel something
+          is out of place, please contact Mist on the Digital Odyssey Discord.
         </p>
       </div>
 
