@@ -771,8 +771,9 @@ export function DpsLabPage() {
     if (useAutoAnimCancel) next.set('animCancel', '1')
     if (forceAutoCrit) next.set('forceAutoCrit', '1')
     if (perfectAtClone) next.set('perfectAtClone', '1')
-    const base = window.location.href.split('#')[0]
-    return `${base}#/lab?${next.toString()}`
+    /** Canonical GitHub Pages URL so shared links work outside localhost. */
+    const shareBase = 'https://mistgg.github.io/Odyssey-Calc'
+    return `${shareBase}#/lab?${next.toString()}`
   }, [
     digimonId,
     globalLevel,
@@ -814,27 +815,6 @@ export function DpsLabPage() {
         </div>
       </div>
       {shareStatus ? <p className="muted lab-share-status">{shareStatus}</p> : null}
-      <p className="muted">
-        This lab simulates a timed rotation using your Digimon&apos;s wiki skills plus
-        wiki role skills (not tamer skills), with in-game cast times and cooldowns.
-        Support skills are cast when ready if their buff is not already active.
-        Damage skills use current buffs. Between casts, the sim fills with auto
-        attacks. If attack-speed buffs make autos stronger per second than a ready
-        damage skill, it weaves an auto instead. Damage skills never crit. Only
-        auto attacks use wiki crit rate, base +50% crit damage, and buff crit stats.
-      </p>
-      <p className="muted">
-        When a damage skill is available, the sim previews a short window and compares three
-        options: cast the best DPCT skill now, cast another damage skill as filler, or wait and use
-        only autos/supports to align with buffs. It picks the option with the highest preview damage,
-        then still applies the auto-vs-skill check above. The preview is capped (about 12 seconds or
-        35% of time left), so this favors strong short-term decisioning, not a perfect full-fight
-        solver.
-      </p>
-      <p className="muted">
-        Rotation mode can be switched to Custom Rotation to run a user-defined fixed sequence. In
-        custom mode, support skills are manual-only (they cast only when included in the sequence).
-      </p>
 
       {!digimonId && (
         <p className="error">
