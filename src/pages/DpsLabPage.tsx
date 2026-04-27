@@ -9,7 +9,7 @@ import {
   DEFAULT_ROTATION_SIM_DURATION_SEC,
   simulateRotation,
 } from '../lib/dpsSim'
-import { getGearAttackContribution } from '../lib/gearStats'
+import { getGearAttackContribution, getGearStatBonuses } from '../lib/gearStats'
 import {
   DIGIMON_ROLE_SKILL_CAST_SEC,
   digimonRoleWikiSkills,
@@ -297,6 +297,8 @@ export function DpsLabPage() {
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
+  const gearAttack = useMemo(() => getGearAttackContribution(), [])
+  const sealBonuses = useMemo(() => getGearStatBonuses(), [])
 
   useEffect(() => {
     if (durationFromUrl != null) setDurationSec(durationFromUrl)
@@ -340,19 +342,19 @@ export function DpsLabPage() {
       return
     }
     setCombatStats({
-      hp: Math.max(0, Math.floor(data.stats.hp ?? 0)),
-      ds: Math.max(0, Math.floor(data.stats.ds ?? 0)),
-      attack: Math.max(0, Math.floor(data.attack ?? data.stats.attack ?? 0)),
-      defense: Math.max(0, Math.floor(data.stats.defense ?? 0)),
-      crit_rate: Math.max(0, Math.floor(data.stats.crit_rate ?? 0)),
-      atk_speed: Math.max(0, Math.floor(data.stats.atk_speed ?? 0)),
-      evasion: Math.max(0, Math.floor(data.stats.evasion ?? 0)),
-      hit_rate: Math.max(0, Math.floor(data.stats.hit_rate ?? 0)),
-      block_rate: Math.max(0, Math.floor(data.stats.block_rate ?? 0)),
+      hp: Math.max(0, Math.floor(data.stats.hp ?? 0)) + sealBonuses.hp,
+      ds: Math.max(0, Math.floor(data.stats.ds ?? 0)) + sealBonuses.ds,
+      attack: Math.max(0, Math.floor(data.attack ?? data.stats.attack ?? 0)) + sealBonuses.attack,
+      defense: Math.max(0, Math.floor(data.stats.defense ?? 0)) + sealBonuses.defense,
+      crit_rate: Math.max(0, Math.floor(data.stats.crit_rate ?? 0)) + sealBonuses.critRate,
+      atk_speed: Math.max(0, Math.floor(data.stats.atk_speed ?? 0)) + sealBonuses.atkSpeed,
+      evasion: Math.max(0, Math.floor(data.stats.evasion ?? 0)) + sealBonuses.evasion,
+      hit_rate: Math.max(0, Math.floor(data.stats.hit_rate ?? 0)) + sealBonuses.hitRate,
+      block_rate: Math.max(0, Math.floor(data.stats.block_rate ?? 0)) + sealBonuses.blockRate,
       dex: Math.max(0, Math.floor(data.stats.dex ?? 0)),
       int: Math.max(0, Math.floor(data.stats.int ?? 0)),
     })
-  }, [data])
+  }, [data, sealBonuses])
 
   useEffect(() => {
     if (!digimonId) {
@@ -393,7 +395,6 @@ export function DpsLabPage() {
 
   const roleNorm = useMemo(() => normalizeWikiRole(data?.role), [data?.role])
   const isHybridRole = roleNorm === 'hybrid'
-  const gearAttack = useMemo(() => getGearAttackContribution(), [])
   const simBaseAttack = useMemo(
     () => (combatStats ? combatStats.attack + gearAttack.totalAttack : 0),
     [combatStats, gearAttack.totalAttack],
@@ -680,6 +681,38 @@ export function DpsLabPage() {
         : [],
     [combatStats],
   )
+  const sealBonusByCombatKey = useMemo<Record<keyof CombatStatsState, number>>(
+    () => ({
+      hp: sealBonuses.hp,
+      ds: sealBonuses.ds,
+      attack: sealBonuses.attack,
+      defense: sealBonuses.defense,
+      crit_rate: sealBonuses.critRate,
+      atk_speed: sealBonuses.atkSpeed,
+      evasion: sealBonuses.evasion,
+      hit_rate: sealBonuses.hitRate,
+      block_rate: sealBonuses.blockRate,
+      dex: 0,
+      int: 0,
+    }),
+    [sealBonuses],
+  )
+  const gearBonusByCombatKey = useMemo<Record<keyof CombatStatsState, number>>(
+    () => ({
+      hp: 0,
+      ds: 0,
+      attack: gearAttack.totalAttack,
+      defense: 0,
+      crit_rate: 0,
+      atk_speed: 0,
+      evasion: 0,
+      hit_rate: 0,
+      block_rate: 0,
+      dex: 0,
+      int: 0,
+    }),
+    [gearAttack.totalAttack],
+  )
   const perfectCloneAttackPreview = useMemo(() => {
     const baseAttack = Math.max(0, combatStats?.attack ?? 0)
     const bonusAttack = Math.round(baseAttack * 1.44)
@@ -838,19 +871,25 @@ export function DpsLabPage() {
                   {combatStatRows.map((row) => (
                     <div
                       key={row.key}
-                      className={
-                        row.key === 'attack' && perfectAtClone
-                          ? 'stat-cell stat-cell--perfect-clone'
-                          : 'stat-cell'
-                      }
+                      className={[
+                        'stat-cell',
+                        row.key === 'attack' && perfectAtClone ? 'stat-cell--perfect-clone' : '',
+                        sealBonusByCombatKey[row.key] > 0 ? 'stat-cell--seal' : '',
+                        gearBonusByCombatKey[row.key] > 0 ? 'stat-cell--gear' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
                       <span className="stat-label">{row.label}</span>
                       <input
-                        className={
-                          row.key === 'attack' && perfectAtClone
-                            ? 'lab-stat-input lab-stat-input--perfect-clone'
-                            : 'lab-stat-input'
-                        }
+                        className={[
+                          'lab-stat-input',
+                          row.key === 'attack' && perfectAtClone ? 'lab-stat-input--perfect-clone' : '',
+                          sealBonusByCombatKey[row.key] > 0 ? 'lab-stat-input--seal' : '',
+                          gearBonusByCombatKey[row.key] > 0 ? 'lab-stat-input--gear' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
                         type="number"
                         min={0}
                         value={row.value}
@@ -858,10 +897,29 @@ export function DpsLabPage() {
                       />
                       {row.key === 'attack' && perfectAtClone ? (
                         <div className="lab-perfect-clone-popover" role="note" aria-live="polite">
-                          <div className="lab-perfect-clone-popover-row">
-                            <span>Base AT</span>
-                            <strong>{perfectCloneAttackPreview.baseAttack.toLocaleString()}</strong>
-                          </div>
+                          {sealBonusByCombatKey[row.key] > 0 ? (
+                            <div className="lab-perfect-clone-popover-row">
+                              <span className="lab-seal-badge-label">
+                                <span className="lab-seal-badge-icon" aria-hidden="true" />
+                                <span>Seals</span>
+                              </span>
+                              <strong>+{sealBonusByCombatKey[row.key].toLocaleString()}</strong>
+                            </div>
+                          ) : null}
+                          {gearBonusByCombatKey[row.key] > 0 ? (
+                            <div className="lab-perfect-clone-popover-row">
+                              <span className="lab-gear-badge-label">
+                                <span className="lab-gear-badge-icon" aria-hidden="true" />
+                                <span>Gear</span>
+                              </span>
+                              <strong>
+                                +
+                                {gearBonusByCombatKey[row.key].toLocaleString(undefined, {
+                                  maximumFractionDigits: 1,
+                                })}
+                              </strong>
+                            </div>
+                          ) : null}
                           <div className="lab-perfect-clone-popover-row">
                             <span className="lab-perfect-clone-badge-label">
                               <span className="lab-perfect-clone-badge">15</span>
@@ -873,6 +931,32 @@ export function DpsLabPage() {
                             <span>Effective AT</span>
                             <strong>{perfectCloneAttackPreview.effectiveAttack.toLocaleString()}</strong>
                           </div>
+                        </div>
+                      ) : sealBonusByCombatKey[row.key] > 0 || gearBonusByCombatKey[row.key] > 0 ? (
+                        <div className="lab-seal-popover" role="note">
+                          {sealBonusByCombatKey[row.key] > 0 ? (
+                            <div className="lab-perfect-clone-popover-row">
+                              <span className="lab-seal-badge-label">
+                                <span className="lab-seal-badge-icon" aria-hidden="true" />
+                                <span>Seals</span>
+                              </span>
+                              <strong>+{sealBonusByCombatKey[row.key].toLocaleString()}</strong>
+                            </div>
+                          ) : null}
+                          {gearBonusByCombatKey[row.key] > 0 ? (
+                            <div className="lab-perfect-clone-popover-row">
+                              <span className="lab-gear-badge-label">
+                                <span className="lab-gear-badge-icon" aria-hidden="true" />
+                                <span>Gear</span>
+                              </span>
+                              <strong>
+                                +
+                                {gearBonusByCombatKey[row.key].toLocaleString(undefined, {
+                                  maximumFractionDigits: 1,
+                                })}
+                              </strong>
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                     </div>

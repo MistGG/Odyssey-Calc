@@ -1,19 +1,14 @@
 import { useMemo, useState } from 'react'
-
-type LeftPiece = 'head-goggles' | 'fashion' | 'top' | 'bottom' | 'gloves' | 'shoes'
-type LeftStat = 'maxDs' | 'maxHp' | 'defense' | 'attack' | 'moveSpeed'
-type RingStat = 'attack' | 'basicAttribute' | 'critical' | 'defense' | 'maxDs' | 'maxHp' | 'skill'
-
-type LeftPieceStats = Record<LeftStat, number>
-type LeftGearState = Record<LeftPiece, LeftPieceStats>
-
-type RingLine = { stat: RingStat | ''; value: number }
-type GearState = {
-  left: LeftGearState
-  ring: RingLine[]
-}
-
-const GEAR_STORAGE_KEY = 'gear-v1'
+import {
+  GEAR_STORAGE_KEY,
+  SEAL_STATS,
+  readGearState,
+  type GearState,
+  type LeftPiece,
+  type LeftStat,
+  type RingStat,
+  type SealStat,
+} from '../lib/gearStats'
 
 const LEFT_PIECES: Array<{ id: LeftPiece; label: string }> = [
   { id: 'head-goggles', label: 'Head - Goggles' },
@@ -42,65 +37,14 @@ const RING_STAT_META: Array<{ id: RingStat; label: string; cap: number }> = [
   { id: 'skill', label: 'Skill', cap: 2 },
 ]
 
-function emptyLeftPieceStats(): LeftPieceStats {
-  return { maxDs: 0, maxHp: 0, defense: 0, attack: 0, moveSpeed: 0 }
-}
-
-function initialGearState(): GearState {
-  return {
-    left: {
-      'head-goggles': emptyLeftPieceStats(),
-      fashion: emptyLeftPieceStats(),
-      top: emptyLeftPieceStats(),
-      bottom: emptyLeftPieceStats(),
-      gloves: emptyLeftPieceStats(),
-      shoes: emptyLeftPieceStats(),
-    },
-    ring: Array.from({ length: 4 }, () => ({ stat: '', value: 0 })),
-  }
-}
-
 function toInt(raw: string): number {
   const n = Number(raw)
   if (!Number.isFinite(n)) return 0
   return Math.max(0, Math.floor(n))
 }
 
-function loadGearState(): GearState {
-  try {
-    const raw = localStorage.getItem(GEAR_STORAGE_KEY)
-    if (!raw) return initialGearState()
-    const parsed = JSON.parse(raw) as Partial<GearState>
-    const base = initialGearState()
-    if (parsed.left) {
-      for (const p of LEFT_PIECES) {
-        const piece = parsed.left[p.id]
-        if (!piece) continue
-        for (const s of LEFT_STATS) {
-          const next = Number(piece[s.id])
-          if (Number.isFinite(next) && next >= 0) base.left[p.id][s.id] = Math.floor(next)
-        }
-      }
-    }
-    if (Array.isArray(parsed.ring)) {
-      base.ring = Array.from({ length: 4 }, (_, i) => {
-        const line = parsed.ring?.[i]
-        const stat = line?.stat
-        const valid = stat && RING_STAT_META.some((m) => m.id === stat)
-        return {
-          stat: valid ? stat : '',
-          value: Number.isFinite(Number(line?.value)) ? Math.max(0, Math.floor(Number(line?.value))) : 0,
-        }
-      })
-    }
-    return base
-  } catch {
-    return initialGearState()
-  }
-}
-
 export function GearPage() {
-  const [gear, setGear] = useState<GearState>(() => loadGearState())
+  const [gear, setGear] = useState<GearState>(() => readGearState())
 
   const ringCountByStat = useMemo(() => {
     const counts: Partial<Record<RingStat, number>> = {}
@@ -136,6 +80,17 @@ export function GearPage() {
     const value = toInt(raw)
     const ring = gear.ring.map((line, i) => (i === idx ? { ...line, value } : line))
     persist({ ...gear, ring })
+  }
+
+  const updateSeal = (stat: SealStat, raw: string) => {
+    const value = toInt(raw)
+    persist({
+      ...gear,
+      seals: {
+        ...gear.seals,
+        [stat]: value,
+      },
+    })
   }
 
   return (
@@ -222,6 +177,31 @@ export function GearPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="lab-result gear-section">
+        <h3>Seals</h3>
+        <p className="muted">Manual stat inputs that are added to Lab combat stat totals.</p>
+        <div className="gear-seals-grid">
+          {SEAL_STATS.map((stat) => {
+            const isPercent = stat === 'ct' || stat === 'bl' || stat === 'ev'
+            return (
+              <label key={stat} className="gear-seal-cell">
+                <span className="gear-seal-label">
+                  {stat.toUpperCase()}
+                  {isPercent ? ' (%)' : ''}
+                </span>
+                <input
+                  className="gear-input"
+                  type="number"
+                  min={0}
+                  value={gear.seals[stat]}
+                  onChange={(e) => updateSeal(stat, e.target.value)}
+                />
+              </label>
+            )
+          })}
         </div>
       </section>
     </div>
