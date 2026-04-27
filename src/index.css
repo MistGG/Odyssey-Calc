@@ -2632,6 +2632,92 @@ code {
   box-shadow: 0 0 0 3px var(--cyan-dim);
 }
 
+.stat-cell--perfect-clone .stat-label {
+  color: #facc15;
+  font-weight: 600;
+}
+
+.stat-cell--perfect-clone {
+  position: relative;
+  overflow: visible;
+}
+
+.lab-stat-input--perfect-clone {
+  border-color: rgba(250, 204, 21, 0.75);
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.18);
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.1), rgba(15, 23, 42, 0.4));
+}
+
+.lab-stat-input--perfect-clone:focus {
+  border-color: rgba(250, 204, 21, 0.95);
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.26);
+}
+
+.lab-perfect-clone-popover {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 15;
+  min-width: 210px;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: linear-gradient(180deg, rgba(56, 42, 8, 0.95), rgba(15, 23, 42, 0.96));
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.5);
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.stat-cell--perfect-clone:hover .lab-perfect-clone-popover,
+.stat-cell--perfect-clone:focus-within .lab-perfect-clone-popover {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lab-perfect-clone-popover-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin: 0.1rem 0;
+  font-size: 0.82rem;
+  color: #e2e8f0;
+}
+
+.lab-perfect-clone-badge-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.lab-perfect-clone-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.2rem;
+  border-radius: 4px;
+  border: 1px solid rgba(250, 204, 21, 0.9);
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.95), rgba(202, 138, 4, 0.95));
+  color: #111827;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lab-perfect-clone-popover-row strong {
+  color: #facc15;
+  font-weight: 700;
+}
+
+.lab-perfect-clone-popover-row--total {
+  margin-top: 0.32rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid rgba(250, 204, 21, 0.35);
+}
+
 .lab-page .lab-result {
   margin-bottom: 1.5rem;
 }

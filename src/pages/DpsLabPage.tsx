@@ -621,9 +621,7 @@ export function DpsLabPage() {
           const level = levelOf(s.id)
           const rawBase = skillDamageAtLevel(s.base_dmg, s.scaling, level, s.max_level)
           const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
-          const skillOneHit = perfectAtClone
-            ? (rawBase * 1.43 + Math.max(0, simBaseAttack)) * targetHits
-            : rawBase * targetHits
+          const skillOneHit = perfectAtClone ? rawBase * 1.43 * targetHits : rawBase * targetHits
           const cast = Math.max(0.1, s.cast_time_sec || 0)
           const cd = Math.max(0, s.cooldown_sec || 0)
           const period = cast + cd
@@ -682,6 +680,12 @@ export function DpsLabPage() {
         : [],
     [combatStats],
   )
+  const perfectCloneAttackPreview = useMemo(() => {
+    const baseAttack = Math.max(0, combatStats?.attack ?? 0)
+    const bonusAttack = Math.round(baseAttack * 1.44)
+    const effectiveAttack = baseAttack + bonusAttack
+    return { baseAttack, bonusAttack, effectiveAttack }
+  }, [combatStats?.attack])
 
   const updateCombatStat = (key: keyof CombatStatsState, raw: string) => {
     const n = Number(raw)
@@ -832,15 +836,45 @@ export function DpsLabPage() {
                   aria-labelledby="lab-combat-stats-heading"
                 >
                   {combatStatRows.map((row) => (
-                    <div key={row.key} className="stat-cell">
+                    <div
+                      key={row.key}
+                      className={
+                        row.key === 'attack' && perfectAtClone
+                          ? 'stat-cell stat-cell--perfect-clone'
+                          : 'stat-cell'
+                      }
+                    >
                       <span className="stat-label">{row.label}</span>
                       <input
-                        className="lab-stat-input"
+                        className={
+                          row.key === 'attack' && perfectAtClone
+                            ? 'lab-stat-input lab-stat-input--perfect-clone'
+                            : 'lab-stat-input'
+                        }
                         type="number"
                         min={0}
                         value={row.value}
                         onChange={(e) => updateCombatStat(row.key, e.target.value)}
                       />
+                      {row.key === 'attack' && perfectAtClone ? (
+                        <div className="lab-perfect-clone-popover" role="note" aria-live="polite">
+                          <div className="lab-perfect-clone-popover-row">
+                            <span>Base AT</span>
+                            <strong>{perfectCloneAttackPreview.baseAttack.toLocaleString()}</strong>
+                          </div>
+                          <div className="lab-perfect-clone-popover-row">
+                            <span className="lab-perfect-clone-badge-label">
+                              <span className="lab-perfect-clone-badge">15</span>
+                              <span>Clone AT</span>
+                            </span>
+                            <strong>+{perfectCloneAttackPreview.bonusAttack.toLocaleString()}</strong>
+                          </div>
+                          <div className="lab-perfect-clone-popover-row lab-perfect-clone-popover-row--total">
+                            <span>Effective AT</span>
+                            <strong>{perfectCloneAttackPreview.effectiveAttack.toLocaleString()}</strong>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>

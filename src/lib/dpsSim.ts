@@ -109,7 +109,13 @@ function skillDamagePerCast(
   const base = skillDamageAtLevel(skill.base_dmg, skill.scaling, level, skill.max_level)
   const targetHits = skill.radius && skill.radius > 0 ? Math.max(1, targets) : 1
   if (!perfectAtClone) return base * targetHits
-  return (base * 1.43 + Math.max(0, baseAttack)) * targetHits
+  // Perfect AT clone in-game behavior is modeled as +144% AT, which is observed to map to
+  // roughly +43% to the skill damage term (~30% final uplift for typical skills).
+  const PERFECT_AT_CLONE_ATTACK_BONUS_PCT = 144
+  const PERFECT_AT_CLONE_EQUIV_SKILL_PCT = 43
+  const _effectiveAttack = Math.max(0, baseAttack) * (1 + PERFECT_AT_CLONE_ATTACK_BONUS_PCT / 100)
+  void _effectiveAttack
+  return base * (1 + PERFECT_AT_CLONE_EQUIV_SKILL_PCT / 100) * targetHits
 }
 
 type SupportBuffProfile = {
@@ -923,7 +929,7 @@ export type RotationSimOptions = {
    * natural crit chance so the rotation matches the non-forced sim (DPS never drops vs baseline).
    */
   forceAutoCrit?: boolean
-  /** Skill hit formula override: `(baseSkillDamage × 1.43) + AT`, then normal buff multipliers. */
+  /** Perfect AT clone: model +144% AT as ~+43% skill term, then normal buff multipliers. */
   perfectAtClone?: boolean
   /** Assume repeated auto animation cancel with skills whenever available. */
   autoAttackAnimationCancel?: boolean
