@@ -996,7 +996,7 @@ export function TierListPage() {
                   onChange={(e) => setDpsForceAutoCritPersist(e.target.checked)}
                   disabled={dpsTierCategory === 'aoe'}
                 />
-                Guaranteed Crit on Auto Attacks (Temporary until more clone research is completed)
+                Guaranteed Crit
               </label>
               <label
                 className={`tier-auto-crit-toggle tier-special-modifier-toggle${

@@ -1201,7 +1201,7 @@ export function DpsLabPage() {
                       checked={forceAutoCrit}
                       onChange={(e) => setForceAutoCrit(e.target.checked)}
                     />
-                    <span>Guaranteed Crit on Auto Attacks (Temporary until more clone research is completed)</span>
+                    <span>Guaranteed Crit</span>
                   </label>
                   <label className="lab-special-modifier-toggle">
                     <input

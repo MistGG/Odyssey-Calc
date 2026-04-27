@@ -50,6 +50,8 @@ export type WikiSkill = {
   ds_cost: number
   /** Present for area skills (wiki AOE). */
   radius?: number
+  /** Present on some wiki skill payloads when a damage skill can crit. */
+  can_crit?: boolean | 0 | 1 | '0' | '1' | 'true' | 'false'
   /** Present for support skills. */
   buff?: {
     id: string
