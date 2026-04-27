@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { EditableNumberInput } from '../components/EditableNumberInput'
 import {
   GEAR_STORAGE_KEY,
   SEAL_STATS,
@@ -37,12 +38,6 @@ const RING_STAT_META: Array<{ id: RingStat; label: string; cap: number }> = [
   { id: 'skill', label: 'Skill', cap: 2 },
 ]
 
-function toInt(raw: string): number {
-  const n = Number(raw)
-  if (!Number.isFinite(n)) return 0
-  return Math.max(0, Math.floor(n))
-}
-
 export function GearPage() {
   const [gear, setGear] = useState<GearState>(() => readGearState())
 
@@ -60,8 +55,7 @@ export function GearPage() {
     localStorage.setItem(GEAR_STORAGE_KEY, JSON.stringify(next))
   }
 
-  const updateLeft = (piece: LeftPiece, stat: LeftStat, raw: string) => {
-    const value = toInt(raw)
+  const updateLeft = (piece: LeftPiece, stat: LeftStat, value: number) => {
     persist({
       ...gear,
       left: {
@@ -76,14 +70,12 @@ export function GearPage() {
     persist({ ...gear, ring })
   }
 
-  const updateRingValue = (idx: number, raw: string) => {
-    const value = toInt(raw)
+  const updateRingValue = (idx: number, value: number) => {
     const ring = gear.ring.map((line, i) => (i === idx ? { ...line, value } : line))
     persist({ ...gear, ring })
   }
 
-  const updateSeal = (stat: SealStat, raw: string) => {
-    const value = toInt(raw)
+  const updateSeal = (stat: SealStat, value: number) => {
     persist({
       ...gear,
       seals: {
@@ -119,12 +111,13 @@ export function GearPage() {
                   <td>{piece.label}</td>
                   {LEFT_STATS.map((s) => (
                     <td key={s.id}>
-                      <input
+                      <EditableNumberInput
                         className="gear-input"
-                        type="number"
                         min={0}
+                        integer
+                        emptyValue={0}
                         value={gear.left[piece.id][s.id]}
-                        onChange={(e) => updateLeft(piece.id, s.id, e.target.value)}
+                        onCommit={(next) => updateLeft(piece.id, s.id, next)}
                       />
                     </td>
                   ))}
@@ -165,12 +158,13 @@ export function GearPage() {
                 </label>
                 <label>
                   Value
-                  <input
+                  <EditableNumberInput
                     className="gear-input"
-                    type="number"
                     min={0}
+                    integer
+                    emptyValue={0}
                     value={line.value}
-                    onChange={(e) => updateRingValue(idx, e.target.value)}
+                    onCommit={(next) => updateRingValue(idx, next)}
                     disabled={!line.stat}
                   />
                 </label>
@@ -192,12 +186,13 @@ export function GearPage() {
                   {stat.toUpperCase()}
                   {isPercent ? ' (%)' : ''}
                 </span>
-                <input
+                <EditableNumberInput
                   className="gear-input"
-                  type="number"
                   min={0}
+                  integer
+                  emptyValue={0}
                   value={gear.seals[stat]}
-                  onChange={(e) => updateSeal(stat, e.target.value)}
+                  onCommit={(next) => updateSeal(stat, next)}
                 />
               </label>
             )

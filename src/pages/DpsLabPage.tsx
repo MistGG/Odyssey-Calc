@@ -7,8 +7,12 @@ import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import {
   AUTO_ANIM_CANCEL_OVERLAP_SEC,
   DEFAULT_ROTATION_SIM_DURATION_SEC,
+  MAX_ROTATION_SIM_DURATION_SEC,
+  MIN_ROTATION_SIM_DURATION_SEC,
+  clampRotationDurationSec,
   simulateRotation,
 } from '../lib/dpsSim'
+import { EditableNumberInput } from '../components/EditableNumberInput'
 import { getGearAttackContribution, getGearStatBonuses } from '../lib/gearStats'
 import {
   DIGIMON_ROLE_SKILL_CAST_SEC,
@@ -261,7 +265,7 @@ export function DpsLabPage() {
   const durationFromUrl = useMemo(() => {
     const raw = new URLSearchParams(search).get('duration')
     if (raw == null || raw.trim() === '') return null
-    return Math.max(10, toInt(raw, DEFAULT_ROTATION_SIM_DURATION_SEC))
+    return clampRotationDurationSec(toInt(raw, DEFAULT_ROTATION_SIM_DURATION_SEC))
   }, [search])
   const targetsFromUrl = useMemo(() => {
     const raw = new URLSearchParams(search).get('targets')
@@ -480,7 +484,7 @@ export function DpsLabPage() {
 
   const sim = useMemo(() => {
     if (!data) return null
-    const secs = Math.max(10, durationSec)
+    const secs = clampRotationDurationSec(durationSec)
     return simulateRotation(
       data.skills ?? [],
       skillLevels,
@@ -739,9 +743,7 @@ export function DpsLabPage() {
     [simAttackPreview],
   )
 
-  const updateCombatStat = (key: keyof CombatStatsState, raw: string) => {
-    const n = Number(raw)
-    const next = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0
+  const updateCombatStat = (key: keyof CombatStatsState, next: number) => {
     setCombatStats((prev) => (prev ? { ...prev, [key]: next } : prev))
   }
   const portraitSrc = useMemo(
@@ -754,7 +756,7 @@ export function DpsLabPage() {
     const next = new URLSearchParams()
     if (digimonId) next.set('digimonId', digimonId)
     next.set('level', String(globalLevel))
-    next.set('duration', String(Math.max(10, durationSec)))
+    next.set('duration', String(clampRotationDurationSec(durationSec)))
     next.set('targets', String(Math.max(1, targets)))
     next.set('hybrid', hybridStance)
     next.set('rotationMode', rotationMode)
@@ -909,7 +911,7 @@ export function DpsLabPage() {
                         return (
                           <>
                       <span className="stat-label">{row.label}</span>
-                      <input
+                      <EditableNumberInput
                         className={[
                           'lab-stat-input',
                           row.key === 'attack' && perfectAtClone ? 'lab-stat-input--perfect-clone' : '',
@@ -918,10 +920,11 @@ export function DpsLabPage() {
                         ]
                           .filter(Boolean)
                           .join(' ')}
-                        type="number"
                         min={0}
+                        integer
+                        emptyValue={0}
                         value={row.value}
-                        onChange={(e) => updateCombatStat(row.key, e.target.value)}
+                        onCommit={(next) => updateCombatStat(row.key, next)}
                       />
                       {hasAttackModifier ? (
                         <div className="lab-perfect-clone-popover" role="note" aria-live="polite">
@@ -1006,13 +1009,13 @@ export function DpsLabPage() {
               <div className="lab-controls-fields">
                 <label>
                   Overall skill level
-                  <input
-                    type="number"
+                  <EditableNumberInput
                     min={1}
                     max={SKILL_LEVEL_CAP}
+                    integer
+                    emptyValue={1}
                     value={globalLevel}
-                    onChange={(e) => {
-                      const v = Math.max(1, Math.min(SKILL_LEVEL_CAP, Number(e.target.value) || 1))
+                    onCommit={(v) => {
                       setGlobalLevel(v)
                       setSkillLevels((prev) => {
                         const next: Record<string, number> = {}
@@ -1031,25 +1034,24 @@ export function DpsLabPage() {
                 </label>
                 <label>
                   Targets hit
-                  <input
-                    type="number"
+                  <EditableNumberInput
                     min={1}
+                    integer
+                    emptyValue={1}
                     value={targets}
-                    onChange={(e) => setTargets(Math.max(1, Number(e.target.value) || 1))}
+                    onCommit={(next) => setTargets(next)}
                   />
                 </label>
                 <label>
                   Simulation seconds
-                  <input
-                    type="number"
-                    min={10}
+                  <EditableNumberInput
+                    min={MIN_ROTATION_SIM_DURATION_SEC}
+                    max={MAX_ROTATION_SIM_DURATION_SEC}
                     step={5}
+                    integer
+                    emptyValue={DEFAULT_ROTATION_SIM_DURATION_SEC}
                     value={durationSec}
-                    onChange={(e) =>
-                      setDurationSec(
-                        Math.max(10, Number(e.target.value) || DEFAULT_ROTATION_SIM_DURATION_SEC),
-                      )
-                    }
+                    onCommit={(next) => setDurationSec(clampRotationDurationSec(next))}
                   />
                 </label>
               </div>
@@ -1314,17 +1316,14 @@ export function DpsLabPage() {
                         </td>
                         <td>{cap}</td>
                         <td>
-                          <input
+                          <EditableNumberInput
                             className="lab-level-input"
-                            type="number"
                             min={1}
                             max={cap}
+                            integer
+                            emptyValue={1}
                             value={levelValue}
-                            onChange={(e) => {
-                              const v = Math.max(
-                                1,
-                                Math.min(cap, Number(e.target.value) || 1),
-                              )
+                            onCommit={(v) => {
                               setSkillLevels((prev) => ({ ...prev, [s.id]: v }))
                             }}
                           />

@@ -73,6 +73,16 @@ export type RotationResult = {
 
 /** Default window for `simulateRotation` in Lab and tier list (same sim). */
 export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
+export const MIN_ROTATION_SIM_DURATION_SEC = 10
+export const MAX_ROTATION_SIM_DURATION_SEC = 600
+
+export function clampRotationDurationSec(durationSec: number): number {
+  const parsed = Number.isFinite(durationSec) ? Math.floor(durationSec) : DEFAULT_ROTATION_SIM_DURATION_SEC
+  return Math.max(
+    MIN_ROTATION_SIM_DURATION_SEC,
+    Math.min(MAX_ROTATION_SIM_DURATION_SEC, parsed),
+  )
+}
 
 /**
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
@@ -103,19 +113,14 @@ function skillDamagePerCast(
   skill: WikiSkill,
   level: number,
   targets: number,
-  baseAttack: number,
-  perfectAtClone: boolean,
+  _baseAttack: number,
+  _perfectAtClone: boolean,
 ) {
   const base = skillDamageAtLevel(skill.base_dmg, skill.scaling, level, skill.max_level)
   const targetHits = skill.radius && skill.radius > 0 ? Math.max(1, targets) : 1
-  if (!perfectAtClone) return base * targetHits
-  // Perfect AT clone in-game behavior is modeled as +144% AT, which is observed to map to
-  // roughly +43% to the skill damage term (~30% final uplift for typical skills).
-  const PERFECT_AT_CLONE_ATTACK_BONUS_PCT = 144
-  const PERFECT_AT_CLONE_EQUIV_SKILL_PCT = 43
-  const _effectiveAttack = Math.max(0, baseAttack) * (1 + PERFECT_AT_CLONE_ATTACK_BONUS_PCT / 100)
-  void _effectiveAttack
-  return base * (1 + PERFECT_AT_CLONE_EQUIV_SKILL_PCT / 100) * targetHits
+  void _baseAttack
+  void _perfectAtClone
+  return base * targetHits
 }
 
 type SupportBuffProfile = {
@@ -149,19 +154,19 @@ function critRateToChance(critRateStat: number) {
 }
 
 /**
- * Bonus damage when a hit crits (before buff "+X% critical damage"), as a fraction of non-crit damage.
+ * Bonus damage when a hit crits (before crit-damage buffs), as a fraction of non-crit damage.
  * Baseline crit bonus: +100% (crit hit = 2.0× non-crit before buff crit damage).
  */
 const BASE_CRIT_DAMAGE_BONUS = 1.0
 
 /**
- * Expected damage multiplier vs always non-crit: E = (1 − p) + p × (1 + BASE + buff/100)
- * with p = crit chance, buff/100 from support buffs only (wiki crit damage stat is not modeled).
+ * Expected damage multiplier vs always non-crit: E = (1 − p) + p × (1 + BASE × cdMult)
+ * where cdMult = (1 + buffCritDamage/100). Buff crit damage scales the crit bonus multiplicatively.
  */
 function expectedCritMultiplier(critChance: number, buffCritDamagePct: number) {
   const chance = Math.max(0, Math.min(1, critChance))
-  const buffExtra = Math.max(0, buffCritDamagePct) / 100
-  return 1 + chance * (BASE_CRIT_DAMAGE_BONUS + buffExtra)
+  const critDamageMultiplier = 1 + Math.max(0, buffCritDamagePct) / 100
+  return 1 + chance * BASE_CRIT_DAMAGE_BONUS * critDamageMultiplier
 }
 
 /**
@@ -374,8 +379,8 @@ function buildBuffContributionsForDamage(
       `Total attack % from active buffs: +${activeAttackPct.toFixed(2)}%.`,
       includeSkillPct
         ? canCrit
-          ? 'Used inside (1 + (attack% + skill damage% + flat-as-%) ÷ 100) for this skill hit, before crit multiplier.'
-          : 'Used inside (1 + (attack% + skill damage% + flat-as-%) ÷ 100) for this skill hit.'
+          ? 'Applied only on the AT term: (base AT + flat AT) × (1 + AT% ÷ 100), then multiplied by crit term if this skill can crit.'
+          : 'Applied only on the AT term: (base AT + flat AT) × (1 + AT% ÷ 100) for this skill hit.'
         : 'Used inside (1 + attack% ÷ 100) for autos, before the crit multiplier.',
     ]
     for (const b of m.activeBuffs) {
@@ -389,7 +394,7 @@ function buildBuffContributionsForDamage(
   if (includeSkillPct && activeSkillPct > BUFF_SPLIT_EPS) {
     const detailLines: string[] = [
       `Total skill damage % from active buffs: +${activeSkillPct.toFixed(2)}%.`,
-      'Added in the same bracket as attack % and flat attack (as % of wiki attack).',
+      'Applied only on base skill term: (clone-adjusted base skill) × (1 + skill damage% ÷ 100).',
     ]
     for (const b of m.activeBuffs) {
       if (b.skillDamagePct > BUFF_SPLIT_EPS) {
@@ -417,7 +422,7 @@ function buildBuffContributionsForDamage(
     const multBase = expectedCritMultiplier(baseCritP, 0)
     const detailLines: string[] = [
       includeSkillPct
-        ? 'The +% chip is extra expected damage from buff crit rate and/or buff crit damage for this crit-capable skill.'
+        ? 'The +% chip is extra expected damage from buff crit rate and/or buff crit damage on the AT term for this crit-capable skill.'
         : 'The +% chip is extra expected damage from buff crit rate and/or buff crit damage on auto attacks.',
       'Your Digimon wiki crit_rate is used only to form a baseline multiplier that is subtracted out — it is not part of this +%.',
     ]
@@ -495,42 +500,64 @@ function availableDamaging(ctx: SimCtx, m: SimMutable, hold: DamageHold | null) 
   return sortDamageByDpct(ctx, list)
 }
 
-function parseSkillCritFlag(value: unknown): boolean {
+function parseSkillCritFlag(value: unknown): boolean | undefined {
   if (value === true || value === 1) return true
+  if (value === false || value === 0) return false
   if (typeof value === 'string') {
     const norm = value.trim().toLowerCase()
-    return norm === 'true' || norm === '1' || norm === 'yes'
+    if (norm === 'true' || norm === '1' || norm === 'yes') return true
+    if (norm === 'false' || norm === '0' || norm === 'no') return false
   }
-  return false
+  return undefined
 }
 
 /**
  * Prefer wiki `can_crit` when present.
- * Safe fallback: any missing/unknown value is treated as non-crit-capable.
+ * Safe fallback: any damage skill (non-support-only) is treated as crit-capable.
  */
 function skillCanCrit(skill: WikiSkill): boolean {
   const raw = skill as WikiSkill & Record<string, unknown>
-  return parseSkillCritFlag(raw.can_crit ?? raw.canCrit ?? raw.can_critical)
+  const parsed = parseSkillCritFlag(raw.can_crit ?? raw.canCrit ?? raw.can_critical)
+  if (parsed !== undefined) return parsed
+  return !skillIsSupportOnly(skill.base_dmg, skill.scaling)
 }
 
 /** Expected damage for one cast of `skill` with current buffs (no side effects). */
-function computeDamageSkillHit(ctx: SimCtx, m: SimMutable, skill: WikiSkill): number {
+type DamageSkillHitSnapshot = {
+  dmg: number
+  totalBuffPct: number
+  critCapable: boolean
+}
+
+function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSkill): DamageSkillHitSnapshot {
   const usedLevel = ctx.skillLevel(skill)
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
   const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-  const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
+
+  const baseSkillDamage = skillDamagePerCast(skill, usedLevel, ctx.targets, ctx.baseAttack, ctx.perfectAtClone)
+  const cloneMultiplier = ctx.perfectAtClone ? 1.3 : 1
+  const baseSkillTerm = baseSkillDamage * cloneMultiplier * (1 + activeSkillPct / 100)
+
+  const atkBuffed = Math.max(0, ctx.baseAttack + activeFlatAtk) * (1 + activeAttackPct / 100)
   const critCapable = skillCanCrit(skill)
   const naturalP = naturalAutoCritChance(ctx.baseCritRateStat, activeCritRatePct)
   const critChance = ctx.forceAutoCrit && critCapable ? 1 : naturalP
   const critMult = critCapable ? expectedCritMultiplier(critChance, activeCritDamagePct) : 1
-  return (
-    skillDamagePerCast(skill, usedLevel, ctx.targets, ctx.baseAttack, ctx.perfectAtClone) *
-    (1 + (activeAttackPct + activeSkillPct + flatPct) / 100) *
-    critMult
-  )
+  const targetHits = skill.radius && skill.radius > 0 ? Math.max(1, ctx.targets) : 1
+  const atkTerm = atkBuffed * critMult * targetHits
+  const dmg = baseSkillTerm + atkTerm
+
+  const baselineAtkTerm = Math.max(0, ctx.baseAttack) * targetHits
+  const baselineDmg = baseSkillDamage + baselineAtkTerm
+  const totalBuffPct = baselineDmg > 0 ? Math.max(0, ((dmg - baselineDmg) / baselineDmg) * 100) : 0
+  return { dmg, totalBuffPct, critCapable }
+}
+
+function computeDamageSkillHit(ctx: SimCtx, m: SimMutable, skill: WikiSkill): number {
+  return computeDamageSkillHitSnapshot(ctx, m, skill).dmg
 }
 
 type AutoHitSnapshot = {
@@ -672,15 +699,8 @@ function castDamageSkill(
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0)
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
-  const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
-  const flatPct = ctx.baseAttack > 0 ? (activeFlatAtk / ctx.baseAttack) * 100 : 0
-  const critCapable = skillCanCrit(skill)
-  const critBuffPct = critCapable
-    ? buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
-    : 0
-  const totalBuffPct = activeAttackPct + activeSkillPct + flatPct + critBuffPct
-  const dmg = computeDamageSkillHit(ctx, m, skill)
+  const hit = computeDamageSkillHitSnapshot(ctx, m, skill)
+  const dmg = hit.dmg
 
   m.totalDamage += dmg
   m.damageCastCount += 1
@@ -698,9 +718,9 @@ function castDamageSkill(
       castTimeSec: castTime,
       damage: dmg,
       buffedBy: m.activeBuffs.map((b) => b.skillName),
-      totalBuffPct,
+      totalBuffPct: hit.totalBuffPct,
       buffContributions:
-        m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, true, critCapable) : undefined,
+        m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, true, hit.critCapable) : undefined,
       cumulativeDamage: m.totalDamage,
       cancelledFromAuto,
     })
@@ -964,7 +984,7 @@ export type RotationSimOptions = {
    * Skill-vs-auto weaving and lookahead still use natural crit chance on autos.
    */
   forceAutoCrit?: boolean
-  /** Perfect AT clone: model +144% AT as ~+43% skill term, then normal buff multipliers. */
+  /** Perfect AT clone: apply a 1.3× multiplier to base skill term. */
   perfectAtClone?: boolean
   /** Assume repeated auto animation cancel with skills whenever available. */
   autoAttackAnimationCancel?: boolean
@@ -1429,6 +1449,7 @@ export function simulateRotation(
   baseCritRateStat: number = 0,
   options?: RotationSimOptions,
 ): RotationResult {
+  const normalizedDurationSec = clampRotationDurationSec(durationSec)
   const roleNorm = normalizeWikiRole(options?.role ?? '')
   const hybridOpt = options?.hybridStance
 
@@ -1438,7 +1459,7 @@ export function simulateRotation(
       const r = runRotationSim(
         skills,
         levelBySkillId,
-        durationSec,
+        normalizedDurationSec,
         targets,
         baseAttack,
         attackSpeed,
@@ -1468,7 +1489,7 @@ export function simulateRotation(
   return runRotationSim(
     skills,
     levelBySkillId,
-    durationSec,
+    normalizedDurationSec,
     targets,
     baseAttack,
     attackSpeed,
