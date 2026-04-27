@@ -59,6 +59,7 @@ import {
   readDpsAutoAnimCancel,
   readDpsForceAutoCrit,
   readDpsPerfectAtClone,
+  readTierIgnoreIncomplete,
   readTierListMode,
   readTierUpdatePanelMinimized,
   REQUEST_DELAY_MS,
@@ -68,6 +69,7 @@ import {
   writeDpsAutoAnimCancel,
   writeDpsForceAutoCrit,
   writeDpsPerfectAtClone,
+  writeTierIgnoreIncomplete,
   writeTierListMode,
   writeTierUpdatePanelMinimized,
   type TierListUpdateSummary,
@@ -107,6 +109,7 @@ export function TierListPage() {
   const [dpsForceAutoCrit, setDpsForceAutoCrit] = useState<boolean>(readDpsForceAutoCrit)
   const [dpsPerfectAtClone, setDpsPerfectAtClone] = useState<boolean>(readDpsPerfectAtClone)
   const [dpsAutoAnimCancel, setDpsAutoAnimCancel] = useState<boolean>(readDpsAutoAnimCancel)
+  const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -131,6 +134,11 @@ export function TierListPage() {
   function setDpsAutoAnimCancelPersist(next: boolean) {
     setDpsAutoAnimCancel(next)
     writeDpsAutoAnimCancel(next)
+  }
+
+  function setIgnoreIncompletePersist(next: boolean) {
+    setIgnoreIncomplete(next)
+    writeTierIgnoreIncomplete(next)
   }
 
   useEffect(() => {
@@ -618,6 +626,7 @@ export function TierListPage() {
     const all = cache?.entries ?? {}
     const out: Record<string, SustainedDpsEntry> = {}
     for (const [id, e] of Object.entries(all)) {
+      if (ignoreIncomplete && e.status === 'incomplete') continue
       if (selectedStages.length > 0 && !selectedStages.includes(e.stage)) continue
       const meta = listMeta[id]
       if (selectedAttributes.length > 0) {
@@ -645,6 +654,7 @@ export function TierListPage() {
     selectedAttributes,
     selectedElements,
     selectedFamilies,
+    ignoreIncomplete,
   ])
 
   const entriesForMatrix = useMemo(() => {
@@ -1724,6 +1734,19 @@ export function TierListPage() {
                     </button>
                   )
                 })}
+              </div>
+            </div>
+            <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Tier list options">
+              <span className="tier-filter-label">Options</span>
+              <div className="stage-tabs tier-filter-chips">
+                <button
+                  type="button"
+                  className="stage-tab tier-facet-tab tier-option-chip"
+                  aria-pressed={ignoreIncomplete}
+                  onClick={() => setIgnoreIncompletePersist(!ignoreIncomplete)}
+                >
+                  Ignore Incomplete
+                </button>
               </div>
             </div>
           </div>

@@ -16,6 +16,7 @@ export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
 export const TIER_DPS_PERFECT_AT_CLONE_KEY = 'odysseyCalc.tierList.dpsPerfectAtClone.v1'
 export const TIER_DPS_AUTO_ANIM_CANCEL_KEY = 'odysseyCalc.tierList.dpsAutoAnimCancel.v1'
+export const TIER_IGNORE_INCOMPLETE_KEY = 'odysseyCalc.tierList.ignoreIncomplete.v1'
 export const TIER_DPS_CHANGE_EPS = 0.05
 export const TIER_TANK_SCORE_CHANGE_EPS = 0.02
 export const TIER_HEALER_SCORE_CHANGE_EPS = 0.02
@@ -193,6 +194,22 @@ export function readDpsAutoAnimCancel(): boolean {
 export function writeDpsAutoAnimCancel(on: boolean) {
   try {
     localStorage.setItem(TIER_DPS_AUTO_ANIM_CANCEL_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readTierIgnoreIncomplete(): boolean {
+  try {
+    return localStorage.getItem(TIER_IGNORE_INCOMPLETE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function writeTierIgnoreIncomplete(on: boolean) {
+  try {
+    localStorage.setItem(TIER_IGNORE_INCOMPLETE_KEY, on ? '1' : '0')
   } catch {
     /* ignore */
   }
