@@ -397,20 +397,23 @@ export function DpsLabPage() {
   const isHybridRole = roleNorm === 'hybrid'
   const simAttackPreview = useMemo(() => {
     const inputAttack = Math.max(0, combatStats?.attack ?? 0)
+    const sealAttackBonus = Math.max(0, sealBonuses.attack)
     const gearAttackBonus = Math.max(0, gearAttack.totalAttack)
     const cloneAttackBonus = perfectAtClone ? Math.round(inputAttack * 1.44) : 0
     const effectiveAttack = inputAttack + gearAttackBonus + cloneAttackBonus
-    const hasEffectiveOverride = gearAttackBonus > 0 || cloneAttackBonus > 0
+    const hasEffectiveOverride =
+      sealAttackBonus > 0 || gearAttackBonus > 0 || cloneAttackBonus > 0
     const simAttack = hasEffectiveOverride ? effectiveAttack : inputAttack
     return {
       inputAttack,
+      sealAttackBonus,
       gearAttackBonus,
       cloneAttackBonus,
       effectiveAttack,
       hasEffectiveOverride,
       simAttack,
     }
-  }, [combatStats?.attack, gearAttack.totalAttack, perfectAtClone])
+  }, [combatStats?.attack, sealBonuses.attack, gearAttack.totalAttack, perfectAtClone])
   const simBaseAttack = simAttackPreview.simAttack
 
   const digimonRoleWikiSkillsForRole = useMemo(
@@ -896,6 +899,15 @@ export function DpsLabPage() {
                         .filter(Boolean)
                         .join(' ')}
                     >
+                      {(() => {
+                        const sealBonus = sealBonusByCombatKey[row.key]
+                        const gearBonus = gearBonusByCombatKey[row.key]
+                        const isAttackRow = row.key === 'attack'
+                        const hasAttackModifier =
+                          isAttackRow &&
+                          (sealBonus > 0 || gearBonus > 0 || simAttackPreview.cloneAttackBonus > 0)
+                        return (
+                          <>
                       <span className="stat-label">{row.label}</span>
                       <input
                         className={[
@@ -911,18 +923,18 @@ export function DpsLabPage() {
                         value={row.value}
                         onChange={(e) => updateCombatStat(row.key, e.target.value)}
                       />
-                      {row.key === 'attack' && perfectAtClone ? (
+                      {hasAttackModifier ? (
                         <div className="lab-perfect-clone-popover" role="note" aria-live="polite">
-                          {sealBonusByCombatKey[row.key] > 0 ? (
+                          {sealBonus > 0 ? (
                             <div className="lab-perfect-clone-popover-row">
                               <span className="lab-seal-badge-label">
                                 <span className="lab-seal-badge-icon" aria-hidden="true" />
                                 <span>Seals</span>
                               </span>
-                              <strong>+{sealBonusByCombatKey[row.key].toLocaleString()}</strong>
+                              <strong>+{sealBonus.toLocaleString()}</strong>
                             </div>
                           ) : null}
-                          {gearBonusByCombatKey[row.key] > 0 ? (
+                          {gearBonus > 0 ? (
                             <div className="lab-perfect-clone-popover-row">
                               <span className="lab-gear-badge-label">
                                 <span className="lab-gear-badge-icon" aria-hidden="true" />
@@ -930,36 +942,42 @@ export function DpsLabPage() {
                               </span>
                               <strong>
                                 +
-                                {gearBonusByCombatKey[row.key].toLocaleString(undefined, {
+                                {gearBonus.toLocaleString(undefined, {
                                   maximumFractionDigits: 1,
                                 })}
                               </strong>
                             </div>
                           ) : null}
-                          <div className="lab-perfect-clone-popover-row">
-                            <span className="lab-perfect-clone-badge-label">
-                              <span className="lab-perfect-clone-badge">15</span>
-                              <span>Clone AT</span>
-                            </span>
-                            <strong>+{perfectCloneAttackPreview.bonusAttack.toLocaleString()}</strong>
-                          </div>
+                          {simAttackPreview.cloneAttackBonus > 0 ? (
+                            <div className="lab-perfect-clone-popover-row">
+                              <span className="lab-perfect-clone-badge-label">
+                                <span className="lab-perfect-clone-badge">15</span>
+                                <span>Clone AT</span>
+                              </span>
+                              <strong>+{perfectCloneAttackPreview.bonusAttack.toLocaleString()}</strong>
+                            </div>
+                          ) : null}
                           <div className="lab-perfect-clone-popover-row lab-perfect-clone-popover-row--total">
                             <span>Effective AT</span>
-                            <strong>{perfectCloneAttackPreview.effectiveAttack.toLocaleString()}</strong>
+                            <strong>
+                              {simAttackPreview.simAttack.toLocaleString(undefined, {
+                                maximumFractionDigits: 1,
+                              })}
+                            </strong>
                           </div>
                         </div>
-                      ) : sealBonusByCombatKey[row.key] > 0 || gearBonusByCombatKey[row.key] > 0 ? (
+                      ) : sealBonus > 0 || gearBonus > 0 ? (
                         <div className="lab-seal-popover" role="note">
-                          {sealBonusByCombatKey[row.key] > 0 ? (
+                          {sealBonus > 0 ? (
                             <div className="lab-perfect-clone-popover-row">
                               <span className="lab-seal-badge-label">
                                 <span className="lab-seal-badge-icon" aria-hidden="true" />
                                 <span>Seals</span>
                               </span>
-                              <strong>+{sealBonusByCombatKey[row.key].toLocaleString()}</strong>
+                              <strong>+{sealBonus.toLocaleString()}</strong>
                             </div>
                           ) : null}
-                          {gearBonusByCombatKey[row.key] > 0 ? (
+                          {gearBonus > 0 ? (
                             <div className="lab-perfect-clone-popover-row">
                               <span className="lab-gear-badge-label">
                                 <span className="lab-gear-badge-icon" aria-hidden="true" />
@@ -967,7 +985,7 @@ export function DpsLabPage() {
                               </span>
                               <strong>
                                 +
-                                {gearBonusByCombatKey[row.key].toLocaleString(undefined, {
+                                {gearBonus.toLocaleString(undefined, {
                                   maximumFractionDigits: 1,
                                 })}
                               </strong>
@@ -975,6 +993,9 @@ export function DpsLabPage() {
                           ) : null}
                         </div>
                       ) : null}
+                          </>
+                        )
+                      })()}
                     </div>
                   ))}
                 </div>

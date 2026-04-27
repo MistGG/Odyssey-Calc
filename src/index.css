@@ -2735,7 +2735,11 @@ code {
 }
 
 .stat-cell--perfect-clone:hover .lab-perfect-clone-popover,
-.stat-cell--perfect-clone:focus-within .lab-perfect-clone-popover {
+.stat-cell--perfect-clone:focus-within .lab-perfect-clone-popover,
+.stat-cell--seal:hover .lab-perfect-clone-popover,
+.stat-cell--seal:focus-within .lab-perfect-clone-popover,
+.stat-cell--gear:hover .lab-perfect-clone-popover,
+.stat-cell--gear:focus-within .lab-perfect-clone-popover {
   opacity: 1;
   transform: translateY(0);
 }
