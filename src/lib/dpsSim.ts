@@ -88,7 +88,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 13
+export const TIER_DPS_SIM_REVISION = 14
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -852,6 +852,8 @@ function runGreedyUntilWall(
   wallTime: number,
   damageBan: DamageHold | null,
   recordEvents: boolean,
+  /** When true, never cast support in this rollout (damage + autos only). Used to evaluate “delay buff”. */
+  skipSupport = false,
 ) {
   const wall = Math.min(wallTime, ctx.durationSec)
   while (m.t < wall - 1e-9 && m.t < ctx.durationSec - 1e-9) {
@@ -863,7 +865,7 @@ function runGreedyUntilWall(
       return ready && !alreadyUp
     })
 
-    if (availableSupport.length > 0) {
+    if (!skipSupport && availableSupport.length > 0) {
       availableSupport.sort((a, b) => {
         const aFlat = ctx.baseAttack > 0 ? (a.flatAttack / ctx.baseAttack) * 100 : 0
         const bFlat = ctx.baseAttack > 0 ? (b.flatAttack / ctx.baseAttack) * 100 : 0
@@ -958,20 +960,59 @@ function runGreedyUntilWall(
   }
 }
 
-const LOOKAHEAD_SEC = 12
-const LOOKAHEAD_MAX_FRACTION = 0.35
+const LOOKAHEAD_SEC = 20
+const LOOKAHEAD_MAX_FRACTION = 0.42
 
-/** Cap damage skills considered as first/second beam branches (sorted by DPCT). */
-const BEAM_DAMAGE_SKILL_CAP = 6
+/** Cap damage skills considered per beam branch (sorted by DPCT). */
+const BEAM_DAMAGE_SKILL_CAP = 8
+/** Beam search depth (sequential damage actions before greedy tail). */
+const BEAM_DEPTH = 3
+/** Deeper depth on periodic replan ticks. */
+const BEAM_DEPTH_REPLAN = 4
+/** Max distinct first-step candidates kept after scoring (prune wide beams). */
+const BEAM_FIRST_PRUNE = 10
+/** Re-plan: every this many sim seconds, use longer horizon + deeper beam once. */
+const PLANNER_REPLAN_EVERY_SEC = 10
+/** Extra horizon multiplier on replan ticks. */
+const PLANNER_REPLAN_HORIZON_MULT = 1.28
+
 /** Max support profiles tried when several buffs are ready at once (order matters). */
-const SUPPORT_BEAM_TRY = 4
-/** Greedy rollout horizon after a tentative support cast when comparing support order. */
-const SUPPORT_BEAM_HORIZON_SEC = 12
+const SUPPORT_BEAM_TRY = 5
+/** Greedy rollout horizon when comparing support cast vs delay. */
+const SUPPORT_BEAM_HORIZON_SEC = 20
+/** First phase of “delay buff”: damage-only greedy for this many seconds, then normal greedy to horizon. */
+const SUPPORT_DELAY_DAMAGE_ONLY_SEC = 5
+
+/** Top-N damaging skills treated as “nuke” for alignment bonus in beam scoring. */
+const NUKE_TOP_N = 2
+/** Scales buff-strength bonus when a nuke is scheduled in the beam prefix (AT+Skill+½·CritDmg). */
+const NUKE_BUFF_ALIGN_WEIGHT = 0.14
 
 type DamageChoice =
   | { kind: 'skill'; skill: WikiSkill }
   | { kind: 'auto' }
   | { kind: 'hold'; skillId: string; until: number }
+
+function nukeSkillIdSet(ctx: SimCtx, damaging: WikiSkill[]): Set<string> {
+  const scored = damaging.map((s) => ({
+    id: s.id,
+    score: skillDamagePerCast(s, ctx.skillLevel(s), ctx.targets, ctx.baseAttack, ctx.perfectAtClone),
+  }))
+  scored.sort((a, b) => b.score - a.score)
+  return new Set(scored.slice(0, NUKE_TOP_N).map((x) => x.id))
+}
+
+function nukeBuffAlignmentScore(m: SimMutable): number {
+  let atk = 0
+  let sk = 0
+  let cd = 0
+  for (const b of m.activeBuffs) {
+    atk += b.attackPct
+    sk += b.skillDamagePct
+    cd += b.critDamagePct
+  }
+  return atk + sk + cd * 0.5
+}
 
 function applyDamageChoice(ctx: SimCtx, m: SimMutable, ch: DamageChoice, recordEvents: boolean) {
   if (ch.kind === 'auto') {
@@ -1002,9 +1043,10 @@ function enumerateDamageChoices(
   available: WikiSkill[],
   branchWall: number,
   primary: WikiSkill | undefined,
+  skillCap = BEAM_DAMAGE_SKILL_CAP,
 ): DamageChoice[] {
   const out: DamageChoice[] = []
-  const lim = Math.min(BEAM_DAMAGE_SKILL_CAP, available.length)
+  const lim = Math.min(skillCap, available.length)
   for (let i = 0; i < lim; i += 1) {
     out.push({ kind: 'skill', skill: available[i] })
   }
@@ -1015,84 +1057,95 @@ function enumerateDamageChoices(
   return out
 }
 
-function evaluateDamagePathGain(
+/** Recursive beam score: gain from `startM` after optional prefix ending at `m`, then greedy to `branchWall`. */
+function beamScoreFrom(
   ctx: SimCtx,
-  base: SimMutable,
+  startM: SimMutable,
+  m: SimMutable,
   branchWall: number,
-  actions: DamageChoice[],
+  depthLeft: number,
+  nukeIds: Set<string>,
+  skillCap: number,
 ): number {
-  const sh = cloneSim(base)
-  for (let i = 0; i < actions.length; i += 1) {
-    const a = actions[i]
-    if (a.kind === 'hold') {
-      runGreedyUntilWall(ctx, sh, branchWall, { skillId: a.skillId, until: a.until }, false)
-      return sh.totalDamage - base.totalDamage
-    }
-    applyDamageChoice(ctx, sh, a, false)
-    if (sh.t >= branchWall - 1e-9) {
-      return sh.totalDamage - base.totalDamage
-    }
+  if (depthLeft <= 0 || m.t >= branchWall - 1e-9) {
+    const sh = cloneSim(m)
+    runGreedyUntilWall(ctx, sh, branchWall, null, false, false)
+    return sh.totalDamage - startM.totalDamage
   }
-  runGreedyUntilWall(ctx, sh, branchWall, null, false)
-  return sh.totalDamage - base.totalDamage
+  const avail = availableDamaging(ctx, m, null)
+  if (avail.length === 0) {
+    const sh = cloneSim(m)
+    runGreedyUntilWall(ctx, sh, branchWall, null, false, false)
+    return sh.totalDamage - startM.totalDamage
+  }
+  const prim = avail[0]
+  const choices = enumerateDamageChoices(ctx, m, avail, branchWall, prim, skillCap)
+  let best = -Infinity
+  for (const c of choices) {
+    if (c.kind === 'hold') {
+      const sh = cloneSim(m)
+      runGreedyUntilWall(ctx, sh, branchWall, { skillId: c.skillId, until: c.until }, false, false)
+      best = Math.max(best, sh.totalDamage - startM.totalDamage)
+      continue
+    }
+    const sh = cloneSim(m)
+    let extra = 0
+    if (c.kind === 'skill' && nukeIds.has(c.skill.id)) {
+      extra = nukeBuffAlignmentScore(sh) * NUKE_BUFF_ALIGN_WEIGHT
+    }
+    applyDamageChoice(ctx, sh, c, false)
+    best = Math.max(
+      best,
+      extra + beamScoreFrom(ctx, startM, sh, branchWall, depthLeft - 1, nukeIds, skillCap),
+    )
+  }
+  return best
 }
 
 /**
- * Beam rollout (depth 2): compare pairs of immediate actions + greedy tail to `branchWall`,
- * then pick the first action of the best-scoring path. Replaces flat primary/secondary/hold.
+ * Beam rollout: search depth-`beamDepth` action prefixes + greedy tail, nuke-alignment tie bias,
+ * optional pruning of first-step candidates.
  */
 function beamDamageDecision(
   ctx: SimCtx,
   m: SimMutable,
   branchWall: number,
   available: WikiSkill[],
+  beamDepth: number,
 ): { tag: 'hold'; ban: DamageHold } | { tag: 'auto' } | { tag: 'skill'; skill: WikiSkill } {
   const primary = available[0]
+  const nukeIds = nukeSkillIdSet(ctx, ctx.damaging)
   const firstChoices = enumerateDamageChoices(ctx, m, available, branchWall, primary)
+  const innerCap = Math.min(6, BEAM_DAMAGE_SKILL_CAP)
 
-  let bestGain = -Infinity
-  let bestFirst: DamageChoice | null = null
-
+  type Scored = { c1: DamageChoice; score: number }
+  const scored: Scored[] = []
   for (const c1 of firstChoices) {
+    let score = -Infinity
     if (c1.kind === 'hold') {
-      const g = evaluateDamagePathGain(ctx, m, branchWall, [c1])
-      if (g > bestGain + 1e-9) {
-        bestGain = g
-        bestFirst = c1
+      const sh = cloneSim(m)
+      runGreedyUntilWall(ctx, sh, branchWall, { skillId: c1.skillId, until: c1.until }, false, false)
+      score = sh.totalDamage - m.totalDamage
+    } else {
+      const sh = cloneSim(m)
+      let extra = 0
+      if (c1.kind === 'skill' && nukeIds.has(c1.skill.id)) {
+        extra = nukeBuffAlignmentScore(sh) * NUKE_BUFF_ALIGN_WEIGHT
       }
-      continue
+      applyDamageChoice(ctx, sh, c1, false)
+      score = extra + beamScoreFrom(ctx, m, sh, branchWall, beamDepth - 1, nukeIds, innerCap)
     }
+    scored.push({ c1, score })
+  }
+  scored.sort((a, b) => b.score - a.score)
+  const candidates = scored.slice(0, BEAM_FIRST_PRUNE)
+  let bestFirst = candidates[0]?.c1 ?? { kind: 'skill' as const, skill: primary }
 
-    const sh1 = cloneSim(m)
-    applyDamageChoice(ctx, sh1, c1, false)
-    if (sh1.t >= branchWall - 1e-9) {
-      const g = sh1.totalDamage - m.totalDamage
-      if (g > bestGain + 1e-9) {
-        bestGain = g
-        bestFirst = c1
-      }
-      continue
-    }
-
-    const avail2 = availableDamaging(ctx, sh1, null)
-    if (avail2.length === 0) {
-      runGreedyUntilWall(ctx, sh1, branchWall, null, false)
-      const g = sh1.totalDamage - m.totalDamage
-      if (g > bestGain + 1e-9) {
-        bestGain = g
-        bestFirst = c1
-      }
-      continue
-    }
-
-    const prim2 = avail2[0]
-    const secondChoices = enumerateDamageChoices(ctx, sh1, avail2, branchWall, prim2)
-    for (const c2 of secondChoices) {
-      const g = evaluateDamagePathGain(ctx, m, branchWall, [c1, c2])
-      if (g > bestGain + 1e-9) {
-        bestGain = g
-        bestFirst = c1
-      }
+  let bestScore = -Infinity
+  for (const { c1, score } of candidates) {
+    if (score > bestScore + 1e-9) {
+      bestScore = score
+      bestFirst = c1
     }
   }
 
@@ -1362,6 +1415,8 @@ function runRotationSim(
     )
   } else {
   let stepGuard = 0
+  /** Periodic replan: deeper beam + longer horizon on this clock. */
+  let lastPlannerPhaseT = -1e18
   while (m.t < durationSec - 1e-9) {
     if (++stepGuard > 250000) {
       console.error('[dpsSim] simulateRotation: step limit exceeded, aborting early')
@@ -1387,21 +1442,39 @@ function runRotationSim(
       })
       const trySupport = availableSupport.slice(0, SUPPORT_BEAM_TRY)
       let bestP = trySupport[0]
-      if (trySupport.length > 1) {
-        let bestDelta = -Infinity
-        const supWall = Math.min(durationSec, m.t + SUPPORT_BEAM_HORIZON_SEC)
-        for (const p of trySupport) {
-          const sh = cloneSim(m)
-          if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, sh, p, false)
-          else castSupportProfile(ctx, sh, p, false, false)
-          runGreedyUntilWall(ctx, sh, supWall, null, false)
-          const delta = sh.totalDamage - m.totalDamage
-          if (delta > bestDelta + 1e-9) {
-            bestDelta = delta
-            bestP = p
-          }
+      let bestDelta = -Infinity
+      let useDelay = false
+      const supWall = Math.min(durationSec, m.t + SUPPORT_BEAM_HORIZON_SEC)
+      const delayPhaseEnd = Math.min(supWall, m.t + SUPPORT_DELAY_DAMAGE_ONLY_SEC)
+
+      for (const p of trySupport) {
+        const sh = cloneSim(m)
+        if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, sh, p, false)
+        else castSupportProfile(ctx, sh, p, false, false)
+        runGreedyUntilWall(ctx, sh, supWall, null, false, false)
+        const delta = sh.totalDamage - m.totalDamage
+        if (delta > bestDelta + 1e-9) {
+          bestDelta = delta
+          bestP = p
+          useDelay = false
         }
       }
+
+      const shDelay = cloneSim(m)
+      runGreedyUntilWall(ctx, shDelay, delayPhaseEnd, damageHold, false, true)
+      runGreedyUntilWall(ctx, shDelay, supWall, damageHold, false, false)
+      const delayDelta = shDelay.totalDamage - m.totalDamage
+      if (delayDelta > bestDelta + 1e-9) {
+        useDelay = true
+        bestDelta = delayDelta
+      }
+
+      if (useDelay) {
+        runGreedyUntilWall(ctx, m, delayPhaseEnd, damageHold, true, true)
+        runGreedyUntilWall(ctx, m, supWall, damageHold, true, false)
+        continue
+      }
+
       if (ctx.autoAttackAnimationCancel) {
         performAutoIntoSupportCancel(ctx, m, bestP, true)
         continue
@@ -1458,9 +1531,16 @@ function runRotationSim(
       LOOKAHEAD_SEC,
       Math.max(0, durationSec - m.t) * LOOKAHEAD_MAX_FRACTION,
     )
-    const branchWall = Math.min(durationSec, m.t + Math.max(0.5, horizon))
+    let branchHorizon = Math.max(0.5, horizon)
+    let beamDepth = BEAM_DEPTH
+    if (m.t - lastPlannerPhaseT >= PLANNER_REPLAN_EVERY_SEC) {
+      lastPlannerPhaseT = m.t
+      branchHorizon *= PLANNER_REPLAN_HORIZON_MULT
+      beamDepth = BEAM_DEPTH_REPLAN
+    }
+    const branchWall = Math.min(durationSec, m.t + branchHorizon)
 
-    const decision = beamDamageDecision(ctx, m, branchWall, available)
+    const decision = beamDamageDecision(ctx, m, branchWall, available, beamDepth)
     if (decision.tag === 'hold') {
       damageHold = decision.ban
       continue
