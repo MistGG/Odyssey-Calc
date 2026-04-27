@@ -88,7 +88,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 12
+export const TIER_DPS_SIM_REVISION = 13
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -961,17 +961,149 @@ function runGreedyUntilWall(
 const LOOKAHEAD_SEC = 12
 const LOOKAHEAD_MAX_FRACTION = 0.35
 
-function branchDamageGain(
+/** Cap damage skills considered as first/second beam branches (sorted by DPCT). */
+const BEAM_DAMAGE_SKILL_CAP = 6
+/** Max support profiles tried when several buffs are ready at once (order matters). */
+const SUPPORT_BEAM_TRY = 4
+/** Greedy rollout horizon after a tentative support cast when comparing support order. */
+const SUPPORT_BEAM_HORIZON_SEC = 12
+
+type DamageChoice =
+  | { kind: 'skill'; skill: WikiSkill }
+  | { kind: 'auto' }
+  | { kind: 'hold'; skillId: string; until: number }
+
+function applyDamageChoice(ctx: SimCtx, m: SimMutable, ch: DamageChoice, recordEvents: boolean) {
+  if (ch.kind === 'auto') {
+    performAutoAttack(ctx, m, recordEvents)
+    return
+  }
+  if (ch.kind === 'hold') {
+    return
+  }
+  const sk = ch.skill
+  const castT = effectiveCastTime(sk.cast_time_sec)
+  const skillDmg = computeDamageSkillHit(ctx, m, sk)
+  const snap = computeAutoHit(ctx, m, 'planning')
+  const rSkill = skillDmg / castT
+  const rCancelCombo = (snap.dmg + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castT)
+  if (ctx.autoAttackAnimationCancel && rCancelCombo > rSkill + 1e-9) {
+    performAutoIntoSkillCancel(ctx, m, sk, recordEvents)
+  } else if (ctx.autoAttackAnimationCancel) {
+    castDamageSkill(ctx, m, sk, recordEvents)
+  } else {
+    castDamageSkill(ctx, m, sk, recordEvents)
+  }
+}
+
+function enumerateDamageChoices(
+  ctx: SimCtx,
+  _m: SimMutable,
+  available: WikiSkill[],
+  branchWall: number,
+  primary: WikiSkill | undefined,
+): DamageChoice[] {
+  const out: DamageChoice[] = []
+  const lim = Math.min(BEAM_DAMAGE_SKILL_CAP, available.length)
+  for (let i = 0; i < lim; i += 1) {
+    out.push({ kind: 'skill', skill: available[i] })
+  }
+  out.push({ kind: 'auto' })
+  if (!ctx.autoAttackAnimationCancel && primary) {
+    out.push({ kind: 'hold', skillId: primary.id, until: branchWall })
+  }
+  return out
+}
+
+function evaluateDamagePathGain(
   ctx: SimCtx,
   base: SimMutable,
-  wallTime: number,
-  firstCast: WikiSkill | null,
-  damageBan: DamageHold | null,
+  branchWall: number,
+  actions: DamageChoice[],
 ): number {
-  const shadow = cloneSim(base)
-  if (firstCast) castDamageSkill(ctx, shadow, firstCast, false)
-  runGreedyUntilWall(ctx, shadow, wallTime, damageBan, false)
-  return shadow.totalDamage - base.totalDamage
+  const sh = cloneSim(base)
+  for (let i = 0; i < actions.length; i += 1) {
+    const a = actions[i]
+    if (a.kind === 'hold') {
+      runGreedyUntilWall(ctx, sh, branchWall, { skillId: a.skillId, until: a.until }, false)
+      return sh.totalDamage - base.totalDamage
+    }
+    applyDamageChoice(ctx, sh, a, false)
+    if (sh.t >= branchWall - 1e-9) {
+      return sh.totalDamage - base.totalDamage
+    }
+  }
+  runGreedyUntilWall(ctx, sh, branchWall, null, false)
+  return sh.totalDamage - base.totalDamage
+}
+
+/**
+ * Beam rollout (depth 2): compare pairs of immediate actions + greedy tail to `branchWall`,
+ * then pick the first action of the best-scoring path. Replaces flat primary/secondary/hold.
+ */
+function beamDamageDecision(
+  ctx: SimCtx,
+  m: SimMutable,
+  branchWall: number,
+  available: WikiSkill[],
+): { tag: 'hold'; ban: DamageHold } | { tag: 'auto' } | { tag: 'skill'; skill: WikiSkill } {
+  const primary = available[0]
+  const firstChoices = enumerateDamageChoices(ctx, m, available, branchWall, primary)
+
+  let bestGain = -Infinity
+  let bestFirst: DamageChoice | null = null
+
+  for (const c1 of firstChoices) {
+    if (c1.kind === 'hold') {
+      const g = evaluateDamagePathGain(ctx, m, branchWall, [c1])
+      if (g > bestGain + 1e-9) {
+        bestGain = g
+        bestFirst = c1
+      }
+      continue
+    }
+
+    const sh1 = cloneSim(m)
+    applyDamageChoice(ctx, sh1, c1, false)
+    if (sh1.t >= branchWall - 1e-9) {
+      const g = sh1.totalDamage - m.totalDamage
+      if (g > bestGain + 1e-9) {
+        bestGain = g
+        bestFirst = c1
+      }
+      continue
+    }
+
+    const avail2 = availableDamaging(ctx, sh1, null)
+    if (avail2.length === 0) {
+      runGreedyUntilWall(ctx, sh1, branchWall, null, false)
+      const g = sh1.totalDamage - m.totalDamage
+      if (g > bestGain + 1e-9) {
+        bestGain = g
+        bestFirst = c1
+      }
+      continue
+    }
+
+    const prim2 = avail2[0]
+    const secondChoices = enumerateDamageChoices(ctx, sh1, avail2, branchWall, prim2)
+    for (const c2 of secondChoices) {
+      const g = evaluateDamagePathGain(ctx, m, branchWall, [c1, c2])
+      if (g > bestGain + 1e-9) {
+        bestGain = g
+        bestFirst = c1
+      }
+    }
+  }
+
+  if (!bestFirst || bestFirst.kind === 'skill') {
+    const sk = bestFirst?.kind === 'skill' ? bestFirst.skill : primary
+    return { tag: 'skill', skill: sk }
+  }
+  if (bestFirst.kind === 'hold') {
+    return { tag: 'hold', ban: { skillId: bestFirst.skillId, until: bestFirst.until } }
+  }
+  return { tag: 'auto' }
 }
 
 export type RotationSimOptions = {
@@ -1253,11 +1385,28 @@ function runRotationSim(
         const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
         return bScore - aScore
       })
+      const trySupport = availableSupport.slice(0, SUPPORT_BEAM_TRY)
+      let bestP = trySupport[0]
+      if (trySupport.length > 1) {
+        let bestDelta = -Infinity
+        const supWall = Math.min(durationSec, m.t + SUPPORT_BEAM_HORIZON_SEC)
+        for (const p of trySupport) {
+          const sh = cloneSim(m)
+          if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, sh, p, false)
+          else castSupportProfile(ctx, sh, p, false, false)
+          runGreedyUntilWall(ctx, sh, supWall, null, false)
+          const delta = sh.totalDamage - m.totalDamage
+          if (delta > bestDelta + 1e-9) {
+            bestDelta = delta
+            bestP = p
+          }
+        }
+      }
       if (ctx.autoAttackAnimationCancel) {
-        performAutoIntoSupportCancel(ctx, m, availableSupport[0], true)
+        performAutoIntoSupportCancel(ctx, m, bestP, true)
         continue
       }
-      castSupportProfile(ctx, m, availableSupport[0], true)
+      castSupportProfile(ctx, m, bestP, true)
       continue
     }
 
@@ -1305,75 +1454,22 @@ function runRotationSim(
       continue
     }
 
-    const primary = available[0]
-    const secondary = available[1]
+    const horizon = Math.min(
+      LOOKAHEAD_SEC,
+      Math.max(0, durationSec - m.t) * LOOKAHEAD_MAX_FRACTION,
+    )
+    const branchWall = Math.min(durationSec, m.t + Math.max(0.5, horizon))
 
-    let chosen: WikiSkill = primary
-
-    {
-      const horizon = Math.min(
-        LOOKAHEAD_SEC,
-        Math.max(0, durationSec - m.t) * LOOKAHEAD_MAX_FRACTION,
-      )
-      const branchWall = Math.min(durationSec, m.t + Math.max(0.5, horizon))
-
-      const gPrimary = branchDamageGain(ctx, m, branchWall, primary, null)
-      const gSecondary = secondary ? branchDamageGain(ctx, m, branchWall, secondary, null) : -Infinity
-      const gDefer = ctx.autoAttackAnimationCancel
-        ? -Infinity
-        : branchDamageGain(ctx, m, branchWall, null, {
-            skillId: primary.id,
-            until: branchWall,
-          })
-
-      let best = gPrimary
-      let pick: 'primary' | 'secondary' | 'hold' = 'primary'
-      if (gSecondary > best + 1e-6) {
-        best = gSecondary
-        pick = 'secondary'
-      }
-      if (gDefer > best + 1e-6) {
-        best = gDefer
-        pick = 'hold'
-      }
-
-      if (pick === 'secondary' && secondary) {
-        chosen = secondary
-      } else if (pick === 'hold') {
-        if (secondary && gDefer >= gSecondary - 1e-6) {
-          chosen = secondary
-        } else {
-          damageHold = { skillId: primary.id, until: branchWall }
-          continue
-        }
-      }
-    }
-
-    const castTChosen = effectiveCastTime(chosen.cast_time_sec)
-    const skillDmgChosen = computeDamageSkillHit(ctx, m, chosen)
-    const snapChosen = computeAutoHit(ctx, m, 'planning')
-    const rAutoChosen = snapChosen.dmg / snapChosen.step
-    const rSkillChosen = skillDmgChosen / castTChosen
-    const rCancelComboChosen =
-      (snapChosen.dmg + skillDmgChosen) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castTChosen)
-    if (
-      ctx.autoAttackAnimationCancel &&
-      rCancelComboChosen > rSkillChosen + 1e-9
-    ) {
-      performAutoIntoSkillCancel(ctx, m, chosen, true)
+    const decision = beamDamageDecision(ctx, m, branchWall, available)
+    if (decision.tag === 'hold') {
+      damageHold = decision.ban
       continue
     }
-    // In animation-cancel mode, avoid uncancelled auto weaving when a skill is ready.
-    // If auto->skill cancel is not better, cast the skill directly.
-    if (ctx.autoAttackAnimationCancel) {
-      castDamageSkill(ctx, m, chosen, true)
-      continue
-    }
-    if (rAutoChosen > rSkillChosen + 1e-9) {
+    if (decision.tag === 'auto') {
       performAutoAttack(ctx, m, true)
       continue
     }
-    castDamageSkill(ctx, m, chosen, true)
+    applyDamageChoice(ctx, m, { kind: 'skill', skill: decision.skill }, true)
   }
   }
 
