@@ -26,6 +26,12 @@ function amountToNum(raw: string) {
 /** Digits with optional thousands separators (e.g. 1,222,333). */
 const AMOUNT_NUM = String.raw`(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?`
 
+/**
+ * Direct heal amount clauses ("restore 4631 HP …"). `/i` does not equate "restore" to "Restores" in JS,
+ * so include singular imperatives explicitly.
+ */
+const HEAL_DIRECT_VERBS = String.raw`(?:Recovers?|Restores?|Heals?|Recovering|Restoring|Healing)`
+
 /** True when the same clause continues with "+ N [per skill level|per Lv]" scaling. */
 function hasPlusPerSkillLevelAfter(description: string, matchEndIndex: number) {
   const tail = description.slice(matchEndIndex)
@@ -177,7 +183,7 @@ export function parseSupportEffects(
 
   // Example: "Increases Defense by 10 at Lv1, increasing by 2 per extra level."
   const scalingRe =
-    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers|Restores|Heals)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s%/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s+at\s+Lv1,\s+increasing\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:extra\s+)?level/gi
+    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s%/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s+at\s+Lv1,\s+increasing\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s+per\s+(?:extra\s+)?level/gi
   for (const m of description.matchAll(scalingRe)) {
     const action = m[1]
     const target = m[2].trim()
@@ -220,7 +226,7 @@ export function parseSupportEffects(
 
   // "Increases Evasion by 100 (5/skill level)" — wiki flavor often uses slash form without "+" or "per" inside parens.
   const parenSlashSkillLevelRe =
-    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers|Restores|Heals)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\s*\+?\s*(\d+(?:\.\d+)?)\s*(%?)\s*\/\s*skill\s+level\s*\)/gi
+    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\s*\+?\s*(\d+(?:\.\d+)?)\s*(%?)\s*\/\s*skill\s+level\s*\)/gi
   for (const m of description.matchAll(parenSlashSkillLevelRe)) {
     const action = m[1]
     const target = m[2].trim()
@@ -241,7 +247,7 @@ export function parseSupportEffects(
 
   // Example: "Reduces all damage taken by 6%"
   const flatRe =
-    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers|Restores|Heals)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s%/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)/gi
+    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s%/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)/gi
   for (const m of description.matchAll(flatRe)) {
     const phrase = m[0]
     if (/at\s+Lv1,\s+increasing\s+by/i.test(phrase)) continue
@@ -262,15 +268,15 @@ export function parseSupportEffects(
 
   // Example: "Recovers 2783 HP + 167 per skill level", "restoring 4631 HP + 232 per skill level"
   const healPlusScaleRe = new RegExp(
-    String.raw`(Recovers|Restores|Heals|Recovering|Restoring|Healing)\s+(${AMOUNT_NUM})\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*?)\s*\+\s*(${AMOUNT_NUM})\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b`,
+    String.raw`${HEAL_DIRECT_VERBS}\s+(${AMOUNT_NUM})\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*?)\s*\+\s*(${AMOUNT_NUM})\s*(%?)\s+per\s+(?:skill\s+level|Lv)\b`,
     'gi',
   )
   for (const m of description.matchAll(healPlusScaleRe)) {
-    const target = m[4].trim()
-    const base = amountToNum(m[2])
-    const baseUnit = (m[3] as '%' | '') || ''
-    const per = amountToNum(m[5])
-    const perUnit = (m[6] as '%' | '') || baseUnit
+    const target = m[3].trim()
+    const base = amountToNum(m[1])
+    const baseUnit = (m[2] as '%' | '') || ''
+    const per = amountToNum(m[4])
+    const perUnit = (m[5] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
       label: healEffectLabel(target),
@@ -283,14 +289,14 @@ export function parseSupportEffects(
 
   // "Recovers 5800 HP (+105 per Lv)." — paren scaling (wiki shorthand)
   const healHpParenPerLvRe = new RegExp(
-    String.raw`\b(Recovers|Restores|Heals)\s+(${AMOUNT_NUM})\s*(%?)\s+HP\s*\(\s*\+?\s*(${AMOUNT_NUM})\s*(%?)\s*per\s+(?:Lv|skill\s+level)\s*\)`,
+    String.raw`\b(?:Recovers?|Restores?|Heals?)\s+(${AMOUNT_NUM})\s*(%?)\s+HP\s*\(\s*\+?\s*(${AMOUNT_NUM})\s*(%?)\s*per\s+(?:Lv|skill\s+level)\s*\)`,
     'gi',
   )
   for (const m of description.matchAll(healHpParenPerLvRe)) {
-    const base = amountToNum(m[2])
-    const baseUnit = (m[3] as '%' | '') || ''
-    const per = amountToNum(m[4])
-    const perUnit = (m[5] as '%' | '') || baseUnit
+    const base = amountToNum(m[1])
+    const baseUnit = (m[2] as '%' | '') || ''
+    const per = amountToNum(m[3])
+    const perUnit = (m[4] as '%' | '') || baseUnit
     const unit = baseUnit || perUnit
     out.push({
       label: healEffectLabel('HP'),
@@ -443,7 +449,7 @@ export function parseSupportEffects(
 
   // Example: "Recovers 15% HP", "Heals 1200 HP", "Restores 1,122 HP", "while restoring 1,122 HP"
   const healDirectRe = new RegExp(
-    String.raw`(Recovers|Restores|Heals|Recovering|Restoring|Healing)\s+(${AMOUNT_NUM})\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*)`,
+    String.raw`${HEAL_DIRECT_VERBS}\s+(${AMOUNT_NUM})\s*(%?)\s+([A-Za-z][A-Za-z0-9\s/-]*)`,
     'gi',
   )
   for (const m of description.matchAll(healDirectRe)) {
@@ -456,9 +462,9 @@ export function parseSupportEffects(
         continue
       }
     }
-    const base = amountToNum(m[2])
-    const unit = ((m[3] as '%' | '') || '') as '%' | ''
-    const target = m[4].trim()
+    const base = amountToNum(m[1])
+    const unit = ((m[2] as '%' | '') || '') as '%' | ''
+    const target = m[3].trim()
     out.push({
       label: healEffectLabel(target),
       base,
@@ -470,7 +476,7 @@ export function parseSupportEffects(
 
   // Example: "Restores 5% DS (+1% per Skill Level)"
   const parenScaleRe =
-    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers|Restores|Heals)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\+(\d+(?:\.\d+)?)\s*(%?)\s*\/?\s*per\s+skill\s+level\)/gi
+    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\+(\d+(?:\.\d+)?)\s*(%?)\s*\/?\s*per\s+skill\s+level\)/gi
   for (const m of description.matchAll(parenScaleRe)) {
     const action = m[1]
     const target = m[2].trim()
