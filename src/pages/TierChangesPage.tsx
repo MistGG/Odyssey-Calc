@@ -11,6 +11,58 @@ function causeLabel(cause: TierChangeCause): string {
   return 'Tier'
 }
 
+function diffHighlightSegments(before: string, after: string) {
+  let left = 0
+  const maxLeft = Math.min(before.length, after.length)
+  while (left < maxLeft && before[left] === after[left]) left += 1
+
+  let right = 0
+  const maxRight = Math.min(before.length - left, after.length - left)
+  while (
+    right < maxRight &&
+    before[before.length - 1 - right] === after[after.length - 1 - right]
+  ) {
+    right += 1
+  }
+
+  return {
+    before: {
+      prefix: before.slice(0, left),
+      changed: before.slice(left, before.length - right),
+      suffix: before.slice(before.length - right),
+    },
+    after: {
+      prefix: after.slice(0, left),
+      changed: after.slice(left, after.length - right),
+      suffix: after.slice(after.length - right),
+    },
+  }
+}
+
+function renderChangeLine(line: string) {
+  const m = line.match(/^(.*?): "([\s\S]*)" -> "([\s\S]*)"$/)
+  if (!m) return line
+  const label = m[1]
+  const before = m[2]
+  const after = m[3]
+  const seg = diffHighlightSegments(before, after)
+  return (
+    <>
+      {label}: "
+      {seg.before.prefix}
+      {seg.before.changed ? (
+        <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
+      ) : null}
+      {seg.before.suffix}" {'->'} "
+      {seg.after.prefix}
+      {seg.after.changed ? (
+        <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
+      ) : null}
+      {seg.after.suffix}"
+    </>
+  )
+}
+
 type DigimonFeedRow = {
   key: string
   id: string
@@ -189,7 +241,7 @@ export function TierChangesPage() {
                         </div>
                         <ul className="tier-changes-detail-list">
                           {d.lines.map((line, idx) => (
-                            <li key={`${row.id}-${d.id}-${idx}`}>{line}</li>
+                            <li key={`${row.id}-${d.id}-${idx}`}>{renderChangeLine(line)}</li>
                           ))}
                         </ul>
                       </article>
