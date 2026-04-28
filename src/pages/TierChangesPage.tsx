@@ -60,18 +60,77 @@ function diffHighlightSegments(before: string, after: string) {
   }
 }
 
-function renderChangeLine(line: string) {
-  const m = line.match(/^(.*?): "([\s\S]*)" -> "([\s\S]*)"$/)
-  if (!m) {
-    return (
-      <span className="tier-change-line-plain tier-change-line-side-text--clamped" title={line}>
-        {line}
-      </span>
-    )
+/** `Label: 123 -> 456` (API stat/skill number lines) — not quoted text diffs. */
+function parseNumericChangeLine(line: string): { label: string; before: string; after: string } | null {
+  const arrow = ' -> '
+  const aIdx = line.lastIndexOf(arrow)
+  if (aIdx === -1) return null
+  const afterRaw = line.slice(aIdx + arrow.length).trim()
+  const left = line.slice(0, aIdx)
+  const cIdx = left.indexOf(': ')
+  if (cIdx === -1) return null
+  const label = left.slice(0, cIdx).trim()
+  const beforeRaw = left.slice(cIdx + 2).trim()
+  const numRe = /^-?\d+(?:\.\d+)?$/
+  if (!numRe.test(beforeRaw) || !numRe.test(afterRaw)) return null
+  return { label, before: beforeRaw, after: afterRaw }
+}
+
+function numericStatDedupeKey(label: string, before: string, after: string): string {
+  const l = label.trim()
+  const canon =
+    l === 'Stats.hp' || l === 'HP'
+      ? 'hp'
+      : l === 'Stats.attack' || l === 'Attack'
+        ? 'atk'
+        : `raw:${l}`
+  return `${canon}|${before}|${after}`
+}
+
+function numericStatLabelPreference(label: string): number {
+  const l = label.trim()
+  if (l === 'HP' || l === 'Attack') return 2
+  if (l === 'Stats.hp' || l === 'Stats.attack') return 1
+  return 0
+}
+
+/** Drop redundant Stats.hp / Stats.attack when HP / Attack exist for same delta (fixes legacy cached rows). */
+function dedupeSemanticNumericApiLines(lines: string[]): string[] {
+  const bestLineByKey = new Map<string, string>()
+  const prefByKey = new Map<string, number>()
+  for (const line of lines) {
+    const n = parseNumericChangeLine(line)
+    if (!n) continue
+    const key = numericStatDedupeKey(n.label, n.before, n.after)
+    const pref = numericStatLabelPreference(n.label)
+    const prev = prefByKey.get(key) ?? -1
+    if (pref > prev) {
+      prefByKey.set(key, pref)
+      bestLineByKey.set(key, line)
+    }
   }
-  const label = m[1]
-  const before = m[2]
-  const after = m[3]
+  const emittedKey = new Set<string>()
+  const seenPlain = new Set<string>()
+  const out: string[] = []
+  for (const line of lines) {
+    const n = parseNumericChangeLine(line)
+    if (!n) {
+      if (!seenPlain.has(line)) {
+        seenPlain.add(line)
+        out.push(line)
+      }
+      continue
+    }
+    const key = numericStatDedupeKey(n.label, n.before, n.after)
+    if (bestLineByKey.get(key) !== line) continue
+    if (emittedKey.has(key)) continue
+    emittedKey.add(key)
+    out.push(line)
+  }
+  return out
+}
+
+function renderDiffBlock(label: string, before: string, after: string) {
   const seg = diffHighlightSegments(before, after)
   return (
     <div className="tier-change-line-diff">
@@ -106,6 +165,25 @@ function renderChangeLine(line: string) {
   )
 }
 
+function renderChangeLine(line: string) {
+  const quoted = line.match(/^(.*?): "([\s\S]*)" -> "([\s\S]*)"$/)
+  if (quoted) {
+    const label = quoted[1]
+    const before = quoted[2]
+    const after = quoted[3]
+    return renderDiffBlock(label, before, after)
+  }
+  const numeric = parseNumericChangeLine(line)
+  if (numeric) {
+    return renderDiffBlock(numeric.label, numeric.before, numeric.after)
+  }
+  return (
+    <span className="tier-change-line-plain tier-change-line-side-text--clamped" title={line}>
+      {line}
+    </span>
+  )
+}
+
 type DigimonFeedRow = {
   key: string
   id: string
@@ -119,7 +197,10 @@ function addLine(
   map: Map<string, DigimonFeedRow>,
   meta: { id: string; name: string; role: string; cause: TierChangeCause },
   line: string,
+  seenLine: Set<string>,
 ) {
+  if (seenLine.has(line)) return
+  seenLine.add(line)
   const key = `${meta.id}:${meta.cause}`
   const prev = map.get(key)
   if (prev) {
@@ -145,12 +226,24 @@ function buildDigimonFeed(
   for (const r of row.summary.healerNew) nameById.set(r.id, r.name)
   for (const r of row.summary.statusChanges) nameById.set(r.id, r.name)
   const map = new Map<string, DigimonFeedRow>()
+  /** Per Digimon + cause: skip exact duplicate lines (e.g. legacy rows with both apiDiffById and apiDiffs). */
+  const seenByFeedKey = new Map<string, Set<string>>()
+
+  function seenFor(key: string): Set<string> {
+    let s = seenByFeedKey.get(key)
+    if (!s) {
+      s = new Set<string>()
+      seenByFeedKey.set(key, s)
+    }
+    return s
+  }
 
   for (const r of row.summary.dpsUp) {
     addLine(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `DPS ${r.before.toFixed(1)} -> ${r.after.toFixed(1)} (+${r.delta.toFixed(1)})`,
+      seenFor(`${r.id}:tier`),
     )
   }
   for (const r of row.summary.dpsDown) {
@@ -158,6 +251,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `DPS ${r.before.toFixed(1)} -> ${r.after.toFixed(1)} (${r.delta.toFixed(1)})`,
+      seenFor(`${r.id}:tier`),
     )
   }
   for (const r of row.summary.dpsNew) {
@@ -165,6 +259,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `DPS newly cached at ${r.after.toFixed(1)}`,
+      seenFor(`${r.id}:tier`),
     )
   }
 
@@ -173,6 +268,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Tank ${r.before.toFixed(2)} -> ${r.after.toFixed(2)} (+${r.delta.toFixed(2)})`,
+      seenFor(`${r.id}:tier`),
     )
   }
   for (const r of row.summary.tankDown) {
@@ -180,6 +276,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Tank ${r.before.toFixed(2)} -> ${r.after.toFixed(2)} (${r.delta.toFixed(2)})`,
+      seenFor(`${r.id}:tier`),
     )
   }
   for (const r of row.summary.tankNew) {
@@ -187,6 +284,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Tank newly cached at ${r.after.toFixed(2)}`,
+      seenFor(`${r.id}:tier`),
     )
   }
 
@@ -195,6 +293,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Healer ${r.before.toFixed(2)} -> ${r.after.toFixed(2)} (+${r.delta.toFixed(2)})`,
+      seenFor(`${r.id}:tier`),
     )
   }
   for (const r of row.summary.healerDown) {
@@ -202,6 +301,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Healer ${r.before.toFixed(2)} -> ${r.after.toFixed(2)} (${r.delta.toFixed(2)})`,
+      seenFor(`${r.id}:tier`),
     )
   }
   for (const r of row.summary.healerNew) {
@@ -209,6 +309,7 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Healer newly cached at ${r.after.toFixed(2)}`,
+      seenFor(`${r.id}:tier`),
     )
   }
 
@@ -217,26 +318,37 @@ function buildDigimonFeed(
       map,
       { id: r.id, name: r.name, role: r.role, cause: 'tier' },
       `Status ${String(r.from ?? 'pending')} -> ${r.to}`,
+      seenFor(`${r.id}:tier`),
     )
   }
 
   for (const [id, lines] of Object.entries(row.apiDiffById ?? {})) {
+    const sid = seenFor(`${id}:api`)
     for (const line of lines) {
       addLine(
         map,
         { id, name: nameById.get(id) ?? fallbackNameById.get(id) ?? id, role: '—', cause: 'api' },
         line,
+        sid,
       )
     }
   }
 
   for (const d of row.apiDiffs ?? []) {
+    const sid = seenFor(`${d.id}:api`)
     for (const line of d.lines) {
       addLine(
         map,
         { id: d.id, name: d.name || fallbackNameById.get(d.id) || d.id, role: '—', cause: 'api' },
         line,
+        sid,
       )
+    }
+  }
+
+  for (const row of map.values()) {
+    if (row.cause === 'api') {
+      row.lines = dedupeSemanticNumericApiLines(row.lines)
     }
   }
 

@@ -159,6 +159,8 @@ function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSna
   cmpNum('HP', prev.hp, next.hp)
   cmpNum('Attack', prev.attack, next.attack)
   for (const key of Object.keys(prev.stats) as Array<keyof TierApiSnapshot['stats']>) {
+    // Avoid duplicating HP / Attack: same fields are already compared above.
+    if (key === 'hp' || key === 'attack') continue
     cmpNum(`Stats.${key}`, prev.stats[key], next.stats[key])
   }
 
