@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { loadTierListCache } from '../lib/tierList'
 import {
@@ -165,6 +165,70 @@ function renderDiffBlock(label: string, before: string, after: string) {
   )
 }
 
+function formatStatDeltaParen(beforeStr: string, afterStr: string): {
+  node: ReactNode
+  summary: string
+} | null {
+  const b = parseFloat(beforeStr)
+  const a = parseFloat(afterStr)
+  if (!Number.isFinite(b) || !Number.isFinite(a)) return null
+  const delta = a - b
+  const bothInt = /^-?\d+$/.test(beforeStr.trim()) && /^-?\d+$/.test(afterStr.trim())
+  const magStr = bothInt
+    ? String(Math.abs(Math.round(delta)))
+    : (() => {
+        const x = Math.abs(delta)
+        return x.toFixed(8).replace(/\.?0+$/, '')
+      })()
+
+  if (delta === 0 || (bothInt && Math.round(delta) === 0)) {
+    return {
+      node: <span className="tier-stat-delta tier-stat-delta--flat"> (0)</span>,
+      summary: `${afterStr} (0)`,
+    }
+  }
+  const parens = delta > 0 ? `(+${magStr})` : `(-${magStr})`
+  const tone = delta > 0 ? 'gain' : 'loss'
+  const summaryPlain = `${afterStr} ${parens}`
+  return {
+    node: (
+      <span className={`tier-stat-delta tier-stat-delta--${tone}`}> {parens}</span>
+    ),
+    summary: summaryPlain,
+  }
+}
+
+/** Stats / numeric API lines: same Before/After layout; After shows plain value + colored (±Δ). */
+function renderNumericDiffBlock(label: string, before: string, after: string) {
+  const deltaFmt = formatStatDeltaParen(before, after)
+  const afterTitle = deltaFmt?.summary ?? after
+
+  return (
+    <div className="tier-change-line-diff tier-change-line-diff--numeric">
+      <div className="tier-change-line-label">{label}</div>
+      <div className="tier-change-line-side">
+        <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
+        <span
+          className="tier-change-line-side-text tier-change-line-side-text--clamped"
+          title={before}
+        >
+          {before}
+        </span>
+      </div>
+      <div className="tier-change-line-side">
+        <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
+        <span
+          className="tier-change-line-side-text tier-change-line-side-text--clamped"
+          title={afterTitle}
+        >
+          {after}
+          {deltaFmt?.node}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function renderChangeLine(line: string) {
   const quoted = line.match(/^(.*?): "([\s\S]*)" -> "([\s\S]*)"$/)
   if (quoted) {
@@ -175,7 +239,7 @@ function renderChangeLine(line: string) {
   }
   const numeric = parseNumericChangeLine(line)
   if (numeric) {
-    return renderDiffBlock(numeric.label, numeric.before, numeric.after)
+    return renderNumericDiffBlock(numeric.label, numeric.before, numeric.after)
   }
   return (
     <span className="tier-change-line-plain tier-change-line-side-text--clamped" title={line}>

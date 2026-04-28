@@ -719,6 +719,10 @@ code {
   cursor: help;
 }
 
+.tier-change-line-diff--numeric .tier-change-line-side-text--clamped {
+  cursor: default;
+}
+
 .tier-change-line-plain {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -776,6 +780,23 @@ code {
 .tier-diff-highlight-new {
   background: rgba(34, 197, 94, 0.2);
   color: #bbf7d0;
+}
+
+.tier-stat-delta {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tier-stat-delta--gain {
+  color: #86efac;
+}
+
+.tier-stat-delta--loss {
+  color: #fca5a5;
+}
+
+.tier-stat-delta--flat {
+  color: #94a3b8;
 }
 
 .tier-matrix-empty {
