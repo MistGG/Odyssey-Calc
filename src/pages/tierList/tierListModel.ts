@@ -10,6 +10,7 @@ export const RATE_LIMIT_COOLDOWN_MS = 10_000
 
 export const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'
 export const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
+export const TIER_CHANGE_HISTORY_STORAGE_KEY = 'odysseyCalc.tierChangeHistory.v1'
 export const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
 export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
@@ -85,6 +86,21 @@ export type TierListUpdateSummary = {
 }
 
 export type TierListUpdateSummaryTabKey = 'dps' | 'tank' | 'healer' | 'status'
+
+export type TierChangeCause = 'api' | 'tier'
+
+export type TierListChangeHistoryRow = {
+  id: string
+  finishedAt: string
+  mode: 'incremental' | 'force'
+  refreshedCount: number
+  apiCount: number
+  tierCount: number
+  sampleDigimon: Array<{ id: string; name: string; cause: TierChangeCause }>
+  /** API field-level diffs by Digimon id (e.g. skill cooldown/base/scaling/radius changes). */
+  apiDiffById?: Record<string, string[]>
+  summary: TierListUpdateSummary
+}
 
 export function readTierUpdatePanelMinimized(): boolean {
   try {
@@ -264,6 +280,96 @@ export function saveTierUpdateSummaryToStorage(summary: TierListUpdateSummary | 
   } catch {
     /* ignore */
   }
+}
+
+export function loadTierChangeHistory(): TierListChangeHistoryRow[] {
+  try {
+    const raw = localStorage.getItem(TIER_CHANGE_HISTORY_STORAGE_KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    const out: TierListChangeHistoryRow[] = []
+    for (const row of parsed) {
+      if (!row || typeof row !== 'object') continue
+      const r = row as Record<string, unknown>
+      const id = typeof r.id === 'string' ? r.id : null
+      const finishedAt = typeof r.finishedAt === 'string' ? r.finishedAt : null
+      const mode = r.mode === 'incremental' || r.mode === 'force' ? r.mode : null
+      const refreshedCount = typeof r.refreshedCount === 'number' ? r.refreshedCount : null
+      const apiCount = typeof r.apiCount === 'number' ? r.apiCount : 0
+      const legacyFormula = typeof r.formulaCount === 'number' ? r.formulaCount : 0
+      const legacyMixed = typeof r.mixedCount === 'number' ? r.mixedCount : 0
+      const legacyOther = typeof r.otherCount === 'number' ? r.otherCount : 0
+      const tierCount =
+        typeof r.tierCount === 'number' ? r.tierCount : legacyFormula + legacyMixed + legacyOther
+      const summaryUnknown = r.summary
+      if (
+        !id ||
+        !finishedAt ||
+        !mode ||
+        refreshedCount == null ||
+        !isTierListUpdateSummary(summaryUnknown)
+      ) {
+        continue
+      }
+      const summary = normalizeTierUpdateSummary(summaryUnknown)
+      const rawSample = Array.isArray(r.sampleDigimon) ? r.sampleDigimon : []
+      const rawApiDiffById =
+        r.apiDiffById && typeof r.apiDiffById === 'object'
+          ? (r.apiDiffById as Record<string, unknown>)
+          : {}
+      const apiDiffById: Record<string, string[]> = {}
+      for (const [id, val] of Object.entries(rawApiDiffById)) {
+        if (!Array.isArray(val)) continue
+        const lines = val.filter((x): x is string => typeof x === 'string').slice(0, 20)
+        if (lines.length > 0) apiDiffById[id] = lines
+      }
+      const sampleDigimon: TierListChangeHistoryRow['sampleDigimon'] = rawSample
+        .filter(
+          (d): d is { id: string; name: string; cause: TierChangeCause | 'formula' | 'mixed' | 'other' } =>
+            !!d &&
+            typeof d === 'object' &&
+            typeof (d as { id?: unknown }).id === 'string' &&
+            typeof (d as { name?: unknown }).name === 'string' &&
+            ['api', 'tier', 'formula', 'mixed', 'other'].includes(
+              String((d as { cause?: unknown }).cause),
+            ),
+        )
+        .map((d) => ({
+          id: d.id,
+          name: d.name,
+          cause: d.cause === 'api' ? ('api' as const) : ('tier' as const),
+        }))
+        .slice(0, 12)
+      out.push({
+        id,
+        finishedAt,
+        mode,
+        refreshedCount,
+        apiCount,
+        tierCount,
+        sampleDigimon,
+        apiDiffById,
+        summary,
+      })
+    }
+    return out
+  } catch {
+    return []
+  }
+}
+
+export function saveTierChangeHistory(rows: TierListChangeHistoryRow[]) {
+  try {
+    localStorage.setItem(TIER_CHANGE_HISTORY_STORAGE_KEY, JSON.stringify(rows))
+  } catch {
+    /* ignore */
+  }
+}
+
+export function appendTierChangeHistory(row: TierListChangeHistoryRow, maxRows = 80) {
+  const next = [row, ...loadTierChangeHistory()].slice(0, Math.max(1, maxRows))
+  saveTierChangeHistory(next)
 }
 
 export function formatTierStatus(s: DigimonContentStatus | undefined) {

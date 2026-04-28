@@ -68,6 +68,46 @@ export type AoeTierCategoryKey = keyof AoeTierCategoryScores
 /** DPS sub-tab: rotation lenses, or `aoe` for the four-column AoE matrix. */
 export type DpsTierCategoryKey = DpsRotationCategoryKey | 'aoe'
 
+export type TierApiSkillSnapshot = {
+  id: string
+  name: string
+  base_dmg: number
+  scaling: number
+  cast_time_sec: number
+  cooldown_sec: number
+  ds_cost: number
+  radius?: number
+  description?: string
+  buff_name?: string
+  buff_description?: string
+  buff_duration?: number
+}
+
+export type TierApiSnapshot = {
+  id: string
+  name: string
+  role: string
+  attribute: string
+  element: string
+  rank: number
+  hp: number
+  attack: number
+  stats: {
+    hp: number
+    ds: number
+    attack: number
+    defense: number
+    crit_rate: number
+    atk_speed: number
+    evasion: number
+    hit_rate: number
+    block_rate: number
+    dex: number
+    int: number
+  }
+  skills: TierApiSkillSnapshot[]
+}
+
 export type SustainedDpsEntry = {
   id: string
   name: string
@@ -121,6 +161,8 @@ export type SustainedDpsEntry = {
   supportScoreRevision?: number
   /** Last DPS row used this revision of `simulateRotation` (see `TIER_DPS_SIM_REVISION` in dpsSim). */
   dpsSimRevision?: number
+  /** Compact API snapshot used to show field-level wiki changes on the Changes page. */
+  apiSnapshot?: TierApiSnapshot
 }
 
 export type TierListCache = {

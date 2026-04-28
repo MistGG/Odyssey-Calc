@@ -33,6 +33,7 @@ import {
   TIER_SUPPORT_SCORE_REVISION,
   type BuildTierGroupsOptions,
   type DpsTierCategoryKey,
+  type TierApiSnapshot,
   type SustainedDpsEntry,
   type TierListCache,
   type TierListMode,
@@ -45,8 +46,9 @@ import {
   WIKI_ELEMENT_OPTIONS,
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
-import type { WikiDigimonListItem } from '../types/wikiApi'
+import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
 import {
+  appendTierChangeHistory,
   buildTierListUpdateSummary,
   fetchAllDigimonIndex,
   formatTierStatus,
@@ -71,12 +73,115 @@ import {
   writeTierIgnoreIncomplete,
   writeTierListMode,
   writeTierUpdatePanelMinimized,
+  type TierChangeCause,
+  type TierListChangeHistoryRow,
   type TierListUpdateSummary,
   type TierListUpdateSummaryTabKey,
 } from './tierList/tierListModel'
 
 /** After this many ms on one Digimon, append a reassurance line (heavy DPS sims can block the UI). */
 const TIER_UPDATE_SLOW_HINT_MS = 5_000
+
+type TierRefreshCauseFlags = {
+  api: boolean
+  tier: boolean
+  other: boolean
+}
+
+function collapseTierRefreshCause(cause?: TierRefreshCauseFlags): TierChangeCause {
+  if (!cause) return 'tier'
+  if (cause.api) return 'api'
+  return 'tier'
+}
+
+function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
+  return {
+    id: detail.id,
+    name: detail.name,
+    role: detail.role,
+    attribute: detail.attribute,
+    element: detail.element,
+    rank: detail.rank,
+    hp: detail.hp,
+    attack: detail.attack,
+    stats: {
+      hp: detail.stats?.hp ?? 0,
+      ds: detail.stats?.ds ?? 0,
+      attack: detail.stats?.attack ?? 0,
+      defense: detail.stats?.defense ?? 0,
+      crit_rate: detail.stats?.crit_rate ?? 0,
+      atk_speed: detail.stats?.atk_speed ?? 0,
+      evasion: detail.stats?.evasion ?? 0,
+      hit_rate: detail.stats?.hit_rate ?? 0,
+      block_rate: detail.stats?.block_rate ?? 0,
+      dex: detail.stats?.dex ?? 0,
+      int: detail.stats?.int ?? 0,
+    },
+    skills: (detail.skills ?? []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      base_dmg: s.base_dmg,
+      scaling: s.scaling,
+      cast_time_sec: s.cast_time_sec,
+      cooldown_sec: s.cooldown_sec,
+      ds_cost: s.ds_cost,
+      radius: s.radius,
+      description: s.description,
+      buff_name: s.buff?.name,
+      buff_description: s.buff?.description,
+      buff_duration: s.buff?.duration,
+    })),
+  }
+}
+
+function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSnapshot): string[] {
+  if (!prev) return ['Initial API snapshot captured']
+  const lines: string[] = []
+  const push = (line: string) => {
+    if (lines.length < 20) lines.push(line)
+  }
+  const cmpNum = (label: string, a: number, b: number) => {
+    if (a !== b) push(`${label}: ${a} -> ${b}`)
+  }
+  const cmpText = (label: string, a?: string, b?: string) => {
+    if ((a ?? '') !== (b ?? '')) push(`${label}: "${a ?? ''}" -> "${b ?? ''}"`)
+  }
+
+  cmpText('Role', prev.role, next.role)
+  cmpText('Attribute', prev.attribute, next.attribute)
+  cmpText('Element', prev.element, next.element)
+  cmpNum('Rank', prev.rank, next.rank)
+  cmpNum('HP', prev.hp, next.hp)
+  cmpNum('Attack', prev.attack, next.attack)
+  for (const key of Object.keys(prev.stats) as Array<keyof TierApiSnapshot['stats']>) {
+    cmpNum(`Stats.${key}`, prev.stats[key], next.stats[key])
+  }
+
+  const prevSkills = new Map(prev.skills.map((s) => [s.id, s] as const))
+  const nextSkills = new Map(next.skills.map((s) => [s.id, s] as const))
+  for (const [id, ns] of nextSkills.entries()) {
+    const ps = prevSkills.get(id)
+    if (!ps) {
+      push(`Skill added: ${ns.name}`)
+      continue
+    }
+    cmpText(`Skill ${ns.name} name`, ps.name, ns.name)
+    cmpNum(`Skill ${ns.name} base_dmg`, ps.base_dmg, ns.base_dmg)
+    cmpNum(`Skill ${ns.name} scaling`, ps.scaling, ns.scaling)
+    cmpNum(`Skill ${ns.name} cast_time`, ps.cast_time_sec, ns.cast_time_sec)
+    cmpNum(`Skill ${ns.name} cooldown`, ps.cooldown_sec, ns.cooldown_sec)
+    cmpNum(`Skill ${ns.name} ds_cost`, ps.ds_cost, ns.ds_cost)
+    cmpNum(`Skill ${ns.name} radius`, ps.radius ?? 0, ns.radius ?? 0)
+    cmpText(`Skill ${ns.name} description`, ps.description, ns.description)
+    cmpText(`Skill ${ns.name} buff name`, ps.buff_name, ns.buff_name)
+    cmpText(`Skill ${ns.name} buff description`, ps.buff_description, ns.buff_description)
+    cmpNum(`Skill ${ns.name} buff duration`, ps.buff_duration ?? 0, ns.buff_duration ?? 0)
+  }
+  for (const [id, ps] of prevSkills.entries()) {
+    if (!nextSkills.has(id)) push(`Skill removed: ${ps.name}`)
+  }
+  return lines
+}
 
 const WIKI_ATTR_STRINGS = WIKI_ATTRIBUTE_OPTIONS as readonly string[]
 const WIKI_EL_STRINGS = WIKI_ELEMENT_OPTIONS as readonly string[]
@@ -249,6 +354,8 @@ export function TierListPage() {
       working.total = all.length
 
       const hadPriorSignatures = Object.keys(working.listSignatures).length > 0
+      const refreshCauseById = new Map<string, TierRefreshCauseFlags>()
+      const apiDiffById = new Map<string, string[]>()
       // Migration safety: if signatures were not present in an older cache,
       // baseline them now so incremental mode does not force a full rebuild.
       if (!hadPriorSignatures && mode === 'incremental') {
@@ -259,23 +366,51 @@ export function TierListPage() {
         .map((d) => d.id)
         .filter((id) => {
           const entry = working.entries[id]
-          return (
-            (hadPriorSignatures && working.listSignatures[id] !== signatures[id]) ||
-            !entry ||
-            !entry.status ||
-            tierEntryIsStaleForDetailFetch(entry) ||
-            entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
-            tierEntryNeedsDpsSimRefresh(entry) ||
-            tierEntryNeedsAutoCritScores(entry) ||
-            tierEntryNeedsPerfectAtCloneScores(entry) ||
-            tierEntryNeedsAnimationCancelScores(entry)
-          )
+          const apiChanged = !entry || (hadPriorSignatures && working.listSignatures[id] !== signatures[id])
+          const formulaChanged =
+            !!entry &&
+            (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
+              tierEntryNeedsDpsSimRefresh(entry) ||
+              tierEntryNeedsAutoCritScores(entry) ||
+              tierEntryNeedsPerfectAtCloneScores(entry) ||
+              tierEntryNeedsAnimationCancelScores(entry))
+          const scheduledRefresh = !!entry && (!entry.status || tierEntryIsStaleForDetailFetch(entry))
+          const needsRefresh = apiChanged || formulaChanged || scheduledRefresh
+          if (needsRefresh) {
+            refreshCauseById.set(id, {
+              api: apiChanged,
+              tier: formulaChanged,
+              other: scheduledRefresh,
+            })
+          }
+          return needsRefresh
         })
       const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
       const plannedQueue =
         mode === 'force'
           ? all.map((d) => d.id)
           : [...new Set([...carryOverQueue, ...changedOrMissing])]
+
+      if (mode === 'force') {
+        for (const d of all) {
+          const id = d.id
+          if (refreshCauseById.has(id)) continue
+          const entry = working.entries[id]
+          const apiChanged = !entry || (hadPriorSignatures && working.listSignatures[id] !== signatures[id])
+          const formulaChanged =
+            !!entry &&
+            (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
+              tierEntryNeedsDpsSimRefresh(entry) ||
+              tierEntryNeedsAutoCritScores(entry) ||
+              tierEntryNeedsPerfectAtCloneScores(entry) ||
+              tierEntryNeedsAnimationCancelScores(entry))
+          refreshCauseById.set(id, {
+            api: apiChanged,
+            tier: formulaChanged,
+            other: !apiChanged && !formulaChanged,
+          })
+        }
+      }
 
       working.queue = plannedQueue
       const initialBuildQueueTotal = plannedQueue.length
@@ -337,6 +472,8 @@ export function TierListPage() {
         try {
           try {
             const detail = await fetchDigimonDetail(id)
+          const prevApiSnapshot = working.entries[id]?.apiSnapshot
+          const nextApiSnapshot = buildTierApiSnapshot(detail)
           const levels = levelMapForSkills(detail.skills)
           const runComparableSim = (
             durationSec: number,
@@ -477,7 +614,10 @@ export function TierListPage() {
             skillsSignature: tierSkillsSignature(detail.skills),
             supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
             dpsSimRevision: TIER_DPS_SIM_REVISION,
+            apiSnapshot: nextApiSnapshot,
           }
+          const apiDiffLines = diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
+          if (apiDiffLines.length > 0) apiDiffById.set(id, apiDiffLines)
           working.entries[id] = entry
           refreshedIds.add(id)
           working.queue.shift()
@@ -533,6 +673,32 @@ export function TierListPage() {
           )
           setUpdateSummary(nextSummary)
           saveTierUpdateSummaryToStorage(nextSummary)
+
+          let apiCount = 0
+          let tierCount = 0
+          const sampleDigimon: TierListChangeHistoryRow['sampleDigimon'] = []
+          for (const id of refreshedIds) {
+            const entry = working.entries[id]
+            if (!entry) continue
+            const rawCause = refreshCauseById.get(id)
+            const cause = collapseTierRefreshCause(rawCause)
+            if (cause === 'api') apiCount += 1
+            if (rawCause?.tier || rawCause?.other || !rawCause || cause === 'tier') tierCount += 1
+            if (sampleDigimon.length < 12) {
+              sampleDigimon.push({ id, name: entry.name, cause })
+            }
+          }
+          appendTierChangeHistory({
+            id: `${nextSummary.finishedAt}-${Math.random().toString(36).slice(2, 8)}`,
+            finishedAt: nextSummary.finishedAt,
+            mode,
+            refreshedCount: refreshedIds.size,
+            apiCount,
+            tierCount,
+            sampleDigimon,
+            apiDiffById: Object.fromEntries(apiDiffById.entries()),
+            summary: nextSummary,
+          })
         }
       }
     } catch (e: unknown) {

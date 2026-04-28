@@ -21,6 +21,7 @@ export function Layout() {
           <Link to="/lab">Lab</Link>
           <Link to="/gear">Gear</Link>
           <Link to="/tier-list">Tier list</Link>
+          <Link to="/changes">Changes</Link>
           <a
             className="nav-link-official"
             href="https://thedigitalodyssey.com/"
