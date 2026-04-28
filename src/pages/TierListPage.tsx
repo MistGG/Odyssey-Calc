@@ -135,7 +135,7 @@ function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
 }
 
 function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSnapshot): string[] {
-  if (!prev) return ['Initial API snapshot captured']
+  if (!prev) return []
   const lines: string[] = []
   const push = (line: string) => {
     if (lines.length < 20) lines.push(line)
@@ -688,6 +688,14 @@ export function TierListPage() {
               sampleDigimon.push({ id, name: entry.name, cause })
             }
           }
+          const compactApiDiffById: Record<string, string[]> = {}
+          let apiDiffBuckets = 0
+          for (const [id, lines] of apiDiffById.entries()) {
+            if (lines.length === 0) continue
+            compactApiDiffById[id] = lines.slice(0, 8)
+            apiDiffBuckets += 1
+            if (apiDiffBuckets >= 60) break
+          }
           appendTierChangeHistory({
             id: `${nextSummary.finishedAt}-${Math.random().toString(36).slice(2, 8)}`,
             finishedAt: nextSummary.finishedAt,
@@ -696,7 +704,7 @@ export function TierListPage() {
             apiCount,
             tierCount,
             sampleDigimon,
-            apiDiffById: Object.fromEntries(apiDiffById.entries()),
+            apiDiffById: compactApiDiffById,
             summary: nextSummary,
           })
         }
