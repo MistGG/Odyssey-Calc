@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { loadTierListCache } from '../lib/tierList'
 import {
   loadTierChangeHistory,
   type TierChangeCause,
@@ -47,19 +48,29 @@ function renderChangeLine(line: string) {
   const after = m[3]
   const seg = diffHighlightSegments(before, after)
   return (
-    <>
-      {label}: "
-      {seg.before.prefix}
-      {seg.before.changed ? (
-        <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
-      ) : null}
-      {seg.before.suffix}" {'->'} "
-      {seg.after.prefix}
-      {seg.after.changed ? (
-        <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
-      ) : null}
-      {seg.after.suffix}"
-    </>
+    <div className="tier-change-line-diff">
+      <div className="tier-change-line-label">{label}</div>
+      <div className="tier-change-line-side">
+        <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
+        <span className="tier-change-line-side-text">
+          {seg.before.prefix}
+          {seg.before.changed ? (
+            <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
+          ) : null}
+          {seg.before.suffix}
+        </span>
+      </div>
+      <div className="tier-change-line-side">
+        <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
+        <span className="tier-change-line-side-text">
+          {seg.after.prefix}
+          {seg.after.changed ? (
+            <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
+          ) : null}
+          {seg.after.suffix}
+        </span>
+      </div>
+    </div>
   )
 }
 
@@ -86,7 +97,10 @@ function addLine(
   map.set(key, { key, ...meta, lines: [line] })
 }
 
-function buildDigimonFeed(row: TierListChangeHistoryRow): DigimonFeedRow[] {
+function buildDigimonFeed(
+  row: TierListChangeHistoryRow,
+  fallbackNameById: Map<string, string>,
+): DigimonFeedRow[] {
   const nameById = new Map(row.sampleDigimon.map((d) => [d.id, d.name] as const))
   for (const r of row.summary.dpsUp) nameById.set(r.id, r.name)
   for (const r of row.summary.dpsDown) nameById.set(r.id, r.name)
@@ -178,12 +192,17 @@ function buildDigimonFeed(row: TierListChangeHistoryRow): DigimonFeedRow[] {
     for (const line of lines) {
       addLine(
         map,
-        {
-          id,
-          name: nameById.get(id) ?? id,
-          role: '—',
-          cause: 'api',
-        },
+        { id, name: nameById.get(id) ?? fallbackNameById.get(id) ?? id, role: '—', cause: 'api' },
+        line,
+      )
+    }
+  }
+
+  for (const d of row.apiDiffs ?? []) {
+    for (const line of d.lines) {
+      addLine(
+        map,
+        { id: d.id, name: d.name || fallbackNameById.get(d.id) || d.id, role: '—', cause: 'api' },
         line,
       )
     }
@@ -193,13 +212,22 @@ function buildDigimonFeed(row: TierListChangeHistoryRow): DigimonFeedRow[] {
 }
 
 export function TierChangesPage() {
+  const fallbackNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    const cache = loadTierListCache()
+    for (const [id, e] of Object.entries(cache?.entries ?? {})) {
+      if (e.name?.trim()) map.set(id, e.name.trim())
+    }
+    return map
+  }, [])
+
   const rows = useMemo(
     () =>
       loadTierChangeHistory().map((row) => ({
         row,
-        feed: buildDigimonFeed(row),
+        feed: buildDigimonFeed(row, fallbackNameById),
       })),
-    [],
+    [fallbackNameById],
   )
 
   return (
