@@ -62,7 +62,13 @@ function diffHighlightSegments(before: string, after: string) {
 
 function renderChangeLine(line: string) {
   const m = line.match(/^(.*?): "([\s\S]*)" -> "([\s\S]*)"$/)
-  if (!m) return line
+  if (!m) {
+    return (
+      <span className="tier-change-line-plain tier-change-line-side-text--clamped" title={line}>
+        {line}
+      </span>
+    )
+  }
   const label = m[1]
   const before = m[2]
   const after = m[3]
@@ -72,7 +78,10 @@ function renderChangeLine(line: string) {
       <div className="tier-change-line-label">{label}</div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
-        <span className="tier-change-line-side-text">
+        <span
+          className="tier-change-line-side-text tier-change-line-side-text--clamped"
+          title={before}
+        >
           {seg.before.prefix}
           {seg.before.changed ? (
             <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
@@ -82,7 +91,10 @@ function renderChangeLine(line: string) {
       </div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
-        <span className="tier-change-line-side-text">
+        <span
+          className="tier-change-line-side-text tier-change-line-side-text--clamped"
+          title={after}
+        >
           {seg.after.prefix}
           {seg.after.changed ? (
             <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
@@ -231,10 +243,15 @@ function buildDigimonFeed(
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
+function normalizeDigimonSearch(raw: string): string {
+  return raw.trim().toLowerCase()
+}
+
 export function TierChangesPage() {
   const [hideNoChanges, setHideNoChanges] = useState(readHideNoChangesPref)
   const [showApiChanges, setShowApiChanges] = useState(true)
   const [showTierChanges, setShowTierChanges] = useState(true)
+  const [digimonSearch, setDigimonSearch] = useState('')
   const fallbackNameById = useMemo(() => {
     const map = new Map<string, string>()
     const cache = loadTierListCache()
@@ -253,13 +270,20 @@ export function TierChangesPage() {
       }),
     [fallbackNameById],
   )
+  const searchNorm = normalizeDigimonSearch(digimonSearch)
   const visibleRows = rows
-    .map((r) => ({
-      ...r,
-      visibleFeed: r.feed.filter(
+    .map((r) => {
+      const byCause = r.feed.filter(
         (d) => (d.cause === 'api' && showApiChanges) || (d.cause === 'tier' && showTierChanges),
-      ),
-    }))
+      )
+      const visibleFeed = searchNorm
+        ? byCause.filter(
+            (d) =>
+              d.name.toLowerCase().includes(searchNorm) || d.id.toLowerCase().includes(searchNorm),
+          )
+        : byCause
+      return { ...r, visibleFeed }
+    })
     .filter((r) => (hideNoChanges ? r.visibleFeed.length > 0 : true))
 
   return (
@@ -269,39 +293,60 @@ export function TierChangesPage() {
       </div>
       <section className="lab-result">
         <p className="tier-wip-note">This page is a WIP. Data is checked against your cache.</p>
-        <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">
-          <span className="tier-filter-label">Options</span>
-          <div className="stage-tabs tier-filter-chips">
-            <button
-              type="button"
-              className="stage-tab tier-facet-tab tier-option-chip"
-              aria-pressed={hideNoChanges}
-              onClick={() =>
-                setHideNoChanges((v) => {
-                  const next = !v
-                  writeHideNoChangesPref(next)
-                  return next
-                })
-              }
-            >
-              Hide entries without changes
-            </button>
-            <button
-              type="button"
-              className="stage-tab tier-facet-tab tier-option-chip"
-              aria-pressed={showApiChanges}
-              onClick={() => setShowApiChanges((v) => !v)}
-            >
-              API changes
-            </button>
-            <button
-              type="button"
-              className="stage-tab tier-facet-tab tier-option-chip"
-              aria-pressed={showTierChanges}
-              onClick={() => setShowTierChanges((v) => !v)}
-            >
-              Tier changes
-            </button>
+        <div className="tier-filter-panel tier-changes-filter-panel">
+          <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">
+            <span className="tier-filter-label">Options</span>
+            <div className="stage-tabs tier-filter-chips">
+              <button
+                type="button"
+                className="stage-tab tier-facet-tab tier-option-chip"
+                aria-pressed={hideNoChanges}
+                onClick={() =>
+                  setHideNoChanges((v) => {
+                    const next = !v
+                    writeHideNoChangesPref(next)
+                    return next
+                  })
+                }
+              >
+                Hide entries without changes
+              </button>
+              <button
+                type="button"
+                className="stage-tab tier-facet-tab tier-option-chip"
+                aria-pressed={showApiChanges}
+                onClick={() => setShowApiChanges((v) => !v)}
+              >
+                API changes
+              </button>
+              <button
+                type="button"
+                className="stage-tab tier-facet-tab tier-option-chip"
+                aria-pressed={showTierChanges}
+                onClick={() => setShowTierChanges((v) => !v)}
+              >
+                Tier changes
+              </button>
+            </div>
+          </div>
+          <div
+            className="tier-filter-row tier-filter-row--options tier-changes-search-row"
+            role="search"
+          >
+            <label className="tier-filter-label" htmlFor="tier-changes-digimon-search">
+              Search
+            </label>
+            <input
+              id="tier-changes-digimon-search"
+              className="tier-changes-search-input"
+              type="search"
+              placeholder="Digimon name or ID…"
+              value={digimonSearch}
+              onChange={(e) => setDigimonSearch(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              aria-label="Filter by Digimon name or ID"
+            />
           </div>
         </div>
         {visibleRows.length === 0 ? (
@@ -311,6 +356,8 @@ export function TierChangesPage() {
                 No tier change history yet. Run <Link to="/tier-list">Update tier list</Link> to create
                 an entry.
               </>
+            ) : searchNorm ? (
+              <>No entries match your search and the current filters.</>
             ) : (
               <>No entries match the current filter.</>
             )}
@@ -334,7 +381,13 @@ export function TierChangesPage() {
                     {visibleFeed.map((d) => (
                       <article key={`${row.id}-${d.key}`} className="tier-changes-digimon-card">
                         <div className="tier-changes-digimon-head">
-                          <Link to={`/lab?digimonId=${encodeURIComponent(d.id)}`}>{d.name}</Link>
+                          <Link
+                            className="tier-changes-digimon-name"
+                            to={`/lab?digimonId=${encodeURIComponent(d.id)}`}
+                            title={d.name}
+                          >
+                            {d.name}
+                          </Link>
                           <span className="muted">{d.role}</span>
                           <span className={`tier-changes-cause tier-changes-cause-${d.cause}`}>
                             {causeLabel(d.cause)}

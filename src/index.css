@@ -576,6 +576,12 @@ code {
   margin-top: 0.55rem;
 }
 
+.tier-wip-note--alert {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(127, 29, 29, 0.28);
+  color: #fecaca;
+}
+
 .tier-changes-list {
   display: flex;
   flex-direction: column;
@@ -703,6 +709,58 @@ code {
 
 .tier-change-line-side-text {
   word-break: break-word;
+}
+
+.tier-change-line-side-text--clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+  cursor: help;
+}
+
+.tier-change-line-plain {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+  word-break: break-word;
+  cursor: help;
+}
+
+.tier-changes-filter-panel {
+  margin-top: 0.5rem;
+}
+
+.tier-changes-search-row {
+  align-items: center;
+}
+
+.tier-changes-search-row .tier-changes-search-input {
+  flex: 1;
+  min-width: 12rem;
+  max-width: 28rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+.tier-changes-search-row .tier-changes-search-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px var(--cyan-dim);
+}
+
+.tier-changes-digimon-head .tier-changes-digimon-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .tier-diff-highlight {

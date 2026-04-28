@@ -1096,10 +1096,9 @@ export function TierListPage() {
           ) : null}
         </div>
       </div>
-      <div className="tier-wip-note tier-wip-note-wide" role="note">
+      <div className="tier-wip-note tier-wip-note-wide tier-wip-note--alert" role="note">
         <p>
-          <strong>Disclaimer:</strong> The tier list is now in a stable state as DPS formulas should be more accurate and automatic
-          rotations have been further optimized with feedback.
+          <strong>Disclaimer:</strong> We are investigating the new patch, the tier list will likely change again.
         </p>
         <p>
           ASB, Attributes, Variance damage and latency are not considered at this time. If you feel something
