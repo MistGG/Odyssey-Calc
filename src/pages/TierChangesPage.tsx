@@ -223,10 +223,11 @@ export function TierChangesPage() {
 
   const rows = useMemo(
     () =>
-      loadTierChangeHistory().map((row) => ({
-        row,
-        feed: buildDigimonFeed(row, fallbackNameById),
-      })),
+      loadTierChangeHistory().map((row) => {
+        const feed = buildDigimonFeed(row, fallbackNameById)
+        const apiCardCount = new Set(feed.filter((d) => d.cause === 'api').map((d) => d.id)).size
+        return { row, feed, apiCardCount }
+      }),
     [fallbackNameById],
   )
 
@@ -244,7 +245,7 @@ export function TierChangesPage() {
           </p>
         ) : (
           <div className="tier-changes-list">
-            {rows.map(({ row, feed }) => (
+            {rows.map(({ row, feed, apiCardCount }) => (
               <article key={row.id} className="tier-changes-item tier-changes-run">
                 <div className="tier-changes-item-head">
                   <h3>
@@ -254,7 +255,7 @@ export function TierChangesPage() {
                   <span className="tier-changes-total">{row.refreshedCount} refreshed</span>
                 </div>
                 <p className="muted tier-changes-cause-breakdown">
-                  API data: {row.apiCount} · Tier: {row.tierCount}
+                  API data: {Math.max(row.apiCount, apiCardCount)} · Tier: {row.tierCount}
                 </p>
                 {feed.length > 0 ? (
                   <div className="tier-changes-digimon-grid">
