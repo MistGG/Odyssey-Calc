@@ -36,6 +36,16 @@ function addLine(
 
 function buildDigimonFeed(row: TierListChangeHistoryRow): DigimonFeedRow[] {
   const nameById = new Map(row.sampleDigimon.map((d) => [d.id, d.name] as const))
+  for (const r of row.summary.dpsUp) nameById.set(r.id, r.name)
+  for (const r of row.summary.dpsDown) nameById.set(r.id, r.name)
+  for (const r of row.summary.dpsNew) nameById.set(r.id, r.name)
+  for (const r of row.summary.tankUp) nameById.set(r.id, r.name)
+  for (const r of row.summary.tankDown) nameById.set(r.id, r.name)
+  for (const r of row.summary.tankNew) nameById.set(r.id, r.name)
+  for (const r of row.summary.healerUp) nameById.set(r.id, r.name)
+  for (const r of row.summary.healerDown) nameById.set(r.id, r.name)
+  for (const r of row.summary.healerNew) nameById.set(r.id, r.name)
+  for (const r of row.summary.statusChanges) nameById.set(r.id, r.name)
   const map = new Map<string, DigimonFeedRow>()
 
   for (const r of row.summary.dpsUp) {
