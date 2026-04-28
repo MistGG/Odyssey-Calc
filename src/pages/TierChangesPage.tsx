@@ -233,6 +233,8 @@ function buildDigimonFeed(
 
 export function TierChangesPage() {
   const [hideNoChanges, setHideNoChanges] = useState(readHideNoChangesPref)
+  const [showApiChanges, setShowApiChanges] = useState(true)
+  const [showTierChanges, setShowTierChanges] = useState(true)
   const fallbackNameById = useMemo(() => {
     const map = new Map<string, string>()
     const cache = loadTierListCache()
@@ -251,7 +253,14 @@ export function TierChangesPage() {
       }),
     [fallbackNameById],
   )
-  const visibleRows = hideNoChanges ? rows.filter((r) => r.feed.length > 0) : rows
+  const visibleRows = rows
+    .map((r) => ({
+      ...r,
+      visibleFeed: r.feed.filter(
+        (d) => (d.cause === 'api' && showApiChanges) || (d.cause === 'tier' && showTierChanges),
+      ),
+    }))
+    .filter((r) => (hideNoChanges ? r.visibleFeed.length > 0 : true))
 
   return (
     <div className="lab tier-page">
@@ -277,6 +286,22 @@ export function TierChangesPage() {
             >
               Hide entries without changes
             </button>
+            <button
+              type="button"
+              className="stage-tab tier-facet-tab tier-option-chip"
+              aria-pressed={showApiChanges}
+              onClick={() => setShowApiChanges((v) => !v)}
+            >
+              API changes
+            </button>
+            <button
+              type="button"
+              className="stage-tab tier-facet-tab tier-option-chip"
+              aria-pressed={showTierChanges}
+              onClick={() => setShowTierChanges((v) => !v)}
+            >
+              Tier changes
+            </button>
           </div>
         </div>
         {visibleRows.length === 0 ? (
@@ -292,7 +317,7 @@ export function TierChangesPage() {
           </p>
         ) : (
           <div className="tier-changes-list">
-            {visibleRows.map(({ row, feed, apiCardCount }) => (
+            {visibleRows.map(({ row, visibleFeed, apiCardCount }) => (
               <article key={row.id} className="tier-changes-item tier-changes-run">
                 <div className="tier-changes-item-head">
                   <h3>
@@ -304,9 +329,9 @@ export function TierChangesPage() {
                 <p className="muted tier-changes-cause-breakdown">
                   API data: {Math.max(row.apiCount, apiCardCount)} · Tier: {row.tierCount}
                 </p>
-                {feed.length > 0 ? (
+                {visibleFeed.length > 0 ? (
                   <div className="tier-changes-digimon-grid">
-                    {feed.map((d) => (
+                    {visibleFeed.map((d) => (
                       <article key={`${row.id}-${d.key}`} className="tier-changes-digimon-card">
                         <div className="tier-changes-digimon-head">
                           <Link to={`/lab?digimonId=${encodeURIComponent(d.id)}`}>{d.name}</Link>
@@ -324,7 +349,7 @@ export function TierChangesPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="muted">No score/status deltas were recorded for this run.</p>
+                  <p className="muted">No entries match the selected change-type filters for this run.</p>
                 )}
               </article>
             ))}
