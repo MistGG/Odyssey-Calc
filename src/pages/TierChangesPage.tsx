@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { loadTierListCache } from '../lib/tierList'
 import {
@@ -212,6 +212,7 @@ function buildDigimonFeed(
 }
 
 export function TierChangesPage() {
+  const [hideNoChanges, setHideNoChanges] = useState(false)
   const fallbackNameById = useMemo(() => {
     const map = new Map<string, string>()
     const cache = loadTierListCache()
@@ -230,6 +231,7 @@ export function TierChangesPage() {
       }),
     [fallbackNameById],
   )
+  const visibleRows = hideNoChanges ? rows.filter((r) => r.feed.length > 0) : rows
 
   return (
     <div className="lab tier-page">
@@ -238,14 +240,33 @@ export function TierChangesPage() {
       </div>
       <section className="lab-result">
         <p className="tier-wip-note">This page is a WIP. Data is checked against your cache.</p>
-        {rows.length === 0 ? (
+        <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">
+          <span className="tier-filter-label">Options</span>
+          <div className="stage-tabs tier-filter-chips">
+            <button
+              type="button"
+              className="stage-tab tier-facet-tab tier-option-chip"
+              aria-pressed={hideNoChanges}
+              onClick={() => setHideNoChanges((v) => !v)}
+            >
+              Hide entries without changes
+            </button>
+          </div>
+        </div>
+        {visibleRows.length === 0 ? (
           <p className="muted">
-            No tier change history yet. Run <Link to="/tier-list">Update tier list</Link> to create an
-            entry.
+            {rows.length === 0 ? (
+              <>
+                No tier change history yet. Run <Link to="/tier-list">Update tier list</Link> to create
+                an entry.
+              </>
+            ) : (
+              <>No entries match the current filter.</>
+            )}
           </p>
         ) : (
           <div className="tier-changes-list">
-            {rows.map(({ row, feed, apiCardCount }) => (
+            {visibleRows.map(({ row, feed, apiCardCount }) => (
               <article key={row.id} className="tier-changes-item tier-changes-run">
                 <div className="tier-changes-item-head">
                   <h3>
