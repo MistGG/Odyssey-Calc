@@ -7,6 +7,26 @@ import {
   type TierListChangeHistoryRow,
 } from './tierList/tierListModel'
 
+const TIER_CHANGES_HIDE_NO_CHANGES_KEY = 'odysseyCalc.tierChanges.hideNoChanges.v1'
+
+function readHideNoChangesPref(): boolean {
+  try {
+    const raw = localStorage.getItem(TIER_CHANGES_HIDE_NO_CHANGES_KEY)
+    if (raw == null) return true
+    return raw === '1'
+  } catch {
+    return true
+  }
+}
+
+function writeHideNoChangesPref(on: boolean) {
+  try {
+    localStorage.setItem(TIER_CHANGES_HIDE_NO_CHANGES_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
 function causeLabel(cause: TierChangeCause): string {
   if (cause === 'api') return 'API data'
   return 'Tier'
@@ -212,7 +232,7 @@ function buildDigimonFeed(
 }
 
 export function TierChangesPage() {
-  const [hideNoChanges, setHideNoChanges] = useState(false)
+  const [hideNoChanges, setHideNoChanges] = useState(readHideNoChangesPref)
   const fallbackNameById = useMemo(() => {
     const map = new Map<string, string>()
     const cache = loadTierListCache()
@@ -247,7 +267,13 @@ export function TierChangesPage() {
               type="button"
               className="stage-tab tier-facet-tab tier-option-chip"
               aria-pressed={hideNoChanges}
-              onClick={() => setHideNoChanges((v) => !v)}
+              onClick={() =>
+                setHideNoChanges((v) => {
+                  const next = !v
+                  writeHideNoChangesPref(next)
+                  return next
+                })
+              }
             >
               Hide entries without changes
             </button>
