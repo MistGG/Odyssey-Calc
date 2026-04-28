@@ -97,8 +97,10 @@ export type TierListChangeHistoryRow = {
   apiCount: number
   tierCount: number
   sampleDigimon: Array<{ id: string; name: string; cause: TierChangeCause }>
-  /** API field-level diffs by Digimon id (e.g. skill cooldown/base/scaling/radius changes). */
+  /** Legacy API field-level diffs by Digimon id. */
   apiDiffById?: Record<string, string[]>
+  /** API field-level diffs with display names (preferred shape). */
+  apiDiffs?: Array<{ id: string; name: string; lines: string[] }>
   summary: TierListUpdateSummary
 }
 
@@ -324,6 +326,23 @@ export function loadTierChangeHistory(): TierListChangeHistoryRow[] {
         const lines = val.filter((x): x is string => typeof x === 'string').slice(0, 20)
         if (lines.length > 0) apiDiffById[id] = lines
       }
+      const rawApiDiffs = Array.isArray(r.apiDiffs) ? r.apiDiffs : []
+      const apiDiffs: Array<{ id: string; name: string; lines: string[] }> = rawApiDiffs
+        .filter(
+          (d): d is { id: string; name: string; lines: unknown[] } =>
+            !!d &&
+            typeof d === 'object' &&
+            typeof (d as { id?: unknown }).id === 'string' &&
+            typeof (d as { name?: unknown }).name === 'string' &&
+            Array.isArray((d as { lines?: unknown }).lines),
+        )
+        .map((d) => ({
+          id: d.id,
+          name: d.name,
+          lines: d.lines.filter((x): x is string => typeof x === 'string').slice(0, 20),
+        }))
+        .filter((d) => d.lines.length > 0)
+        .slice(0, 60)
       const sampleDigimon: TierListChangeHistoryRow['sampleDigimon'] = rawSample
         .filter(
           (d): d is { id: string; name: string; cause: TierChangeCause | 'formula' | 'mixed' | 'other' } =>
@@ -350,6 +369,7 @@ export function loadTierChangeHistory(): TierListChangeHistoryRow[] {
         tierCount,
         sampleDigimon,
         apiDiffById,
+        apiDiffs,
         summary,
       })
     }

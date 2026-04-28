@@ -140,11 +140,16 @@ function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSna
   const push = (line: string) => {
     if (lines.length < 20) lines.push(line)
   }
+  const compactText = (v?: string, max = 92) => {
+    const s = (v ?? '').replace(/\s+/g, ' ').trim()
+    if (s.length <= max) return s
+    return `${s.slice(0, max - 1)}…`
+  }
   const cmpNum = (label: string, a: number, b: number) => {
     if (a !== b) push(`${label}: ${a} -> ${b}`)
   }
   const cmpText = (label: string, a?: string, b?: string) => {
-    if ((a ?? '') !== (b ?? '')) push(`${label}: "${a ?? ''}" -> "${b ?? ''}"`)
+    if ((a ?? '') !== (b ?? '')) push(`${label}: "${compactText(a)}" -> "${compactText(b)}"`)
   }
 
   cmpText('Role', prev.role, next.role)
@@ -617,7 +622,15 @@ export function TierListPage() {
             apiSnapshot: nextApiSnapshot,
           }
           const apiDiffLines = diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
-          if (apiDiffLines.length > 0) apiDiffById.set(id, apiDiffLines)
+          if (apiDiffLines.length > 0) {
+            apiDiffById.set(id, apiDiffLines)
+            const prevCause = refreshCauseById.get(id)
+            refreshCauseById.set(id, {
+              api: true,
+              tier: prevCause?.tier ?? false,
+              other: prevCause?.other ?? false,
+            })
+          }
           working.entries[id] = entry
           refreshedIds.add(id)
           working.queue.shift()
@@ -689,10 +702,13 @@ export function TierListPage() {
             }
           }
           const compactApiDiffById: Record<string, string[]> = {}
+          const compactApiDiffs: Array<{ id: string; name: string; lines: string[] }> = []
           let apiDiffBuckets = 0
           for (const [id, lines] of apiDiffById.entries()) {
             if (lines.length === 0) continue
-            compactApiDiffById[id] = lines.slice(0, 8)
+            const clipped = lines.slice(0, 8)
+            compactApiDiffById[id] = clipped
+            compactApiDiffs.push({ id, name: working.entries[id]?.name ?? id, lines: clipped })
             apiDiffBuckets += 1
             if (apiDiffBuckets >= 60) break
           }
@@ -705,6 +721,7 @@ export function TierListPage() {
             tierCount,
             sampleDigimon,
             apiDiffById: compactApiDiffById,
+            apiDiffs: compactApiDiffs,
             summary: nextSummary,
           })
         }
