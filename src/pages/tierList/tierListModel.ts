@@ -2,6 +2,7 @@ import { fetchDigimonPage } from '../../api/digimonService'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
 import type { DpsTierCategoryKey, SustainedDpsEntry, TierListMode } from '../../lib/tierList'
+import { sanitizeDpsTargetEnemyAttribute } from '../../lib/wikiListFacetOptions'
 import type { WikiDigimonListItem } from '../../types/wikiApi'
 
 export const REQUEST_DELAY_MS = 700
@@ -16,6 +17,7 @@ export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
 export const TIER_DPS_PERFECT_AT_CLONE_KEY = 'odysseyCalc.tierList.dpsPerfectAtClone.v1'
 export const TIER_DPS_AUTO_ANIM_CANCEL_KEY = 'odysseyCalc.tierList.dpsAutoAnimCancel.v1'
+export const TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY = 'odysseyCalc.tierList.dpsTargetEnemyAttribute.v1'
 export const TIER_IGNORE_INCOMPLETE_KEY = 'odysseyCalc.tierList.ignoreIncomplete.v1'
 export const TIER_DPS_CHANGE_EPS = 0.05
 export const TIER_TANK_SCORE_CHANGE_EPS = 0.02
@@ -214,6 +216,23 @@ export function readDpsAutoAnimCancel(): boolean {
 export function writeDpsAutoAnimCancel(on: boolean) {
   try {
     localStorage.setItem(TIER_DPS_AUTO_ANIM_CANCEL_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Wiki enemy attribute used for DPS sim attribute-advantage (triangle + neutral None). Empty = off. */
+export function readTierDpsTargetEnemyAttribute(): string {
+  try {
+    return sanitizeDpsTargetEnemyAttribute(localStorage.getItem(TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY) ?? '')
+  } catch {
+    return ''
+  }
+}
+
+export function writeTierDpsTargetEnemyAttribute(value: string) {
+  try {
+    localStorage.setItem(TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY, value)
   } catch {
     /* ignore */
   }

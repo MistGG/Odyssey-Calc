@@ -1,4 +1,5 @@
 import type { WikiSkill } from '../types/wikiApi'
+import { attributeAdvantageSkillDamageMultiplier } from './attributeAdvantage'
 import { skillDamageAtLevel, skillIsSupportOnly } from './skillDamage'
 import {
   digimonRoleWikiSkills,
@@ -109,7 +110,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 23
+export const TIER_DPS_SIM_REVISION = 25
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -378,6 +379,11 @@ type SimCtx = {
   targets: number
   baseAttack: number
   baseCritRateStat: number
+  /**
+   * Vaccine/Data/Virus advantage vs selected enemy attribute: ×1.5 on full skill hit only
+   * (wiki base_dmg/scaling term + ATK term); autos unchanged.
+   */
+  attributeAdvantageSkillMult: number
   forceAutoCrit: boolean
   perfectAtClone: boolean
   autoAttackAnimationCancel: boolean
@@ -668,7 +674,8 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
   const critMult = critCapable ? expectedCritMultiplier(critChance, activeCritDamagePct) : 1
   const targetHits = skill.radius && skill.radius > 0 ? Math.max(1, ctx.targets) : 1
   const atkTerm = atkBuffed * critMult * targetHits
-  const dmg = baseSkillTerm + atkTerm
+  const rawSkillHit = baseSkillTerm + atkTerm
+  const dmg = rawSkillHit * ctx.attributeAdvantageSkillMult
 
   const baselineAtkTerm = Math.max(0, ctx.baseAttack) * targetHits
   const baselineDmg = baseSkillDamage + baselineAtkTerm
@@ -1325,6 +1332,13 @@ export type RotationSimOptions = {
    * as auto rotation; supports skipped when `manualSupportOnly` is true).
    */
   customRotationFiller?: Array<{ skillId: string }>
+  /** Attacker wiki attribute (Vaccine/Data/Virus/…); used with `targetEnemyAttribute`. */
+  attackerAttribute?: string | null
+  /**
+   * Enemy wiki attribute for attribute-advantage checks. When set and the attacker wins the
+   * Vaccine→Data→Virus triangle, **skill damage only** (full skill hit) is multiplied by 1.5.
+   */
+  targetEnemyAttribute?: string | null
 }
 
 type RotationSimCoreOpts = {
@@ -1335,6 +1349,8 @@ type RotationSimCoreOpts = {
   autoAttackAnimationCancel: boolean
   /** Seconds; clamped; used when `autoAttackAnimationCancel` is true. */
   animCancelOverlapSec: number
+  /** 1 or 1.5 when attribute advantage applies to skill hits. */
+  attributeAdvantageSkillMult: number
   useCustomRotation: boolean
   customRotationSkillIds: string[]
   manualSupportOnly: boolean
@@ -1726,6 +1742,7 @@ function runRotationSim(
     targets,
     baseAttack,
     baseCritRateStat,
+    attributeAdvantageSkillMult: core.attributeAdvantageSkillMult,
     forceAutoCrit: core.forceAutoCrit,
     perfectAtClone: core.perfectAtClone,
     autoAttackAnimationCancel: core.autoAttackAnimationCancel,
@@ -1989,6 +2006,32 @@ function resolveCustomRotationFullCycles(
   return clampCustomRotationFullCycles(raw)
 }
 
+function buildRotationSimCore(
+  roleNorm: string,
+  hybridStance: HybridStance,
+  options: RotationSimOptions | undefined,
+  animCancelOverlapSec: number,
+  customRotationFullCycles: number | undefined,
+): RotationSimCoreOpts {
+  return {
+    roleNorm,
+    hybridStance,
+    forceAutoCrit: options?.forceAutoCrit === true,
+    perfectAtClone: options?.perfectAtClone === true,
+    autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+    animCancelOverlapSec,
+    attributeAdvantageSkillMult: attributeAdvantageSkillDamageMultiplier(
+      options?.attackerAttribute,
+      options?.targetEnemyAttribute,
+    ),
+    useCustomRotation: Array.isArray(options?.customRotation),
+    customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
+    manualSupportOnly: options?.manualSupportOnly === true,
+    customRotationFullCycles,
+    customRotationFillerSkillIds: (options?.customRotationFiller ?? []).map((row) => row.skillId),
+  }
+}
+
 export function simulateRotation(
   skills: WikiSkill[] | undefined | null,
   levelBySkillId: Record<string, number>,
@@ -2021,19 +2064,7 @@ export function simulateRotation(
         baseAttack,
         attackSpeed,
         baseCritRateStat,
-        {
-          roleNorm,
-          hybridStance: st,
-          forceAutoCrit: options?.forceAutoCrit === true,
-          perfectAtClone: options?.perfectAtClone === true,
-          autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
-          animCancelOverlapSec,
-          useCustomRotation: Array.isArray(options?.customRotation),
-          customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
-          manualSupportOnly: options?.manualSupportOnly === true,
-          customRotationFullCycles,
-          customRotationFillerSkillIds: (options?.customRotationFiller ?? []).map((row) => row.skillId),
-        },
+        buildRotationSimCore(roleNorm, st, options, animCancelOverlapSec, customRotationFullCycles),
       )
       if (!best || r.dps > best.dps) best = r
     }
@@ -2054,18 +2085,12 @@ export function simulateRotation(
     baseAttack,
     attackSpeed,
     baseCritRateStat,
-    {
+    buildRotationSimCore(
       roleNorm,
-      hybridStance: hybridConcrete,
-      forceAutoCrit: options?.forceAutoCrit === true,
-      perfectAtClone: options?.perfectAtClone === true,
-      autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+      hybridConcrete,
+      options,
       animCancelOverlapSec,
-      useCustomRotation: Array.isArray(options?.customRotation),
-      customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
-      manualSupportOnly: options?.manualSupportOnly === true,
       customRotationFullCycles,
-      customRotationFillerSkillIds: (options?.customRotationFiller ?? []).map((row) => row.skillId),
-    },
+    ),
   )
 }

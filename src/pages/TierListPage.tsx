@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
+import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
+import { ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT } from '../lib/attributeAdvantage'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
@@ -60,6 +62,7 @@ import {
   readDpsAutoAnimCancel,
   readDpsForceAutoCrit,
   readDpsPerfectAtClone,
+  readTierDpsTargetEnemyAttribute,
   readTierIgnoreIncomplete,
   readTierListMode,
   readTierUpdatePanelMinimized,
@@ -70,6 +73,7 @@ import {
   writeDpsAutoAnimCancel,
   writeDpsForceAutoCrit,
   writeDpsPerfectAtClone,
+  writeTierDpsTargetEnemyAttribute,
   writeTierIgnoreIncomplete,
   writeTierListMode,
   writeTierUpdatePanelMinimized,
@@ -220,6 +224,9 @@ export function TierListPage() {
   const [dpsForceAutoCrit, setDpsForceAutoCrit] = useState<boolean>(readDpsForceAutoCrit)
   const [dpsPerfectAtClone, setDpsPerfectAtClone] = useState<boolean>(readDpsPerfectAtClone)
   const [dpsAutoAnimCancel, setDpsAutoAnimCancel] = useState<boolean>(readDpsAutoAnimCancel)
+  const [dpsTargetEnemyAttribute, setDpsTargetEnemyAttribute] = useState<string>(() =>
+    readTierDpsTargetEnemyAttribute(),
+  )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
 
   function setTierModePersist(next: TierListMode) {
@@ -245,6 +252,11 @@ export function TierListPage() {
   function setDpsAutoAnimCancelPersist(next: boolean) {
     setDpsAutoAnimCancel(next)
     writeDpsAutoAnimCancel(next)
+  }
+
+  function setDpsTargetEnemyAttributePersist(next: string) {
+    setDpsTargetEnemyAttribute(next)
+    writeTierDpsTargetEnemyAttribute(next)
   }
 
   function setIgnoreIncompletePersist(next: boolean) {
@@ -487,7 +499,10 @@ export function TierListPage() {
               autoAttackAnimationCancel?: boolean
             },
           ) => {
-            const cfg = buildComparableRotationConfig(detail, durationSec, 1, options)
+            const cfg = buildComparableRotationConfig(detail, durationSec, 1, {
+              ...options,
+              targetEnemyAttribute: dpsTargetEnemyAttribute,
+            })
             return simulateRotation(
               detail.skills,
               levels,
@@ -1657,6 +1672,11 @@ export function TierListPage() {
                       {DEFAULT_ROTATION_SIM_DURATION_SEC}s; Hybrid defaults to melee stance).
                     </li>
                     <li>
+                      <strong>Attribute damage:</strong> optional <em>DPS target</em> below applies the
+                      Vaccine/Data/Virus triangle and neutral <strong>None</strong> (everyone gets ×
+                      {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} on full skill hits).
+                    </li>
+                    <li>
                       <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
                       horizon (openers / short burst bias).
                     </li>
@@ -1894,6 +1914,24 @@ export function TierListPage() {
                     </button>
                   )
                 })}
+              </div>
+            </div>
+            <div
+              className="tier-filter-row tier-filter-row--dps-enemy-attr"
+              role="group"
+              aria-labelledby="tier-dps-enemy-attr-label"
+            >
+              <span className="tier-filter-label" id="tier-dps-enemy-attr-label">
+                DPS target
+              </span>
+              <div className="tier-dps-enemy-attr-stack">
+                <EnemyAttributeTargetField
+                  value={dpsTargetEnemyAttribute}
+                  onChange={setDpsTargetEnemyAttributePersist}
+                  selectClassName="tier-dps-enemy-attr-select"
+                  ariaLabel="Enemy wiki attribute for DPS attribute damage"
+                  showLegend={false}
+                />
               </div>
             </div>
             <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Tier list options">

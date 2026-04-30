@@ -2,6 +2,10 @@ import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
+import {
+  ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
+  attributeAdvantageIsActive,
+} from '../lib/attributeAdvantage'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import {
@@ -25,6 +29,8 @@ import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../
 import { SKILL_LEVEL_CAP, skillDamageAtLevel, skillIsSupportOnly } from '../lib/skillDamage'
 import { buildSupportSkillEffects } from '../lib/supportEffects'
 import type { RotationEvent } from '../lib/dpsSim'
+import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
+import { DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 /** One line of text, or a titled block with sub-bullets (e.g. animation-cancel priority). */
@@ -301,6 +307,13 @@ function initialRotCyclesFromParams(params: URLSearchParams): number {
   return Number.isFinite(v) && v >= 0 ? v : DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
 }
 
+function parseEnemyAttrFromSearch(search: string): string {
+  const raw = new URLSearchParams(search).get('enemyAttr')?.trim() ?? ''
+  if (!raw) return ''
+  if ((DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS as readonly string[]).includes(raw)) return raw
+  return ''
+}
+
 const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
 const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-index'
 
@@ -351,6 +364,9 @@ export function DpsLabPage() {
   )
   const [forceAutoCrit, setForceAutoCrit] = useState(() => parseToggleFromParams(params, 'forceAutoCrit'))
   const [perfectAtClone, setPerfectAtClone] = useState(() => parseToggleFromParams(params, 'perfectAtClone'))
+  const [targetEnemyAttribute, setTargetEnemyAttribute] = useState(() =>
+    parseEnemyAttrFromSearch(search),
+  )
   const [sim, setSim] = useState<RotationResult | null>(null)
   const [simBusy, setSimBusy] = useState(false)
   const [simSlowHint, setSimSlowHint] = useState(false)
@@ -393,6 +409,12 @@ export function DpsLabPage() {
     setAnimCancelReactionMs(parseReactMsFromParams(next))
     setForceAutoCrit(parseToggleFromParams(next, 'forceAutoCrit'))
     setPerfectAtClone(parseToggleFromParams(next, 'perfectAtClone'))
+    const rawEnemy = next.get('enemyAttr')?.trim() ?? ''
+    setTargetEnemyAttribute(
+      rawEnemy && (DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS as readonly string[]).includes(rawEnemy)
+        ? rawEnemy
+        : '',
+    )
   }, [search])
 
   useEffect(() => {
@@ -645,6 +667,8 @@ export function DpsLabPage() {
                 rotationMode === 'custom' && customRotationFillerValidRows.length > 0
                   ? customRotationFillerValidRows
                   : undefined,
+              attackerAttribute: data.attribute ?? '',
+              targetEnemyAttribute: targetEnemyAttribute.trim() || undefined,
             },
           )
           if (!cancelled) setSim(result)
@@ -684,6 +708,7 @@ export function DpsLabPage() {
     customRotationValidRows,
     customRotationFullCycles,
     customRotationFillerValidRows,
+    targetEnemyAttribute,
   ])
 
   const breakdown = useMemo(() => {
@@ -1074,6 +1099,7 @@ export function DpsLabPage() {
     }
     if (forceAutoCrit) next.set('forceAutoCrit', '1')
     if (perfectAtClone) next.set('perfectAtClone', '1')
+    if (targetEnemyAttribute.trim()) next.set('enemyAttr', targetEnemyAttribute.trim())
     /** Canonical GitHub Pages URL so shared links work outside localhost. */
     const shareBase = 'https://mistgg.github.io/Odyssey-Calc'
     return `${shareBase}#/lab?${next.toString()}`
@@ -1091,6 +1117,7 @@ export function DpsLabPage() {
     animCancelReactionMs,
     forceAutoCrit,
     perfectAtClone,
+    targetEnemyAttribute,
   ])
 
   const onShareLabUrl = useCallback(async () => {
@@ -1339,20 +1366,31 @@ export function DpsLabPage() {
                     onCommit={(next) => setTargets(next)}
                   />
                 </label>
-                <label className="lab-sim-duration-label">
-                  <span className="lab-sim-duration-label-text">
-                    {rotationMode === 'custom' ? 'Max simulation time' : 'Simulation seconds'}
-                  </span>
-                  <EditableNumberInput
-                    min={MIN_ROTATION_SIM_DURATION_SEC}
-                    max={MAX_ROTATION_SIM_DURATION_SEC}
-                    step={5}
-                    integer
-                    emptyValue={DEFAULT_ROTATION_SIM_DURATION_SEC}
-                    value={durationSec}
-                    onCommit={(next) => setDurationSec(clampRotationDurationSec(next))}
+                <div className="lab-enemy-attr-field">
+                  <EnemyAttributeTargetField
+                    value={targetEnemyAttribute}
+                    onChange={setTargetEnemyAttribute}
+                    attackerAttribute={data?.attribute}
+                    ariaLabel="Enemy Digimon wiki attribute (skill attribute damage)"
+                    fieldCaption="Enemy attribute"
+                    afterSelectSlot={
+                      <label className="lab-sim-duration-label lab-sim-duration-label--inline">
+                        <span className="lab-sim-duration-label-text">
+                          {rotationMode === 'custom' ? 'Max simulation time' : 'Simulation seconds'}
+                        </span>
+                        <EditableNumberInput
+                          min={MIN_ROTATION_SIM_DURATION_SEC}
+                          max={MAX_ROTATION_SIM_DURATION_SEC}
+                          step={5}
+                          integer
+                          emptyValue={DEFAULT_ROTATION_SIM_DURATION_SEC}
+                          value={durationSec}
+                          onCommit={(next) => setDurationSec(clampRotationDurationSec(next))}
+                        />
+                      </label>
+                    }
                   />
-                </label>
+                </div>
                 {rotationMode === 'custom' ? (
                   <>
                     <label className="lab-sim-duration-label">
@@ -1396,6 +1434,15 @@ export function DpsLabPage() {
                   </>
                 ) : null}
               </div>
+              {data &&
+              attributeAdvantageIsActive(data.attribute ?? '', targetEnemyAttribute) ? (
+                <p className="lab-enemy-attr-active-hint" role="status">
+                  {targetEnemyAttribute === 'None'
+                    ? `Neutral enemy (None): skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `
+                    : `Attribute advantage vs ${targetEnemyAttribute}: skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `}
+                  (full skill hit; auto damage unchanged).
+                </p>
+              ) : null}
               <div className="lab-custom-rotation-mode">
                 <p className="lab-controls-bar-title">Rotation mode</p>
                 <div className="lab-custom-rotation-mode-options" role="tablist" aria-label="Rotation mode">

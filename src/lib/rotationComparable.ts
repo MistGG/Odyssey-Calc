@@ -35,15 +35,19 @@ function comparableBaseAttack(
  * - optional special modifiers mapped 1:1 into sim options
  */
 export function buildComparableRotationConfig(
-  detail: Pick<WikiDigimonDetail, 'role' | 'attack' | 'stats'>,
+  detail: Pick<WikiDigimonDetail, 'role' | 'attack' | 'stats' | 'attribute'>,
   durationSec: number,
   targets: number,
   options?: Pick<
     RotationSimOptions,
     'forceAutoCrit' | 'perfectAtClone' | 'autoAttackAnimationCancel'
-  >,
+  > & {
+    /** Wiki attribute of the enemy (Vaccine/Data/Virus/…). Empty = no attribute advantage. */
+    targetEnemyAttribute?: string
+  },
 ): ComparableRotationConfig {
   const perfectAtClone = options?.perfectAtClone === true
+  const targetAttr = (options?.targetEnemyAttribute ?? '').trim()
   return {
     durationSec,
     targets: Math.max(1, Math.floor(targets)),
@@ -56,6 +60,8 @@ export function buildComparableRotationConfig(
       forceAutoCrit: options?.forceAutoCrit === true,
       perfectAtClone,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+      attackerAttribute: detail.attribute ?? '',
+      targetEnemyAttribute: targetAttr || undefined,
     },
   }
 }

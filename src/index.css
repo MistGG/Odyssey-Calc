@@ -1513,6 +1513,225 @@ code {
   margin-top: 0;
 }
 
+.tier-filter-row--dps-enemy-attr {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.tier-dps-enemy-attr-stack {
+  flex: 0 0 auto;
+  width: 12rem;
+  max-width: min(12rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-self: flex-start;
+}
+
+.tier-dps-enemy-attr-stack .enemy-attr-target-field {
+  width: 100%;
+  gap: 0;
+}
+
+.tier-dps-enemy-attr-select {
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 100%;
+  cursor: pointer;
+  outline: none;
+  min-height: 0;
+}
+
+.tier-dps-enemy-attr-select:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px var(--cyan-dim);
+}
+
+/* DPS lab / tier: enemy attribute target (triangle + neutral None) */
+.enemy-attr-target-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.enemy-attr-select-row--with-slot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  align-items: end;
+}
+
+@media (max-width: 560px) {
+  .enemy-attr-select-row--with-slot {
+    grid-template-columns: 1fr;
+  }
+}
+
+.enemy-attr-select-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.enemy-attr-field-caption {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.lab-controls-fields .lab-sim-duration-label--inline {
+  font-size: 0.875rem;
+  color: var(--muted);
+  gap: 0.4rem;
+}
+
+.enemy-attr-select {
+  padding: 0.45rem 2rem 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+}
+
+.enemy-attr-select:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px var(--cyan-dim);
+}
+
+/* Tier DPS target: compact select (base .enemy-attr-select comes later and would win otherwise). */
+.tier-dps-enemy-attr-stack .enemy-attr-select.tier-dps-enemy-attr-select {
+  padding: 0.22rem 1.35rem 0.22rem 0.45rem;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.enemy-attr-select--unset {
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.enemy-attr-select--vaccine {
+  border-color: rgba(56, 189, 248, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+}
+
+.enemy-attr-select--data {
+  border-color: rgba(74, 222, 128, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.12);
+}
+
+.enemy-attr-select--virus {
+  border-color: rgba(244, 114, 182, 0.65);
+  box-shadow: inset 0 0 0 1px rgba(244, 114, 182, 0.12);
+}
+
+.enemy-attr-select--neutral {
+  border-color: rgba(148, 163, 184, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.15);
+}
+
+.enemy-attr-legend {
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(51, 65, 85, 0.35);
+}
+
+.enemy-attr-legend-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.enemy-attr-legend-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.enemy-attr-legend-item {
+  margin: 0.15rem 0;
+}
+
+.enemy-attr-legend-item--neutral {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.35);
+}
+
+.enemy-attr-legend-beats {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.enemy-attr-pill {
+  display: inline-block;
+  padding: 0.06rem 0.38rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.74rem;
+}
+
+.enemy-attr-pill--vaccine {
+  background: rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+}
+
+.enemy-attr-pill--data {
+  background: rgba(74, 222, 128, 0.18);
+  color: #86efac;
+}
+
+.enemy-attr-pill--virus {
+  background: rgba(244, 114, 182, 0.18);
+  color: #f9a8d4;
+}
+
+.enemy-attr-pill--neutral {
+  background: rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
+}
+
+.enemy-attr-pill--misc {
+  background: rgba(167, 139, 250, 0.2);
+  color: #ddd6fe;
+}
+
+.enemy-attr-you-line {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #bae6fd;
+}
+
+.enemy-attr-you-active {
+  color: #86efac;
+  font-weight: 600;
+}
+
+.enemy-attr-you-inactive {
+  color: #94a3b8;
+}
+
+.lab-enemy-attr-field {
+  grid-column: 1 / -1;
+}
+
+.lab-controls-fields .enemy-attr-target-field {
+  max-width: 100%;
+}
+
 .tier-filter-label {
   flex: 0 0 auto;
   min-width: 4.75rem;
@@ -3055,6 +3274,28 @@ code {
   gap: 0.4rem;
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.lab-controls-fields select:not(.enemy-attr-select) {
+  padding: 0.45rem 2rem 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.lab-controls-fields select:not(.enemy-attr-select):focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px var(--cyan-dim);
+}
+
+.lab-enemy-attr-active-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #86efac;
 }
 
 .lab-special-modifier-list {
