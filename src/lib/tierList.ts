@@ -56,7 +56,8 @@ export type DpsRotationCategoryScores = {
   burstAutoDps?: number
 }
 
-export type DpsRotationCategoryKey = keyof DpsRotationCategoryScores
+/** Sort/display lens for rotation DPS only (`DpsRotationCategoryScores` also holds auto-DPS metadata). */
+export type DpsRotationCategoryKey = 'sustained' | 'burst'
 
 /** AoE matrix columns when the DPS sub-tab “AoE” is selected (wiki `radius` skills). */
 export type AoeTierCategoryScores = {
@@ -415,9 +416,8 @@ function healerCategorySortValue(entry: SustainedDpsEntry, key: HealerTierCatego
 
 function dpsRotationSortValue(entry: SustainedDpsEntry, key: DpsRotationCategoryKey): number {
   const s = entry.dpsCategoryScores
-  if (s && key in s) return s[key]
-  if (key === 'sustained') return entry.dps ?? -1
-  return -1
+  if (!s) return key === 'sustained' ? entry.dps ?? -1 : -1
+  return key === 'sustained' ? s.sustained : s.burst
 }
 
 function aoeCategorySortValue(entry: SustainedDpsEntry, key: AoeTierCategoryKey): number {
