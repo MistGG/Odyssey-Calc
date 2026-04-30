@@ -67,7 +67,7 @@ export type AoeTierCategoryScores = {
   cooldown: number
   /** Arbitrary farming rank heuristic (bucketed composite). */
   farming: number
-  /** Wiki radius of the same main AoE skill. */
+  /** Wiki radius of the same damaging AoE skill (0 if none). */
   radius: number
 }
 

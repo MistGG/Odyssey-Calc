@@ -32,11 +32,12 @@ export function TierListScoringNotes({
                   horizon (openers / short burst bias).
                 </li>
                 <li>
-                  <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab for Damage / Uptime / Farming / Radius
-                  (wiki <code>radius</code> &gt; 0). <strong>Damage</strong> is per-cast damage of the hardest-hitting
-                  damaging AoE; <strong>Uptime</strong> is cast-time share of that skill&apos;s cycle;{' '}
-                  <strong>Farming</strong> uses cooldown-only buckets (≤8, (8,10], (10,12], &gt;12s) and a damage / DPS /
-                  radius blend; <strong>Radius</strong> is that skill&apos;s wiki radius.
+                  <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab for Damage / Uptime / Farming / Radius.
+                  <strong>Damage</strong>, <strong>Uptime</strong>, and <strong>Radius</strong> use only{' '}
+                  <strong>damaging</strong> wiki AoE skills (<code>radius</code> &gt; 0, non-support damage lines); buff
+                  / heal AoE is excluded. <strong>Farming</strong> uses cooldown-only buckets (≤8, (8,10], (10,12],
+                  &gt;12s) and a damage / DPS / radius blend on damaging AoE (support-only kits use a legacy cadence
+                  fallback).
                 </li>
               </ul>
             </div>

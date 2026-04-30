@@ -99,17 +99,13 @@ function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick |
   return best
 }
 
-function firstWikiAoeSkill(detail: WikiDigimonDetail): WikiSkill | undefined {
-  return detail.skills?.find(skillIsWikiAoe)
-}
-
 /**
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: per-cast damage of the **hardest-hitting** damaging AoE (tie-break higher `damage ÷ (cast + cooldown)`).
  * - **Cooldown** (display): **cast-time uptime** for that same skill — `cast_time ÷ (cast + cooldown)` (display as % of cycle).
  * - **Farming**: arbitrary composite rank (cooldown-only buckets + blend; legacy if no damage AoE).
- * - **Radius**: wiki `radius` of that same skill (support-only kit: first AoE skill’s radius if any).
+ * - **Radius**: wiki `radius` of that same skill (no damaging AoE → 0; buff/heal radii ignored).
  */
 export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   damage: number
@@ -174,13 +170,6 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
     damage = main.dmgPerCast
     cooldown = Math.min(1, Math.max(0, main.castTimeSec / main.periodSec))
     radius = main.radius
-  } else {
-    const fallback = firstWikiAoeSkill(detail)
-    if (fallback && typeof fallback.radius === 'number') {
-      radius = fallback.radius
-      const period = Math.max(0.5, fallback.cooldown_sec + fallback.cast_time_sec)
-      cooldown = Math.min(1, Math.max(0, Math.max(0, fallback.cast_time_sec) / period))
-    }
   }
 
   return { damage, cooldown, farming, radius }

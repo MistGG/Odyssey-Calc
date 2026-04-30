@@ -1762,8 +1762,8 @@ export function TierListPage() {
                       edges). Best damaging AoE in each bucket uses <code>damage</code>,{' '}
                       <code>DPS</code> (<code>damage ÷ (cast + cooldown)</code>), and <code>radius</code>.
                       Support-only kits
-                      use a legacy cadence blend. <strong>Radius</strong> is the wiki radius of that same
-                      hardest-hitting skill (support-only: first AoE skill for radius/uptime).
+                      use a legacy cadence blend. <strong>Radius</strong> and <strong>Uptime</strong> use that same
+                      damaging skill only (support/buff AoE radii are ignored; no damaging AoE → 0).
                     </li>
                   </ul>
                 </div>
