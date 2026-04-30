@@ -582,13 +582,6 @@ code {
   color: #fecaca;
 }
 
-.tier-changes-page-head .tier-changes-lead {
-  margin: 0.35rem 0 0;
-  max-width: 44rem;
-  line-height: 1.5;
-  font-size: 0.92rem;
-}
-
 .tier-changes-list {
   display: flex;
   flex-direction: column;
@@ -802,8 +795,19 @@ code {
 }
 
 .tier-change-summary--score {
-  justify-content: space-between;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.tier-change-summary--score .tier-change-summary-values {
+  flex: unset;
+  min-width: 0;
+}
+
+.tier-change-summary--score .tier-change-summary-delta {
+  margin-left: 0;
 }
 
 .tier-change-summary-metric {
@@ -836,6 +840,8 @@ code {
   margin-left: auto;
   font-weight: 700;
   font-size: 0.9rem;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .tier-change-summary-delta--up {
@@ -867,21 +873,78 @@ code {
   color: #93c5fd;
 }
 
-.tier-change-summary--status .tier-change-summary-values {
-  flex-basis: 100%;
-  margin-left: 0;
-  margin-top: 0.1rem;
+/* Status chips + arrow: one row, no scrollbars—compact copy + ellipsis for odd raw values */
+.tier-change-summary.tier-change-summary--status {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
 }
 
-@media (max-width: 520px) {
-  .tier-change-summary--score {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.tier-change-summary--status .tier-change-summary-metric {
+  flex-shrink: 0;
+}
 
-  .tier-change-summary-delta {
-    margin-left: 0;
-  }
+.tier-change-status-flow {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.28rem 0.38rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: visible;
+}
+
+.tier-change-status-arrow {
+  color: #64748b;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.tier-change-status-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: 0.3rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border: 1px solid transparent;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tier-change-status-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tier-change-status-chip .tier-status-dot {
+  flex-shrink: 0;
+}
+
+.tier-change-status-chip--complete {
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.42);
+  background: rgba(74, 222, 128, 0.12);
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.12);
+}
+
+.tier-change-status-chip--incomplete {
+  color: #fecaca;
+  border-color: rgba(251, 113, 133, 0.42);
+  background: rgba(251, 113, 133, 0.12);
+  box-shadow: 0 0 12px rgba(251, 113, 133, 0.1);
+}
+
+.tier-change-status-chip--unknown {
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(51, 65, 85, 0.35);
 }
 
 .tier-change-line-diff {
@@ -951,7 +1014,31 @@ code {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 7;
   overflow: hidden;
-  cursor: help;
+  cursor: default;
+  border-radius: 0.25rem;
+  transition: box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+@media (hover: hover) {
+  .tier-change-line-side-text--clamped:hover,
+  .tier-change-line-plain:hover {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+    -webkit-box-orient: unset;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.48);
+    background: rgba(15, 23, 42, 0.98);
+    padding: 0.28rem 0.42rem;
+    margin: -0.28rem -0.42rem;
+  }
+
+  .tier-changes-digimon-card:has(.tier-change-line-side-text--clamped:hover),
+  .tier-changes-digimon-card:has(.tier-change-line-plain:hover) {
+    position: relative;
+    z-index: 8;
+  }
 }
 
 .tier-change-line-diff--numeric .tier-change-line-side-text--clamped {
@@ -964,8 +1051,10 @@ code {
   -webkit-line-clamp: 7;
   overflow: hidden;
   word-break: break-word;
-  cursor: help;
+  cursor: default;
   line-height: 1.45;
+  border-radius: 0.25rem;
+  transition: box-shadow 0.12s ease, background-color 0.12s ease;
 }
 
 .tier-changes-filter-panel {

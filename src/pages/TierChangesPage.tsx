@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { contentStatusLabel, type DigimonContentStatus } from '../lib/contentStatus'
 import { loadTierListCache } from '../lib/tierList'
 import {
   loadTierChangeHistory,
@@ -30,6 +31,47 @@ function writeHideNoChangesPref(on: boolean) {
 function causeLabel(cause: TierChangeCause): string {
   if (cause === 'api') return 'API data'
   return 'Tier'
+}
+
+function parseContentStatusToken(raw: string): DigimonContentStatus | 'unknown' {
+  const n = raw.trim().toLowerCase()
+  if (n === 'complete') return 'complete'
+  if (n === 'incomplete') return 'incomplete'
+  return 'unknown'
+}
+
+/** Short visible copy so status chips stay one line without horizontal scroll in narrow cards */
+function statusChipLabel(parsed: DigimonContentStatus | 'unknown', raw: string): string {
+  if (parsed === 'complete') return 'Complete'
+  if (parsed === 'incomplete') return 'Incomplete'
+  const t = raw.trim()
+  return t || 'Unknown'
+}
+
+function statusChipAriaLabel(parsed: DigimonContentStatus | 'unknown', raw: string): string {
+  if (parsed === 'complete') return contentStatusLabel('complete')
+  if (parsed === 'incomplete') return contentStatusLabel('incomplete')
+  const t = raw.trim()
+  return t || 'Unknown'
+}
+
+function renderContentStatusChip(parsed: DigimonContentStatus | 'unknown', raw: string) {
+  const dotClass =
+    parsed === 'complete'
+      ? 'tier-status-dot-complete'
+      : parsed === 'incomplete'
+        ? 'tier-status-dot-incomplete'
+        : 'tier-status-dot-unknown'
+
+  return (
+    <span
+      className={`tier-change-status-chip tier-change-status-chip--${parsed}`}
+      aria-label={statusChipAriaLabel(parsed, raw)}
+    >
+      <span className={`tier-status-dot ${dotClass}`} aria-hidden="true" />
+      <span className="tier-change-status-chip-label">{statusChipLabel(parsed, raw)}</span>
+    </span>
+  )
 }
 
 function diffHighlightSegments(before: string, after: string) {
@@ -137,10 +179,7 @@ function renderDiffBlock(label: string, before: string, after: string) {
       <div className="tier-change-line-label">{label}</div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
-        <span
-          className="tier-change-line-side-text tier-change-line-side-text--clamped"
-          title={before}
-        >
+        <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
           {seg.before.prefix}
           {seg.before.changed ? (
             <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
@@ -150,10 +189,7 @@ function renderDiffBlock(label: string, before: string, after: string) {
       </div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
-        <span
-          className="tier-change-line-side-text tier-change-line-side-text--clamped"
-          title={after}
-        >
+        <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
           {seg.after.prefix}
           {seg.after.changed ? (
             <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
@@ -201,26 +237,17 @@ function formatStatDeltaParen(beforeStr: string, afterStr: string): {
 /** Stats / numeric API lines: same Before/After layout; After shows plain value + colored (±Δ). */
 function renderNumericDiffBlock(label: string, before: string, after: string) {
   const deltaFmt = formatStatDeltaParen(before, after)
-  const afterTitle = deltaFmt?.summary ?? after
 
   return (
     <div className="tier-change-line-diff tier-change-line-diff--numeric">
       <div className="tier-change-line-label">{label}</div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
-        <span
-          className="tier-change-line-side-text tier-change-line-side-text--clamped"
-          title={before}
-        >
-          {before}
-        </span>
+        <span className="tier-change-line-side-text tier-change-line-side-text--clamped">{before}</span>
       </div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
-        <span
-          className="tier-change-line-side-text tier-change-line-side-text--clamped"
-          title={afterTitle}
-        >
+        <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
           {after}
           {deltaFmt?.node}
         </span>
@@ -242,9 +269,7 @@ function renderChangeLine(line: string) {
     return renderNumericDiffBlock(numeric.label, numeric.before, numeric.after)
   }
   return (
-    <span className="tier-change-line-plain tier-change-line-side-text--clamped" title={line}>
-      {line}
-    </span>
+    <span className="tier-change-line-plain tier-change-line-side-text--clamped">{line}</span>
   )
 }
 
@@ -263,16 +288,21 @@ function renderTierScoreLine(line: string): ReactNode | null {
 
   const status = line.match(/^Status (.+) -> (.+)$/)
   if (status) {
+    const fromRaw = status[1].trim()
+    const toRaw = status[2].trim()
+    const fromParsed = parseContentStatusToken(fromRaw)
+    const toParsed = parseContentStatusToken(toRaw)
+
     return (
       <div className="tier-change-summary tier-change-summary--status">
         <span className="tier-change-summary-metric">Status</span>
-        <span className="tier-change-summary-values">
-          <span className="tier-change-summary-before">{status[1]}</span>
-          <span className="tier-change-summary-arrow" aria-hidden>
+        <div className="tier-change-status-flow">
+          {renderContentStatusChip(fromParsed, fromRaw)}
+          <span className="tier-change-status-arrow" aria-hidden="true">
             →
           </span>
-          <span className="tier-change-summary-after">{status[2]}</span>
-        </span>
+          {renderContentStatusChip(toParsed, toRaw)}
+        </div>
       </div>
     )
   }
@@ -295,7 +325,7 @@ function renderTierScoreLine(line: string): ReactNode | null {
     return (
       <div className={`tier-change-summary tier-change-summary--score tier-change-summary--${tone}`}>
         <span className="tier-change-summary-metric">{metric}</span>
-        <div className="tier-change-summary-values" title={`${before} → ${after}`}>
+        <div className="tier-change-summary-values">
           <span className="tier-change-summary-before tier-change-num">{before}</span>
           <span className="tier-change-summary-arrow" aria-hidden>
             →
@@ -533,13 +563,9 @@ export function TierChangesPage() {
     .filter((r) => (hideNoChanges ? r.visibleFeed.length > 0 : true))
 
   return (
-    <div className="lab tier-page tier-changes-page">
-      <div className="tier-page-head tier-changes-page-head">
+    <div className="lab tier-page">
+      <div className="tier-page-head">
         <h1>Tier list changes</h1>
-        <p className="tier-changes-lead muted">
-          Chronological log of tier list refreshes. Each block is one run; cards list Digimon whose wiki data
-          or simulated tiers changed.
-        </p>
       </div>
       <section className="lab-result">
         <p className="tier-wip-note tier-wip-note-wide">
@@ -627,17 +653,12 @@ export function TierChangesPage() {
                     <time className="tier-changes-run-time" dateTime={finished.toISOString()}>
                       {finished.toLocaleString()}
                     </time>
-                    <span
-                      className={`tier-changes-mode-badge tier-changes-mode-badge--${row.mode}`}
-                      title={row.mode === 'force' ? 'Full wiki sweep' : 'Only stale or missing entries were checked'}
-                    >
+                    <span className={`tier-changes-mode-badge tier-changes-mode-badge--${row.mode}`}>
                       {row.mode === 'force' ? 'Force check' : 'Incremental'}
                     </span>
                   </div>
                   <div className="tier-changes-run-header-meta">
-                    <span className="tier-changes-total" title="Digimon processed in this run">
-                      {row.refreshedCount} scanned
-                    </span>
+                    <span className="tier-changes-total">{row.refreshedCount} scanned</span>
                     <dl className="tier-changes-run-counts" aria-label="Changes in this run">
                       <div className="tier-changes-run-count">
                         <dt>API</dt>
@@ -658,7 +679,7 @@ export function TierChangesPage() {
                           <Link
                             className="tier-changes-digimon-name"
                             to={`/lab?digimonId=${encodeURIComponent(d.id)}`}
-                            title={`Open ${d.name} in DPS Lab`}
+                            aria-label={`Open ${d.name} in DPS Lab`}
                           >
                             {d.name}
                           </Link>
