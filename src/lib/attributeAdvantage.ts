@@ -5,17 +5,18 @@
  */
 export const ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT = 1.5
 
+/** Strong matchup: attacker wiki attribute → enemy attribute it beats (rock–paper–scissors). */
 const BEATS: Record<string, string> = {
-  Vaccine: 'Data',
-  Data: 'Virus',
-  Virus: 'Vaccine',
+  Vaccine: 'Virus',
+  Virus: 'Data',
+  Data: 'Vaccine',
 }
 
-/** Ordered triangle edges for UI: attacker beats defender. */
+/** Ordered triangle edges for UI: attacker beats defender (Vaccine→Virus→Data→Vaccine). */
 export const ATTRIBUTE_TRIANGLE_EDGES: readonly { attacker: string; defender: string }[] = [
-  { attacker: 'Vaccine', defender: 'Data' },
-  { attacker: 'Data', defender: 'Virus' },
-  { attacker: 'Virus', defender: 'Vaccine' },
+  { attacker: 'Vaccine', defender: 'Virus' },
+  { attacker: 'Virus', defender: 'Data' },
+  { attacker: 'Data', defender: 'Vaccine' },
 ]
 
 export function normalizeWikiAttribute(raw: string | null | undefined): string {

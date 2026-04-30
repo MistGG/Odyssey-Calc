@@ -1336,7 +1336,7 @@ export type RotationSimOptions = {
   attackerAttribute?: string | null
   /**
    * Enemy wiki attribute for attribute-advantage checks. When set and the attacker wins the
-   * Vaccine→Data→Virus triangle, **skill damage only** (full skill hit) is multiplied by 1.5.
+   * Vaccine→Virus→Data triangle (or enemy **None**), **skill damage only** (full skill hit) is multiplied by 1.5.
    */
   targetEnemyAttribute?: string | null
 }
