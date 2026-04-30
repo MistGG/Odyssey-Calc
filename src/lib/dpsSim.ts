@@ -110,7 +110,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 26
+export const TIER_DPS_SIM_REVISION = 30
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).

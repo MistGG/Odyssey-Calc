@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom'
 import { digimonPortraitUrl } from '../../lib/digimonImage'
 import { digimonStageBorderColor } from '../../lib/digimonStage'
 import { contentStatusLabel } from '../../lib/contentStatus'
-import type { DpsTierCategoryKey, TierGroup, TierListMode } from '../../lib/tierList'
+import {
+  formatAoeTierMatrixCell,
+  type DpsTierCategoryKey,
+  type TierGroup,
+  type TierListMode,
+} from '../../lib/tierList'
 import type { WikiDigimonListItem } from '../../types/wikiApi'
 import { TierListFilterPanel } from './TierListFilterPanel'
 
@@ -142,7 +147,9 @@ export function TierListMatrixTable({
                                         const k = columnGroup.aoeSortKey
                                         const s = e.aoeCategoryScores
                                         const v = s?.[k]
-                                        return v != null ? v.toFixed(2) : '…'
+                                        return v != null && Number.isFinite(v)
+                                          ? formatAoeTierMatrixCell(k, v)
+                                          : '…'
                                       })()
                                     : tierMode === 'dps' && dpsTierCategory !== 'aoe'
                                       ? (() => {

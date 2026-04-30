@@ -61,10 +61,14 @@ export type DpsRotationCategoryKey = 'sustained' | 'burst'
 
 /** AoE matrix columns when the DPS sub-tab “AoE” is selected (wiki `radius` skills). */
 export type AoeTierCategoryScores = {
-  general: number
+  /** Main damaging AoE skill: damage ÷ (cast + cooldown). */
   damage: number
+  /** Main damaging AoE: cast_time ÷ period (0–1); display as % cycle in cast. */
   cooldown: number
+  /** Arbitrary farming rank heuristic (bucketed composite). */
   farming: number
+  /** Wiki radius of the same main AoE skill. */
+  radius: number
 }
 
 export type AoeTierCategoryKey = keyof AoeTierCategoryScores
@@ -253,17 +257,34 @@ export const DPS_TIER_MATRIX_COLUMN_LABELS: Record<DpsTierCategoryKey, string> =
 }
 
 export const AOE_TIER_CATEGORY_ORDER: readonly AoeTierCategoryKey[] = [
-  'general',
   'damage',
   'cooldown',
   'farming',
+  'radius',
 ]
 
 export const AOE_TIER_MATRIX_COLUMN_LABELS: Record<AoeTierCategoryKey, string> = {
-  general: 'General',
-  damage: 'Damage',
-  cooldown: 'Cooldown',
+  damage: 'DPS',
+  cooldown: 'Uptime',
   farming: 'Farming',
+  radius: 'Radius',
+}
+
+/** Human-readable AoE matrix cell (DPS, cast-uptime %, farming score, radius). */
+export function formatAoeTierMatrixCell(key: AoeTierCategoryKey, v: number): string {
+  if (!Number.isFinite(v)) return '…'
+  switch (key) {
+    case 'damage':
+      return v.toFixed(1)
+    case 'cooldown':
+      return `${(Math.min(1, Math.max(0, v)) * 100).toFixed(0)}%`
+    case 'farming':
+      return v.toFixed(2)
+    case 'radius':
+      return Math.abs(v - Math.round(v)) < 1e-6 ? String(Math.round(v)) : v.toFixed(1)
+    default:
+      return v.toFixed(2)
+  }
 }
 
 function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
@@ -277,24 +298,21 @@ function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
       sustained: typeof d.sustained === 'number' ? d.sustained : entry.dps,
       burst: typeof d.burst === 'number' ? d.burst : entry.dps,
     },
-    aoeCategoryScores:
-      typeof d.aoe_farming === 'number'
-        ? {
-            general: d.aoe_general,
-            damage: d.aoe_damage,
-            cooldown: d.aoe_cooldown,
-            farming: d.aoe_farming,
-          }
-        : undefined,
+    /** Ancient nested AoE blob; drop so entries refresh with current AoE columns. */
+    aoeCategoryScores: undefined,
   }
 }
 
-/** Old caches stored a fourth AoE key `radius`; farming uses a new formula; clear so users refresh tier list. */
+/** Invalidate AoE scores from older shapes (e.g. `general` column, or missing `radius`). */
 function migrateLegacyAoeRadiusToFarming(entry: SustainedDpsEntry): SustainedDpsEntry {
-  const a = entry.aoeCategoryScores as (AoeTierCategoryScores & { radius?: number }) | undefined
+  const a = entry.aoeCategoryScores as
+    | (AoeTierCategoryScores & { general?: number })
+    | undefined
   if (!a) return entry
-  if (typeof a.farming === 'number' && Number.isFinite(a.farming)) return entry
-  if ('radius' in a) {
+  if ('general' in a && typeof (a as { general?: number }).general === 'number') {
+    return { ...entry, aoeCategoryScores: undefined }
+  }
+  if (typeof a.radius !== 'number' || !Number.isFinite(a.radius)) {
     return { ...entry, aoeCategoryScores: undefined }
   }
   return entry

@@ -36,6 +36,7 @@ import {
   tierEntryNeedsPerfectAtCloneScores,
   tierEntryIsStaleForDetailFetch,
   tierEntryNeedsDpsSimRefresh,
+  formatAoeTierMatrixCell,
   TIER_SUPPORT_SCORE_REVISION,
   type BuildTierGroupsOptions,
   type DpsRotationCategoryScores,
@@ -1725,7 +1726,7 @@ export function TierListPage() {
           <h3>
             {tierMode === 'dps'
               ? dpsTierCategory === 'aoe'
-                ? 'DPS tier list: AoE (General / Damage / Cooldown / Farming)'
+                ? 'DPS tier list: AoE (DPS / Uptime / Farming / Radius)'
                 : `DPS tier list: ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
               : tierMode === 'tank'
                 ? 'Tank tier list'
@@ -1751,18 +1752,18 @@ export function TierListPage() {
                       horizon (openers / short burst bias).
                     </li>
                     <li>
-                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column Tier List
-                      (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same as
-                      the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
-                      per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                      <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> uses{' '}
-                      <code>period = cast + cooldown</code> on each <strong>damaging</strong> AoE skill: kits are
-                      ordered into pools <code>&lt;= 8s</code>, then <code>(8, 10]</code>s, then <code>(10, 12]</code>s,
-                      then <code>&gt; 12s</code> (faster pools always outrank slower ones). Within a pool, cooldown is
-                      not part of the score; each Digimon is ranked by the best skill in that pool using{' '}
-                      <strong>90%</strong> <code>log1p(damage)</code> + <strong>10%</strong>{' '}
-                      <code>log1p(radius)</code>. Support-only AoE uses a legacy cadence blend instead of damage.
-                      <strong>General</strong> is the average of Damage, Cooldown, and Farming (equal weight).
+                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab for four columns (wiki{' '}
+                      <code>radius</code> &gt; 0 only). The <strong>main</strong> damaging AoE skill is the one with
+                      the highest <code>damage ÷ (cast + cooldown)</code> (tie-break higher per-cast damage).{' '}
+                      <strong>DPS</strong> shows that skill&apos;s sustained DPS; <strong>Uptime</strong> is{' '}
+                      <code>cast_time ÷ (cast + cooldown)</code> for that skill (share of each cycle in cast);{' '}
+                      <strong>Farming</strong> is an arbitrary rank score: buckets by{' '}
+                      <strong>cooldown only</strong> (fast ≤8s, then (8,10], (10,12], &gt;12s; cast ignored for bucket
+                      edges). Best damaging AoE in each bucket uses <code>damage</code>,{' '}
+                      <code>DPS</code> (<code>damage ÷ (cast + cooldown)</code>), and <code>radius</code>.
+                      Support-only kits
+                      use a legacy cadence blend. <strong>Radius</strong> is
+                      the wiki radius of that main skill (support-only: first AoE skill for radius/uptime).
                     </li>
                   </ul>
                 </div>
@@ -2082,7 +2083,9 @@ export function TierListPage() {
                                             const k = columnGroup.aoeSortKey
                                             const s = e.aoeCategoryScores
                                             const v = s?.[k]
-                                            return v != null ? v.toFixed(2) : '…'
+                                            return v != null && Number.isFinite(v)
+                                              ? formatAoeTierMatrixCell(k, v)
+                                              : '…'
                                           })()
                                         : tierMode === 'dps' && dpsTierCategory !== 'aoe'
                                           ? (() => {
