@@ -1201,28 +1201,41 @@ export function DpsLabPage() {
                   />
                 </label>
                 {rotationMode === 'custom' ? (
-                  <label className="lab-sim-duration-label">
-                    <span className="lab-sim-duration-label-text">Full rotation passes</span>
-                    <span className="lab-field-hint">
-                      Select the amount of times a custom rotation should run.
-                      <br />
-                      Auto Attacks will fill gaps between each rotation cycle.
-                      <br />
-                      Setting the value to 0 will auto loop the rotation till the max simulation time.
-                    </span>
-                    <EditableNumberInput
-                      min={0}
-                      max={MAX_CUSTOM_ROTATION_FULL_CYCLES}
-                      integer
-                      emptyValue={DEFAULT_CUSTOM_ROTATION_FULL_CYCLES}
-                      value={customRotationFullCycles}
-                      onCommit={(v) =>
-                        setCustomRotationFullCycles(
-                          v === 0 ? 0 : clampCustomRotationFullCycles(v),
-                        )
-                      }
-                    />
-                  </label>
+                  <>
+                    <label className="lab-sim-duration-label">
+                      <span className="lab-sim-duration-label-text">Full rotation passes</span>
+                      <EditableNumberInput
+                        min={0}
+                        max={MAX_CUSTOM_ROTATION_FULL_CYCLES}
+                        integer
+                        emptyValue={DEFAULT_CUSTOM_ROTATION_FULL_CYCLES}
+                        value={customRotationFullCycles}
+                        onCommit={(v) =>
+                          setCustomRotationFullCycles(
+                            v === 0 ? 0 : clampCustomRotationFullCycles(v),
+                          )
+                        }
+                      />
+                    </label>
+                    <div
+                      className="lab-rotation-passes-callout"
+                      role="note"
+                      aria-label="How full rotation passes work"
+                    >
+                      <p className="lab-rotation-passes-callout-title">How full passes work</p>
+                      <ul className="lab-rotation-passes-callout-list">
+                        <li>
+                          This is how many times your <strong>entire</strong> custom sequence runs
+                          (every step, in order).
+                        </li>
+                        <li>Auto attacks fill gaps while skills and supports are on cooldown.</li>
+                        <li>
+                          <strong>0</strong> repeats the sequence until <strong>max simulation time</strong>{' '}
+                          is reached.
+                        </li>
+                      </ul>
+                    </div>
+                  </>
                 ) : null}
               </div>
               <div className="lab-custom-rotation-mode">
@@ -1263,7 +1276,7 @@ export function DpsLabPage() {
                       <p className="lab-custom-rotation-card-title">Build your rotation</p>
                       <p className="lab-custom-rotation-card-sub">
                         Click a skill to append. Drag tiles to reorder. The sim follows this list in
-                        order (supports and autos included).
+                        order.
                       </p>
                     </div>
                     <button

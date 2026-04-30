@@ -2894,6 +2894,50 @@ code {
   max-width: 100%;
 }
 
+.lab-controls-fields .lab-rotation-passes-callout {
+  grid-column: 1 / -1;
+}
+
+.lab-rotation-passes-callout {
+  margin: 0.15rem 0 0;
+  padding: 0.65rem 0.75rem 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-left-width: 4px;
+  border-left-color: rgba(34, 211, 238, 0.75);
+  background: linear-gradient(
+    145deg,
+    rgba(14, 165, 233, 0.11) 0%,
+    rgba(15, 23, 42, 0.55) 100%
+  );
+}
+
+.lab-rotation-passes-callout-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a5f3fc;
+}
+
+.lab-rotation-passes-callout-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.lab-rotation-passes-callout-list strong {
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .lab-sim-window-meta {
   margin: 0.35rem 0 0.6rem;
   font-size: 0.875rem;
