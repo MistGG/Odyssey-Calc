@@ -109,7 +109,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 20
+export const TIER_DPS_SIM_REVISION = 21
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -427,6 +427,16 @@ function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
   return Math.max(0.15, ctx.baseAutoIntervalSec / mult)
 }
 
+/**
+ * The next auto cannot occur until one full attack-speed period after the previous auto swing
+ * (sim time at the auto hit), even if a 0s support or cancel path uses only the overlap window.
+ * Interval uses buffs as of the current `m` (e.g. atk speed from a buff applied after the swing).
+ */
+function enforceNextAutoSwingGate(ctx: SimCtx, m: SimMutable, autoSwingAtT: number) {
+  m.t = Math.max(m.t, autoSwingAtT + autoIntervalFor(ctx, m))
+  purgeExpiredBuffs(m, m.t)
+}
+
 const BUFF_SPLIT_EPS = 1e-3
 
 /**
@@ -738,6 +748,7 @@ function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
  * - only valid when a real damage skill is cast right after the auto
  * - skill begins after ~300ms overlap window (inside observed 200–500ms range)
  * - next auto must still wait for the skill cast to finish
+ * - after the skill resolves, the next auto is still gated by full attack-speed interval from swing start
  */
 function performAutoIntoSkillCancel(
   ctx: SimCtx,
@@ -745,6 +756,7 @@ function performAutoIntoSkillCancel(
   skill: WikiSkill,
   recordEvents: boolean,
 ) {
+  const tAuto = m.t
   const snap = computeAutoHit(ctx, m, 'damage')
   m.totalDamage += snap.dmg
   m.autoDamageTotal += snap.dmg
@@ -779,6 +791,7 @@ function performAutoIntoSkillCancel(
   m.t += ov + waitUntilSkillReady
   purgeExpiredBuffs(m, m.t)
   castDamageSkill(ctx, m, skill, recordEvents, true)
+  enforceNextAutoSwingGate(ctx, m, tAuto)
 }
 
 function castDamageSkill(
@@ -899,6 +912,7 @@ function performAutoIntoSupportCancel(
   chosen: SupportBuffProfile,
   recordEvents: boolean,
 ) {
+  const tAuto = m.t
   const snap = computeAutoHit(ctx, m, 'damage')
   m.totalDamage += snap.dmg
   m.autoDamageTotal += snap.dmg
@@ -930,6 +944,7 @@ function performAutoIntoSupportCancel(
   m.t += ctx.animCancelOverlapSec
   purgeExpiredBuffs(m, m.t)
   castSupportProfile(ctx, m, chosen, recordEvents, true)
+  enforceNextAutoSwingGate(ctx, m, tAuto)
 }
 
 
@@ -949,7 +964,12 @@ function runGreedyUntilWall(
   skipSupport = false,
 ) {
   const wall = Math.min(wallTime, ctx.durationSec)
+  let greedyStepGuard = 0
   while (m.t < wall - 1e-9 && m.t < ctx.durationSec - 1e-9) {
+    if (++greedyStepGuard > 250_000) {
+      console.error('[dpsSim] runGreedyUntilWall: step limit exceeded, aborting greedy rollout')
+      break
+    }
     purgeExpiredBuffs(m, m.t)
 
     const availableSupport = ctx.supportBuffs.filter((p) => {
@@ -1659,6 +1679,9 @@ function runRotationSim(
     const decision = beamDamageDecision(ctx, m, branchWall, available, beamDepth)
     if (decision.tag === 'hold') {
       damageHold = decision.ban
+      // Beam scored this as “defer primary until branchWall” via a full greedy clone; the main
+      // loop must run that rollout or we spin at fixed `m.t` until the outer step guard trips.
+      runGreedyUntilWall(ctx, m, branchWall, damageHold, true, false)
       continue
     }
     if (decision.tag === 'auto') {
