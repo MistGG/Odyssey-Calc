@@ -287,6 +287,11 @@ function parseRotCyclesFromParams(params: URLSearchParams): number {
   return clampCustomRotationFullCycles(Math.floor(n))
 }
 
+function initialRotCyclesFromParams(params: URLSearchParams): number {
+  const v = parseRotCyclesFromParams(params)
+  return Number.isFinite(v) && v >= 0 ? v : DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
+}
+
 const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
 
 export function DpsLabPage() {
@@ -325,7 +330,7 @@ export function DpsLabPage() {
     parseCustomRotationFromParams(params),
   )
   const [customRotationFullCycles, setCustomRotationFullCycles] = useState(() =>
-    parseRotCyclesFromParams(params),
+    initialRotCyclesFromParams(params),
   )
   const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(() => parseAnimCancelFromParams(params))
   const [animCancelReactionMs, setAnimCancelReactionMs] = useState(() =>
@@ -369,7 +374,7 @@ export function DpsLabPage() {
     const next = new URLSearchParams(search)
     setRotationMode(parseRotationModeFromParams(next))
     setCustomRotationSkillIds(parseCustomRotationFromParams(next))
-    setCustomRotationFullCycles(parseRotCyclesFromParams(next))
+    setCustomRotationFullCycles(initialRotCyclesFromParams(next))
     setUseAutoAnimCancel(parseAnimCancelFromParams(next))
     setAnimCancelReactionMs(parseReactMsFromParams(next))
     setForceAutoCrit(parseToggleFromParams(next, 'forceAutoCrit'))
