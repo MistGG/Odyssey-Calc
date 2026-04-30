@@ -1204,8 +1204,11 @@ export function DpsLabPage() {
                   <label className="lab-sim-duration-label">
                     <span className="lab-sim-duration-label-text">Full rotation passes</span>
                     <span className="lab-field-hint">
-                      One pass = execute every step in order once (then repeat if &gt; 1). Use{' '}
-                      <strong>0</strong> to loop until the safety cap.
+                      Select the amount of times a custom rotation should run.
+                      <br />
+                      Auto Attacks will fill gaps between each rotation cycle.
+                      <br />
+                      Setting the value to 0 will auto loop the rotation till the max simulation time.
                     </span>
                     <EditableNumberInput
                       min={0}
