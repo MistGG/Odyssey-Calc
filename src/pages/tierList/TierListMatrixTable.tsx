@@ -127,7 +127,7 @@ export function TierListMatrixTable({
                       <td key={`${tier}-${role}`} className={`tier-cell tier-${tier.toLowerCase()}`}>
                         <div className="tier-cell-content">
                           {entries.length === 0 ? (
-                            <span className="muted">—</span>
+                            <span className="muted">-</span>
                           ) : (
                             <ul className="tier-entry-list">
                               {entries.map((e) => {

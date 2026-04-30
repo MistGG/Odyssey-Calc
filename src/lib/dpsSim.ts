@@ -17,7 +17,7 @@ export type BuffContribution = {
   /** Short label on the chip, e.g. ATK, Skill, Flat, Crit, Hit */
   label: string
   /**
-   * Shown as +valuePct% on the chip. Always from active buffs only — wiki base stats are never
+   * Shown as +valuePct% on the chip. Always from active buffs only; wiki base stats are never
    * added here (flat uses wiki attack only as a divisor to express buff flat as a comparable %;
    * crit uses wiki crit only inside a subtracted baseline, not as a + row).
    */
@@ -50,7 +50,15 @@ export type RotationResult = {
   totalDamage: number
   dps: number
   casts: number
+  /**
+   * Elapsed simulation time (seconds). DPS = totalDamage ÷ durationSec.
+   * Auto mode usually matches the requested window; custom cycle mode stops earlier when rotations complete.
+   */
   durationSec: number
+  /** Wall cap passed into the sim (seconds). Useful when custom mode stops on rotation count before the cap. */
+  simCapSec?: number
+  /** How many full passes through the custom sequence completed (custom mode only). */
+  customRotationCyclesCompleted?: number
   attackBuffPct: number
   skillDamageBuffPct: number
   attackPowerFlat: number
@@ -76,6 +84,19 @@ export const DEFAULT_ROTATION_SIM_DURATION_SEC = 180
 export const MIN_ROTATION_SIM_DURATION_SEC = 10
 export const MAX_ROTATION_SIM_DURATION_SEC = 600
 
+/** Default “full passes” through the custom sequence before stopping (unless the wall cap is hit first). */
+export const DEFAULT_CUSTOM_ROTATION_FULL_CYCLES = 1
+export const MIN_CUSTOM_ROTATION_FULL_CYCLES = 1
+export const MAX_CUSTOM_ROTATION_FULL_CYCLES = 100
+
+export function clampCustomRotationFullCycles(n: number): number {
+  const parsed = Number.isFinite(n) ? Math.floor(n) : DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
+  return Math.max(
+    MIN_CUSTOM_ROTATION_FULL_CYCLES,
+    Math.min(MAX_CUSTOM_ROTATION_FULL_CYCLES, parsed),
+  )
+}
+
 export function clampRotationDurationSec(durationSec: number): number {
   const parsed = Number.isFinite(durationSec) ? Math.floor(durationSec) : DEFAULT_ROTATION_SIM_DURATION_SEC
   return Math.max(
@@ -88,12 +109,12 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 15
+export const TIER_DPS_SIM_REVISION = 20
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
  * If every skill is already due (`readyAt <= m.t`), returns `cap` so the caller can idle
- * forward with autos until the window end — never use `Math.min` of past ready times,
+ * forward with autos until the window end; never use `Math.min` of past ready times,
  * which can be `<= m.t` and incorrectly abort the sim early.
  */
 function nextSkillReadyAfter(m: { t: number; readyAt: Map<string, number> }, skills: WikiSkill[], cap: number) {
@@ -107,6 +128,14 @@ function nextSkillReadyAfter(m: { t: number; readyAt: Map<string, number> }, ski
 
 function effectiveCastTime(castTimeSec: number) {
   return Math.max(0.1, castTimeSec || 0)
+}
+
+/**
+ * Support/buff-only casts are instant (0s) in current game. Wiki/API may still list legacy cast times;
+ * rotation sim ignores them so buffs chain with auto cancels (~300ms) without extra cast dead time.
+ */
+function effectiveSupportCastTime(): number {
+  return 0
 }
 
 function skillDamagePerCast(
@@ -185,61 +214,88 @@ function buffCritMarginalDamagePct(
   return Math.max(0, (multBuffed - multBase) * 100)
 }
 
+/** Parsed support lines that still matter for rotation weaving (animation cancels) even without DPS stats. */
+function effectIsWeaveUtility(e: { label: string }): boolean {
+  const l = e.label.toLowerCase()
+  return (
+    /\bheal/.test(l) ||
+    /\bevasion\b/.test(l) ||
+    /\bmovement speed\b/.test(l) ||
+    /\bmove speed\b/.test(l) ||
+    /\bhit rate\b/.test(l)
+  )
+}
+
+/** Greedy / beam ordering for which support to fire when several are off cooldown. */
+function supportBuffPriorityScore(p: SupportBuffProfile, baseAttack: number): number {
+  const flatAsPct = baseAttack > 0 ? (p.flatAttack / baseAttack) * 100 : 0
+  return (
+    p.attackPct +
+    p.skillDamagePct +
+    flatAsPct +
+    p.atkSpeedPct * 0.12 +
+    p.critRatePct * 0.1 +
+    p.critDamagePct * 0.12
+  )
+}
+
 function supportProfiles(
   supportSkills: WikiSkill[],
   levelBySkillId: Record<string, number>,
 ): SupportBuffProfile[] {
-  return supportSkills
-    .map((s) => {
-      const L = Math.max(1, Math.floor(levelBySkillId[s.id] ?? 25))
-      const effects = buildSupportSkillEffects(s, L)
-      let attackPct = 0
-      let skillDamagePct = 0
-      let flatAttack = 0
-      let critRatePct = 0
-      let critDamagePct = 0
-      let atkSpeedPct = 0
-      for (const e of effects) {
-        const label = e.label.toLowerCase()
-        if (e.unit === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) {
-          skillDamagePct += e.valueAtLevel
-        } else if (e.unit === '%' && /(\bcritical damage\b|\bcrit damage\b|\bcd\b)/.test(label)) {
-          critDamagePct += e.valueAtLevel
-        } else if (e.unit === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) {
-          critRatePct += e.valueAtLevel
-        } else if (e.unit === '%' && /\battack speed\b/.test(label)) {
-          atkSpeedPct += e.valueAtLevel
-        } else if (
-          e.unit === '%' &&
-          /\battack( power)?\b/.test(label) &&
-          !/\battack speed\b/.test(label)
-        ) {
-          attackPct += e.valueAtLevel
-        } else if (!e.unit && /\battack( power)?\b/.test(label) && !/\battack speed\b/.test(label)) {
-          flatAttack += e.valueAtLevel
-        }
+  const out: SupportBuffProfile[] = []
+  for (const s of supportSkills) {
+    const L = Math.max(1, Math.floor(levelBySkillId[s.id] ?? 25))
+    const effects = buildSupportSkillEffects(s, L)
+    let attackPct = 0
+    let skillDamagePct = 0
+    let flatAttack = 0
+    let critRatePct = 0
+    let critDamagePct = 0
+    let atkSpeedPct = 0
+    for (const e of effects) {
+      const label = e.label.toLowerCase()
+      if (e.unit === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) {
+        skillDamagePct += e.valueAtLevel
+      } else if (e.unit === '%' && /(\bcritical damage\b|\bcrit damage\b|\bcd\b)/.test(label)) {
+        critDamagePct += e.valueAtLevel
+      } else if (e.unit === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) {
+        critRatePct += e.valueAtLevel
+      } else if (e.unit === '%' && /\battack speed\b/.test(label)) {
+        atkSpeedPct += e.valueAtLevel
+      } else if (
+        e.unit === '%' &&
+        /\battack( power)?\b/.test(label) &&
+        !/\battack speed\b/.test(label)
+      ) {
+        attackPct += e.valueAtLevel
+      } else if (!e.unit && /\battack( power)?\b/.test(label) && !/\battack speed\b/.test(label)) {
+        flatAttack += e.valueAtLevel
       }
-      return {
-        skill: s,
-        durationSec: s.buff?.duration ?? 0,
-        attackPct,
-        skillDamagePct,
-        flatAttack,
-        critRatePct,
-        critDamagePct,
-        atkSpeedPct,
-      }
+    }
+    const durationSec = s.buff?.duration ?? 0
+    const cooldownSec = s.cooldown_sec || 0
+    const hasOffense =
+      attackPct > 0 ||
+      skillDamagePct > 0 ||
+      flatAttack > 0 ||
+      critRatePct > 0 ||
+      critDamagePct > 0 ||
+      atkSpeedPct > 0
+    const hasUtilityWeave = effects.some(effectIsWeaveUtility)
+    if (!(durationSec > 0 && cooldownSec > 0 && (hasOffense || hasUtilityWeave))) continue
+    out.push({
+      skill: s,
+      durationSec,
+      attackPct,
+      skillDamagePct,
+      flatAttack,
+      critRatePct,
+      critDamagePct,
+      atkSpeedPct,
     })
-    .filter(
-      (p) =>
-        p.durationSec > 0 &&
-        (p.attackPct > 0 ||
-          p.skillDamagePct > 0 ||
-          p.flatAttack > 0 ||
-          p.critRatePct > 0 ||
-          p.critDamagePct > 0 ||
-          p.atkSpeedPct > 0),
-    )
+  }
+  return out
 }
 
 export function estimateSupportAttackBuffPct(supportSkills: WikiSkill[], level: number) {
@@ -307,6 +363,11 @@ type SimCtx = {
   forceAutoCrit: boolean
   perfectAtClone: boolean
   autoAttackAnimationCancel: boolean
+  /**
+   * Auto animation cancel: time from auto start until skill input (reaction / overlap), in seconds.
+   * Ignored when `autoAttackAnimationCancel` is false.
+   */
+  animCancelOverlapSec: number
   /** Auto-attack interval from wiki atk_speed stat only (no temporary buffs). */
   baseAutoIntervalSec: number
   skillLevel: (skill: WikiSkill) => number
@@ -325,15 +386,40 @@ type SimMutable = {
   damageCastCount: number
   autoDamageTotal: number
   autoHitCount: number
-  /** Sum of total crit chance (0–1) on each auto hit — skills cannot crit. */
+  /** Sum of total crit chance (0–1) on each auto hit; skills cannot crit. */
   autoHitCritChanceSum: number
   /** Sum of buff crit damage % on each auto hit. */
   autoHitCritBuffDamSum: number
 }
 
-/** Practical midpoint in the observed ~200–500ms cancel window. */
+/** Default reaction / overlap for auto → skill cancels (300ms). */
 export const AUTO_ANIM_CANCEL_OVERLAP_SEC = 0.3
 const AUTO_ANIM_CANCEL_MAX_WINDOW_SEC = 0.5
+
+export const ANIM_CANCEL_REACTION_MS_DEFAULT = 300
+export const ANIM_CANCEL_REACTION_MS_MIN = 50
+export const ANIM_CANCEL_REACTION_MS_MAX = 800
+
+/** Clamp cancel reaction time for the sim (seconds). */
+export function clampAnimCancelReactionSec(sec: number): number {
+  if (!Number.isFinite(sec)) return AUTO_ANIM_CANCEL_OVERLAP_SEC
+  return Math.min(
+    ANIM_CANCEL_REACTION_MS_MAX / 1000,
+    Math.max(ANIM_CANCEL_REACTION_MS_MIN / 1000, sec),
+  )
+}
+
+export function clampAnimCancelReactionMs(ms: number): number {
+  if (!Number.isFinite(ms)) return ANIM_CANCEL_REACTION_MS_DEFAULT
+  return Math.min(
+    ANIM_CANCEL_REACTION_MS_MAX,
+    Math.max(ANIM_CANCEL_REACTION_MS_MIN, Math.round(ms)),
+  )
+}
+
+function animCancelSkillReadyMaxDt(ctx: SimCtx): number {
+  return Math.max(AUTO_ANIM_CANCEL_MAX_WINDOW_SEC, ctx.animCancelOverlapSec + 0.2)
+}
 
 function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
   const atkSpdPct = m.activeBuffs.reduce((sum, b) => sum + (b.atkSpeedPct ?? 0), 0)
@@ -344,10 +430,10 @@ function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
 const BUFF_SPLIT_EPS = 1e-3
 
 /**
- * Per-category contributions for one damage/auto hit — **active buffs only**.
+ * Per-category contributions for one damage/auto hit (**active buffs only**).
  * Wiki Digimon stats are never summed into these +% chips: flat uses wiki attack only as a
  * denominator for “buff flat as %”; crit uses wiki crit only to compute a subtracted baseline
- * so the Crit chip is extra from buff crit rate/CD only (autos only — damage skills never crit).
+ * so the Crit chip is extra from buff crit rate/CD only (autos only; damage skills never crit).
  * Omits attack-speed-only buffs (cadence).
  */
 function buildBuffContributionsForDamage(
@@ -394,7 +480,7 @@ function buildBuffContributionsForDamage(
   if (includeSkillPct && activeSkillPct > BUFF_SPLIT_EPS) {
     const detailLines: string[] = [
       `Total skill damage % from active buffs: +${activeSkillPct.toFixed(2)}%.`,
-      'Applied only on base skill term: (clone-adjusted base skill) × (1 + skill damage% ÷ 100).',
+      'Applied to wiki skill hit only: wikiHit × (1 + skill damage% ÷ 100). Perfect AT clone adds +30% of raw wikiHit separately (not scaled by skill damage%).',
     ]
     for (const b of m.activeBuffs) {
       if (b.skillDamagePct > BUFF_SPLIT_EPS) {
@@ -407,7 +493,7 @@ function buildBuffContributionsForDamage(
   if (flatPct > BUFF_SPLIT_EPS) {
     const detailLines: string[] = [
       `Total flat attack from buffs: ${activeFlatAtk.toFixed(0)}`,
-      `The +% chip is buff flat only, expressed as % of wiki attack (${ctx.baseAttack}) so it lines up with attack/skill % — wiki attack is not added as a buff.`,
+      `The +% chip is buff flat only, expressed as % of wiki attack (${ctx.baseAttack}) so it lines up with attack/skill %. Wiki attack is not added as a buff.`,
       `Equivalent %: (${activeFlatAtk.toFixed(0)} ÷ ${ctx.baseAttack}) × 100 = ${flatPct.toFixed(2)}%`,
     ]
     for (const b of m.activeBuffs) {
@@ -424,7 +510,7 @@ function buildBuffContributionsForDamage(
       includeSkillPct
         ? 'The +% chip is extra expected damage from buff crit rate and/or buff crit damage on the AT term for this crit-capable skill.'
         : 'The +% chip is extra expected damage from buff crit rate and/or buff crit damage on auto attacks.',
-      'Your Digimon wiki crit_rate is used only to form a baseline multiplier that is subtracted out — it is not part of this +%.',
+      'Your Digimon wiki crit_rate is used only to form a baseline multiplier that is subtracted out; it is not part of this +%.',
     ]
     if (activeCritRatePct > BUFF_SPLIT_EPS) {
       detailLines.push(
@@ -539,7 +625,13 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
 
   const baseSkillDamage = skillDamagePerCast(skill, usedLevel, ctx.targets, ctx.baseAttack, ctx.perfectAtClone)
   const cloneMultiplier = ctx.perfectAtClone ? 1.3 : 1
-  const baseSkillTerm = baseSkillDamage * cloneMultiplier * (1 + activeSkillPct / 100)
+  /**
+   * Skill damage % applies only to the wiki skill hit (base_dmg/scaling at level × targets). Perfect AT
+   * clone adds +30% of that **raw** hit; it is not multiplied by skill damage % (avoids double scaling).
+   * Equivalent: baseSkillDamage × (1 + skillDmg%) + baseSkillDamage × (cloneMul − 1).
+   */
+  const baseSkillTerm =
+    baseSkillDamage * (1 + activeSkillPct / 100) + baseSkillDamage * (cloneMultiplier - 1)
 
   const atkBuffed = Math.max(0, ctx.baseAttack + activeFlatAtk) * (1 + activeAttackPct / 100)
   const critCapable = skillCanCrit(skill)
@@ -665,7 +757,8 @@ function performAutoIntoSkillCancel(
   m.skillPctAtDamageCasts += 0
   m.casts += 1
   const readyAt = m.readyAt.get(skill.id) ?? 0
-  const waitUntilSkillReady = Math.max(0, readyAt - (m.t + AUTO_ANIM_CANCEL_OVERLAP_SEC))
+  const ov = ctx.animCancelOverlapSec
+  const waitUntilSkillReady = Math.max(0, readyAt - (m.t + ov))
   if (recordEvents) {
     m.events.push({
       atSec: m.t,
@@ -673,7 +766,7 @@ function performAutoIntoSkillCancel(
       skillName: 'Auto Attack',
       iconId: '',
       eventType: 'auto',
-      castTimeSec: AUTO_ANIM_CANCEL_OVERLAP_SEC + waitUntilSkillReady,
+      castTimeSec: ov + waitUntilSkillReady,
       damage: snap.dmg,
       buffedBy: m.activeBuffs.map((b) => b.skillName),
       totalBuffPct: snap.totalBuffPct,
@@ -683,7 +776,7 @@ function performAutoIntoSkillCancel(
       cancelledBySkillName: skill.name,
     })
   }
-  m.t += AUTO_ANIM_CANCEL_OVERLAP_SEC + waitUntilSkillReady
+  m.t += ov + waitUntilSkillReady
   purgeExpiredBuffs(m, m.t)
   castDamageSkill(ctx, m, skill, recordEvents, true)
 }
@@ -740,9 +833,9 @@ function soonReadyDamageWithinCancelWindow(
   for (const s of ctx.damaging) {
     if (hold && m.t < hold.until && hold.skillId === s.id) continue
     const dt = (m.readyAt.get(s.id) ?? 0) - m.t
-    if (dt <= 0 || dt > AUTO_ANIM_CANCEL_MAX_WINDOW_SEC + 1e-9) continue
+    if (dt <= 0 || dt > animCancelSkillReadyMaxDt(ctx) + 1e-9) continue
     const castT = effectiveCastTime(s.cast_time_sec)
-    const skillStartDt = Math.max(AUTO_ANIM_CANCEL_OVERLAP_SEC, dt)
+    const skillStartDt = Math.max(ctx.animCancelOverlapSec, dt)
     const shadow = cloneSim(m)
     shadow.t = m.t + skillStartDt
     purgeExpiredBuffs(shadow, shadow.t)
@@ -764,7 +857,7 @@ function castSupportProfile(
   recordEvents: boolean,
   cancelledFromAuto: boolean = false,
 ) {
-  const castTime = effectiveCastTime(chosen.skill.cast_time_sec)
+  const castTime = effectiveSupportCastTime()
   m.casts += 1
   if (recordEvents) {
     m.events.push({
@@ -824,7 +917,7 @@ function performAutoIntoSupportCancel(
       skillName: 'Auto Attack',
       iconId: '',
       eventType: 'auto',
-      castTimeSec: AUTO_ANIM_CANCEL_OVERLAP_SEC,
+      castTimeSec: ctx.animCancelOverlapSec,
       damage: snap.dmg,
       buffedBy: m.activeBuffs.map((b) => b.skillName),
       totalBuffPct: snap.totalBuffPct,
@@ -834,7 +927,7 @@ function performAutoIntoSupportCancel(
       cancelledBySkillName: chosen.skill.name,
     })
   }
-  m.t += AUTO_ANIM_CANCEL_OVERLAP_SEC
+  m.t += ctx.animCancelOverlapSec
   purgeExpiredBuffs(m, m.t)
   castSupportProfile(ctx, m, chosen, recordEvents, true)
 }
@@ -866,13 +959,9 @@ function runGreedyUntilWall(
     })
 
     if (!skipSupport && availableSupport.length > 0) {
-      availableSupport.sort((a, b) => {
-        const aFlat = ctx.baseAttack > 0 ? (a.flatAttack / ctx.baseAttack) * 100 : 0
-        const bFlat = ctx.baseAttack > 0 ? (b.flatAttack / ctx.baseAttack) * 100 : 0
-        const aScore = a.attackPct + a.skillDamagePct + aFlat + a.atkSpeedPct * 0.12
-        const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
-        return bScore - aScore
-      })
+      availableSupport.sort(
+        (a, b) => supportBuffPriorityScore(b, ctx.baseAttack) - supportBuffPriorityScore(a, ctx.baseAttack),
+      )
       if (ctx.autoAttackAnimationCancel) {
         performAutoIntoSupportCancel(ctx, m, availableSupport[0], recordEvents)
         continue
@@ -937,7 +1026,7 @@ function runGreedyUntilWall(
     const snap = computeAutoHit(ctx, m, 'planning')
     const rAuto = snap.dmg / snap.step
     const rSkill = skillDmg / castT
-    const rCancelCombo = (snap.dmg + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castT)
+    const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
 
     if (
       ctx.autoAttackAnimationCancel &&
@@ -1027,7 +1116,7 @@ function applyDamageChoice(ctx: SimCtx, m: SimMutable, ch: DamageChoice, recordE
   const skillDmg = computeDamageSkillHit(ctx, m, sk)
   const snap = computeAutoHit(ctx, m, 'planning')
   const rSkill = skillDmg / castT
-  const rCancelCombo = (snap.dmg + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castT)
+  const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
   if (ctx.autoAttackAnimationCancel && rCancelCombo > rSkill + 1e-9) {
     performAutoIntoSkillCancel(ctx, m, sk, recordEvents)
   } else if (ctx.autoAttackAnimationCancel) {
@@ -1174,12 +1263,23 @@ export type RotationSimOptions = {
   /** Assume repeated auto animation cancel with skills whenever available. */
   autoAttackAnimationCancel?: boolean
   /**
+   * Auto-cancel reaction / overlap in **seconds** (e.g. `0.3` = 300ms). Default 0.3. Clamped ~50–800ms.
+   * Only applies when `autoAttackAnimationCancel` is true.
+   */
+  animCancelReactionSec?: number
+  /**
    * Optional fixed cast sequence for Lab custom mode. The sim follows this list in order
    * (wrapping at the end), waiting/auto-attacking until the next listed skill is ready.
    */
   customRotation?: Array<{ skillId: string }>
   /** When true, support skills are cast only if present in `customRotation`. */
   manualSupportOnly?: boolean
+  /**
+   * Custom rotation only: stop after this many **full passes** through `customRotation` (in order),
+   * or when `durationSec` wall cap is hit, whichever comes first. Defaults to 1 when `customRotation` is set.
+   * Use `0` to run until the wall cap only (repeat the sequence until time runs out).
+   */
+  customRotationFullCycles?: number
 }
 
 type RotationSimCoreOpts = {
@@ -1188,29 +1288,44 @@ type RotationSimCoreOpts = {
   forceAutoCrit: boolean
   perfectAtClone: boolean
   autoAttackAnimationCancel: boolean
+  /** Seconds; clamped; used when `autoAttackAnimationCancel` is true. */
+  animCancelOverlapSec: number
   useCustomRotation: boolean
   customRotationSkillIds: string[]
   manualSupportOnly: boolean
+  /** When set with custom rotation, ends the sim after N full cycles or at wall cap. */
+  customRotationFullCycles?: number
 }
 
 function runCustomRotationSequence(
   ctx: SimCtx,
   m: SimMutable,
-  durationSec: number,
+  wallCapSec: number,
   supportBuffs: SupportBuffProfile[],
   sequenceSkillIds: string[],
   manualSupportOnly: boolean,
-): void {
+  stopAfterFullCycles: number | undefined,
+): { cyclesCompleted: number } {
   const supportById = new Map(supportBuffs.map((p) => [p.skill.id, p] as const))
   const damagingById = new Map(ctx.damaging.map((s) => [s.id, s] as const))
   const usableIds = sequenceSkillIds.filter(
     (id) => id === 'auto-attack' || supportById.has(id) || damagingById.has(id),
   )
-  if (usableIds.length === 0) return
+  if (usableIds.length === 0) return { cyclesCompleted: 0 }
 
   let seqIdx = 0
+  let fullCycles = 0
   let stepGuard = 0
-  while (m.t < durationSec - 1e-9) {
+
+  const bumpSeq = () => {
+    const len = usableIds.length
+    const wrapped = len > 0 && seqIdx === len - 1
+    seqIdx = (seqIdx + 1) % len
+    if (wrapped) fullCycles += 1
+  }
+
+  while (m.t < wallCapSec - 1e-9) {
+    if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) break
     if (++stepGuard > 250000) {
       console.error('[dpsSim] runCustomRotationSequence: step limit exceeded, aborting early')
       break
@@ -1224,13 +1339,9 @@ function runCustomRotationSequence(
         return ready && !alreadyUp
       })
       if (availableSupport.length > 0) {
-        availableSupport.sort((a, b) => {
-          const aFlat = ctx.baseAttack > 0 ? (a.flatAttack / ctx.baseAttack) * 100 : 0
-          const bFlat = ctx.baseAttack > 0 ? (b.flatAttack / ctx.baseAttack) * 100 : 0
-          const aScore = a.attackPct + a.skillDamagePct + aFlat + a.atkSpeedPct * 0.12
-          const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
-          return bScore - aScore
-        })
+        availableSupport.sort(
+          (a, b) => supportBuffPriorityScore(b, ctx.baseAttack) - supportBuffPriorityScore(a, ctx.baseAttack),
+        )
         if (ctx.autoAttackAnimationCancel) {
           performAutoIntoSupportCancel(ctx, m, availableSupport[0], true)
           continue
@@ -1243,13 +1354,13 @@ function runCustomRotationSequence(
     const chosenId = usableIds[seqIdx]
     if (chosenId === 'auto-attack') {
       performAutoAttack(ctx, m, true)
-      seqIdx = (seqIdx + 1) % usableIds.length
+      bumpSeq()
       continue
     }
     const support = supportById.get(chosenId)
     const damageSkill = damagingById.get(chosenId)
     if (!support && !damageSkill) {
-      seqIdx = (seqIdx + 1) % usableIds.length
+      bumpSeq()
       continue
     }
 
@@ -1259,16 +1370,17 @@ function runCustomRotationSequence(
       if (ready && !alreadyUp) {
         if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, m, support, true)
         else castSupportProfile(ctx, m, support, true)
-        seqIdx = (seqIdx + 1) % usableIds.length
+        bumpSeq()
         continue
       }
       const nextReady = Math.max(m.t, m.readyAt.get(support.skill.id) ?? m.t)
-      while (m.t < durationSec - 1e-9) {
+      while (m.t < wallCapSec - 1e-9) {
+        if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) break
         const step = autoIntervalFor(ctx, m)
         if (m.t + step > nextReady + 1e-9) break
         performAutoAttack(ctx, m, true)
       }
-      m.t = Math.max(m.t, Math.min(nextReady, durationSec))
+      m.t = Math.max(m.t, Math.min(nextReady, wallCapSec))
       continue
     }
 
@@ -1278,19 +1390,20 @@ function runCustomRotationSequence(
       const dt = readyAt - m.t
       if (
         ctx.autoAttackAnimationCancel &&
-        dt <= AUTO_ANIM_CANCEL_MAX_WINDOW_SEC + 1e-9 &&
+        dt <= animCancelSkillReadyMaxDt(ctx) + 1e-9 &&
         dt > 0
       ) {
         performAutoIntoSkillCancel(ctx, m, skill, true)
-        seqIdx = (seqIdx + 1) % usableIds.length
+        bumpSeq()
         continue
       }
-      while (m.t < durationSec - 1e-9) {
+      while (m.t < wallCapSec - 1e-9) {
+        if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) break
         const step = autoIntervalFor(ctx, m)
         if (m.t + step > readyAt + 1e-9) break
         performAutoAttack(ctx, m, true)
       }
-      m.t = Math.max(m.t, Math.min(readyAt, durationSec))
+      m.t = Math.max(m.t, Math.min(readyAt, wallCapSec))
       continue
     }
 
@@ -1299,15 +1412,15 @@ function runCustomRotationSequence(
     const snap = computeAutoHit(ctx, m, 'planning')
     const rAuto = snap.dmg / snap.step
     const rSkill = skillDmg / castT
-    const rCancelCombo = (snap.dmg + skillDmg) / (AUTO_ANIM_CANCEL_OVERLAP_SEC + castT)
+    const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
     if (ctx.autoAttackAnimationCancel && rCancelCombo > rSkill + 1e-9) {
       performAutoIntoSkillCancel(ctx, m, skill, true)
-      seqIdx = (seqIdx + 1) % usableIds.length
+      bumpSeq()
       continue
     }
     if (ctx.autoAttackAnimationCancel) {
       castDamageSkill(ctx, m, skill, true)
-      seqIdx = (seqIdx + 1) % usableIds.length
+      bumpSeq()
       continue
     }
     if (rAuto > rSkill + 1e-9) {
@@ -1315,8 +1428,10 @@ function runCustomRotationSequence(
       continue
     }
     castDamageSkill(ctx, m, skill, true)
-    seqIdx = (seqIdx + 1) % usableIds.length
+    bumpSeq()
   }
+
+  return { cyclesCompleted: fullCycles }
 }
 
 function runRotationSim(
@@ -1353,6 +1468,7 @@ function runRotationSim(
       dps: 0,
       casts: 0,
       durationSec,
+      simCapSec: durationSec,
       attackBuffPct: buffs.attackPct,
       skillDamageBuffPct: buffs.skillDamagePct,
       attackPowerFlat: buffs.flatAttack,
@@ -1380,6 +1496,7 @@ function runRotationSim(
     forceAutoCrit: core.forceAutoCrit,
     perfectAtClone: core.perfectAtClone,
     autoAttackAnimationCancel: core.autoAttackAnimationCancel,
+    animCancelOverlapSec: core.animCancelOverlapSec,
     baseAutoIntervalSec,
     skillLevel,
   }
@@ -1404,15 +1521,18 @@ function runRotationSim(
   let damageHold: DamageHold | null = null
 
   try {
+  let customRotationCyclesCompleted: number | undefined
   if (core.useCustomRotation) {
-    runCustomRotationSequence(
+    const { cyclesCompleted } = runCustomRotationSequence(
       ctx,
       m,
       durationSec,
       supportBuffs,
       core.customRotationSkillIds,
       core.manualSupportOnly,
+      core.customRotationFullCycles,
     )
+    customRotationCyclesCompleted = cyclesCompleted
   } else {
   let stepGuard = 0
   /** Periodic replan: deeper beam + longer horizon on this clock. */
@@ -1433,13 +1553,9 @@ function runRotationSim(
     })
 
     if (availableSupport.length > 0) {
-      availableSupport.sort((a, b) => {
-        const aFlat = baseAttack > 0 ? (a.flatAttack / baseAttack) * 100 : 0
-        const bFlat = baseAttack > 0 ? (b.flatAttack / baseAttack) * 100 : 0
-        const aScore = a.attackPct + a.skillDamagePct + aFlat + a.atkSpeedPct * 0.12
-        const bScore = b.attackPct + b.skillDamagePct + bFlat + b.atkSpeedPct * 0.12
-        return bScore - aScore
-      })
+      availableSupport.sort(
+        (a, b) => supportBuffPriorityScore(b, baseAttack) - supportBuffPriorityScore(a, baseAttack),
+      )
       const trySupport = availableSupport.slice(0, SUPPORT_BEAM_TRY)
       let bestP = trySupport[0]
       let bestDelta = -Infinity
@@ -1555,16 +1671,20 @@ function runRotationSim(
 
   const autoHits = m.autoHitCount
   const autoTot = m.autoDamageTotal
+  const elapsedSec = Math.max(1e-9, m.t)
+  const capSec = durationSec
 
   return {
     totalDamage: m.totalDamage,
-    dps: durationSec > 0 ? m.totalDamage / durationSec : 0,
+    dps: m.totalDamage / elapsedSec,
     casts: m.casts,
-    durationSec,
+    durationSec: elapsedSec,
+    simCapSec: capSec,
+    customRotationCyclesCompleted,
     autoDamageTotal: autoTot,
     autoAttackHits: autoHits,
     autoDamageAvg: autoHits > 0 ? autoTot / autoHits : 0,
-    autoDps: durationSec > 0 ? autoTot / durationSec : 0,
+    autoDps: autoTot / elapsedSec,
     attackBuffPct:
       m.damageCastCount > 0 ? m.attackPctAtDamageCasts / m.damageCastCount : buffs.attackPct,
     skillDamageBuffPct:
@@ -1600,6 +1720,7 @@ function runRotationSim(
       dps: 0,
       casts: 0,
       durationSec,
+      simCapSec: durationSec,
       attackBuffPct: buffs.attackPct,
       skillDamageBuffPct: buffs.skillDamagePct,
       attackPowerFlat: buffs.flatAttack,
@@ -1615,6 +1736,16 @@ function runRotationSim(
   }
 }
 
+function resolveCustomRotationFullCycles(
+  customRotation: Array<{ skillId: string }> | undefined,
+  raw: number | undefined,
+): number | undefined {
+  if (!Array.isArray(customRotation) || customRotation.length === 0) return undefined
+  if (raw === 0) return undefined
+  if (raw === undefined) return DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
+  return clampCustomRotationFullCycles(raw)
+}
+
 export function simulateRotation(
   skills: WikiSkill[] | undefined | null,
   levelBySkillId: Record<string, number>,
@@ -1628,6 +1759,13 @@ export function simulateRotation(
   const normalizedDurationSec = clampRotationDurationSec(durationSec)
   const roleNorm = normalizeWikiRole(options?.role ?? '')
   const hybridOpt = options?.hybridStance
+  const animCancelOverlapSec = clampAnimCancelReactionSec(
+    options?.animCancelReactionSec ?? AUTO_ANIM_CANCEL_OVERLAP_SEC,
+  )
+  const customRotationFullCycles = resolveCustomRotationFullCycles(
+    options?.customRotation,
+    options?.customRotationFullCycles,
+  )
 
   if (roleNorm === 'hybrid' && (hybridOpt === undefined || hybridOpt === 'best')) {
     let best: RotationResult | null = null
@@ -1646,9 +1784,11 @@ export function simulateRotation(
           forceAutoCrit: options?.forceAutoCrit === true,
           perfectAtClone: options?.perfectAtClone === true,
           autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+          animCancelOverlapSec,
           useCustomRotation: Array.isArray(options?.customRotation),
           customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
           manualSupportOnly: options?.manualSupportOnly === true,
+          customRotationFullCycles,
         },
       )
       if (!best || r.dps > best.dps) best = r
@@ -1676,9 +1816,11 @@ export function simulateRotation(
       forceAutoCrit: options?.forceAutoCrit === true,
       perfectAtClone: options?.perfectAtClone === true,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
+      animCancelOverlapSec,
       useCustomRotation: Array.isArray(options?.customRotation),
       customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
       manualSupportOnly: options?.manualSupportOnly === true,
+      customRotationFullCycles,
     },
   )
 }

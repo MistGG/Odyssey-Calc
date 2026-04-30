@@ -24,8 +24,8 @@ export function TierListScoringNotes({
             <div className="tier-score-explainer-body">
               <ul className="tier-score-explainer-list">
                 <li>
-                  <strong>Sustained:</strong> same simulation as Lab default — greedy rotation over{' '}
-                  {DEFAULT_ROTATION_SIM_DURATION_SEC}s, Hybrid uses best stance.
+                  <strong>Sustained:</strong> same simulation as Lab default (greedy rotation over{' '}
+                  {DEFAULT_ROTATION_SIM_DURATION_SEC}s; Hybrid uses best stance).
                 </li>
                 <li>
                   <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
@@ -62,9 +62,9 @@ export function TierListScoringNotes({
             <div className="tier-score-explainer-body">
               <ul className="tier-score-explainer-list">
                 <li>Parses skill/buff text and numbers, mixes in base stats; used only to order rows.</li>
-                <li>Base HP (~65%): wiki combat max HP — main tankiness signal.</li>
+                <li>Base HP (~65%): wiki combat max HP, main tankiness signal.</li>
                 <li>
-                  Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills — each scaled by
+                  Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills; each scaled by
                   estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if duration missing).
                 </li>
                 <li>Defense (~9%): defense × 6, then scaled like HP (log1p(defenseRaw/1000)).</li>
@@ -119,7 +119,7 @@ export function TierListScoringNotes({
                 </li>
                 <li>
                   Damage buffs in the <strong>Overall</strong> score (~7% weight): parsed skill damage %, ATK%,
-                  crit rate/damage %, attack speed %, and flat ATK — each turned into a small internal “buff
+                  crit rate/damage %, attack speed %, and flat ATK; each turned into a small internal “buff
                   strength” number with different weights per stat type, then <code>log1p</code> for the composite.
                 </li>
                 <li>INT (~3%): small tie-breaker from wiki combat stats.</li>
@@ -134,7 +134,7 @@ export function TierListScoringNotes({
                 <li>
                   <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong> shows
                   modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier HP per cast ÷ cooldown+cast,
-                  summed across shield skills — same number used to sort that column). <strong>INT</strong> is wiki
+                  summed across shield skills; same number used to sort that column). <strong>INT</strong> is wiki
                   combat INT.
                 </li>
                 <li>
@@ -143,7 +143,7 @@ export function TierListScoringNotes({
                   (uptime uses buff duration vs skill cooldown+cast, like mitigation). For <strong>%</strong> lines
                   that is literally “percentage points × uptime” (e.g. +20% ATK half the time adds ~10 to the sum).
                   <strong>Flat attack</strong> lines add <code>flat × 0.02 × uptime</code> so they sit on a similar
-                  scale to percentages — that 0.02 is a model choice, not an in-game conversion.{' '}
+                  scale to percentages; that 0.02 is a model choice, not an in-game conversion.{' '}
                   <strong>Everything stacks across all skills</strong>, so the total is <strong>not</strong> “your
                   party deals X% more damage,” can exceed 100, and is only a <strong>relative buff-density score</strong>{' '}
                   for sorting and comparison.

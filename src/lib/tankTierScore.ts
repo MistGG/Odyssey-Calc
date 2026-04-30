@@ -20,13 +20,13 @@ function shieldHpPerCast(e: ParsedSupportEffect, casterMaxHp: number): number {
 }
 
 export type TankTierScoreBreakdown = {
-  /** Base max HP from wiki stats — dominant layer (~65% of composite). */
+  /** Base max HP from wiki stats; dominant layer (~65% of composite). */
   hpRaw: number
-  /** Weighted defense (def × 6) for log scaling — small stat layer. */
+  /** Weighted defense (def × 6) for log scaling; small stat layer. */
   defenseRaw: number
-  /** Parsed mitigation kit (DR × uptime, shields, heals, Max HP%) — second layer (~22%). */
+  /** Parsed mitigation kit (DR × uptime, shields, heals, Max HP%); second layer (~22%). */
   mitigationRaw: number
-  /** Block + evasion — smallest layer. */
+  /** Block + evasion; smallest layer. */
   avoidanceRaw: number
   /** Higher = better tank index (heuristic). */
   score: number

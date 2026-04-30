@@ -11,7 +11,7 @@ export type DigimonFilters = {
   attribute?: string
   /** Wiki may filter by family type name when supported. */
   family?: string
-  /** Wiki rank tier (`A`, `SS+`, …) — passed as `rank` query param when set. */
+  /** Wiki rank tier (`A`, `SS+`, …); passed as `rank` query param when set. */
   rank?: string
 }
 

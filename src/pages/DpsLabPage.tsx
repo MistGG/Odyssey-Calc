@@ -5,8 +5,14 @@ import { fetchDigimonDetail } from '../api/digimonService'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import {
-  AUTO_ANIM_CANCEL_OVERLAP_SEC,
+  ANIM_CANCEL_REACTION_MS_DEFAULT,
+  ANIM_CANCEL_REACTION_MS_MAX,
+  ANIM_CANCEL_REACTION_MS_MIN,
+  clampAnimCancelReactionMs,
+  clampCustomRotationFullCycles,
+  DEFAULT_CUSTOM_ROTATION_FULL_CYCLES,
   DEFAULT_ROTATION_SIM_DURATION_SEC,
+  MAX_CUSTOM_ROTATION_FULL_CYCLES,
   MAX_ROTATION_SIM_DURATION_SEC,
   MIN_ROTATION_SIM_DURATION_SEC,
   clampRotationDurationSec,
@@ -15,12 +21,7 @@ import {
 } from '../lib/dpsSim'
 import { EditableNumberInput } from '../components/EditableNumberInput'
 import { getGearAttackContribution, getGearStatBonuses } from '../lib/gearStats'
-import {
-  DIGIMON_ROLE_SKILL_CAST_SEC,
-  digimonRoleWikiSkills,
-  normalizeWikiRole,
-  type HybridStance,
-} from '../lib/digimonRoleSkills'
+import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
 import { SKILL_LEVEL_CAP, skillDamageAtLevel, skillIsSupportOnly } from '../lib/skillDamage'
 import { buildSupportSkillEffects } from '../lib/supportEffects'
 import type { RotationEvent } from '../lib/dpsSim'
@@ -136,7 +137,7 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
           ) : (
             <>
               Combined attack, skill, and flat (as % of wiki ATK). Damage skills never crit in the
-              sim — no crit chip:{' '}
+              sim; no crit chip:{' '}
             </>
           )}
           <strong>+{e.totalBuffPct.toFixed(1)}%</strong> (see sim code for exact stacking).
@@ -248,6 +249,22 @@ function parseToggleFromParams(params: URLSearchParams, key: string): boolean {
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
 }
 
+/** Default on: instant buffs + cancel meta; set animCancel=0 in URL to disable. */
+function parseAnimCancelFromParams(params: URLSearchParams): boolean {
+  if (!params.has('animCancel')) return true
+  const raw = (params.get('animCancel') ?? '').trim().toLowerCase()
+  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
+}
+
+function parseReactMsFromParams(params: URLSearchParams): number {
+  const raw = params.get('reactMs')
+  if (raw == null || raw.trim() === '') return ANIM_CANCEL_REACTION_MS_DEFAULT
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return ANIM_CANCEL_REACTION_MS_DEFAULT
+  return clampAnimCancelReactionMs(Math.round(n))
+}
+
 function parseRotationModeFromParams(params: URLSearchParams): LabRotationMode {
   return params.get('rotationMode')?.trim().toLowerCase() === 'custom' ? 'custom' : 'auto'
 }
@@ -260,6 +277,17 @@ function parseCustomRotationFromParams(params: URLSearchParams): string[] {
     .map((s) => s.trim())
     .filter(Boolean)
 }
+
+function parseRotCyclesFromParams(params: URLSearchParams): number {
+  const raw = params.get('rotCycles')?.trim()
+  if (raw == null || raw === '') return DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
+  if (n === 0) return 0
+  return clampCustomRotationFullCycles(Math.floor(n))
+}
+
+const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
 
 export function DpsLabPage() {
   const { search } = useLocation()
@@ -296,9 +324,12 @@ export function DpsLabPage() {
   const [customRotationSkillIds, setCustomRotationSkillIds] = useState<string[]>(() =>
     parseCustomRotationFromParams(params),
   )
-  const [customRotationDraftSkillId, setCustomRotationDraftSkillId] = useState('')
-  const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(() =>
-    parseToggleFromParams(params, 'animCancel'),
+  const [customRotationFullCycles, setCustomRotationFullCycles] = useState(() =>
+    parseRotCyclesFromParams(params),
+  )
+  const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(() => parseAnimCancelFromParams(params))
+  const [animCancelReactionMs, setAnimCancelReactionMs] = useState(() =>
+    parseReactMsFromParams(params),
   )
   const [forceAutoCrit, setForceAutoCrit] = useState(() => parseToggleFromParams(params, 'forceAutoCrit'))
   const [perfectAtClone, setPerfectAtClone] = useState(() => parseToggleFromParams(params, 'perfectAtClone'))
@@ -338,7 +369,9 @@ export function DpsLabPage() {
     const next = new URLSearchParams(search)
     setRotationMode(parseRotationModeFromParams(next))
     setCustomRotationSkillIds(parseCustomRotationFromParams(next))
-    setUseAutoAnimCancel(parseToggleFromParams(next, 'animCancel'))
+    setCustomRotationFullCycles(parseRotCyclesFromParams(next))
+    setUseAutoAnimCancel(parseAnimCancelFromParams(next))
+    setAnimCancelReactionMs(parseReactMsFromParams(next))
     setForceAutoCrit(parseToggleFromParams(next, 'forceAutoCrit'))
     setPerfectAtClone(parseToggleFromParams(next, 'perfectAtClone'))
   }, [search])
@@ -441,7 +474,8 @@ export function DpsLabPage() {
       id: string
       label: string
       kind: 'damage' | 'support' | 'role-support' | 'auto'
-    }> = [{ id: 'auto-attack', label: 'Auto Attack', kind: 'auto' }]
+      iconId: string
+    }> = [{ id: 'auto-attack', label: 'Auto Attack', kind: 'auto', iconId: '' }]
     const seen = new Set<string>()
     for (const s of data.skills ?? []) {
       if (seen.has(s.id)) continue
@@ -450,32 +484,60 @@ export function DpsLabPage() {
         id: s.id,
         label: s.name,
         kind: skillIsSupportOnly(s.base_dmg, s.scaling) ? 'support' : 'damage',
+        iconId: s.icon_id ?? '',
       })
     }
     for (const s of digimonRoleWikiSkillsForRole) {
       if (seen.has(s.id)) continue
       seen.add(s.id)
-      out.push({ id: s.id, label: `${s.name} (Role)`, kind: 'role-support' })
+      out.push({
+        id: s.id,
+        label: `${s.name} (Role)`,
+        kind: 'role-support',
+        iconId: s.icon_id ?? '',
+      })
     }
     return out
   }, [data, digimonRoleWikiSkillsForRole])
 
+  const customRotationPaletteGroups = useMemo(() => {
+    const auto = customRotationSkillOptions.filter((o) => o.kind === 'auto')
+    const damage = customRotationSkillOptions
+      .filter((o) => o.kind === 'damage')
+      .slice()
+      .sort((a, b) => a.label.localeCompare(b.label))
+    const support = customRotationSkillOptions
+      .filter((o) => o.kind === 'support')
+      .slice()
+      .sort((a, b) => a.label.localeCompare(b.label))
+    const role = customRotationSkillOptions
+      .filter((o) => o.kind === 'role-support')
+      .slice()
+      .sort((a, b) => a.label.localeCompare(b.label))
+    return { auto, damage, support, role }
+  }, [customRotationSkillOptions])
+
+  const skillByIdForLab = useMemo(() => {
+    const m = new Map<string, { name: string; icon_id: string }>()
+    if (!data) return m
+    for (const s of data.skills ?? []) m.set(s.id, { name: s.name, icon_id: s.icon_id ?? '' })
+    for (const s of digimonRoleWikiSkillsForRole) {
+      if (!m.has(s.id)) m.set(s.id, { name: s.name, icon_id: s.icon_id ?? '' })
+    }
+    m.set('auto-attack', { name: 'Auto Attack', icon_id: '' })
+    return m
+  }, [data, digimonRoleWikiSkillsForRole])
+
   useEffect(() => {
-    // While `data` is still loading, options are empty — do not filter or we'd wipe URL-hydrated
+    // While `data` is still loading, options are empty; do not filter or we'd wipe URL-hydrated
     // rotation before skill ids can be validated (breaks share links on cold load / live).
     if (!data || customRotationSkillOptions.length === 0) return
-    // While fetching a new Digimon, `data` can still be the previous entry — skip until ids align.
+    // While fetching a new Digimon, `data` can still be the previous entry; skip until ids align.
     if (data.id !== digimonId) return
     setCustomRotationSkillIds((prev) =>
       prev.filter((id) => customRotationSkillOptions.some((opt) => opt.id === id)),
     )
   }, [data, digimonId, customRotationSkillOptions])
-
-  useEffect(() => {
-    if (!customRotationDraftSkillId) return
-    const stillValid = customRotationSkillOptions.some((opt) => opt.id === customRotationDraftSkillId)
-    if (!stillValid) setCustomRotationDraftSkillId('')
-  }, [customRotationDraftSkillId, customRotationSkillOptions])
 
   const customRotationResolved = useMemo(
     () =>
@@ -529,10 +591,17 @@ export function DpsLabPage() {
               role: data.role,
               hybridStance: isHybridRole ? hybridStance : 'best',
               autoAttackAnimationCancel: useAutoAnimCancel,
+              animCancelReactionSec: clampAnimCancelReactionMs(animCancelReactionMs) / 1000,
               forceAutoCrit,
               perfectAtClone,
               customRotation: rotationMode === 'custom' ? customRotationValidRows : undefined,
               manualSupportOnly: rotationMode === 'custom',
+              customRotationFullCycles:
+                rotationMode === 'custom'
+                  ? customRotationFullCycles === 0
+                    ? 0
+                    : clampCustomRotationFullCycles(customRotationFullCycles)
+                  : undefined,
             },
           )
           if (!cancelled) setSim(result)
@@ -565,10 +634,12 @@ export function DpsLabPage() {
     simBaseAttack,
     combatStats,
     useAutoAnimCancel,
+    animCancelReactionMs,
     forceAutoCrit,
     perfectAtClone,
     rotationMode,
     customRotationValidRows,
+    customRotationFullCycles,
   ])
 
   const breakdown = useMemo(() => {
@@ -680,14 +751,18 @@ export function DpsLabPage() {
 
     if (atkSpdSupports.length === 0 && dmgScalingSupports.length === 0 && supportSkills.length > 0) {
       const names = supportSkills.map((s) => s.name).join(', ')
-      lines.push(`Use support skills (${names}) for utility windows; they are excluded from DPS casts.`)
+      lines.push(
+        useAutoAnimCancel
+          ? `Animation cancel ${names} right after an auto. These buffs are instant and that weaving adds DPS.`
+          : `Use support skills (${names}) for utility windows; they are excluded from DPS casts.`,
+      )
     }
 
     if (useAutoAnimCancel) {
       /** One auto: lab ATK with a simple wiki crit rough (same idea as sim fallback); not timeline mean. */
       const autoOneHit =
         (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
-      const overlap = AUTO_ANIM_CANCEL_OVERLAP_SEC
+      const overlap = clampAnimCancelReactionMs(animCancelReactionMs) / 1000
       const cancelCandidates = (data.skills ?? [])
         .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
         .map((s) => {
@@ -710,11 +785,10 @@ export function DpsLabPage() {
       if (cancelCandidates.length > 0) {
         lines.push({
           kind: 'anim-cancel-priority',
-          title: 'Animation cancel — one-weave rate',
-          caption: `Each line is (one expected auto hit + one skill hit from wiki and lab ATK, no stacked buffs) ÷ (${overlap}s cancel overlap + cast). Not sustained sim DPS.`,
+          title: 'Animation cancel DPS',
           bullets: cancelCandidates.slice(0, 4).map(
             (c) =>
-              `${c.name} — ${c.cast.toFixed(1)}s cast · ${c.period.toFixed(1)}s cast+CD · ~${c.cancelWeaveRate.toFixed(0)} / s`,
+              `${c.name}: ${c.cast.toFixed(1)}s cast · ${c.period.toFixed(1)}s cast+CD · ~${c.cancelWeaveRate.toFixed(0)} / s`,
           ),
         })
       }
@@ -723,7 +797,9 @@ export function DpsLabPage() {
     if (digimonRoleWikiSkillsForRole.length > 0) {
       const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
       lines.push(
-        `Digimon role skills (${tn}) are cast when ready like other supports.`,
+        useAutoAnimCancel
+          ? `Digimon role skills (${tn}) are instant. Animation cancel them after an auto for more DPS (same idea as your other buffs).`
+          : `Digimon role skills (${tn}) are instant cast; turn on animation cancel under Special modifiers to model weaving them after autos.`,
         `Hover buff % on timeline rows for per-hit breakdowns.`,
       )
     }
@@ -736,6 +812,7 @@ export function DpsLabPage() {
     skillLevels,
     digimonRoleWikiSkillsForRole,
     useAutoAnimCancel,
+    animCancelReactionMs,
     simBaseAttack,
     combatStats?.crit_rate,
     perfectAtClone,
@@ -804,6 +881,29 @@ export function DpsLabPage() {
   )
   const showLabPortrait = Boolean(portraitSrc && !portraitBroken)
 
+  const moveRotationStep = useCallback((from: number, to: number) => {
+    setCustomRotationSkillIds((prev) => {
+      if (
+        from === to ||
+        from < 0 ||
+        to < 0 ||
+        from >= prev.length ||
+        to >= prev.length
+      ) {
+        return prev
+      }
+      const next = [...prev]
+      const [item] = next.splice(from, 1)
+      next.splice(to, 0, item)
+      return next
+    })
+  }, [])
+
+  const [rotationDnd, setRotationDnd] = useState<{ source: number | null; over: number | null }>({
+    source: null,
+    over: null,
+  })
+
   const buildShareUrl = useCallback(() => {
     const next = new URLSearchParams()
     if (digimonId) next.set('digimonId', digimonId)
@@ -814,8 +914,12 @@ export function DpsLabPage() {
     next.set('rotationMode', rotationMode)
     if (rotationMode === 'custom' && customRotationSkillIds.length > 0) {
       next.set('rotationSeq', customRotationSkillIds.join(','))
+      next.set('rotCycles', String(customRotationFullCycles))
     }
-    if (useAutoAnimCancel) next.set('animCancel', '1')
+    if (useAutoAnimCancel) {
+      next.set('animCancel', '1')
+      next.set('reactMs', String(clampAnimCancelReactionMs(animCancelReactionMs)))
+    }
     if (forceAutoCrit) next.set('forceAutoCrit', '1')
     if (perfectAtClone) next.set('perfectAtClone', '1')
     /** Canonical GitHub Pages URL so shared links work outside localhost. */
@@ -829,7 +933,9 @@ export function DpsLabPage() {
     hybridStance,
     rotationMode,
     customRotationSkillIds,
+    customRotationFullCycles,
     useAutoAnimCancel,
+    animCancelReactionMs,
     forceAutoCrit,
     perfectAtClone,
   ])
@@ -874,7 +980,7 @@ export function DpsLabPage() {
       {simBusy && data && data.id === digimonId && (
         <p className="muted lab-sim-busy-status" role="status" aria-live="polite">
           Running rotation simulation…
-          {simSlowHint ? ' (Taking longer than expected — please wait.)' : ''}
+          {simSlowHint ? ' (Taking longer than expected, please wait.)' : ''}
         </p>
       )}
 
@@ -905,9 +1011,9 @@ export function DpsLabPage() {
                       <span className="muted lab-identity-stage">({data.stage})</span>
                     </h2>
                     <div className="lab-identity-pills">
-                      <span className="detail-info-pill detail-info-pill-class">+ {data.role || '—'}</span>
-                      <span className="detail-info-pill detail-info-pill-type">{data.attribute || '—'}</span>
-                      <span className="detail-info-pill detail-info-pill-attrib">{data.element || '—'}</span>
+                      <span className="detail-info-pill detail-info-pill-class">+ {data.role || '-'}</span>
+                      <span className="detail-info-pill detail-info-pill-type">{data.attribute || '-'}</span>
+                      <span className="detail-info-pill detail-info-pill-attrib">{data.element || '-'}</span>
                     </div>
                     <p className="muted lab-identity-sub">
                       {(data.skills ?? []).length} skills · Wiki attack {data.attack.toLocaleString()}
@@ -1080,8 +1186,10 @@ export function DpsLabPage() {
                     onCommit={(next) => setTargets(next)}
                   />
                 </label>
-                <label>
-                  Simulation seconds
+                <label className="lab-sim-duration-label">
+                  <span className="lab-sim-duration-label-text">
+                    {rotationMode === 'custom' ? 'Max simulation time' : 'Simulation seconds'}
+                  </span>
                   <EditableNumberInput
                     min={MIN_ROTATION_SIM_DURATION_SEC}
                     max={MAX_ROTATION_SIM_DURATION_SEC}
@@ -1092,6 +1200,27 @@ export function DpsLabPage() {
                     onCommit={(next) => setDurationSec(clampRotationDurationSec(next))}
                   />
                 </label>
+                {rotationMode === 'custom' ? (
+                  <label className="lab-sim-duration-label">
+                    <span className="lab-sim-duration-label-text">Full rotation passes</span>
+                    <span className="lab-field-hint">
+                      One pass = execute every step in order once (then repeat if &gt; 1). Use{' '}
+                      <strong>0</strong> to loop until the safety cap.
+                    </span>
+                    <EditableNumberInput
+                      min={0}
+                      max={MAX_CUSTOM_ROTATION_FULL_CYCLES}
+                      integer
+                      emptyValue={DEFAULT_CUSTOM_ROTATION_FULL_CYCLES}
+                      value={customRotationFullCycles}
+                      onCommit={(v) =>
+                        setCustomRotationFullCycles(
+                          v === 0 ? 0 : clampCustomRotationFullCycles(v),
+                        )
+                      }
+                    />
+                  </label>
+                ) : null}
               </div>
               <div className="lab-custom-rotation-mode">
                 <p className="lab-controls-bar-title">Rotation mode</p>
@@ -1126,40 +1255,154 @@ export function DpsLabPage() {
               </div>
               {rotationMode === 'custom' && (
                 <div className="lab-custom-rotation-card">
-                  <div className="lab-custom-rotation-add">
-                    <select
-                      value={customRotationDraftSkillId}
-                      onChange={(e) => setCustomRotationDraftSkillId(e.target.value)}
-                    >
-                      <option value="">Select skill…</option>
-                      {customRotationSkillOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.label} · {opt.kind}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="lab-btn"
-                      onClick={() => {
-                        if (!customRotationDraftSkillId) return
-                        setCustomRotationSkillIds((prev) => [...prev, customRotationDraftSkillId])
-                      }}
-                    >
-                      Add
-                    </button>
+                  <div className="lab-custom-rotation-card-head">
+                    <div>
+                      <p className="lab-custom-rotation-card-title">Build your rotation</p>
+                      <p className="lab-custom-rotation-card-sub">
+                        Click a skill to append. Drag tiles to reorder. The sim follows this list in
+                        order (supports and autos included).
+                      </p>
+                    </div>
                     <button
                       type="button"
                       className="lab-btn lab-btn--ghost"
                       onClick={() => setCustomRotationSkillIds([])}
                       disabled={customRotationSkillIds.length === 0}
                     >
-                      Clear
+                      Clear all
                     </button>
                   </div>
+
+                  <div className="lab-rotation-palette">
+                    {customRotationPaletteGroups.auto.length > 0 ? (
+                      <div className="lab-rotation-palette-row">
+                        <span className="lab-rotation-palette-row-label">Basics</span>
+                        <div className="lab-rotation-palette-chips">
+                          {customRotationPaletteGroups.auto.map((opt) => (
+                            <button
+                              type="button"
+                              key={opt.id}
+                              className="lab-rotation-palette-chip"
+                              onClick={() =>
+                                setCustomRotationSkillIds((prev) => [...prev, opt.id])
+                              }
+                            >
+                              {skillIconUrl(opt.iconId) ? (
+                                <img
+                                  src={skillIconUrl(opt.iconId)}
+                                  alt=""
+                                  className="lab-rotation-palette-chip-icon"
+                                />
+                              ) : (
+                                <span className="lab-rotation-palette-chip-fallback" aria-hidden>
+                                  A
+                                </span>
+                              )}
+                              <span className="lab-rotation-palette-chip-text">{opt.label}</span>
+                              <span className="lab-rotation-palette-chip-kind">Auto</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {customRotationPaletteGroups.damage.length > 0 ? (
+                      <div className="lab-rotation-palette-row">
+                        <span className="lab-rotation-palette-row-label">Damage</span>
+                        <div className="lab-rotation-palette-chips">
+                          {customRotationPaletteGroups.damage.map((opt) => (
+                            <button
+                              type="button"
+                              key={opt.id}
+                              className="lab-rotation-palette-chip"
+                              onClick={() =>
+                                setCustomRotationSkillIds((prev) => [...prev, opt.id])
+                              }
+                            >
+                              {skillIconUrl(opt.iconId) ? (
+                                <img
+                                  src={skillIconUrl(opt.iconId)}
+                                  alt=""
+                                  className="lab-rotation-palette-chip-icon"
+                                />
+                              ) : (
+                                <span className="lab-rotation-palette-chip-fallback" aria-hidden>
+                                  ◆
+                                </span>
+                              )}
+                              <span className="lab-rotation-palette-chip-text">{opt.label}</span>
+                              <span className="lab-rotation-palette-chip-kind">DMG</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {customRotationPaletteGroups.support.length > 0 ? (
+                      <div className="lab-rotation-palette-row">
+                        <span className="lab-rotation-palette-row-label">Support</span>
+                        <div className="lab-rotation-palette-chips">
+                          {customRotationPaletteGroups.support.map((opt) => (
+                            <button
+                              type="button"
+                              key={opt.id}
+                              className="lab-rotation-palette-chip"
+                              onClick={() =>
+                                setCustomRotationSkillIds((prev) => [...prev, opt.id])
+                              }
+                            >
+                              {skillIconUrl(opt.iconId) ? (
+                                <img
+                                  src={skillIconUrl(opt.iconId)}
+                                  alt=""
+                                  className="lab-rotation-palette-chip-icon"
+                                />
+                              ) : (
+                                <span className="lab-rotation-palette-chip-fallback" aria-hidden>
+                                  +
+                                </span>
+                              )}
+                              <span className="lab-rotation-palette-chip-text">{opt.label}</span>
+                              <span className="lab-rotation-palette-chip-kind">Sup</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {customRotationPaletteGroups.role.length > 0 ? (
+                      <div className="lab-rotation-palette-row">
+                        <span className="lab-rotation-palette-row-label">Role</span>
+                        <div className="lab-rotation-palette-chips">
+                          {customRotationPaletteGroups.role.map((opt) => (
+                            <button
+                              type="button"
+                              key={opt.id}
+                              className="lab-rotation-palette-chip"
+                              onClick={() =>
+                                setCustomRotationSkillIds((prev) => [...prev, opt.id])
+                              }
+                            >
+                              {skillIconUrl(opt.iconId) ? (
+                                <img
+                                  src={skillIconUrl(opt.iconId)}
+                                  alt=""
+                                  className="lab-rotation-palette-chip-icon"
+                                />
+                              ) : (
+                                <span className="lab-rotation-palette-chip-fallback" aria-hidden>
+                                  R
+                                </span>
+                              )}
+                              <span className="lab-rotation-palette-chip-text">{opt.label}</span>
+                              <span className="lab-rotation-palette-chip-kind">Role</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
                   {customRotationSkillIds.length === 0 ? (
                     <p className="lab-custom-rotation-warning">
-                      Add at least one skill to run custom mode.
+                      Add at least one step to run custom mode.
                     </p>
                   ) : null}
                   {customRotationInvalidCount > 0 ? (
@@ -1169,67 +1412,107 @@ export function DpsLabPage() {
                       Digimon/stance and will be ignored.
                     </p>
                   ) : null}
-                  <ol className="lab-custom-rotation-list">
-                    {customRotationResolved.map((row, idx) => (
-                      <li key={`${row.skillId}-${idx}`} className="lab-custom-rotation-row">
-                        <select
-                          value={row.skillId}
-                          onChange={(e) =>
-                            setCustomRotationSkillIds((prev) =>
-                              prev.map((id, i) => (i === idx ? e.target.value : id)),
-                            )
-                          }
-                        >
-                          {customRotationSkillOptions.map((opt) => (
-                            <option key={opt.id} value={opt.id}>
-                              {opt.label} · {opt.kind}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="lab-custom-rotation-row-actions">
-                          <button
-                            type="button"
-                            className="lab-btn lab-btn--ghost"
-                            onClick={() =>
-                              setCustomRotationSkillIds((prev) => {
-                                if (idx <= 0) return prev
-                                const next = [...prev]
-                                ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
-                                return next
-                              })
-                            }
-                            disabled={idx === 0}
-                          >
-                            Up
-                          </button>
-                          <button
-                            type="button"
-                            className="lab-btn lab-btn--ghost"
-                            onClick={() =>
-                              setCustomRotationSkillIds((prev) => {
-                                if (idx >= prev.length - 1) return prev
-                                const next = [...prev]
-                                ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
-                                return next
-                              })
-                            }
-                            disabled={idx >= customRotationSkillIds.length - 1}
-                          >
-                            Down
-                          </button>
-                          <button
-                            type="button"
-                            className="lab-btn lab-btn--danger"
-                            onClick={() =>
-                              setCustomRotationSkillIds((prev) => prev.filter((_, i) => i !== idx))
-                            }
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
+
+                  {customRotationSkillIds.length > 0 ? (
+                    <div className="lab-rotation-timeline-wrap">
+                      <p className="lab-rotation-timeline-label">Order (drag to reorder)</p>
+                      <div
+                        className={
+                          rotationDnd.source != null
+                            ? 'lab-rotation-timeline lab-rotation-timeline--dnd-active'
+                            : 'lab-rotation-timeline'
+                        }
+                        onDragLeave={(e) => {
+                          const related = e.relatedTarget as Node | null
+                          if (related && e.currentTarget.contains(related)) return
+                          setRotationDnd((s) => (s.source == null ? s : { ...s, over: null }))
+                        }}
+                      >
+                        {customRotationResolved.map((row, idx) => {
+                          const skWiki = skillByIdForLab.get(row.skillId)
+                          const name = row.option?.label ?? skWiki?.name ?? row.skillId
+                          const iconId = row.option?.iconId ?? skWiki?.icon_id ?? ''
+                          const kind = row.option?.kind ?? 'invalid'
+                          const isDragging = rotationDnd.source === idx
+                          const isDropTarget =
+                            rotationDnd.over === idx &&
+                            rotationDnd.source != null &&
+                            rotationDnd.source !== idx
+                          return (
+                            <div
+                              key={`${row.skillId}-${idx}`}
+                              className={[
+                                'lab-rotation-tile',
+                                isDragging ? 'lab-rotation-tile--dragging' : '',
+                                isDropTarget ? 'lab-rotation-tile--drop-target' : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData(LAB_ROTATION_DND_MIME, String(idx))
+                                e.dataTransfer.effectAllowed = 'move'
+                                setRotationDnd({ source: idx, over: null })
+                              }}
+                              onDragEnter={(e) => {
+                                e.preventDefault()
+                                setRotationDnd((s) =>
+                                  s.source == null ? s : { ...s, over: idx },
+                                )
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault()
+                                e.dataTransfer.dropEffect = 'move'
+                              }}
+                              onDragEnd={() => setRotationDnd({ source: null, over: null })}
+                              onDrop={(e) => {
+                                e.preventDefault()
+                                const raw = e.dataTransfer.getData(LAB_ROTATION_DND_MIME)
+                                const from = Number(raw)
+                                setRotationDnd({ source: null, over: null })
+                                if (!Number.isFinite(from)) return
+                                moveRotationStep(from, idx)
+                              }}
+                            >
+                              <span className="lab-rotation-tile-grip" aria-hidden>
+                                ⋮⋮
+                              </span>
+                              {skillIconUrl(iconId) ? (
+                                <img
+                                  src={skillIconUrl(iconId)}
+                                  alt=""
+                                  className="lab-rotation-tile-icon"
+                                />
+                              ) : (
+                                <span className="lab-rotation-tile-icon-fallback" aria-hidden>
+                                  {kind === 'auto' ? 'A' : kind === 'invalid' ? '?' : '◇'}
+                                </span>
+                              )}
+                              <div className="lab-rotation-tile-body">
+                                <span className="lab-rotation-tile-name">{name}</span>
+                                <span className="lab-rotation-tile-meta">
+                                  #{idx + 1} · {kind}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className="lab-rotation-tile-remove"
+                                aria-label={`Remove ${name}`}
+                                onPointerDown={(ev) => ev.stopPropagation()}
+                                onClick={() =>
+                                  setCustomRotationSkillIds((prev) =>
+                                    prev.filter((_, i) => i !== idx),
+                                  )
+                                }
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )}
               <div className="lab-special-modifiers">
@@ -1261,6 +1544,34 @@ export function DpsLabPage() {
                       Auto attack animation cancelling (Special thanks to Yvelchrome for bringing this to my attention and testing it!)
                     </span>
                   </label>
+                  {useAutoAnimCancel ? (
+                    <div className="lab-special-modifier-reaction">
+                      <label htmlFor="lab-anim-cancel-react-ms" className="lab-special-modifier-reaction-label">
+                        Reaction time
+                      </label>
+                      <div className="lab-special-modifier-reaction-field">
+                        <input
+                          id="lab-anim-cancel-react-ms"
+                          type="number"
+                          inputMode="numeric"
+                          min={ANIM_CANCEL_REACTION_MS_MIN}
+                          max={ANIM_CANCEL_REACTION_MS_MAX}
+                          step={10}
+                          value={animCancelReactionMs}
+                          onChange={(e) => {
+                            const v = e.target.valueAsNumber
+                            if (!Number.isFinite(v)) return
+                            setAnimCancelReactionMs(clampAnimCancelReactionMs(v))
+                          }}
+                          aria-label="Animation cancel reaction time in milliseconds"
+                        />
+                        <span className="muted">
+                          ms ({ANIM_CANCEL_REACTION_MS_MIN}-{ANIM_CANCEL_REACTION_MS_MAX}, default{' '}
+                          {ANIM_CANCEL_REACTION_MS_DEFAULT})
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -1277,9 +1588,9 @@ export function DpsLabPage() {
             <section className="lab-result">
               <h3>Digimon role skills ({data.role})</h3>
               <p className="muted">
-                Role skills only (no tamer skills). {DIGIMON_ROLE_SKILL_CAST_SEC}s casts. Hybrid: one
-                stance at a time. Hit / INT (and skills that only buff those) aren&apos;t in the rotation sim
-                yet—those rows are informational.
+                Role skills only (no tamer skills). Instant casts (0s), like all buffs in the current sim.
+                Hybrid: one stance at a time. Hit / INT (and skills that only buff those) aren&apos;t in the
+                rotation sim yet. Those rows are informational.
               </p>
               {isHybridRole && (
                 <fieldset className="lab-fieldset">
@@ -1312,7 +1623,7 @@ export function DpsLabPage() {
                       <tr key={s.id}>
                         <td>{s.name}</td>
                         <td>{s.cooldown_sec}s</td>
-                        <td>{typeof s.buff?.duration === 'number' ? `${s.buff.duration}s` : '—'}</td>
+                        <td>{typeof s.buff?.duration === 'number' ? `${s.buff.duration}s` : '-'}</td>
                         <td>{s.cast_time_sec}s</td>
                       </tr>
                     ))}
@@ -1350,7 +1661,7 @@ export function DpsLabPage() {
                         <td>
                           {typeof s.buff?.duration === 'number' && s.buff.duration > 0
                             ? `${s.buff.duration}s`
-                            : '—'}
+                            : '-'}
                         </td>
                         <td>{cap}</td>
                         <td>
@@ -1383,9 +1694,30 @@ export function DpsLabPage() {
             >
               <section className="lab-result lab-result--sim-summary">
                 <h3>
-                  {rotationMode === 'custom' ? 'Custom rotation simulation' : 'Optimal rotation simulation'} (
-                  {sim.durationSec}s)
+                  {rotationMode === 'custom' ? 'Custom rotation simulation' : 'Optimal rotation simulation'}
                 </h3>
+                <p className="lab-sim-window-meta">
+                  Simulated time:{' '}
+                  <span className="lab-sim-window-meta-value">
+                    {sim.durationSec.toLocaleString(undefined, { maximumFractionDigits: 2 })}s
+                  </span>
+                  {rotationMode === 'custom' && sim.simCapSec != null ? (
+                    <>
+                      {' '}
+                      · Cap {sim.simCapSec}s
+                      {sim.durationSec + 0.015 < sim.simCapSec ? (
+                        <span className="lab-sim-window-meta-note"> (stopped early)</span>
+                      ) : null}
+                    </>
+                  ) : null}
+                  {sim.customRotationCyclesCompleted != null ? (
+                    <>
+                      {' '}
+                      · {sim.customRotationCyclesCompleted} full rotation pass
+                      {sim.customRotationCyclesCompleted === 1 ? '' : 'es'}
+                    </>
+                  ) : null}
+                </p>
                 <div className="lab-table-wrap lab-kv-table-wrap lab-kv-summary-stack">
                   <table className="lab-kv-table">
                     <tbody>

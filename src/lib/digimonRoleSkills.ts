@@ -4,7 +4,8 @@ import type { WikiSkill } from '../types/wikiApi'
  * In-game **Digimon role** passives (by wiki `role`: Melee DPS, Ranged DPS, etc.).
  * These are not tamer skills; tamer-side passives may be added later.
  */
-export const DIGIMON_ROLE_SKILL_CAST_SEC = 2.5
+/** Role buff skills are instant cast in current game (good for auto-animation cancels). */
+export const DIGIMON_ROLE_SKILL_CAST_SEC = 0
 
 export const HYBRID_STANCE_IDS = {
   melee: 'digimon-role-hybrid-melee-stance',
@@ -60,18 +61,39 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
     case 'melee dps':
       return [
         roleSkill(
-          'digimon-role-melee-berserker',
-          'Berserker',
+          'digimon-role-melee-berserker-soul',
+          'Berserker Soul',
           60,
           15,
-          'Increases Attack Speed by 5%. Increases Attack by 20%.',
+          'Increases Attack Speed by 12%. Increases Attack Power by 20%. Increases Critical Damage by 20%.',
+        ),
+        roleSkill(
+          'digimon-role-melee-inner-energy',
+          'Inner Energy',
+          45,
+          1,
+          'Heals 20% HP.',
+        ),
+        roleSkill(
+          'digimon-role-melee-sprint',
+          'Sprint',
+          30,
+          9,
+          'Increases Movement Speed by 30%.',
+        ),
+        roleSkill(
+          'digimon-role-melee-ultimate-instinct',
+          'Ultimate Instinct',
+          90,
+          5,
+          'Increases Evasion by 200%.',
         ),
         roleSkill(
           'digimon-role-melee-digital-hazard',
           'Digital Hazard',
           90,
           15,
-          'Increases Attack Speed by 10%. Increases Attack by 15%. Increases Critical Damage by 10%.',
+          'Increases Attack Speed by 15%. Increases Attack Power by 30%. Increases Critical Damage by 50%.',
         ),
       ]
     case 'ranged dps':
@@ -81,7 +103,7 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'Quick Shot',
           60,
           15,
-          'Increases Attack Speed by 5%. Increases Attack by 15%. Increases Critical Damage by 10%.',
+          'Increases Attack Speed by 20%. Increases Attack Power by 15%. Increases Critical Damage by 10%.',
         ),
         roleSkill(
           'digimon-role-ranged-hawk-eye',
@@ -91,18 +113,25 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'Increases Critical Rate by 20%.',
         ),
         roleSkill(
-          'digimon-role-ranged-hyper-focus',
-          'Hyper Focus',
-          90,
-          15,
-          'Increases Attack Speed by 10%. Increases Critical Damage by 25%. Increases Critical Rate by 30%.',
+          'digimon-role-ranged-sprint',
+          'Sprint',
+          30,
+          9,
+          'Increases Movement Speed by 30%.',
         ),
         roleSkill(
           'digimon-role-ranged-ultimate-accuracy',
           'Ultimate Accuracy',
-          60,
+          30,
           10,
           'Increases Hit Rate by 50%.',
+        ),
+        roleSkill(
+          'digimon-role-ranged-hyper-focus',
+          'Hyper Focus',
+          90,
+          15,
+          'Increases Attack Speed by 25%. Increases Critical Damage by 25%. Increases Critical Rate by 30%.',
         ),
       ]
     case 'caster':

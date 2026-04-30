@@ -195,8 +195,8 @@ export function DigimonDetailPage() {
             <strong>{skillLevel}</strong>
             <span className="muted">
               {' '}
-              — damage = base + scaling × (level − 1); sustain = damage ÷ (cast
-              + cooldown). Support skills (no damage) are omitted from sustain.
+              Damage = base + scaling × (level - 1); sustain = damage ÷ (cast + cooldown). Support skills (no
+              damage) are omitted from sustain.
             </span>
           </label>
           <input

@@ -38,7 +38,7 @@ function damageBuffRawFromEffect(e: ParsedSupportEffect, uptime: number): number
   return pts * uptime
 }
 
-/** Sum of %-points × uptime (and flat ATK scaled) for matrix display — not the same units as `damageBuffRaw`. */
+/** Sum of %-points × uptime (and flat ATK scaled) for matrix display; not the same units as `damageBuffRaw`. */
 function damageBuffDisplayPctFromEffect(e: ParsedSupportEffect, uptime: number): number {
   const label = e.label.toLowerCase()
   const v = e.valueAtLevel

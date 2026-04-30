@@ -1,14 +1,14 @@
 import type { CSSProperties } from 'react'
 
 /**
- * Circular portrait gradients by evolution stage — matches the main wiki `SC`
+ * Circular portrait gradients by evolution stage; matches the main wiki `SC`
  * palette (Digital Odyssey Wiki).
  */
 const ROOKIE_GRADIENT = 'linear-gradient(135deg,#16641e,#22a040)'
 const ROOKIE_ACCENT = '#4ade80'
 
 /**
- * Wiki `SC[stage].t` label colors — used for borders and small accents.
+ * Wiki `SC[stage].t` label colors; used for borders and small accents.
  */
 export const DIGIMON_STAGE_ACCENT: Record<string, string> = {
   DigiTama: '#8888aa',

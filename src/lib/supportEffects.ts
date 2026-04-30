@@ -45,7 +45,7 @@ function hasPlusPerSkillLevelAfter(description: string, matchEndIndex: number) {
   )
 }
 
-/** "Attack Power +647 (+32/Lv)" — skip the flat "+647" when slash-Lv scaling follows. */
+/** "Attack Power +647 (+32/Lv)": skip the flat "+647" when slash-Lv scaling follows. */
 function hasShortSlashLvScaleAfter(description: string, matchEndIndex: number) {
   const tail = description.slice(matchEndIndex)
   return /^\s*\(\s*\+\s*\d+(?:\.\d+)?\s*(?:%?)\s*\/\s*Lv\)/i.test(tail)
@@ -89,7 +89,7 @@ export function normalizeDamageReductionDisplayLabel(label: string): string {
   return label
 }
 
-/** Wiki buff lines use "DP" for the in-game DE (defense) stat — not DPS. */
+/** Wiki buff lines use "DP" for the in-game DE (defense) stat, not DPS. */
 export function normalizeWikiDpAsDeLabel(label: string): string {
   return label.replace(/\bdp\b/gi, 'DE')
 }
@@ -136,7 +136,7 @@ function healEffectLabel(targetRaw: string): string {
   return `Heals ${normalizeEffectLabel(targetRaw)}`
 }
 
-/** Stat fragment before by/of/worth in generic +per-level matches — skip flavor / gerund clauses. */
+/** Stat fragment before by/of/worth in generic +per-level matches; skip flavor / gerund clauses. */
 function shouldSkipGenericScaleSubject(rawTarget: string): boolean {
   const s = rawTarget.trim()
   if (s.length > 46) return true
@@ -157,7 +157,7 @@ function isGerundStatTarget(target: string): boolean {
   return /^(increasing|decreasing|raising|boosting)\s+/i.test(target.trim())
 }
 
-/** " and increases EV by … (+N per …)" — capture group wrongly includes the verb; full line is handled by parenScaleRe. */
+/** " and increases EV by … (+N per …)": capture group wrongly includes the verb; full line is handled by parenScaleRe. */
 function isVerbLedClauseSubject(target: string): boolean {
   return /^(increases|reduces|decreases|raises|boosts|recovers|restores|heals)\s+/i.test(target.trim())
 }
@@ -224,7 +224,7 @@ export function parseSupportEffects(
     })
   }
 
-  // "Increases Evasion by 100 (5/skill level)" — wiki flavor often uses slash form without "+" or "per" inside parens.
+  // "Increases Evasion by 100 (5/skill level)": wiki flavor often uses slash form without "+" or "per" inside parens.
   const parenSlashSkillLevelRe =
     /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)\s*\(\s*\+?\s*(\d+(?:\.\d+)?)\s*(%?)\s*\/\s*skill\s+level\s*\)/gi
   for (const m of description.matchAll(parenSlashSkillLevelRe)) {
@@ -287,7 +287,7 @@ export function parseSupportEffects(
     })
   }
 
-  // "Recovers 5800 HP (+105 per Lv)." — paren scaling (wiki shorthand)
+  // "Recovers 5800 HP (+105 per Lv).": paren scaling (wiki shorthand)
   const healHpParenPerLvRe = new RegExp(
     String.raw`\b(?:Recovers?|Restores?|Heals?)\s+(${AMOUNT_NUM})\s*(%?)\s+HP\s*\(\s*\+?\s*(${AMOUNT_NUM})\s*(%?)\s*per\s+(?:Lv|skill\s+level)\s*\)`,
     'gi',
@@ -307,7 +307,7 @@ export function parseSupportEffects(
     })
   }
 
-  // "Regenerates 90 HP every 3s (+3 per Lv)." — heal over time (standardized label)
+  // "Regenerates 90 HP every 3s (+3 per Lv).": heal over time (standardized label)
   const regenHotParenPerLvRe = new RegExp(
     String.raw`\bRegenerates?\s+(${AMOUNT_NUM})\s*(%?)\s+HP\s+every\s+(${AMOUNT_NUM})\s*s(?:ec(?:ond)?s?)?\s*(?:\(\s*\+?\s*(${AMOUNT_NUM})\s*(%?)\s*per\s+(?:Lv|skill\s+level)\s*\))?`,
     'gi',
@@ -562,7 +562,7 @@ export function parseSupportEffects(
   for (const m of description.matchAll(shortFlatRe)) {
     const phrase = m[0]
     if (m.index !== undefined && hasShortSlashLvScaleAfter(description, m.index + phrase.length)) continue
-    // "… restores 2783 HP + 167 per skill level" — +N is heal/absorb scaling, not "Stat +N" shorthand.
+    // "… restores 2783 HP + 167 per skill level": +N is heal/absorb scaling, not "Stat +N" shorthand.
     if (m.index !== undefined && m[2] === '+') {
       const tail = description.slice(m.index + phrase.length)
       if (/^\s*per\s+(?:skill\s+level|(?:extra\s+)?level|Lv)\b/i.test(tail)) continue
@@ -680,7 +680,7 @@ function isTrivialBuffDescription(desc: string): boolean {
   const t = desc.trim()
   if (t.length === 0) return true
   if (t.length <= 5) return true
-  if (/^(?:n\/?a|none|tbd|null|—|-|–|\.\.\.|…|\.)$/i.test(t)) return true
+  if (/^(?:n\/?a|none|tbd|null|\u2014|-|–|\.\.\.|…|\.)$/i.test(t)) return true
   return false
 }
 
@@ -922,7 +922,7 @@ export function resolvePctOfMaxHpShields(
 export function buildSupportSkillEffects(
   skill: WikiSkill,
   level: number,
-  /** Wiki max HP — when set, shields parsed as % of Max HP become flat HP. */
+  /** Wiki max HP; when set, shields parsed as % of Max HP become flat HP. */
   hostMaxHp?: number,
 ): ParsedSupportEffect[] {
   const L = Math.max(1, Math.floor(level))

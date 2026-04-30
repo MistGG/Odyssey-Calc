@@ -285,7 +285,7 @@ function migrateEntryDpsAoeShape(entry: SustainedDpsEntry): SustainedDpsEntry {
   }
 }
 
-/** Old caches stored a fourth AoE key `radius`; farming uses a new formula — clear so users refresh tier list. */
+/** Old caches stored a fourth AoE key `radius`; farming uses a new formula; clear so users refresh tier list. */
 function migrateLegacyAoeRadiusToFarming(entry: SustainedDpsEntry): SustainedDpsEntry {
   const a = entry.aoeCategoryScores as (AoeTierCategoryScores & { radius?: number }) | undefined
   if (!a) return entry

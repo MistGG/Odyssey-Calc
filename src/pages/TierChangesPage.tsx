@@ -60,7 +60,7 @@ function diffHighlightSegments(before: string, after: string) {
   }
 }
 
-/** `Label: 123 -> 456` (API stat/skill number lines) — not quoted text diffs. */
+/** `Label: 123 -> 456` (API stat/skill number lines), not quoted text diffs. */
 function parseNumericChangeLine(line: string): { label: string; before: string; after: string } | null {
   const arrow = ' -> '
   const aIdx = line.lastIndexOf(arrow)
@@ -391,7 +391,7 @@ function buildDigimonFeed(
     for (const line of lines) {
       addLine(
         map,
-        { id, name: nameById.get(id) ?? fallbackNameById.get(id) ?? id, role: '—', cause: 'api' },
+        { id, name: nameById.get(id) ?? fallbackNameById.get(id) ?? id, role: '-', cause: 'api' },
         line,
         sid,
       )
@@ -403,7 +403,7 @@ function buildDigimonFeed(
     for (const line of d.lines) {
       addLine(
         map,
-        { id: d.id, name: d.name || fallbackNameById.get(d.id) || d.id, role: '—', cause: 'api' },
+        { id: d.id, name: d.name || fallbackNameById.get(d.id) || d.id, role: '-', cause: 'api' },
         line,
         sid,
       )

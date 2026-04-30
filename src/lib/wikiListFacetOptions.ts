@@ -1,4 +1,4 @@
-/** Wiki list / tier filter facets — keep in sync with browse filters. */
+/** Wiki list / tier filter facets; keep in sync with browse filters. */
 
 export const WIKI_ELEMENT_OPTIONS = [
   'Fire',
@@ -16,7 +16,7 @@ export const WIKI_ELEMENT_OPTIONS = [
 
 export const WIKI_ATTRIBUTE_OPTIONS = ['Vaccine', 'Data', 'Virus', 'Free', 'None'] as const
 
-/** Wiki `family_types` values — keep in sync with browse filters. */
+/** Wiki `family_types` values; keep in sync with browse filters. */
 export const WIKI_FAMILY_OPTIONS = [
   'Dark Area',
   'Deep Savers',

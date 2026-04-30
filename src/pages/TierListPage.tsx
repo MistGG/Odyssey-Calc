@@ -467,7 +467,7 @@ export function TierListPage() {
         }
 
         const checkingLabel = meta?.name ?? id
-        const slowHintSuffix = ' (Taking longer than expected — please wait.)'
+        const slowHintSuffix = ' (Taking longer than expected, please wait.)'
         const slowStatusLine =
           mode === 'force'
             ? `Force checking all… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
@@ -1643,8 +1643,8 @@ export function TierListPage() {
           <h3>
             {tierMode === 'dps'
               ? dpsTierCategory === 'aoe'
-                ? 'DPS tier list — AoE (General / Damage / Cooldown / Farming)'
-                : `DPS tier list — ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
+                ? 'DPS tier list: AoE (General / Damage / Cooldown / Farming)'
+                : `DPS tier list: ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
               : tierMode === 'tank'
                 ? 'Tank tier list'
                 : 'Healer tier list'}
@@ -1656,8 +1656,8 @@ export function TierListPage() {
                 <div className="tier-score-explainer-body">
                   <ul className="tier-score-explainer-list">
                     <li>
-                      <strong>Sustained:</strong> same simulation as Lab default — greedy rotation over{' '}
-                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s, Hybrid defaults to melee stance.
+                      <strong>Sustained:</strong> same simulation as Lab default (greedy rotation over{' '}
+                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s; Hybrid defaults to melee stance).
                     </li>
                     <li>
                       <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
@@ -1698,10 +1698,10 @@ export function TierListPage() {
                       Parses skill/buff text and numbers, mixes in base stats; used only to order rows.
                     </li>
                     <li>
-                      Base HP (~65%): wiki combat max HP — main tankiness signal.
+                      Base HP (~65%): wiki combat max HP, main tankiness signal.
                     </li>
                     <li>
-                      Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills — each
+                      Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills; each
                       scaled by estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if
                       duration missing).
                     </li>
@@ -1776,9 +1776,9 @@ export function TierListPage() {
                     <li>
                       <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong>{' '}
                       shows modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier HP per cast ÷
-                      cooldown+cast, summed across shield skills — same value used to sort that column).{' '}
+                      cooldown+cast, summed across shield skills; same value used to sort that column).{' '}
                       <strong>Buffing</strong> shows summed %-uptime (plus scaled flat ATK) from
-                      offensive buff lines — a rough &quot;how much damage buff&quot; footprint, not in-game
+                      offensive buff lines: a rough &quot;how much damage buff&quot; footprint, not in-game
                       DPS. <strong>INT</strong> is wiki combat INT.
                     </li>
                     <li>
@@ -1962,7 +1962,7 @@ export function TierListPage() {
                           <td key={`${tier}-${role}`} className={`tier-cell tier-${tier.toLowerCase()}`}>
                             <div className="tier-cell-content">
                               {entries.length === 0 ? (
-                                <span className="muted">—</span>
+                                <span className="muted">-</span>
                               ) : (
                                 <ul className="tier-entry-list">
                                   {entries.map((e) => {

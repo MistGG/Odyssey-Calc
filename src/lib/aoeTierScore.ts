@@ -63,7 +63,7 @@ function farmRespawnPriority(periodSec: number): number {
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: `log1p` of summed per-cast damage at tier-list skill level (support-only AoE = 0 damage).
- * - **Cooldown**: `log1p` of summed `1 / (cast + cooldown)` — faster skills contribute more.
+ * - **Cooldown**: `log1p` of summed `1 / (cast + cooldown)`; faster skills contribute more.
  * - **Farming**: period buckets on damaging AoE only; inside each bucket `0.9·log1p(dmg) + 0.1·log1p(radius)`
  *   for the best skill in that bucket; bucket order <=8s > (8,10] > (10,12] > >12s. Legacy blend if no damage AoE.
  * - **General**: arithmetic mean of damage, cooldown, and farming (equal weight).

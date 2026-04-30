@@ -143,7 +143,7 @@ export function GearPage() {
                     value={line.stat}
                     onChange={(e) => updateRingStat(idx, e.target.value as RingStat | '')}
                   >
-                    <option value="">— none —</option>
+                    <option value="">(none)</option>
                     {RING_STAT_META.map((meta) => {
                       const used = ringCountByStat[meta.id] ?? 0
                       const isCurrent = line.stat === meta.id
