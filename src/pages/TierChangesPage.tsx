@@ -133,7 +133,7 @@ function dedupeSemanticNumericApiLines(lines: string[]): string[] {
 function renderDiffBlock(label: string, before: string, after: string) {
   const seg = diffHighlightSegments(before, after)
   return (
-    <div className="tier-change-line-diff">
+    <div className="tier-change-line-diff tier-change-line-diff--quoted">
       <div className="tier-change-line-label">{label}</div>
       <div className="tier-change-line-side">
         <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
@@ -246,6 +246,76 @@ function renderChangeLine(line: string) {
       {line}
     </span>
   )
+}
+
+/** Compact row for simulated tier score lines (DPS / Tank / Healer / Status / newly cached). */
+function renderTierScoreLine(line: string): ReactNode | null {
+  const newCached = line.match(/^(DPS|Tank|Healer) newly cached at (.+)$/)
+  if (newCached) {
+    return (
+      <div className="tier-change-summary tier-change-summary--new">
+        <span className="tier-change-summary-metric">{newCached[1]}</span>
+        <span className="tier-change-summary-new-msg">First score cached</span>
+        <span className="tier-change-summary-after tier-change-num">{newCached[2].trim()}</span>
+      </div>
+    )
+  }
+
+  const status = line.match(/^Status (.+) -> (.+)$/)
+  if (status) {
+    return (
+      <div className="tier-change-summary tier-change-summary--status">
+        <span className="tier-change-summary-metric">Status</span>
+        <span className="tier-change-summary-values">
+          <span className="tier-change-summary-before">{status[1]}</span>
+          <span className="tier-change-summary-arrow" aria-hidden>
+            →
+          </span>
+          <span className="tier-change-summary-after">{status[2]}</span>
+        </span>
+      </div>
+    )
+  }
+
+  const score = line.match(/^(DPS|Tank|Healer) ([\d.]+) -> ([\d.]+) \(([+-]?[\d.]+)\)$/)
+  if (score) {
+    const [, metric, before, after, deltaStr] = score
+    const delta = parseFloat(deltaStr)
+    const tone =
+      delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'
+    const deltaClass =
+      tone === 'up'
+        ? 'tier-change-summary-delta--up'
+        : tone === 'down'
+          ? 'tier-change-summary-delta--down'
+          : 'tier-change-summary-delta--flat'
+    const deltaShow =
+      delta > 0 ? `+${deltaStr.replace(/^\+/, '')}` : deltaStr
+
+    return (
+      <div className={`tier-change-summary tier-change-summary--score tier-change-summary--${tone}`}>
+        <span className="tier-change-summary-metric">{metric}</span>
+        <div className="tier-change-summary-values" title={`${before} → ${after}`}>
+          <span className="tier-change-summary-before tier-change-num">{before}</span>
+          <span className="tier-change-summary-arrow" aria-hidden>
+            →
+          </span>
+          <span className="tier-change-summary-after tier-change-num">{after}</span>
+        </div>
+        <span className={`tier-change-summary-delta tier-change-num ${deltaClass}`}>{deltaShow}</span>
+      </div>
+    )
+  }
+
+  return null
+}
+
+function renderChangeLineSmart(line: string, cause: TierChangeCause) {
+  if (cause === 'tier') {
+    const tier = renderTierScoreLine(line)
+    if (tier) return tier
+  }
+  return renderChangeLine(line)
 }
 
 type DigimonFeedRow = {
@@ -463,12 +533,19 @@ export function TierChangesPage() {
     .filter((r) => (hideNoChanges ? r.visibleFeed.length > 0 : true))
 
   return (
-    <div className="lab tier-page">
-      <div className="tier-page-head">
+    <div className="lab tier-page tier-changes-page">
+      <div className="tier-page-head tier-changes-page-head">
         <h1>Tier list changes</h1>
+        <p className="tier-changes-lead muted">
+          Chronological log of tier list refreshes. Each block is one run; cards list Digimon whose wiki data
+          or simulated tiers changed.
+        </p>
       </div>
       <section className="lab-result">
-        <p className="tier-wip-note">This page is a WIP. Data is checked against your cache.</p>
+        <p className="tier-wip-note tier-wip-note-wide">
+          This page is a work in progress. Entries are stored locally and reflect comparisons against your cached
+          wiki snapshot at the time of each run.
+        </p>
         <div className="tier-filter-panel tier-changes-filter-panel">
           <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">
             <span className="tier-filter-label">Options</span>
@@ -540,48 +617,79 @@ export function TierChangesPage() {
           </p>
         ) : (
           <div className="tier-changes-list">
-            {visibleRows.map(({ row, visibleFeed, apiCardCount }) => (
+            {visibleRows.map(({ row, visibleFeed, apiCardCount }) => {
+              const finished = new Date(row.finishedAt)
+              const apiShown = Math.max(row.apiCount, apiCardCount)
+              return (
               <article key={row.id} className="tier-changes-item tier-changes-run">
-                <div className="tier-changes-item-head">
-                  <h3>
-                    {new Date(row.finishedAt).toLocaleString()} ·{' '}
-                    {row.mode === 'force' ? 'Force check' : 'Incremental update'}
-                  </h3>
-                  <span className="tier-changes-total">{row.refreshedCount} refreshed</span>
-                </div>
-                <p className="muted tier-changes-cause-breakdown">
-                  API data: {Math.max(row.apiCount, apiCardCount)} · Tier: {row.tierCount}
-                </p>
+                <header className="tier-changes-run-header">
+                  <div className="tier-changes-run-header-main">
+                    <time className="tier-changes-run-time" dateTime={finished.toISOString()}>
+                      {finished.toLocaleString()}
+                    </time>
+                    <span
+                      className={`tier-changes-mode-badge tier-changes-mode-badge--${row.mode}`}
+                      title={row.mode === 'force' ? 'Full wiki sweep' : 'Only stale or missing entries were checked'}
+                    >
+                      {row.mode === 'force' ? 'Force check' : 'Incremental'}
+                    </span>
+                  </div>
+                  <div className="tier-changes-run-header-meta">
+                    <span className="tier-changes-total" title="Digimon processed in this run">
+                      {row.refreshedCount} scanned
+                    </span>
+                    <dl className="tier-changes-run-counts" aria-label="Changes in this run">
+                      <div className="tier-changes-run-count">
+                        <dt>API</dt>
+                        <dd>{apiShown}</dd>
+                      </div>
+                      <div className="tier-changes-run-count">
+                        <dt>Tier</dt>
+                        <dd>{row.tierCount}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </header>
                 {visibleFeed.length > 0 ? (
                   <div className="tier-changes-digimon-grid">
                     {visibleFeed.map((d) => (
                       <article key={`${row.id}-${d.key}`} className="tier-changes-digimon-card">
-                        <div className="tier-changes-digimon-head">
+                        <div className="tier-changes-digimon-top">
                           <Link
                             className="tier-changes-digimon-name"
                             to={`/lab?digimonId=${encodeURIComponent(d.id)}`}
-                            title={d.name}
+                            title={`Open ${d.name} in DPS Lab`}
                           >
                             {d.name}
                           </Link>
-                          <span className="muted">{d.role}</span>
                           <span className={`tier-changes-cause tier-changes-cause-${d.cause}`}>
                             {causeLabel(d.cause)}
                           </span>
                         </div>
+                        {d.role && d.role !== '-' ? (
+                          <p className="tier-changes-digimon-role muted">{d.role}</p>
+                        ) : null}
                         <ul className="tier-changes-detail-list">
                           {d.lines.map((line, idx) => (
-                            <li key={`${row.id}-${d.id}-${idx}`}>{renderChangeLine(line)}</li>
+                            <li
+                              key={`${row.id}-${d.id}-${idx}`}
+                              className={`tier-changes-detail-item tier-changes-detail-item--${d.cause}`}
+                            >
+                              {renderChangeLineSmart(line, d.cause)}
+                            </li>
                           ))}
                         </ul>
                       </article>
                     ))}
                   </div>
                 ) : (
-                  <p className="muted">No entries match the selected change-type filters for this run.</p>
+                  <p className="muted tier-changes-run-empty">
+                    No entries match the selected change-type filters for this run.
+                  </p>
                 )}
               </article>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
