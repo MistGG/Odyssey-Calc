@@ -2873,6 +2873,16 @@ code {
   max-width: 42rem;
 }
 
+.lab-custom-rotation-filler {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(56, 189, 248, 0.22);
+}
+
+.lab-rotation-palette-chips--filler-wrap {
+  flex-wrap: wrap;
+}
+
 .lab-sim-duration-label {
   display: flex;
   flex-direction: column;

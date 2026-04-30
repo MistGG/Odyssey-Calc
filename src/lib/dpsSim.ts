@@ -109,7 +109,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 21
+export const TIER_DPS_SIM_REVISION = 22
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -214,6 +214,12 @@ function buffCritMarginalDamagePct(
   return Math.max(0, (multBuffed - multBase) * 100)
 }
 
+/** Role skills that have no modeled DPS stats but must appear in support weaving (e.g. animation cancel). */
+const CAST_ROLE_ANIM_CANCEL_STUB_IDS = new Set<string>([
+  'digimon-role-caster-omega',
+  'digimon-role-caster-dispell',
+])
+
 /** Parsed support lines that still matter for rotation weaving (animation cancels) even without DPS stats. */
 function effectIsWeaveUtility(e: { label: string }): boolean {
   const l = e.label.toLowerCase()
@@ -222,7 +228,11 @@ function effectIsWeaveUtility(e: { label: string }): boolean {
     /\bevasion\b/.test(l) ||
     /\bmovement speed\b/.test(l) ||
     /\bmove speed\b/.test(l) ||
-    /\bhit rate\b/.test(l)
+    /\bhit rate\b/.test(l) ||
+    /\breduces\s+all\s+damage\b/.test(l) ||
+    /\bdamage\s*reduction\b/.test(l) ||
+    /\bremoves\s+all\s+debuffs?\b/.test(l) ||
+    /\bdispel\b/.test(l)
   )
 }
 
@@ -283,7 +293,8 @@ function supportProfiles(
       critDamagePct > 0 ||
       atkSpeedPct > 0
     const hasUtilityWeave = effects.some(effectIsWeaveUtility)
-    if (!(durationSec > 0 && cooldownSec > 0 && (hasOffense || hasUtilityWeave))) continue
+    const animCancelStub = CAST_ROLE_ANIM_CANCEL_STUB_IDS.has(s.id)
+    if (!(durationSec > 0 && cooldownSec > 0 && (hasOffense || hasUtilityWeave || animCancelStub))) continue
     out.push({
       skill: s,
       durationSec,
@@ -1300,6 +1311,12 @@ export type RotationSimOptions = {
    * Use `0` to run until the wall cap only (repeat the sequence until time runs out).
    */
   customRotationFullCycles?: number
+  /**
+   * Custom rotation only: ordered skills (and optional `auto-attack`) to use while waiting for the next
+   * main-sequence step. Empty or omitted: greedy high-DPS filler (`runGreedyUntilWall` — same heuristics
+   * as auto rotation; supports skipped when `manualSupportOnly` is true).
+   */
+  customRotationFiller?: Array<{ skillId: string }>
 }
 
 type RotationSimCoreOpts = {
@@ -1315,6 +1332,178 @@ type RotationSimCoreOpts = {
   manualSupportOnly: boolean
   /** When set with custom rotation, ends the sim after N full cycles or at wall cap. */
   customRotationFullCycles?: number
+  /** Raw ids from options; resolved to wiki/role skills in `runRotationSim`. */
+  customRotationFillerSkillIds?: string[]
+}
+
+function resolveCustomRotationFillerSkillIds(
+  rawIds: string[] | undefined,
+  damaging: WikiSkill[],
+  supportBuffs: SupportBuffProfile[],
+): string[] {
+  if (!rawIds?.length) return []
+  const dmg = new Set(damaging.map((s) => s.id))
+  const sup = new Set(supportBuffs.map((p) => p.skill.id))
+  return rawIds.filter((id) => id === 'auto-attack' || dmg.has(id) || sup.has(id))
+}
+
+function castFillerDamageWhenReady(
+  ctx: SimCtx,
+  m: SimMutable,
+  skill: WikiSkill,
+  recordEvents: boolean,
+) {
+  if (ctx.autoAttackAnimationCancel) {
+    const castT = effectiveCastTime(skill.cast_time_sec)
+    const skillDmg = computeDamageSkillHit(ctx, m, skill)
+    const snap = computeAutoHit(ctx, m, 'planning')
+    const rSkill = skillDmg / castT
+    const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
+    if (rCancelCombo > rSkill + 1e-9) {
+      performAutoIntoSkillCancel(ctx, m, skill, recordEvents)
+      return
+    }
+    castDamageSkill(ctx, m, skill, recordEvents)
+    return
+  }
+  castDamageSkill(ctx, m, skill, recordEvents)
+}
+
+/** One filler action from a non-empty user-defined gap priority list. */
+function tryCustomFillerAction(
+  ctx: SimCtx,
+  m: SimMutable,
+  fillerIds: string[],
+  supportById: Map<string, SupportBuffProfile>,
+  damagingById: Map<string, WikiSkill>,
+  wallCapSec: number,
+  deadlineSec: number,
+  recordEvents: boolean,
+): boolean {
+  const order = fillerIds
+  const cap = Math.min(deadlineSec, wallCapSec)
+  if (m.t >= cap - 1e-9) return false
+
+  for (const id of order) {
+    if (m.t >= cap - 1e-9) return false
+    if (id === 'auto-attack') {
+      const step = autoIntervalFor(ctx, m)
+      if (m.t + step > cap + 1e-9) continue
+      performAutoAttack(ctx, m, recordEvents)
+      return true
+    }
+    const sup = supportById.get(id)
+    if (sup) {
+      const ready = (m.readyAt.get(sup.skill.id) ?? 0) <= m.t
+      const alreadyUp = m.activeBuffs.some((b) => b.skillId === sup.skill.id && b.untilSec > m.t)
+      if (ready && !alreadyUp) {
+        if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, m, sup, recordEvents)
+        else castSupportProfile(ctx, m, sup, recordEvents)
+        return true
+      }
+      continue
+    }
+    const skill = damagingById.get(id)
+    if (!skill) continue
+    const readyAt = m.readyAt.get(skill.id) ?? 0
+    if (readyAt > m.t + 1e-9) {
+      if (
+        ctx.autoAttackAnimationCancel &&
+        readyAt - m.t <= animCancelSkillReadyMaxDt(ctx) + 1e-9
+      ) {
+        performAutoIntoSkillCancel(ctx, m, skill, recordEvents)
+        return true
+      }
+      continue
+    }
+    castFillerDamageWhenReady(ctx, m, skill, recordEvents)
+    return true
+  }
+  return false
+}
+
+function advanceCustomRotationDeadline(
+  ctx: SimCtx,
+  m: SimMutable,
+  fillerIds: string[],
+  supportById: Map<string, SupportBuffProfile>,
+  damagingById: Map<string, WikiSkill>,
+  wallCapSec: number,
+  deadlineSec: number,
+  stopAfterFullCycles: number | undefined,
+  fullCycles: number,
+  recordEvents: boolean,
+): void {
+  const cap = Math.min(deadlineSec, wallCapSec)
+  while (m.t < cap - 1e-9 && m.t < wallCapSec - 1e-9) {
+    if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) return
+    if (
+      tryCustomFillerAction(
+        ctx,
+        m,
+        fillerIds,
+        supportById,
+        damagingById,
+        wallCapSec,
+        deadlineSec,
+        recordEvents,
+      )
+    ) {
+      continue
+    }
+    const step = autoIntervalFor(ctx, m)
+    if (m.t + step > cap + 1e-9) {
+      m.t = cap
+      purgeExpiredBuffs(m, m.t)
+      return
+    }
+    performAutoAttack(ctx, m, recordEvents)
+  }
+  m.t = Math.max(m.t, Math.min(cap, wallCapSec))
+  purgeExpiredBuffs(m, m.t)
+}
+
+/**
+ * Fill time until `deadlineSec`: user gap priority if set; otherwise greedy DPS (same rules as
+ * `runGreedyUntilWall` — supports skipped when `manualSupportOnly` is true).
+ * `waitingDamageBan` prevents casting the sequence damage skill early while waiting on its CD.
+ */
+function advanceCustomRotationGap(
+  ctx: SimCtx,
+  m: SimMutable,
+  fillerIds: string[],
+  supportById: Map<string, SupportBuffProfile>,
+  damagingById: Map<string, WikiSkill>,
+  wallCapSec: number,
+  deadlineSec: number,
+  stopAfterFullCycles: number | undefined,
+  fullCycles: number,
+  recordEvents: boolean,
+  manualSupportOnly: boolean,
+  waitingDamageBan: DamageHold | null,
+): void {
+  if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) return
+
+  if (fillerIds.length > 0) {
+    advanceCustomRotationDeadline(
+      ctx,
+      m,
+      fillerIds,
+      supportById,
+      damagingById,
+      wallCapSec,
+      deadlineSec,
+      stopAfterFullCycles,
+      fullCycles,
+      recordEvents,
+    )
+    return
+  }
+
+  const cap = Math.min(deadlineSec, wallCapSec)
+  runGreedyUntilWall(ctx, m, cap, waitingDamageBan, recordEvents, manualSupportOnly)
+  m.t = Math.max(m.t, Math.min(cap, wallCapSec))
+  purgeExpiredBuffs(m, m.t)
 }
 
 function runCustomRotationSequence(
@@ -1325,6 +1514,7 @@ function runCustomRotationSequence(
   sequenceSkillIds: string[],
   manualSupportOnly: boolean,
   stopAfterFullCycles: number | undefined,
+  fillerSkillIds: string[],
 ): { cyclesCompleted: number } {
   const supportById = new Map(supportBuffs.map((p) => [p.skill.id, p] as const))
   const damagingById = new Map(ctx.damaging.map((s) => [s.id, s] as const))
@@ -1394,13 +1584,20 @@ function runCustomRotationSequence(
         continue
       }
       const nextReady = Math.max(m.t, m.readyAt.get(support.skill.id) ?? m.t)
-      while (m.t < wallCapSec - 1e-9) {
-        if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) break
-        const step = autoIntervalFor(ctx, m)
-        if (m.t + step > nextReady + 1e-9) break
-        performAutoAttack(ctx, m, true)
-      }
-      m.t = Math.max(m.t, Math.min(nextReady, wallCapSec))
+      advanceCustomRotationGap(
+        ctx,
+        m,
+        fillerSkillIds,
+        supportById,
+        damagingById,
+        wallCapSec,
+        nextReady,
+        stopAfterFullCycles,
+        fullCycles,
+        true,
+        manualSupportOnly,
+        null,
+      )
       continue
     }
 
@@ -1417,13 +1614,20 @@ function runCustomRotationSequence(
         bumpSeq()
         continue
       }
-      while (m.t < wallCapSec - 1e-9) {
-        if (stopAfterFullCycles != null && fullCycles >= stopAfterFullCycles) break
-        const step = autoIntervalFor(ctx, m)
-        if (m.t + step > readyAt + 1e-9) break
-        performAutoAttack(ctx, m, true)
-      }
-      m.t = Math.max(m.t, Math.min(readyAt, wallCapSec))
+      advanceCustomRotationGap(
+        ctx,
+        m,
+        fillerSkillIds,
+        supportById,
+        damagingById,
+        wallCapSec,
+        readyAt,
+        stopAfterFullCycles,
+        fullCycles,
+        true,
+        manualSupportOnly,
+        { skillId: skill.id, until: readyAt },
+      )
       continue
     }
 
@@ -1543,6 +1747,11 @@ function runRotationSim(
   try {
   let customRotationCyclesCompleted: number | undefined
   if (core.useCustomRotation) {
+    const fillerResolved = resolveCustomRotationFillerSkillIds(
+      core.customRotationFillerSkillIds,
+      damaging,
+      supportBuffs,
+    )
     const { cyclesCompleted } = runCustomRotationSequence(
       ctx,
       m,
@@ -1551,6 +1760,7 @@ function runRotationSim(
       core.customRotationSkillIds,
       core.manualSupportOnly,
       core.customRotationFullCycles,
+      fillerResolved,
     )
     customRotationCyclesCompleted = cyclesCompleted
   } else {
@@ -1812,6 +2022,7 @@ export function simulateRotation(
           customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
           manualSupportOnly: options?.manualSupportOnly === true,
           customRotationFullCycles,
+          customRotationFillerSkillIds: (options?.customRotationFiller ?? []).map((row) => row.skillId),
         },
       )
       if (!best || r.dps > best.dps) best = r
@@ -1844,6 +2055,7 @@ export function simulateRotation(
       customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
       manualSupportOnly: options?.manualSupportOnly === true,
       customRotationFullCycles,
+      customRotationFillerSkillIds: (options?.customRotationFiller ?? []).map((row) => row.skillId),
     },
   )
 }

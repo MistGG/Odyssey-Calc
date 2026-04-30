@@ -278,6 +278,15 @@ function parseCustomRotationFromParams(params: URLSearchParams): string[] {
     .filter(Boolean)
 }
 
+function parseFillerSeqFromParams(params: URLSearchParams): string[] {
+  const raw = params.get('fillerSeq')?.trim() ?? ''
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
 function parseRotCyclesFromParams(params: URLSearchParams): number {
   const raw = params.get('rotCycles')?.trim()
   if (raw == null || raw === '') return DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
@@ -293,6 +302,7 @@ function initialRotCyclesFromParams(params: URLSearchParams): number {
 }
 
 const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
+const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-index'
 
 export function DpsLabPage() {
   const { search } = useLocation()
@@ -331,6 +341,9 @@ export function DpsLabPage() {
   )
   const [customRotationFullCycles, setCustomRotationFullCycles] = useState(() =>
     initialRotCyclesFromParams(params),
+  )
+  const [customRotationFillerSkillIds, setCustomRotationFillerSkillIds] = useState<string[]>(() =>
+    parseFillerSeqFromParams(params),
   )
   const [useAutoAnimCancel, setUseAutoAnimCancel] = useState(() => parseAnimCancelFromParams(params))
   const [animCancelReactionMs, setAnimCancelReactionMs] = useState(() =>
@@ -374,6 +387,7 @@ export function DpsLabPage() {
     const next = new URLSearchParams(search)
     setRotationMode(parseRotationModeFromParams(next))
     setCustomRotationSkillIds(parseCustomRotationFromParams(next))
+    setCustomRotationFillerSkillIds(parseFillerSeqFromParams(next))
     setCustomRotationFullCycles(initialRotCyclesFromParams(next))
     setUseAutoAnimCancel(parseAnimCancelFromParams(next))
     setAnimCancelReactionMs(parseReactMsFromParams(next))
@@ -542,6 +556,9 @@ export function DpsLabPage() {
     setCustomRotationSkillIds((prev) =>
       prev.filter((id) => customRotationSkillOptions.some((opt) => opt.id === id)),
     )
+    setCustomRotationFillerSkillIds((prev) =>
+      prev.filter((id) => customRotationSkillOptions.some((opt) => opt.id === id)),
+    )
   }, [data, digimonId, customRotationSkillOptions])
 
   const customRotationResolved = useMemo(
@@ -560,6 +577,23 @@ export function DpsLabPage() {
     [customRotationResolved],
   )
   const customRotationInvalidCount = customRotationResolved.filter((row) => !row.option).length
+
+  const customRotationFillerResolved = useMemo(
+    () =>
+      customRotationFillerSkillIds.map((id) => ({
+        skillId: id,
+        option: customRotationSkillOptions.find((opt) => opt.id === id),
+      })),
+    [customRotationFillerSkillIds, customRotationSkillOptions],
+  )
+  const customRotationFillerValidRows = useMemo(
+    () =>
+      customRotationFillerResolved
+        .filter((row) => !!row.option)
+        .map((row) => ({ skillId: row.skillId })),
+    [customRotationFillerResolved],
+  )
+  const customRotationFillerInvalidCount = customRotationFillerResolved.filter((row) => !row.option).length
 
   useEffect(() => {
     if (!data || data.id !== digimonId) {
@@ -607,6 +641,10 @@ export function DpsLabPage() {
                     ? 0
                     : clampCustomRotationFullCycles(customRotationFullCycles)
                   : undefined,
+              customRotationFiller:
+                rotationMode === 'custom' && customRotationFillerValidRows.length > 0
+                  ? customRotationFillerValidRows
+                  : undefined,
             },
           )
           if (!cancelled) setSim(result)
@@ -645,6 +683,7 @@ export function DpsLabPage() {
     rotationMode,
     customRotationValidRows,
     customRotationFullCycles,
+    customRotationFillerValidRows,
   ])
 
   const breakdown = useMemo(() => {
@@ -682,16 +721,11 @@ export function DpsLabPage() {
 
     const levelOf = (skillId: string) => skillLevels[skillId] ?? 1
     const top = breakdown[0]
-    if (top.skillId === 'auto-attack') {
-      lines.push(
-        `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window.`,
-        `Keep attack-speed and ATK buffs active so autos stay competitive with filler skills.`,
-      )
-    } else {
-      lines.push(
-        `Prioritize ${top.name}; it contributes ${top.pct.toFixed(1)}% of total damage.`,
-      )
-    }
+
+    const nameForSkillId = (skillId: string) =>
+      skillByIdForLab.get(skillId)?.name ??
+      (data.skills ?? []).find((s) => s.id === skillId)?.name ??
+      skillId
 
     const transitions = new Map<string, { from: string; to: string; count: number }>()
     for (let i = 0; i < sim.events.length - 1; i += 1) {
@@ -704,6 +738,89 @@ export function DpsLabPage() {
       else transitions.set(key, { from: a.skillName, to: b.skillName, count: 1 })
     }
     const bestTransition = [...transitions.values()].sort((a, b) => b.count - a.count)[0]
+
+    if (rotationMode === 'custom') {
+      if (customRotationValidRows.length > 0) {
+        const seq = customRotationValidRows.map((r) => nameForSkillId(r.skillId)).join(' → ')
+        lines.push(`Your main sequence (fixed order): ${seq}.`)
+      }
+      if (customRotationFillerSkillIds.length > 0 && customRotationFillerValidRows.length > 0) {
+        const fillerLine = customRotationFillerValidRows.map((r) => nameForSkillId(r.skillId)).join(' → ')
+        lines.push(`Downtime gap priority: ${fillerLine}.`)
+      } else {
+        lines.push(
+          'No gap priority set: the sim fills downtime with greedy high-DPS actions (autos vs damage skills using the same effectiveness checks as auto rotation; animation cancel applies when enabled). Supports not listed in your sequence or gap list are not auto-cast.',
+        )
+      }
+
+      lines.push(
+        `Largest damage share in this window: ${top.name} (${top.pct.toFixed(1)}%).`,
+      )
+
+      if (bestTransition && bestTransition.count >= 2) {
+        lines.push(
+          `Common adjacent pair in this timeline: ${bestTransition.from} → ${bestTransition.to} (${bestTransition.count}×).`,
+        )
+      }
+
+      if (useAutoAnimCancel) {
+        const autoOneHit =
+          (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
+        const overlap = clampAnimCancelReactionMs(animCancelReactionMs) / 1000
+        const cancelCandidates = (data.skills ?? [])
+          .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
+          .map((s) => {
+            const level = levelOf(s.id)
+            const rawBase = skillDamageAtLevel(s.base_dmg, s.scaling, level, s.max_level)
+            const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
+            const skillOneHit = perfectAtClone ? rawBase * 1.43 * targetHits : rawBase * targetHits
+            const cast = Math.max(0.1, s.cast_time_sec || 0)
+            const cd = Math.max(0, s.cooldown_sec || 0)
+            const period = cast + cd
+            const cancelWeaveRate = (autoOneHit + skillOneHit) / (overlap + cast)
+            return { name: s.name, cast, period, cancelWeaveRate }
+          })
+          .sort((a, b) => {
+            if (Math.abs(b.cancelWeaveRate - a.cancelWeaveRate) > 1e-6)
+              return b.cancelWeaveRate - a.cancelWeaveRate
+            if (Math.abs(a.cast - b.cast) > 1e-6) return a.cast - b.cast
+            return a.period - b.period
+          })
+        if (cancelCandidates.length > 0) {
+          lines.push({
+            kind: 'anim-cancel-priority',
+            title: 'Animation cancel DPS',
+            bullets: cancelCandidates.slice(0, 4).map(
+              (c) =>
+                `${c.name}: ${c.cast.toFixed(1)}s cast · ${c.period.toFixed(1)}s cast+CD · ~${c.cancelWeaveRate.toFixed(0)} / s`,
+            ),
+          })
+        }
+      }
+
+      if (digimonRoleWikiSkillsForRole.length > 0) {
+        const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
+        lines.push(
+          useAutoAnimCancel
+            ? `Role skills (${tn}) are instant — include them in your sequence or gap list to weave after autos.`
+            : `Role skills (${tn}) are instant; enable animation cancel under Special modifiers to model weaving.`,
+        )
+      }
+
+      return lines
+    }
+
+    if (top.skillId === 'auto-attack') {
+      lines.push(
+        `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window.`,
+        `Keep attack-speed and ATK buffs active so autos stay competitive with filler skills.`,
+      )
+    } else {
+      lines.push(
+        `Prioritize ${top.name}; it contributes ${top.pct.toFixed(1)}% of total damage.`,
+      )
+    }
+
     if (bestTransition && bestTransition.count >= 2) {
       lines.push(
         `Common follow-up: ${bestTransition.from} → ${bestTransition.to} (${bestTransition.count} times in this timeline).`,
@@ -815,6 +932,11 @@ export function DpsLabPage() {
     data,
     sim,
     skillLevels,
+    skillByIdForLab,
+    rotationMode,
+    customRotationValidRows,
+    customRotationFillerSkillIds,
+    customRotationFillerValidRows,
     digimonRoleWikiSkillsForRole,
     useAutoAnimCancel,
     animCancelReactionMs,
@@ -904,7 +1026,29 @@ export function DpsLabPage() {
     })
   }, [])
 
+  const moveFillerStep = useCallback((from: number, to: number) => {
+    setCustomRotationFillerSkillIds((prev) => {
+      if (
+        from === to ||
+        from < 0 ||
+        to < 0 ||
+        from >= prev.length ||
+        to >= prev.length
+      ) {
+        return prev
+      }
+      const next = [...prev]
+      const [item] = next.splice(from, 1)
+      next.splice(to, 0, item)
+      return next
+    })
+  }, [])
+
   const [rotationDnd, setRotationDnd] = useState<{ source: number | null; over: number | null }>({
+    source: null,
+    over: null,
+  })
+  const [fillerDnd, setFillerDnd] = useState<{ source: number | null; over: number | null }>({
     source: null,
     over: null,
   })
@@ -920,6 +1064,9 @@ export function DpsLabPage() {
     if (rotationMode === 'custom' && customRotationSkillIds.length > 0) {
       next.set('rotationSeq', customRotationSkillIds.join(','))
       next.set('rotCycles', String(customRotationFullCycles))
+    }
+    if (rotationMode === 'custom' && customRotationFillerSkillIds.length > 0) {
+      next.set('fillerSeq', customRotationFillerSkillIds.join(','))
     }
     if (useAutoAnimCancel) {
       next.set('animCancel', '1')
@@ -939,6 +1086,7 @@ export function DpsLabPage() {
     rotationMode,
     customRotationSkillIds,
     customRotationFullCycles,
+    customRotationFillerSkillIds,
     useAutoAnimCancel,
     animCancelReactionMs,
     forceAutoCrit,
@@ -1233,7 +1381,12 @@ export function DpsLabPage() {
                           This is how many times your <strong>entire</strong> custom sequence runs
                           (every step, in order).
                         </li>
-                        <li>Auto attacks fill gaps while skills and supports are on cooldown.</li>
+                        <li>
+                          Gaps while waiting on your sequence use your <strong>cooldown gap priority</strong>{' '}
+                          list when set. If you leave it empty, the sim uses <strong>greedy high-DPS filler</strong>{' '}
+                          (autos vs damage skills; animation-cancel rules apply). Off-sequence supports are not
+                          auto-cast in custom mode unless you add them to the sequence or gap list.
+                        </li>
                         <li>
                           <strong>0</strong> repeats the sequence until <strong>max simulation time</strong>{' '}
                           is reached.
@@ -1534,6 +1687,185 @@ export function DpsLabPage() {
                       </div>
                     </div>
                   ) : null}
+
+                  <div className="lab-custom-rotation-filler" aria-label="Cooldown gap priority">
+                    <div className="lab-custom-rotation-card-head">
+                      <div>
+                        <p className="lab-custom-rotation-card-title">Cooldown gap priority</p>
+                        <p className="lab-custom-rotation-card-sub">
+                          While waiting to run your rotation, the sim will attempt to run these skills in the
+                          order you provide.{' '}
+                          <strong>
+                            If nothing is provided, the sim will try to calculate the best options
+                          </strong>{' '}
+                          (greedy DPS while respecting custom rotation rules).
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="lab-btn lab-btn--ghost"
+                        onClick={() => setCustomRotationFillerSkillIds([])}
+                        disabled={customRotationFillerSkillIds.length === 0}
+                      >
+                        Clear gap list
+                      </button>
+                    </div>
+
+                    <div className="lab-rotation-palette">
+                      <div className="lab-rotation-palette-row lab-rotation-palette-row--filler">
+                        <span className="lab-rotation-palette-row-label">Add to gap priority</span>
+                        <div className="lab-rotation-palette-chips lab-rotation-palette-chips--filler-wrap">
+                          {customRotationSkillOptions.map((opt) => (
+                            <button
+                              type="button"
+                              key={`filler-${opt.id}`}
+                              className="lab-rotation-palette-chip"
+                              onClick={() =>
+                                setCustomRotationFillerSkillIds((prev) => [...prev, opt.id])
+                              }
+                            >
+                              {skillIconUrl(opt.iconId) ? (
+                                <img
+                                  src={skillIconUrl(opt.iconId)}
+                                  alt=""
+                                  className="lab-rotation-palette-chip-icon"
+                                />
+                              ) : (
+                                <span className="lab-rotation-palette-chip-fallback" aria-hidden>
+                                  {opt.kind === 'auto'
+                                    ? 'A'
+                                    : opt.kind === 'role-support'
+                                      ? 'R'
+                                      : opt.kind === 'support'
+                                        ? '+'
+                                        : '◆'}
+                                </span>
+                              )}
+                              <span className="lab-rotation-palette-chip-text">{opt.label}</span>
+                              <span className="lab-rotation-palette-chip-kind">
+                                {opt.kind === 'auto'
+                                  ? 'Auto'
+                                  : opt.kind === 'support'
+                                    ? 'Sup'
+                                    : opt.kind === 'role-support'
+                                      ? 'Role'
+                                      : 'DMG'}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {customRotationFillerInvalidCount > 0 ? (
+                      <p className="lab-custom-rotation-warning">
+                        {customRotationFillerInvalidCount} gap-priority entr
+                        {customRotationFillerInvalidCount === 1 ? 'y is' : 'ies are'} no longer valid and
+                        will be ignored.
+                      </p>
+                    ) : null}
+
+                    {customRotationFillerSkillIds.length > 0 ? (
+                      <div className="lab-rotation-timeline-wrap">
+                        <p className="lab-rotation-timeline-label">Gap priority order (drag to reorder)</p>
+                        <div
+                          className={
+                            fillerDnd.source != null
+                              ? 'lab-rotation-timeline lab-rotation-timeline--dnd-active'
+                              : 'lab-rotation-timeline'
+                          }
+                          onDragLeave={(e) => {
+                            const related = e.relatedTarget as Node | null
+                            if (related && e.currentTarget.contains(related)) return
+                            setFillerDnd((s) => (s.source == null ? s : { ...s, over: null }))
+                          }}
+                        >
+                          {customRotationFillerResolved.map((row, idx) => {
+                            const skWiki = skillByIdForLab.get(row.skillId)
+                            const name = row.option?.label ?? skWiki?.name ?? row.skillId
+                            const iconId = row.option?.iconId ?? skWiki?.icon_id ?? ''
+                            const kind = row.option?.kind ?? 'invalid'
+                            const isDragging = fillerDnd.source === idx
+                            const isDropTarget =
+                              fillerDnd.over === idx &&
+                              fillerDnd.source != null &&
+                              fillerDnd.source !== idx
+                            return (
+                              <div
+                                key={`filler-${row.skillId}-${idx}`}
+                                className={[
+                                  'lab-rotation-tile',
+                                  isDragging ? 'lab-rotation-tile--dragging' : '',
+                                  isDropTarget ? 'lab-rotation-tile--drop-target' : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData(LAB_ROTATION_FILLER_DND_MIME, String(idx))
+                                  e.dataTransfer.effectAllowed = 'move'
+                                  setFillerDnd({ source: idx, over: null })
+                                }}
+                                onDragEnter={(e) => {
+                                  e.preventDefault()
+                                  setFillerDnd((s) =>
+                                    s.source == null ? s : { ...s, over: idx },
+                                  )
+                                }}
+                                onDragOver={(e) => {
+                                  e.preventDefault()
+                                  e.dataTransfer.dropEffect = 'move'
+                                }}
+                                onDragEnd={() => setFillerDnd({ source: null, over: null })}
+                                onDrop={(e) => {
+                                  e.preventDefault()
+                                  const raw = e.dataTransfer.getData(LAB_ROTATION_FILLER_DND_MIME)
+                                  const from = Number(raw)
+                                  setFillerDnd({ source: null, over: null })
+                                  if (!Number.isFinite(from)) return
+                                  moveFillerStep(from, idx)
+                                }}
+                              >
+                                <span className="lab-rotation-tile-grip" aria-hidden>
+                                  ⋮⋮
+                                </span>
+                                {skillIconUrl(iconId) ? (
+                                  <img
+                                    src={skillIconUrl(iconId)}
+                                    alt=""
+                                    className="lab-rotation-tile-icon"
+                                  />
+                                ) : (
+                                  <span className="lab-rotation-tile-icon-fallback" aria-hidden>
+                                    {kind === 'auto' ? 'A' : kind === 'invalid' ? '?' : '◇'}
+                                  </span>
+                                )}
+                                <div className="lab-rotation-tile-body">
+                                  <span className="lab-rotation-tile-name">{name}</span>
+                                  <span className="lab-rotation-tile-meta">
+                                    #{idx + 1} · {kind}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="lab-rotation-tile-remove"
+                                  aria-label={`Remove ${name} from gap priority`}
+                                  onPointerDown={(ev) => ev.stopPropagation()}
+                                  onClick={() =>
+                                    setCustomRotationFillerSkillIds((prev) =>
+                                      prev.filter((_, i) => i !== idx),
+                                    )
+                                  }
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               )}
               <div className="lab-special-modifiers">

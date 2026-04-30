@@ -144,11 +144,32 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'Increases Skill Damage by 100%.',
         ),
         roleSkill(
+          'digimon-role-caster-dispell',
+          'Magia Code: Dispell',
+          5,
+          1,
+          'Removes all debuffs.',
+        ),
+        roleSkill(
+          'digimon-role-caster-spring',
+          'Spring',
+          30,
+          9,
+          'Increases Movement Speed by 30%.',
+        ),
+        roleSkill(
+          'digimon-role-caster-protection',
+          'Magia Code: Protection',
+          35,
+          5,
+          'Reduces all damage taken by 99%.',
+        ),
+        roleSkill(
           'digimon-role-caster-omega',
           'Magia Code: Omega',
           35,
           30,
-          'Increases Intelligence by 150%.',
+          'Increases Intelligence by 150%. Reduces all skill cooldowns. Intelligence and cooldown reduction are not modeled in this sim; kept for animation-cancel timing.',
         ),
       ]
     case 'hybrid':
