@@ -62,3 +62,51 @@ export function attributeAdvantageIsActive(
 ): boolean {
   return attributeAdvantageSkillDamageMultiplier(attackerAttribute, targetEnemyAttribute) > 1 + 1e-9
 }
+
+/**
+ * Scale rotation **total** DPS for a UI attribute target. Uses auto DPS vs skill DPS split from sim
+ * (`RotationResult.autoDps`); if `autoDps` is missing (legacy cache), returns `totalDps` unchanged.
+ */
+export function adjustRotationDpsForAttributeTarget(
+  totalDps: number,
+  autoDps: number | undefined,
+  attackerAttribute: string | null | undefined,
+  targetEnemyAttribute: string | null | undefined,
+): number {
+  const mult = attributeAdvantageSkillDamageMultiplier(attackerAttribute, targetEnemyAttribute)
+  if (mult <= 1 + 1e-9) return totalDps
+  if (autoDps == null || !Number.isFinite(autoDps) || !Number.isFinite(totalDps)) return totalDps
+  const skillDps = Math.max(0, totalDps - autoDps)
+  return autoDps + skillDps * mult
+}
+
+export function adjustDpsRotationCategoryScoresForAttributeTarget<
+  T extends {
+    sustained: number
+    burst: number
+    sustainedAutoDps?: number
+    burstAutoDps?: number
+  },
+>(
+  scores: T | undefined,
+  attackerAttribute: string | null | undefined,
+  targetEnemyAttribute: string | null | undefined,
+): T | undefined {
+  if (!scores) return undefined
+  if (!(targetEnemyAttribute ?? '').trim()) return scores
+  return {
+    ...scores,
+    sustained: adjustRotationDpsForAttributeTarget(
+      scores.sustained,
+      scores.sustainedAutoDps,
+      attackerAttribute,
+      targetEnemyAttribute,
+    ),
+    burst: adjustRotationDpsForAttributeTarget(
+      scores.burst,
+      scores.burstAutoDps,
+      attackerAttribute,
+      targetEnemyAttribute,
+    ),
+  }
+}

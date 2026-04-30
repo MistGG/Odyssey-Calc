@@ -51,6 +51,9 @@ export type HealerTierCategoryKey = keyof HealerTierCategoryScores
 export type DpsRotationCategoryScores = {
   sustained: number
   burst: number
+  /** Auto-attack DPS share for sustained window (attribute target adjusts skill portion only). */
+  sustainedAutoDps?: number
+  burstAutoDps?: number
 }
 
 export type DpsRotationCategoryKey = keyof DpsRotationCategoryScores

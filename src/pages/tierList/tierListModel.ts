@@ -17,7 +17,8 @@ export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
 export const TIER_DPS_PERFECT_AT_CLONE_KEY = 'odysseyCalc.tierList.dpsPerfectAtClone.v1'
 export const TIER_DPS_AUTO_ANIM_CANCEL_KEY = 'odysseyCalc.tierList.dpsAutoAnimCancel.v1'
-export const TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY = 'odysseyCalc.tierList.dpsTargetEnemyAttribute.v1'
+/** v2: default empty; v1 ignored so users are not stuck with a persisted target. */
+export const TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY = 'odysseyCalc.tierList.dpsTargetEnemyAttribute.v2'
 export const TIER_IGNORE_INCOMPLETE_KEY = 'odysseyCalc.tierList.ignoreIncomplete.v1'
 export const TIER_DPS_CHANGE_EPS = 0.05
 export const TIER_TANK_SCORE_CHANGE_EPS = 0.02

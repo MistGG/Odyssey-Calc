@@ -3,7 +3,11 @@ import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
-import { ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT } from '../lib/attributeAdvantage'
+import {
+  adjustDpsRotationCategoryScoresForAttributeTarget,
+  adjustRotationDpsForAttributeTarget,
+  ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
+} from '../lib/attributeAdvantage'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
@@ -34,6 +38,7 @@ import {
   tierEntryNeedsDpsSimRefresh,
   TIER_SUPPORT_SCORE_REVISION,
   type BuildTierGroupsOptions,
+  type DpsRotationCategoryScores,
   type DpsTierCategoryKey,
   type TierApiSnapshot,
   type SustainedDpsEntry,
@@ -194,6 +199,39 @@ function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSna
 const WIKI_ATTR_STRINGS = WIKI_ATTRIBUTE_OPTIONS as readonly string[]
 const WIKI_EL_STRINGS = WIKI_ELEMENT_OPTIONS as readonly string[]
 const WIKI_FAMILY_STRINGS = WIKI_FAMILY_OPTIONS as readonly string[]
+
+function tierEntryWithAttributeTarget(
+  e: SustainedDpsEntry,
+  targetAttr: string,
+  attackerAttr: string | undefined,
+): SustainedDpsEntry {
+  const adj = (s?: DpsRotationCategoryScores) =>
+    adjustDpsRotationCategoryScoresForAttributeTarget(s, attackerAttr, targetAttr) ?? s
+  const base = e.dpsCategoryScores
+  const adjBase = adj(base)
+  return {
+    ...e,
+    dps:
+      adjBase?.sustained ??
+      adjustRotationDpsForAttributeTarget(e.dps, base?.sustainedAutoDps, attackerAttr, targetAttr),
+    dpsCategoryScores: adjBase ?? base,
+    dpsCategoryScoresAutoCrit: adj(e.dpsCategoryScoresAutoCrit) ?? e.dpsCategoryScoresAutoCrit,
+    dpsCategoryScoresPerfectAtClone:
+      adj(e.dpsCategoryScoresPerfectAtClone) ?? e.dpsCategoryScoresPerfectAtClone,
+    dpsCategoryScoresPerfectAtCloneAutoCrit:
+      adj(e.dpsCategoryScoresPerfectAtCloneAutoCrit) ?? e.dpsCategoryScoresPerfectAtCloneAutoCrit,
+    dpsCategoryScoresAnimationCancel:
+      adj(e.dpsCategoryScoresAnimationCancel) ?? e.dpsCategoryScoresAnimationCancel,
+    dpsCategoryScoresAnimationCancelAutoCrit:
+      adj(e.dpsCategoryScoresAnimationCancelAutoCrit) ?? e.dpsCategoryScoresAnimationCancelAutoCrit,
+    dpsCategoryScoresPerfectAtCloneAnimationCancel:
+      adj(e.dpsCategoryScoresPerfectAtCloneAnimationCancel) ??
+      e.dpsCategoryScoresPerfectAtCloneAnimationCancel,
+    dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit:
+      adj(e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit) ??
+      e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit,
+  }
+}
 
 export function TierListPage() {
   const [cache, setCache] = useState<TierListCache | null>(null)
@@ -501,7 +539,6 @@ export function TierListPage() {
           ) => {
             const cfg = buildComparableRotationConfig(detail, durationSec, 1, {
               ...options,
-              targetEnemyAttribute: dpsTargetEnemyAttribute,
             })
             return simulateRotation(
               detail.skills,
@@ -587,34 +624,50 @@ export function TierListPage() {
             dpsCategoryScores: {
               sustained: sim.dps,
               burst: simBurst.dps,
+              sustainedAutoDps: sim.autoDps,
+              burstAutoDps: simBurst.autoDps,
             },
             dpsCategoryScoresAutoCrit: {
               sustained: simAutoCrit.dps,
               burst: simBurstAutoCrit.dps,
+              sustainedAutoDps: simAutoCrit.autoDps,
+              burstAutoDps: simBurstAutoCrit.autoDps,
             },
             dpsCategoryScoresPerfectAtClone: {
               sustained: simPerfectAtClone.dps,
               burst: simBurstPerfectAtClone.dps,
+              sustainedAutoDps: simPerfectAtClone.autoDps,
+              burstAutoDps: simBurstPerfectAtClone.autoDps,
             },
             dpsCategoryScoresPerfectAtCloneAutoCrit: {
               sustained: simPerfectAtCloneAutoCrit.dps,
               burst: simBurstPerfectAtCloneAutoCrit.dps,
+              sustainedAutoDps: simPerfectAtCloneAutoCrit.autoDps,
+              burstAutoDps: simBurstPerfectAtCloneAutoCrit.autoDps,
             },
             dpsCategoryScoresAnimationCancel: {
               sustained: simAnimationCancel.dps,
               burst: simBurstAnimationCancel.dps,
+              sustainedAutoDps: simAnimationCancel.autoDps,
+              burstAutoDps: simBurstAnimationCancel.autoDps,
             },
             dpsCategoryScoresAnimationCancelAutoCrit: {
               sustained: simAnimationCancelAutoCrit.dps,
               burst: simBurstAnimationCancelAutoCrit.dps,
+              sustainedAutoDps: simAnimationCancelAutoCrit.autoDps,
+              burstAutoDps: simBurstAnimationCancelAutoCrit.autoDps,
             },
             dpsCategoryScoresPerfectAtCloneAnimationCancel: {
               sustained: simPerfectAtCloneAnimationCancel.dps,
               burst: simBurstPerfectAtCloneAnimationCancel.dps,
+              sustainedAutoDps: simPerfectAtCloneAnimationCancel.autoDps,
+              burstAutoDps: simBurstPerfectAtCloneAnimationCancel.autoDps,
             },
             dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit: {
               sustained: simPerfectAtCloneAnimationCancelAutoCrit.dps,
               burst: simBurstPerfectAtCloneAnimationCancelAutoCrit.dps,
+              sustainedAutoDps: simPerfectAtCloneAnimationCancelAutoCrit.autoDps,
+              burstAutoDps: simBurstPerfectAtCloneAnimationCancelAutoCrit.autoDps,
             },
             aoeCategoryScores: aoeScores,
             tankScore: tank.score,
@@ -855,26 +908,41 @@ export function TierListPage() {
   const entriesForMatrix = useMemo(() => {
     if (tierMode === 'dps') {
       if (dpsTierCategory === 'aoe') return filteredEntries
-      if (!dpsForceAutoCrit && !dpsPerfectAtClone && !dpsAutoAnimCancel) return filteredEntries
-      const out: Record<string, SustainedDpsEntry> = {}
-      for (const [id, e] of Object.entries(filteredEntries)) {
-        const s = dpsAutoAnimCancel
-          ? dpsPerfectAtClone
-            ? dpsForceAutoCrit
-              ? e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit
-              : e.dpsCategoryScoresPerfectAtCloneAnimationCancel
-            : dpsForceAutoCrit
-              ? e.dpsCategoryScoresAnimationCancelAutoCrit
-              : e.dpsCategoryScoresAnimationCancel
-          : dpsPerfectAtClone
-            ? dpsForceAutoCrit
-              ? e.dpsCategoryScoresPerfectAtCloneAutoCrit
-              : e.dpsCategoryScoresPerfectAtClone
-            : e.dpsCategoryScoresAutoCrit
-        out[id] = {
-          ...e,
-          dps: s?.sustained ?? e.dps,
-          dpsCategoryScores: s ?? e.dpsCategoryScores,
+
+      let out: Record<string, SustainedDpsEntry>
+      if (!dpsForceAutoCrit && !dpsPerfectAtClone && !dpsAutoAnimCancel) {
+        out = Object.fromEntries(
+          Object.entries(filteredEntries).map(([id, e]) => [id, { ...e }]),
+        )
+      } else {
+        out = {}
+        for (const [id, e] of Object.entries(filteredEntries)) {
+          const s = dpsAutoAnimCancel
+            ? dpsPerfectAtClone
+              ? dpsForceAutoCrit
+                ? e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit
+                : e.dpsCategoryScoresPerfectAtCloneAnimationCancel
+              : dpsForceAutoCrit
+                ? e.dpsCategoryScoresAnimationCancelAutoCrit
+                : e.dpsCategoryScoresAnimationCancel
+            : dpsPerfectAtClone
+              ? dpsForceAutoCrit
+                ? e.dpsCategoryScoresPerfectAtCloneAutoCrit
+                : e.dpsCategoryScoresPerfectAtClone
+              : e.dpsCategoryScoresAutoCrit
+          out[id] = {
+            ...e,
+            dps: s?.sustained ?? e.dps,
+            dpsCategoryScores: s ?? e.dpsCategoryScores,
+          }
+        }
+      }
+
+      const target = dpsTargetEnemyAttribute.trim()
+      if (target) {
+        for (const id of Object.keys(out)) {
+          const attacker = listMeta[id]?.attribute?.trim()
+          out[id] = tierEntryWithAttributeTarget(out[id], target, attacker)
         }
       }
       return out
@@ -893,6 +961,8 @@ export function TierListPage() {
     dpsPerfectAtClone,
     dpsAutoAnimCancel,
     dpsTierCategory,
+    dpsTargetEnemyAttribute,
+    listMeta,
   ])
 
   function toggleMultiFilter(label: string, setter: Dispatch<SetStateAction<string[]>>) {
