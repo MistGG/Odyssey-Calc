@@ -32,17 +32,11 @@ export function TierListScoringNotes({
                   horizon (openers / short burst bias).
                 </li>
                 <li>
-                  <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab to open a four-column matrix
-                  (General, Damage, Cooldown, Farming). Only skills with wiki <code>radius</code> &gt; 0 (same
-                  as the AOE tag on the detail page). <strong>Damage</strong> column: <code>log1p</code> of summed
-                  per-cast damage; <strong>Cooldown</strong>: <code>log1p</code> of summed{' '}
-                  <code>1 / (cast + cooldown)</code>. <strong>Farming</strong> buckets damaging AoE by{' '}
-                  <code>period = cast + cooldown</code>: <code>&lt;= 8s</code>, then <code>(8, 10]</code>s, then{' '}
-                  <code>(10, 12]</code>s, then <code>&gt; 12s</code> (faster pools outrank slower). Within a pool,
-                  score is <strong>90%</strong> <code>log1p(damage)</code> + <strong>10%</strong>{' '}
-                  <code>log1p(radius)</code> on the best skill in that pool (no cooldown term). Support-only AoE uses a
-                  legacy cadence blend. <strong>General</strong> is the average of Damage, Cooldown, and Farming
-                  (equal weight).
+                  <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab for Damage / Uptime / Farming / Radius
+                  (wiki <code>radius</code> &gt; 0). <strong>Damage</strong> is per-cast damage of the hardest-hitting
+                  damaging AoE; <strong>Uptime</strong> is cast-time share of that skill&apos;s cycle;{' '}
+                  <strong>Farming</strong> uses cooldown-only buckets (≤8, (8,10], (10,12], &gt;12s) and a damage / DPS /
+                  radius blend; <strong>Radius</strong> is that skill&apos;s wiki radius.
                 </li>
               </ul>
             </div>

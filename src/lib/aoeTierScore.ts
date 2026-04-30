@@ -71,9 +71,10 @@ type MainAoePick = {
   radius: number
 }
 
-function pickMainDamagingAoe(detail: WikiDigimonDetail): MainAoePick | null {
+/** Damaging wiki AoE with highest per-cast damage at tier-list level; tie-break higher DPS (dmg ÷ period). */
+function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick | null {
   let best: MainAoePick | null = null
-  let bestDps = -Infinity
+  let bestDmg = -Infinity
   for (const s of detail.skills ?? []) {
     if (!skillIsWikiAoe(s)) continue
     if (skillIsSupportOnly(s.base_dmg, s.scaling)) continue
@@ -82,8 +83,11 @@ function pickMainDamagingAoe(detail: WikiDigimonDetail): MainAoePick | null {
     const period = Math.max(0.5, s.cooldown_sec + s.cast_time_sec)
     const dmg = skillDamageAtLevel(s.base_dmg, s.scaling, lv, s.max_level)
     const dps = dmg / period
-    if (dps > bestDps + 1e-9 || (Math.abs(dps - bestDps) <= 1e-9 && dmg > (best?.dmgPerCast ?? -1))) {
-      bestDps = dps
+    const curDps = best ? best.dmgPerCast / best.periodSec : -Infinity
+    const wins =
+      dmg > bestDmg + 1e-9 || (Math.abs(dmg - bestDmg) <= 1e-9 && dps > curDps + 1e-9)
+    if (wins) {
+      bestDmg = dmg
       best = {
         dmgPerCast: dmg,
         periodSec: period,
@@ -102,10 +106,10 @@ function firstWikiAoeSkill(detail: WikiDigimonDetail): WikiSkill | undefined {
 /**
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
- * - **Damage**: sustained DPS of the **main** damaging AoE skill (highest `damage ÷ (cast + cooldown)`; tie-break higher per-cast damage).
- * - **Cooldown** (display): **cast-time uptime** for that main skill — `cast_time ÷ (cast + cooldown)` in `[0, 1]` (sort/display as % of cycle in cast).
- * - **Farming**: arbitrary composite rank (cooldown-only buckets + damage/DPS/radius blend; legacy if no damage AoE).
- * - **Radius**: wiki `radius` of that same main skill (support-only kit: first AoE skill’s radius if any).
+ * - **Damage**: per-cast damage of the **hardest-hitting** damaging AoE (tie-break higher `damage ÷ (cast + cooldown)`).
+ * - **Cooldown** (display): **cast-time uptime** for that same skill — `cast_time ÷ (cast + cooldown)` (display as % of cycle).
+ * - **Farming**: arbitrary composite rank (cooldown-only buckets + blend; legacy if no damage AoE).
+ * - **Radius**: wiki `radius` of that same skill (support-only kit: first AoE skill’s radius if any).
  */
 export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   damage: number
@@ -161,13 +165,13 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
           ? FARM_BUCKET_BASE_SLOWEST + farmGt12Best
           : farmingLegacy
 
-  const main = pickMainDamagingAoe(detail)
+  const main = pickHardestHittingDamagingAoe(detail)
   let damage = 0
   let cooldown = 0
   let radius = 0
 
   if (main) {
-    damage = main.dmgPerCast / main.periodSec
+    damage = main.dmgPerCast
     cooldown = Math.min(1, Math.max(0, main.castTimeSec / main.periodSec))
     radius = main.radius
   } else {

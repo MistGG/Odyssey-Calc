@@ -1726,7 +1726,7 @@ export function TierListPage() {
           <h3>
             {tierMode === 'dps'
               ? dpsTierCategory === 'aoe'
-                ? 'DPS tier list: AoE (DPS / Uptime / Farming / Radius)'
+                ? 'DPS tier list: AoE (Damage / Uptime / Farming / Radius)'
                 : `DPS tier list: ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
               : tierMode === 'tank'
                 ? 'Tank tier list'
@@ -1753,17 +1753,17 @@ export function TierListPage() {
                     </li>
                     <li>
                       <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab for four columns (wiki{' '}
-                      <code>radius</code> &gt; 0 only). The <strong>main</strong> damaging AoE skill is the one with
-                      the highest <code>damage ÷ (cast + cooldown)</code> (tie-break higher per-cast damage).{' '}
-                      <strong>DPS</strong> shows that skill&apos;s sustained DPS; <strong>Uptime</strong> is{' '}
-                      <code>cast_time ÷ (cast + cooldown)</code> for that skill (share of each cycle in cast);{' '}
+                      <code>radius</code> &gt; 0 only). <strong>Damage</strong> is per-cast damage of the{' '}
+                      <strong>hardest-hitting</strong> damaging AoE (tie-break higher <code>damage ÷ (cast + cooldown)</code>
+                      ). <strong>Uptime</strong> is{' '}
+                      <code>cast_time ÷ (cast + cooldown)</code> for that same skill (share of each cycle in cast);{' '}
                       <strong>Farming</strong> is an arbitrary rank score: buckets by{' '}
                       <strong>cooldown only</strong> (fast ≤8s, then (8,10], (10,12], &gt;12s; cast ignored for bucket
                       edges). Best damaging AoE in each bucket uses <code>damage</code>,{' '}
                       <code>DPS</code> (<code>damage ÷ (cast + cooldown)</code>), and <code>radius</code>.
                       Support-only kits
-                      use a legacy cadence blend. <strong>Radius</strong> is
-                      the wiki radius of that main skill (support-only: first AoE skill for radius/uptime).
+                      use a legacy cadence blend. <strong>Radius</strong> is the wiki radius of that same
+                      hardest-hitting skill (support-only: first AoE skill for radius/uptime).
                     </li>
                   </ul>
                 </div>

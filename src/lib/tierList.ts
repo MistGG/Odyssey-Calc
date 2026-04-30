@@ -61,7 +61,7 @@ export type DpsRotationCategoryKey = 'sustained' | 'burst'
 
 /** AoE matrix columns when the DPS sub-tab “AoE” is selected (wiki `radius` skills). */
 export type AoeTierCategoryScores = {
-  /** Main damaging AoE skill: damage ÷ (cast + cooldown). */
+  /** Hardest-hitting damaging AoE: per-cast damage at tier-list skill level. */
   damage: number
   /** Main damaging AoE: cast_time ÷ period (0–1); display as % cycle in cast. */
   cooldown: number
@@ -264,18 +264,18 @@ export const AOE_TIER_CATEGORY_ORDER: readonly AoeTierCategoryKey[] = [
 ]
 
 export const AOE_TIER_MATRIX_COLUMN_LABELS: Record<AoeTierCategoryKey, string> = {
-  damage: 'DPS',
+  damage: 'Damage',
   cooldown: 'Uptime',
   farming: 'Farming',
   radius: 'Radius',
 }
 
-/** Human-readable AoE matrix cell (DPS, cast-uptime %, farming score, radius). */
+/** Human-readable AoE matrix cell (per-cast damage, cast-uptime %, farming score, radius). */
 export function formatAoeTierMatrixCell(key: AoeTierCategoryKey, v: number): string {
   if (!Number.isFinite(v)) return '…'
   switch (key) {
     case 'damage':
-      return v.toFixed(1)
+      return Math.round(v).toLocaleString('en-US')
     case 'cooldown':
       return `${(Math.min(1, Math.max(0, v)) * 100).toFixed(0)}%`
     case 'farming':
