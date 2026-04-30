@@ -109,7 +109,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 22
+export const TIER_DPS_SIM_REVISION = 23
 
 /**
  * Earliest time strictly after `m.t` when any of `skills` becomes ready (cooldown end).
@@ -161,6 +161,12 @@ type SupportBuffProfile = {
   critRatePct: number
   critDamagePct: number
   atkSpeedPct: number
+  /**
+   * True when this buff has modeled ATK/skill dmg/flat ATK/crit/attack-speed effects.
+   * Pure utility (move speed, DR, cleanse, etc.) and anim-cancel-only stubs stay in the profile list
+   * for custom rotation / filler IDs but are never chosen by greedy or proactive auto weaving.
+   */
+  rotationEligible: boolean
 }
 
 type ActiveBuff = {
@@ -214,13 +220,13 @@ function buffCritMarginalDamagePct(
   return Math.max(0, (multBuffed - multBase) * 100)
 }
 
-/** Role skills that have no modeled DPS stats but must appear in support weaving (e.g. animation cancel). */
+/** Role skills with no modeled DPS but kept as castable profiles (custom rotation / filler IDs). */
 const CAST_ROLE_ANIM_CANCEL_STUB_IDS = new Set<string>([
   'digimon-role-caster-omega',
   'digimon-role-caster-dispell',
 ])
 
-/** Parsed support lines that still matter for rotation weaving (animation cancels) even without DPS stats. */
+/** Parsed support lines that identify pure-utility buffs (still profiled, but not auto-rotated). */
 function effectIsWeaveUtility(e: { label: string }): boolean {
   const l = e.label.toLowerCase()
   return (
@@ -304,6 +310,7 @@ function supportProfiles(
       critRatePct,
       critDamagePct,
       atkSpeedPct,
+      rotationEligible: hasOffense,
     })
   }
   return out
@@ -984,6 +991,7 @@ function runGreedyUntilWall(
     purgeExpiredBuffs(m, m.t)
 
     const availableSupport = ctx.supportBuffs.filter((p) => {
+      if (!p.rotationEligible) return false
       const ready = (m.readyAt.get(p.skill.id) ?? 0) <= m.t
       const alreadyUp = m.activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > m.t)
       return ready && !alreadyUp
@@ -1544,6 +1552,7 @@ function runCustomRotationSequence(
 
     if (!manualSupportOnly) {
       const availableSupport = supportBuffs.filter((p) => {
+        if (!p.rotationEligible) return false
         const ready = (m.readyAt.get(p.skill.id) ?? 0) <= m.t
         const alreadyUp = m.activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > m.t)
         return ready && !alreadyUp
@@ -1777,6 +1786,7 @@ function runRotationSim(
     purgeExpiredBuffs(m, m.t)
 
     const availableSupport = supportBuffs.filter((p) => {
+      if (!p.rotationEligible) return false
       const ready = (m.readyAt.get(p.skill.id) ?? 0) <= m.t
       const alreadyUp = m.activeBuffs.some((b) => b.skillId === p.skill.id && b.untilSec > m.t)
       return ready && !alreadyUp

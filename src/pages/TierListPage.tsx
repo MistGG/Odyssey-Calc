@@ -140,16 +140,13 @@ function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSna
   const push = (line: string) => {
     if (lines.length < 20) lines.push(line)
   }
-  const compactText = (v?: string, max = 92) => {
-    const s = (v ?? '').replace(/\s+/g, ' ').trim()
-    if (s.length <= max) return s
-    return `${s.slice(0, max - 1)}…`
-  }
+  /** Normalize whitespace only — tier change history must keep full strings so the Changes page can expand clamps. */
+  const normText = (v?: string) => (v ?? '').replace(/\s+/g, ' ').trim()
   const cmpNum = (label: string, a: number, b: number) => {
     if (a !== b) push(`${label}: ${a} -> ${b}`)
   }
   const cmpText = (label: string, a?: string, b?: string) => {
-    if ((a ?? '') !== (b ?? '')) push(`${label}: "${compactText(a)}" -> "${compactText(b)}"`)
+    if (normText(a) !== normText(b)) push(`${label}: "${normText(a)}" -> "${normText(b)}"`)
   }
 
   cmpText('Role', prev.role, next.role)
