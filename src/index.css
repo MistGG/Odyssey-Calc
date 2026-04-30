@@ -783,6 +783,65 @@ code {
   padding: 0.65rem 1rem 1rem;
 }
 
+.tier-changes-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem 1rem 0.85rem;
+}
+
+.tier-changes-load-more {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  background: rgba(30, 58, 138, 0.35);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tier-changes-load-more:hover {
+  background: rgba(37, 99, 235, 0.35);
+  border-color: rgba(147, 197, 253, 0.55);
+}
+
+.tier-changes-load-more:focus-visible {
+  outline: 2px solid rgba(147, 197, 253, 0.85);
+  outline-offset: 2px;
+}
+
+.tier-change-before-fold {
+  margin: 0.1rem 0 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(51, 65, 85, 0.42);
+  background: rgba(15, 23, 42, 0.4);
+  padding: 0.35rem 0.45rem 0.45rem;
+}
+
+.tier-change-before-summary {
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 650;
+  color: #94a3b8;
+  list-style: none;
+  user-select: none;
+}
+
+.tier-change-before-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tier-change-before-fold[open] > .tier-change-before-summary {
+  margin-bottom: 0.35rem;
+  color: #cbd5e1;
+}
+
+.tier-change-line-diff--compact-prev .tier-change-before-fold .tier-change-line-side {
+  margin-top: 0.15rem;
+}
+
 .tier-change-num {
   font-variant-numeric: tabular-nums;
 }

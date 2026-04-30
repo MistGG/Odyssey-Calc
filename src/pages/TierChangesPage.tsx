@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { memo, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { contentStatusLabel, type DigimonContentStatus } from '../lib/contentStatus'
 import { loadTierListCache } from '../lib/tierList'
 import {
@@ -9,6 +9,8 @@ import {
 } from './tierList/tierListModel'
 
 const TIER_CHANGES_HIDE_NO_CHANGES_KEY = 'odysseyCalc.tierChanges.hideNoChanges.v1'
+const TIER_CHANGES_SHOW_PREVIOUS_KEY = 'odysseyCalc.tierChanges.showPrevious.v1'
+const TIER_CHANGES_RUNS_PAGE_SIZE = 5
 
 function readHideNoChangesPref(): boolean {
   try {
@@ -23,6 +25,24 @@ function readHideNoChangesPref(): boolean {
 function writeHideNoChangesPref(on: boolean) {
   try {
     localStorage.setItem(TIER_CHANGES_HIDE_NO_CHANGES_KEY, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+function readShowPreviousPref(): boolean {
+  try {
+    const raw = localStorage.getItem(TIER_CHANGES_SHOW_PREVIOUS_KEY)
+    if (raw == null) return false
+    return raw === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeShowPreviousPref(on: boolean) {
+  try {
+    localStorage.setItem(TIER_CHANGES_SHOW_PREVIOUS_KEY, on ? '1' : '0')
   } catch {
     /* ignore */
   }
@@ -172,31 +192,51 @@ function dedupeSemanticNumericApiLines(lines: string[]): string[] {
   return out
 }
 
-function renderDiffBlock(label: string, before: string, after: string) {
+function renderDiffBlock(label: string, before: string, after: string, showPrevious: boolean) {
   const seg = diffHighlightSegments(before, after)
+  const beforeSide = (
+    <div className="tier-change-line-side">
+      <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
+      <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
+        {seg.before.prefix}
+        {seg.before.changed ? (
+          <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
+        ) : null}
+        {seg.before.suffix}
+      </span>
+    </div>
+  )
+  const afterSide = (
+    <div className="tier-change-line-side">
+      <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
+      <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
+        {seg.after.prefix}
+        {seg.after.changed ? (
+          <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
+        ) : null}
+        {seg.after.suffix}
+      </span>
+    </div>
+  )
+
+  if (!showPrevious) {
+    return (
+      <div className="tier-change-line-diff tier-change-line-diff--quoted tier-change-line-diff--compact-prev">
+        <div className="tier-change-line-label">{label}</div>
+        <details className="tier-change-before-fold">
+          <summary className="tier-change-before-summary">Previous value</summary>
+          {beforeSide}
+        </details>
+        {afterSide}
+      </div>
+    )
+  }
+
   return (
     <div className="tier-change-line-diff tier-change-line-diff--quoted">
       <div className="tier-change-line-label">{label}</div>
-      <div className="tier-change-line-side">
-        <span className="tier-change-line-side-tag tier-change-line-side-tag-old">Before</span>
-        <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
-          {seg.before.prefix}
-          {seg.before.changed ? (
-            <mark className="tier-diff-highlight tier-diff-highlight-old">{seg.before.changed}</mark>
-          ) : null}
-          {seg.before.suffix}
-        </span>
-      </div>
-      <div className="tier-change-line-side">
-        <span className="tier-change-line-side-tag tier-change-line-side-tag-new">After</span>
-        <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
-          {seg.after.prefix}
-          {seg.after.changed ? (
-            <mark className="tier-diff-highlight tier-diff-highlight-new">{seg.after.changed}</mark>
-          ) : null}
-          {seg.after.suffix}
-        </span>
-      </div>
+      {beforeSide}
+      {afterSide}
     </div>
   )
 }
@@ -235,8 +275,23 @@ function formatStatDeltaParen(beforeStr: string, afterStr: string): {
 }
 
 /** Stats / numeric API lines: same Before/After layout; After shows plain value + colored (±Δ). */
-function renderNumericDiffBlock(label: string, before: string, after: string) {
+function renderNumericDiffBlock(label: string, before: string, after: string, showPrevious: boolean) {
   const deltaFmt = formatStatDeltaParen(before, after)
+
+  if (!showPrevious) {
+    return (
+      <div className="tier-change-line-diff tier-change-line-diff--numeric tier-change-line-diff--compact-prev">
+        <div className="tier-change-line-label">{label}</div>
+        <div className="tier-change-line-side">
+          <span className="tier-change-line-side-tag tier-change-line-side-tag-new">Now</span>
+          <span className="tier-change-line-side-text tier-change-line-side-text--clamped">
+            {after}
+            {deltaFmt?.node}
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="tier-change-line-diff tier-change-line-diff--numeric">
@@ -256,17 +311,17 @@ function renderNumericDiffBlock(label: string, before: string, after: string) {
   )
 }
 
-function renderChangeLine(line: string) {
+function renderChangeLine(line: string, showPrevious: boolean) {
   const quoted = line.match(/^(.*?): "([\s\S]*)" -> "([\s\S]*)"$/)
   if (quoted) {
     const label = quoted[1]
     const before = quoted[2]
     const after = quoted[3]
-    return renderDiffBlock(label, before, after)
+    return renderDiffBlock(label, before, after, showPrevious)
   }
   const numeric = parseNumericChangeLine(line)
   if (numeric) {
-    return renderNumericDiffBlock(numeric.label, numeric.before, numeric.after)
+    return renderNumericDiffBlock(numeric.label, numeric.before, numeric.after, showPrevious)
   }
   return (
     <span className="tier-change-line-plain tier-change-line-side-text--clamped">{line}</span>
@@ -274,7 +329,7 @@ function renderChangeLine(line: string) {
 }
 
 /** Compact row for simulated tier score lines (DPS / Tank / Healer / Status / newly cached). */
-function renderTierScoreLine(line: string): ReactNode | null {
+function renderTierScoreLine(line: string, showPrevious: boolean): ReactNode | null {
   const newCached = line.match(/^(DPS|Tank|Healer) newly cached at (.+)$/)
   if (newCached) {
     return (
@@ -297,10 +352,14 @@ function renderTierScoreLine(line: string): ReactNode | null {
       <div className="tier-change-summary tier-change-summary--status">
         <span className="tier-change-summary-metric">Status</span>
         <div className="tier-change-status-flow">
-          {renderContentStatusChip(fromParsed, fromRaw)}
-          <span className="tier-change-status-arrow" aria-hidden="true">
-            →
-          </span>
+          {showPrevious ? (
+            <>
+              {renderContentStatusChip(fromParsed, fromRaw)}
+              <span className="tier-change-status-arrow" aria-hidden="true">
+                →
+              </span>
+            </>
+          ) : null}
           {renderContentStatusChip(toParsed, toRaw)}
         </div>
       </div>
@@ -326,10 +385,14 @@ function renderTierScoreLine(line: string): ReactNode | null {
       <div className={`tier-change-summary tier-change-summary--score tier-change-summary--${tone}`}>
         <span className="tier-change-summary-metric">{metric}</span>
         <div className="tier-change-summary-values">
-          <span className="tier-change-summary-before tier-change-num">{before}</span>
-          <span className="tier-change-summary-arrow" aria-hidden>
-            →
-          </span>
+          {showPrevious ? (
+            <>
+              <span className="tier-change-summary-before tier-change-num">{before}</span>
+              <span className="tier-change-summary-arrow" aria-hidden>
+                →
+              </span>
+            </>
+          ) : null}
           <span className="tier-change-summary-after tier-change-num">{after}</span>
         </div>
         <span className={`tier-change-summary-delta tier-change-num ${deltaClass}`}>{deltaShow}</span>
@@ -340,12 +403,12 @@ function renderTierScoreLine(line: string): ReactNode | null {
   return null
 }
 
-function renderChangeLineSmart(line: string, cause: TierChangeCause) {
+function renderChangeLineSmart(line: string, cause: TierChangeCause, showPrevious: boolean) {
   if (cause === 'tier') {
-    const tier = renderTierScoreLine(line)
+    const tier = renderTierScoreLine(line, showPrevious)
     if (tier) return tier
   }
-  return renderChangeLine(line)
+  return renderChangeLine(line, showPrevious)
 }
 
 type DigimonFeedRow = {
@@ -378,7 +441,7 @@ function buildDigimonFeed(
   row: TierListChangeHistoryRow,
   fallbackNameById: Map<string, string>,
 ): DigimonFeedRow[] {
-  const nameById = new Map(row.sampleDigimon.map((d) => [d.id, d.name] as const))
+  const nameById = new Map((row.sampleDigimon ?? []).map((d) => [d.id, d.name] as const))
   for (const r of row.summary.dpsUp) nameById.set(r.id, r.name)
   for (const r of row.summary.dpsDown) nameById.set(r.id, r.name)
   for (const r of row.summary.dpsNew) nameById.set(r.id, r.name)
@@ -519,15 +582,54 @@ function buildDigimonFeed(
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
+const TierChangeDigimonCard = memo(function TierChangeDigimonCard({
+  runId,
+  d,
+  showPrevious,
+}: {
+  runId: string
+  d: DigimonFeedRow
+  showPrevious: boolean
+}) {
+  return (
+    <article className="tier-changes-digimon-card">
+      <div className="tier-changes-digimon-top">
+        <Link
+          className="tier-changes-digimon-name"
+          to={`/lab?digimonId=${encodeURIComponent(d.id)}`}
+          aria-label={`Open ${d.name} in DPS Lab`}
+        >
+          {d.name}
+        </Link>
+        <span className={`tier-changes-cause tier-changes-cause-${d.cause}`}>{causeLabel(d.cause)}</span>
+      </div>
+      {d.role && d.role !== '-' ? <p className="tier-changes-digimon-role muted">{d.role}</p> : null}
+      <ul className="tier-changes-detail-list">
+        {d.lines.map((line, idx) => (
+          <li
+            key={`${runId}-${d.id}-${idx}`}
+            className={`tier-changes-detail-item tier-changes-detail-item--${d.cause}`}
+          >
+            {renderChangeLineSmart(line, d.cause, showPrevious)}
+          </li>
+        ))}
+      </ul>
+    </article>
+  )
+})
+
 function normalizeDigimonSearch(raw: string): string {
   return raw.trim().toLowerCase()
 }
 
 export function TierChangesPage() {
+  const location = useLocation()
   const [hideNoChanges, setHideNoChanges] = useState(readHideNoChangesPref)
+  const [showPreviousValues, setShowPreviousValues] = useState(readShowPreviousPref)
   const [showApiChanges, setShowApiChanges] = useState(true)
   const [showTierChanges, setShowTierChanges] = useState(true)
   const [digimonSearch, setDigimonSearch] = useState('')
+  const [runsVisible, setRunsVisible] = useState(TIER_CHANGES_RUNS_PAGE_SIZE)
   const fallbackNameById = useMemo(() => {
     const map = new Map<string, string>()
     const cache = loadTierListCache()
@@ -537,14 +639,16 @@ export function TierChangesPage() {
     return map
   }, [])
 
+  const historyRows = useMemo(() => loadTierChangeHistory(), [location.key])
+
   const rows = useMemo(
     () =>
-      loadTierChangeHistory().map((row) => {
+      historyRows.map((row) => {
         const feed = buildDigimonFeed(row, fallbackNameById)
         const apiCardCount = new Set(feed.filter((d) => d.cause === 'api').map((d) => d.id)).size
         return { row, feed, apiCardCount }
       }),
-    [fallbackNameById],
+    [historyRows, fallbackNameById],
   )
   const searchNorm = normalizeDigimonSearch(digimonSearch)
   const visibleRows = rows
@@ -561,6 +665,13 @@ export function TierChangesPage() {
       return { ...r, visibleFeed }
     })
     .filter((r) => (hideNoChanges ? r.visibleFeed.length > 0 : true))
+
+  useEffect(() => {
+    setRunsVisible(TIER_CHANGES_RUNS_PAGE_SIZE)
+  }, [searchNorm, hideNoChanges, showApiChanges, showTierChanges, showPreviousValues])
+
+  const displayedRuns = visibleRows.slice(0, runsVisible)
+  const runsRemaining = Math.max(0, visibleRows.length - displayedRuns.length)
 
   return (
     <div className="lab tier-page">
@@ -589,6 +700,20 @@ export function TierChangesPage() {
                 }
               >
                 Hide entries without changes
+              </button>
+              <button
+                type="button"
+                className="stage-tab tier-facet-tab tier-option-chip"
+                aria-pressed={showPreviousValues}
+                onClick={() =>
+                  setShowPreviousValues((v) => {
+                    const next = !v
+                    writeShowPreviousPref(next)
+                    return next
+                  })
+                }
+              >
+                Show previous values
               </button>
               <button
                 type="button"
@@ -643,7 +768,7 @@ export function TierChangesPage() {
           </p>
         ) : (
           <div className="tier-changes-list">
-            {visibleRows.map(({ row, visibleFeed, apiCardCount }) => {
+            {displayedRuns.map(({ row, visibleFeed, apiCardCount }) => {
               const finished = new Date(row.finishedAt)
               const apiShown = Math.max(row.apiCount, apiCardCount)
               return (
@@ -674,33 +799,12 @@ export function TierChangesPage() {
                 {visibleFeed.length > 0 ? (
                   <div className="tier-changes-digimon-grid">
                     {visibleFeed.map((d) => (
-                      <article key={`${row.id}-${d.key}`} className="tier-changes-digimon-card">
-                        <div className="tier-changes-digimon-top">
-                          <Link
-                            className="tier-changes-digimon-name"
-                            to={`/lab?digimonId=${encodeURIComponent(d.id)}`}
-                            aria-label={`Open ${d.name} in DPS Lab`}
-                          >
-                            {d.name}
-                          </Link>
-                          <span className={`tier-changes-cause tier-changes-cause-${d.cause}`}>
-                            {causeLabel(d.cause)}
-                          </span>
-                        </div>
-                        {d.role && d.role !== '-' ? (
-                          <p className="tier-changes-digimon-role muted">{d.role}</p>
-                        ) : null}
-                        <ul className="tier-changes-detail-list">
-                          {d.lines.map((line, idx) => (
-                            <li
-                              key={`${row.id}-${d.id}-${idx}`}
-                              className={`tier-changes-detail-item tier-changes-detail-item--${d.cause}`}
-                            >
-                              {renderChangeLineSmart(line, d.cause)}
-                            </li>
-                          ))}
-                        </ul>
-                      </article>
+                      <TierChangeDigimonCard
+                        key={`${row.id}-${d.key}`}
+                        runId={row.id}
+                        d={d}
+                        showPrevious={showPreviousValues}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -711,6 +815,19 @@ export function TierChangesPage() {
               </article>
               )
             })}
+            {runsRemaining > 0 ? (
+              <div className="tier-changes-load-more-wrap">
+                <button
+                  type="button"
+                  className="tier-changes-load-more"
+                  onClick={() =>
+                    setRunsVisible((n) => Math.min(visibleRows.length, n + TIER_CHANGES_RUNS_PAGE_SIZE))
+                  }
+                >
+                  Show more runs ({runsRemaining} older)
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
       </section>

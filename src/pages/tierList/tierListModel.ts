@@ -407,7 +407,7 @@ export function saveTierChangeHistory(rows: TierListChangeHistoryRow[]) {
   }
 }
 
-export function appendTierChangeHistory(row: TierListChangeHistoryRow, maxRows = 80) {
+export function appendTierChangeHistory(row: TierListChangeHistoryRow, maxRows = 120) {
   const next = [row, ...loadTierChangeHistory()].slice(0, Math.max(1, maxRows))
   saveTierChangeHistory(next)
 }
