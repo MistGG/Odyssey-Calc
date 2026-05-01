@@ -169,6 +169,8 @@ export type SustainedDpsEntry = {
   supportScoreRevision?: number
   /** Last DPS row used this revision of `simulateRotation` (see `TIER_DPS_SIM_REVISION` in dpsSim). */
   dpsSimRevision?: number
+  /** DPS sim included saved True Vice gear (`applySavedGearTrueVice`). */
+  dpsScoredWithGear?: boolean
   /** Compact API snapshot used to show field-level wiki changes on the Changes page. */
   apiSnapshot?: TierApiSnapshot
 }
@@ -321,6 +323,16 @@ function migrateLegacyAoeRadiusToFarming(entry: SustainedDpsEntry): SustainedDps
 /** True when rotation + AoE scores are present (prompt tier list refresh if false). */
 export function tierEntryNeedsDpsSimRefresh(entry: SustainedDpsEntry): boolean {
   return (entry.dpsSimRevision ?? 0) !== TIER_DPS_SIM_REVISION
+}
+
+/** Re-run DPS when tier “use gear” preference no longer matches how this entry was scored. */
+export function tierEntryNeedsGearScoringRefresh(
+  entry: SustainedDpsEntry | undefined,
+  wantGearScoring: boolean,
+): boolean {
+  if (!entry) return false
+  const scored = entry.dpsScoredWithGear === true
+  return scored !== wantGearScoring
 }
 
 export function tierEntryNeedsAutoCritScores(entry: SustainedDpsEntry): boolean {

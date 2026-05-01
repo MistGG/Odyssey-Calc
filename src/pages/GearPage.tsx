@@ -3,12 +3,17 @@ import { EditableNumberInput } from '../components/EditableNumberInput'
 import {
   GEAR_STORAGE_KEY,
   SEAL_STATS,
+  TRUE_VICE_ATTRIBUTE_STATS,
+  TRUE_VICE_ELEMENT_STATS,
+  TRUE_VICE_SLOT_COUNT,
+  clampTrueViceSlot,
   readGearState,
   type GearState,
   type LeftPiece,
   type LeftStat,
   type RingStat,
   type SealStat,
+  type TrueViceSlot,
 } from '../lib/gearStats'
 
 const LEFT_PIECES: Array<{ id: LeftPiece; label: string }> = [
@@ -83,6 +88,13 @@ export function GearPage() {
         [stat]: value,
       },
     })
+  }
+
+  const updateTrueVice = (idx: number, patch: Partial<TrueViceSlot>) => {
+    const trueVice = gear.trueVice.map((row, i) =>
+      i === idx ? clampTrueViceSlot({ ...row, ...patch }) : row,
+    )
+    persist({ ...gear, trueVice })
   }
 
   return (
@@ -171,6 +183,75 @@ export function GearPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="lab-result gear-section">
+        <h3>True Vice</h3>
+        <p className="muted">
+          Up to {TRUE_VICE_SLOT_COUNT} lines. <strong>Element</strong> lines: max 30% each — your{' '}
+          <strong>digimon element</strong> must match the roll, and the enemy element must be the one your
+          digimon beats on the True Vice chart (see Lab). <strong>Attribute</strong> lines: max 20%
+          (Vaccine / Virus / Data) or 14% (Unknown) — your <strong>digimon attribute</strong> must match that
+          roll (enemy attribute must match for V/V/D; Unknown uses Free/Unknown digimon vs neutral enemy).
+          Used by DPS Lab automatically and by the DPS tier list (enemy element target applies True Vice element %
+          when your accessory rolls match).
+        </p>
+        <div className="gear-true-vice-grid">
+          {gear.trueVice.map((slot, idx) => (
+            <div className="gear-true-vice-row" key={idx}>
+              <span className="gear-true-vice-slot-label">Line {idx + 1}</span>
+              <label>
+                Type
+                <select
+                  value={slot.category}
+                  onChange={(e) => {
+                    const category = e.target.value as TrueViceSlot['category']
+                    updateTrueVice(idx, { category, stat: '', value: 0 })
+                  }}
+                >
+                  <option value="">(none)</option>
+                  <option value="element">Element</option>
+                  <option value="attribute">Attribute</option>
+                </select>
+              </label>
+              <label>
+                Stat
+                <select
+                  value={slot.stat}
+                  disabled={!slot.category}
+                  onChange={(e) => updateTrueVice(idx, { stat: e.target.value, value: slot.value })}
+                >
+                  <option value="">—</option>
+                  {slot.category === 'element'
+                    ? TRUE_VICE_ELEMENT_STATS.map((s) => (
+                        <option key={s} value={s}>
+                          {s} dmg
+                        </option>
+                      ))
+                    : slot.category === 'attribute'
+                      ? TRUE_VICE_ATTRIBUTE_STATS.map((s) => (
+                          <option key={s} value={s}>
+                            {s} dmg
+                          </option>
+                        ))
+                      : null}
+                </select>
+              </label>
+              <label>
+                %
+                <EditableNumberInput
+                  className="gear-input"
+                  min={0}
+                  integer
+                  emptyValue={0}
+                  value={slot.value}
+                  disabled={!slot.category || !slot.stat}
+                  onCommit={(next) => updateTrueVice(idx, { value: next })}
+                />
+              </label>
+            </div>
+          ))}
         </div>
       </section>
 

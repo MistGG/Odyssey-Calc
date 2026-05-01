@@ -2,7 +2,7 @@ import { fetchDigimonPage } from '../../api/digimonService'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
 import type { DpsTierCategoryKey, SustainedDpsEntry, TierListMode } from '../../lib/tierList'
-import { sanitizeDpsTargetEnemyAttribute } from '../../lib/wikiListFacetOptions'
+import { sanitizeDpsTargetEnemyAttribute, sanitizeDpsTargetEnemyElement } from '../../lib/wikiListFacetOptions'
 import type { WikiDigimonListItem } from '../../types/wikiApi'
 
 export const REQUEST_DELAY_MS = 700
@@ -19,6 +19,7 @@ export const TIER_DPS_PERFECT_AT_CLONE_KEY = 'odysseyCalc.tierList.dpsPerfectAtC
 export const TIER_DPS_AUTO_ANIM_CANCEL_KEY = 'odysseyCalc.tierList.dpsAutoAnimCancel.v1'
 /** v2: default empty; v1 ignored so users are not stuck with a persisted target. */
 export const TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY = 'odysseyCalc.tierList.dpsTargetEnemyAttribute.v2'
+export const TIER_DPS_TARGET_ENEMY_ELEMENT_KEY = 'odysseyCalc.tierList.dpsTargetEnemyElement.v1'
 export const TIER_IGNORE_INCOMPLETE_KEY = 'odysseyCalc.tierList.ignoreIncomplete.v1'
 export const TIER_DPS_CHANGE_EPS = 0.05
 export const TIER_TANK_SCORE_CHANGE_EPS = 0.02
@@ -234,6 +235,23 @@ export function readTierDpsTargetEnemyAttribute(): string {
 export function writeTierDpsTargetEnemyAttribute(value: string) {
   try {
     localStorage.setItem(TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY, value)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Enemy wiki element for True Vice + element matchup in tier DPS sim. */
+export function readTierDpsTargetEnemyElement(): string {
+  try {
+    return sanitizeDpsTargetEnemyElement(localStorage.getItem(TIER_DPS_TARGET_ENEMY_ELEMENT_KEY) ?? '')
+  } catch {
+    return ''
+  }
+}
+
+export function writeTierDpsTargetEnemyElement(value: string) {
+  try {
+    localStorage.setItem(TIER_DPS_TARGET_ENEMY_ELEMENT_KEY, sanitizeDpsTargetEnemyElement(value))
   } catch {
     /* ignore */
   }

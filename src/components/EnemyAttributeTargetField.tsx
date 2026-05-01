@@ -99,7 +99,8 @@ export function EnemyAttributeTargetField({
 
       {showLegend ? (
         <div className="enemy-attr-legend" aria-hidden="true">
-          <p className="enemy-attr-legend-title">Elemental Advantages</p>
+          <p className="enemy-attr-legend-title">Attribute matchup</p>
+          <p className="enemy-attr-legend-sub">Vaccine · Data · Virus — ×{ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} skill damage when your attribute wins</p>
           <ul className="enemy-attr-legend-list">
             {ATTRIBUTE_TRIANGLE_EDGES.map(({ attacker, defender }) => (
               <li key={`${attacker}-${defender}`} className="enemy-attr-legend-item">

@@ -3,9 +3,20 @@ import type { WikiSkill } from '../types/wikiApi'
 /**
  * In-game **Digimon role** passives (by wiki `role`: Melee DPS, Ranged DPS, etc.).
  * These are not tamer skills; tamer-side passives may be added later.
+ *
+ * Role skills have **no skill levels or stat scaling** in the current model — effects use full values from
+ * their description text; the sim always parses them at {@link DIGIMON_ROLE_SKILL_SIM_LEVEL}.
  */
 /** Role buff skills are instant cast in current game (good for auto-animation cancels). */
 export const DIGIMON_ROLE_SKILL_CAST_SEC = 0
+
+/** Fixed parser/sim level for all role skills (no level progression). */
+export const DIGIMON_ROLE_SKILL_SIM_LEVEL = 1
+
+/** True for bundled Digimon role skill ids (`digimon-role-…`). */
+export function isDigimonRoleSkillId(skillId: string): boolean {
+  return skillId.startsWith('digimon-role-')
+}
 
 export const HYBRID_STANCE_IDS = {
   melee: 'digimon-role-hybrid-melee-stance',
@@ -35,7 +46,7 @@ function roleSkill(
     icon_id: '',
     base_dmg: 0,
     scaling: 0,
-    max_level: 25,
+    max_level: 1,
     cast_time_sec: DIGIMON_ROLE_SKILL_CAST_SEC,
     cooldown_sec: cooldownSec,
     ds_cost: 0,
@@ -52,9 +63,6 @@ function roleSkill(
 /**
  * Extra support-only skills tied to the Digimon's wiki role (Lab / tier DPS sim).
  * Hybrid returns exactly one stance line; mutual exclusion is handled in the sim.
- *
- * Note: Intelligence buffs are listed where they exist in-game but are not applied
- * to DPS (INT also affects cooldown in-game; that is not modeled).
  */
 export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStance): WikiSkill[] {
   switch (roleNorm) {
@@ -168,8 +176,8 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'digimon-role-caster-omega',
           'Magia Code: Omega',
           35,
-          30,
-          'Increases Intelligence by 150%. While active, other skills used after activation get 33% cooldown reduction on their new cooldown only; skills already on cooldown are unchanged. Wiki INT reduces only Magia Code: Omega’s own cooldown (100 INT = 1% CDR). Temporary INT from this buff is not modeled.',
+          15,
+          'Increases Skill Damage by 70%. Increases maximum DS by 20000. While active, other skills used after activation get 33% cooldown reduction on their new cooldown only; skills already on cooldown are unchanged. Wiki INT reduces only Magia Code: Omega’s own cooldown (100 INT = 1% CDR).',
         ),
       ]
     case 'hybrid':

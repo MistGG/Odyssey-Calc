@@ -1578,13 +1578,45 @@ code {
 }
 
 .tier-dps-enemy-attr-stack {
-  flex: 0 0 auto;
-  width: 12rem;
-  max-width: min(12rem, 100%);
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: min(100%, 42rem);
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.45rem;
   align-self: flex-start;
+}
+
+.tier-dps-target-selects-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.tier-dps-target-selects-row > .enemy-attr-target-field {
+  flex: 1 1 11rem;
+  min-width: min(100%, 9.5rem);
+}
+
+.tier-dps-element-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 11rem;
+  min-width: min(100%, 9.5rem);
+  align-self: flex-start;
+}
+
+.tier-dps-element-column > .enemy-attr-target-field {
+  width: 100%;
+}
+
+.tier-dps-tv-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .tier-dps-enemy-attr-stack .enemy-attr-target-field {
@@ -1710,6 +1742,75 @@ code {
   color: var(--muted);
 }
 
+.enemy-attr-legend-sub {
+  margin: 0 0 0.45rem;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.enemy-attr-legend-item--muted {
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.35);
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.enemy-attr-pill--elem {
+  font-weight: 700;
+}
+
+.enemy-attr-pill--elem-fire {
+  background: rgba(251, 146, 60, 0.22);
+  color: #fdba74;
+}
+.enemy-attr-pill--elem-water {
+  background: rgba(56, 189, 248, 0.22);
+  color: #7dd3fc;
+}
+.enemy-attr-pill--elem-ice {
+  background: rgba(125, 211, 252, 0.2);
+  color: #bae6fd;
+}
+.enemy-attr-pill--elem-wind {
+  background: rgba(167, 243, 208, 0.18);
+  color: #a7f3d0;
+}
+.enemy-attr-pill--elem-earth {
+  background: rgba(180, 83, 9, 0.24);
+  color: #fcd34d;
+}
+.enemy-attr-pill--elem-wood {
+  background: rgba(74, 222, 128, 0.18);
+  color: #86efac;
+}
+.enemy-attr-pill--elem-light {
+  background: rgba(254, 249, 195, 0.2);
+  color: #fef9c3;
+}
+.enemy-attr-pill--elem-darkness {
+  background: rgba(76, 29, 149, 0.35);
+  color: #e9d5ff;
+}
+.enemy-attr-pill--elem-steel {
+  background: rgba(148, 163, 184, 0.28);
+  color: #e2e8f0;
+}
+.enemy-attr-pill--elem-thunder {
+  background: rgba(250, 204, 21, 0.2);
+  color: #fde047;
+}
+.enemy-attr-pill--elem-neutral {
+  background: rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
+}
+.enemy-attr-pill--elem-misc {
+  background: rgba(167, 139, 250, 0.2);
+  color: #ddd6fe;
+}
+
 .enemy-attr-legend-list {
   margin: 0;
   padding: 0;
@@ -1785,6 +1886,35 @@ code {
 
 .lab-enemy-attr-field {
   grid-column: 1 / -1;
+}
+
+.lab-target-matchups {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .lab-target-matchups {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.lab-matchup-heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.lab-matchup-section--element .lab-matchup-heading {
+  color: #fde68a;
+}
+
+.lab-matchup-section {
+  min-width: 0;
 }
 
 .lab-controls-fields .enemy-attr-target-field {
@@ -2931,6 +3061,56 @@ code {
   margin-bottom: 2rem;
 }
 
+.gear-true-vice-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.gear-true-vice-row {
+  display: grid;
+  grid-template-columns: minmax(4rem, auto) minmax(0, 1fr) minmax(0, 1.2fr) minmax(5rem, 6rem);
+  gap: 0.5rem 0.75rem;
+  align-items: end;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  background: rgba(15, 23, 42, 0.25);
+}
+
+.gear-true-vice-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+.gear-true-vice-row select {
+  font: inherit;
+  padding: 0.35rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text);
+}
+
+.gear-true-vice-slot-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  align-self: center;
+}
+
+@media (max-width: 719px) {
+  .gear-true-vice-row {
+    grid-template-columns: 1fr;
+  }
+
+  .gear-true-vice-slot-label {
+    align-self: start;
+  }
+}
+
 .gear-table-wrap {
   overflow-x: auto;
 }
@@ -3355,6 +3535,12 @@ code {
   margin: 0.35rem 0 0;
   font-size: 0.82rem;
   color: #86efac;
+}
+
+.lab-enemy-element-active-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: #fde68a;
 }
 
 .lab-special-modifier-list {

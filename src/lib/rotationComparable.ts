@@ -35,12 +35,16 @@ function comparableBaseAttack(
  * - optional special modifiers mapped 1:1 into sim options
  */
 export function buildComparableRotationConfig(
-  detail: Pick<WikiDigimonDetail, 'role' | 'attack' | 'stats' | 'attribute'>,
+  detail: Pick<WikiDigimonDetail, 'role' | 'attack' | 'stats' | 'attribute' | 'element'>,
   durationSec: number,
   targets: number,
   options?: Pick<
     RotationSimOptions,
-    'forceAutoCrit' | 'perfectAtClone' | 'autoAttackAnimationCancel'
+    | 'forceAutoCrit'
+    | 'perfectAtClone'
+    | 'autoAttackAnimationCancel'
+    | 'targetEnemyElement'
+    | 'applySavedGearTrueVice'
   > & {
     /** Wiki attribute of the enemy (Vaccine/Data/Virus/…). Empty = no attribute advantage. */
     targetEnemyAttribute?: string
@@ -48,6 +52,7 @@ export function buildComparableRotationConfig(
 ): ComparableRotationConfig {
   const perfectAtClone = options?.perfectAtClone === true
   const targetAttr = (options?.targetEnemyAttribute ?? '').trim()
+  const targetEl = (options?.targetEnemyElement ?? '').trim()
   return {
     durationSec,
     targets: Math.max(1, Math.floor(targets)),
@@ -62,7 +67,10 @@ export function buildComparableRotationConfig(
       perfectAtClone,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
       attackerAttribute: detail.attribute ?? '',
+      attackerElement: detail.element ?? '',
       targetEnemyAttribute: targetAttr || undefined,
+      targetEnemyElement: targetEl || undefined,
+      applySavedGearTrueVice: options?.applySavedGearTrueVice === true,
     },
   }
 }

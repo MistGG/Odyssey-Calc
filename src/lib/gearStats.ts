@@ -1,4 +1,36 @@
+import { normalizeWikiAttribute } from './attributeAdvantage'
+import { normalizeWikiElement, trueViceElementBonusActive } from './elementAdvantage'
+
 export const GEAR_STORAGE_KEY = 'gear-v1'
+
+/** True Vice accessory: up to eight rolled lines (element or attribute damage %). */
+export const TRUE_VICE_SLOT_COUNT = 8
+
+export const TRUE_VICE_ELEMENT_STATS = [
+  'Darkness',
+  'Earth',
+  'Fire',
+  'Ice',
+  'Light',
+  'Steel',
+  'Thunder',
+  'Water',
+  'Wind',
+  'Wood',
+] as const
+
+export type TrueViceElementStat = (typeof TRUE_VICE_ELEMENT_STATS)[number]
+
+export const TRUE_VICE_ATTRIBUTE_STATS = ['Vaccine', 'Virus', 'Data', 'Unknown'] as const
+
+export type TrueViceAttributeStat = (typeof TRUE_VICE_ATTRIBUTE_STATS)[number]
+
+export type TrueViceSlot = {
+  category: 'element' | 'attribute' | ''
+  /** Element name or attribute name matching {@link TRUE_VICE_ATTRIBUTE_STATS}. */
+  stat: string
+  value: number
+}
 
 export type LeftPiece = 'head-goggles' | 'fashion' | 'top' | 'bottom' | 'gloves' | 'shoes'
 export type LeftStat = 'maxDs' | 'maxHp' | 'defense' | 'attack' | 'moveSpeed'
@@ -20,6 +52,7 @@ export type GearState = {
   left: LeftGearState
   ring: RingLine[]
   seals: SealsState
+  trueVice: TrueViceSlot[]
 }
 
 export type GearAttackContribution = {
@@ -55,6 +88,86 @@ function emptyLeftPieceStats(): LeftPieceStats {
   return { maxDs: 0, maxHp: 0, defense: 0, attack: 0, moveSpeed: 0 }
 }
 
+function emptyTrueViceSlot(): TrueViceSlot {
+  return { category: '', stat: '', value: 0 }
+}
+
+export function initialTrueViceSlots(): TrueViceSlot[] {
+  return Array.from({ length: TRUE_VICE_SLOT_COUNT }, () => emptyTrueViceSlot())
+}
+
+export function clampTrueViceSlot(slot: TrueViceSlot): TrueViceSlot {
+  if (!slot.category || !String(slot.stat ?? '').trim()) {
+    return { ...slot, stat: '', value: 0 }
+  }
+  const v = Math.max(0, Math.floor(toNonNegativeNumber(slot.value)))
+  const cap =
+    slot.category === 'element' ? 30 : slot.stat === 'Unknown' ? 14 : 20
+  return { ...slot, value: Math.min(v, cap) }
+}
+
+export function aggregateTrueViceDamagePercents(gear: GearState): {
+  elements: Partial<Record<string, number>>
+  attributes: Partial<Record<string, number>>
+} {
+  const elements: Partial<Record<string, number>> = {}
+  const attributes: Partial<Record<string, number>> = {}
+  for (const raw of gear.trueVice ?? []) {
+    const s = clampTrueViceSlot(raw)
+    if (!s.category || !s.stat) continue
+    if (s.category === 'element') {
+      const k = normalizeWikiElement(s.stat)
+      if (!k) continue
+      elements[k] = Math.max(elements[k] ?? 0, s.value)
+    } else {
+      const k = normalizeWikiAttribute(s.stat)
+      if (!k) continue
+      attributes[k] = Math.max(attributes[k] ?? 0, s.value)
+    }
+  }
+  return { elements, attributes }
+}
+
+/**
+ * Fractional bonuses (0–0.3 etc.) on the wiki skill coefficient stack.
+ * Element: digimon **element** must match the True Vice element stat, and the True Vice chart must say
+ * the digimon **beats** the enemy element. Attribute: digimon **attribute** must match the True Vice
+ * attribute stat; triangle targets need the same enemy attribute; Unknown uses Free/Unknown digimon vs
+ * neutral enemy bucket.
+ */
+export function trueViceDamageFractionsForSkillHit(
+  attackerAttribute: string,
+  attackerElement: string,
+  targetEnemyAttribute: string,
+  targetEnemyElement: string,
+  gear: GearState,
+): { element: number; attribute: number } {
+  const agg = aggregateTrueViceDamagePercents(gear)
+  let elementFrac = 0
+  const digiEl = normalizeWikiElement(attackerElement)
+  for (const [rollKey, pct] of Object.entries(agg.elements)) {
+    if (!pct || pct <= 0) continue
+    if (normalizeWikiElement(rollKey) !== digiEl) continue
+    if (!trueViceElementBonusActive(attackerElement, targetEnemyElement)) continue
+    elementFrac += pct / 100
+  }
+
+  const enemyAttr = normalizeWikiAttribute(targetEnemyAttribute)
+  const digiAttr = normalizeWikiAttribute(attackerAttribute)
+  let attrFrac = 0
+  if (enemyAttr === 'Vaccine' || enemyAttr === 'Virus' || enemyAttr === 'Data') {
+    if (digiAttr === enemyAttr) {
+      attrFrac = (agg.attributes[enemyAttr] ?? 0) / 100
+    }
+  } else if (!enemyAttr || enemyAttr === 'None' || enemyAttr === 'Free') {
+    const unk = agg.attributes.Unknown ?? 0
+    if (unk > 0 && (digiAttr === 'Free' || digiAttr === 'Unknown')) {
+      attrFrac = unk / 100
+    }
+  }
+  return { element: elementFrac, attribute: attrFrac }
+}
+
 export function initialGearState(): GearState {
   return {
     left: {
@@ -67,6 +180,7 @@ export function initialGearState(): GearState {
     },
     ring: Array.from({ length: 4 }, () => ({ stat: '', value: 0 })),
     seals: { hp: 0, ds: 0, at: 0, as: 0, ct: 0, ht: 0, de: 0, bl: 0, ev: 0 },
+    trueVice: initialTrueViceSlots(),
   }
 }
 
@@ -114,6 +228,23 @@ export function readGearState(): GearState {
     for (const stat of SEAL_STATS) {
       base.seals[stat] = Math.floor(toNonNegativeNumber(parsed.seals[stat]))
     }
+  }
+
+  if (Array.isArray((parsed as Partial<GearState>).trueVice)) {
+    base.trueVice = Array.from({ length: TRUE_VICE_SLOT_COUNT }, (_, i) => {
+      const row = (parsed as Partial<GearState>).trueVice?.[i]
+      if (!row || typeof row !== 'object') return emptyTrueViceSlot()
+      const category =
+        (row as TrueViceSlot).category === 'element' || (row as TrueViceSlot).category === 'attribute'
+          ? (row as TrueViceSlot).category
+          : ''
+      const stat = typeof (row as TrueViceSlot).stat === 'string' ? (row as TrueViceSlot).stat : ''
+      return clampTrueViceSlot({
+        category,
+        stat,
+        value: toNonNegativeNumber((row as TrueViceSlot).value),
+      })
+    })
   }
 
   return base

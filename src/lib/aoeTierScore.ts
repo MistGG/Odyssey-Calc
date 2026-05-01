@@ -1,6 +1,6 @@
 import type { WikiDigimonDetail, WikiSkill } from '../types/wikiApi'
 import { wikiIntSkillDamageMultiplier } from './dpsSim'
-import { skillDamageAtLevel, skillIsSupportOnly } from './skillDamage'
+import { wikiSkillHitCoefficient, skillIsSupportOnly } from './skillDamage'
 import { tierListSkillLevel } from './tierScoreParsing'
 
 /** Wiki marks area skills with a positive `radius` (same rule as the AOE tag in the UI). */
@@ -83,7 +83,7 @@ function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick |
     const radius = s.radius as number
     const lv = tierListSkillLevel(s)
     const period = Math.max(0.5, s.cooldown_sec + s.cast_time_sec)
-    const dmg = skillDamageAtLevel(s.base_dmg, s.scaling, lv, s.max_level) * intDmgMult
+    const dmg = wikiSkillHitCoefficient(s.base_dmg, s.scaling, lv, s.max_level) * intDmgMult
     const dps = dmg / period
     const curDps = best ? best.dmgPerCast / best.periodSec : -Infinity
     const wins =
@@ -135,7 +135,7 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
     farmRadiusRaw += Math.log1p(Math.max(0, radius)) * fit
 
     if (!skillIsSupportOnly(s.base_dmg, s.scaling)) {
-      const dmg = skillDamageAtLevel(s.base_dmg, s.scaling, lv, s.max_level) * intDmgMult
+      const dmg = wikiSkillHitCoefficient(s.base_dmg, s.scaling, lv, s.max_level) * intDmgMult
       farmDamageRaw += dmg * fit
 
       const bucket = farmBucketByCooldownSec(s.cooldown_sec)

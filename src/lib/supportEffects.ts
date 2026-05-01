@@ -780,14 +780,17 @@ export function supportEffectStatBucket(e: ParsedSupportEffect): string {
 }
 
 /**
- * Skill buckets often omitted from short buff lines but present in flavor (heal, shield, etc.).
+ * Skill buckets often omitted from short buff lines but present in flavor (heal, shield, skill dmg, etc.).
  * We do not pull conflicting mitigation stats (DR, def, evasion) from flavor when buff is authoritative.
+ * Skill damage must be mergeable: buff tooltips often repeat only CDR/utility while the full skill text
+ * carries “Increases Skill Damage by …%” (e.g. Magia Code: Omega).
  */
 const SKILL_ONLY_BUCKETS_WHEN_BUFF_AUTHORITATIVE: readonly string[] = [
   'hp|',
   'ds|',
   'max_hp|',
   'shield|',
+  'skill_dmg|',
 ]
 
 /**

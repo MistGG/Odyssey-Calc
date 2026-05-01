@@ -6,6 +6,7 @@ import {
   ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
   attributeAdvantageIsActive,
 } from '../lib/attributeAdvantage'
+import { trueViceElementBonusActive } from '../lib/elementAdvantage'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import {
@@ -26,11 +27,15 @@ import {
 import { EditableNumberInput } from '../components/EditableNumberInput'
 import { getGearAttackContribution, getGearStatBonuses } from '../lib/gearStats'
 import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
-import { SKILL_LEVEL_CAP, skillDamageAtLevel, skillIsSupportOnly } from '../lib/skillDamage'
+import { SKILL_LEVEL_CAP, wikiSkillHitCoefficient, skillIsSupportOnly } from '../lib/skillDamage'
 import { buildSupportSkillEffects } from '../lib/supportEffects'
 import type { RotationEvent } from '../lib/dpsSim'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
-import { DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS } from '../lib/wikiListFacetOptions'
+import { EnemyElementTargetField } from '../components/EnemyElementTargetField'
+import {
+  DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS,
+  sanitizeDpsTargetEnemyElement,
+} from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 /** One line of text, or a titled block with sub-bullets (e.g. animation-cancel priority). */
@@ -314,6 +319,10 @@ function parseEnemyAttrFromSearch(search: string): string {
   return ''
 }
 
+function parseEnemyElementFromSearch(search: string): string {
+  return sanitizeDpsTargetEnemyElement(new URLSearchParams(search).get('enemyElement')?.trim() ?? '')
+}
+
 const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
 const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-index'
 
@@ -367,6 +376,9 @@ export function DpsLabPage() {
   const [targetEnemyAttribute, setTargetEnemyAttribute] = useState(() =>
     parseEnemyAttrFromSearch(search),
   )
+  const [targetEnemyElement, setTargetEnemyElement] = useState(() =>
+    parseEnemyElementFromSearch(search),
+  )
   const [sim, setSim] = useState<RotationResult | null>(null)
   const [simBusy, setSimBusy] = useState(false)
   const [simSlowHint, setSimSlowHint] = useState(false)
@@ -415,6 +427,7 @@ export function DpsLabPage() {
         ? rawEnemy
         : '',
     )
+    setTargetEnemyElement(sanitizeDpsTargetEnemyElement(next.get('enemyElement')?.trim() ?? ''))
   }, [search])
 
   useEffect(() => {
@@ -669,7 +682,10 @@ export function DpsLabPage() {
                   ? customRotationFillerValidRows
                   : undefined,
               attackerAttribute: data.attribute ?? '',
+              attackerElement: data.element ?? '',
               targetEnemyAttribute: targetEnemyAttribute.trim() || undefined,
+              targetEnemyElement: targetEnemyElement.trim() || undefined,
+              applySavedGearTrueVice: true,
             },
           )
           if (!cancelled) setSim(result)
@@ -710,6 +726,7 @@ export function DpsLabPage() {
     customRotationFullCycles,
     customRotationFillerValidRows,
     targetEnemyAttribute,
+    targetEnemyElement,
   ])
 
   const breakdown = useMemo(() => {
@@ -797,9 +814,9 @@ export function DpsLabPage() {
           .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
           .map((s) => {
             const level = levelOf(s.id)
-            const rawBase = skillDamageAtLevel(s.base_dmg, s.scaling, level, s.max_level)
+            const rawBase = wikiSkillHitCoefficient(s.base_dmg, s.scaling, level, s.max_level)
             const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
-            const skillOneHit = perfectAtClone ? rawBase * 1.43 * targetHits : rawBase * targetHits
+            const skillOneHit = rawBase * (perfectAtClone ? 1.43 : 1) * targetHits
             const cast = Math.max(0.1, s.cast_time_sec || 0)
             const cd = Math.max(0, s.cooldown_sec || 0)
             const period = cast + cd
@@ -915,9 +932,9 @@ export function DpsLabPage() {
         .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
         .map((s) => {
           const level = levelOf(s.id)
-          const rawBase = skillDamageAtLevel(s.base_dmg, s.scaling, level, s.max_level)
+          const rawBase = wikiSkillHitCoefficient(s.base_dmg, s.scaling, level, s.max_level)
           const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
-          const skillOneHit = perfectAtClone ? rawBase * 1.43 * targetHits : rawBase * targetHits
+          const skillOneHit = rawBase * (perfectAtClone ? 1.43 : 1) * targetHits
           const cast = Math.max(0.1, s.cast_time_sec || 0)
           const cd = Math.max(0, s.cooldown_sec || 0)
           const period = cast + cd
@@ -1101,6 +1118,7 @@ export function DpsLabPage() {
     if (forceAutoCrit) next.set('forceAutoCrit', '1')
     if (perfectAtClone) next.set('perfectAtClone', '1')
     if (targetEnemyAttribute.trim()) next.set('enemyAttr', targetEnemyAttribute.trim())
+    if (targetEnemyElement.trim()) next.set('enemyElement', targetEnemyElement.trim())
     /** Canonical GitHub Pages URL so shared links work outside localhost. */
     const shareBase = 'https://mistgg.github.io/Odyssey-Calc'
     return `${shareBase}#/lab?${next.toString()}`
@@ -1119,6 +1137,7 @@ export function DpsLabPage() {
     forceAutoCrit,
     perfectAtClone,
     targetEnemyAttribute,
+    targetEnemyElement,
   ])
 
   const onShareLabUrl = useCallback(async () => {
@@ -1367,30 +1386,49 @@ export function DpsLabPage() {
                     onCommit={(next) => setTargets(next)}
                   />
                 </label>
-                <div className="lab-enemy-attr-field">
-                  <EnemyAttributeTargetField
-                    value={targetEnemyAttribute}
-                    onChange={setTargetEnemyAttribute}
-                    attackerAttribute={data?.attribute}
-                    ariaLabel="Enemy Digimon wiki attribute (skill attribute damage)"
-                    fieldCaption="Enemy attribute"
-                    afterSelectSlot={
-                      <label className="lab-sim-duration-label lab-sim-duration-label--inline">
-                        <span className="lab-sim-duration-label-text">
-                          {rotationMode === 'custom' ? 'Max simulation time' : 'Simulation seconds'}
-                        </span>
-                        <EditableNumberInput
-                          min={MIN_ROTATION_SIM_DURATION_SEC}
-                          max={MAX_ROTATION_SIM_DURATION_SEC}
-                          step={5}
-                          integer
-                          emptyValue={DEFAULT_ROTATION_SIM_DURATION_SEC}
-                          value={durationSec}
-                          onCommit={(next) => setDurationSec(clampRotationDurationSec(next))}
-                        />
-                      </label>
-                    }
+                <label className="lab-sim-duration-label">
+                  <span className="lab-sim-duration-label-text">
+                    {rotationMode === 'custom' ? 'Max simulation time' : 'Simulation seconds'}
+                  </span>
+                  <EditableNumberInput
+                    min={MIN_ROTATION_SIM_DURATION_SEC}
+                    max={MAX_ROTATION_SIM_DURATION_SEC}
+                    step={5}
+                    integer
+                    emptyValue={DEFAULT_ROTATION_SIM_DURATION_SEC}
+                    value={durationSec}
+                    onCommit={(next) => setDurationSec(clampRotationDurationSec(next))}
                   />
+                </label>
+                <div className="lab-enemy-attr-field lab-target-matchups">
+                  <div className="lab-matchup-section lab-matchup-section--attribute">
+                    <p className="lab-matchup-heading" id="lab-matchup-attribute-heading">
+                      Target attribute (Vaccine · Data · Virus)
+                    </p>
+                    <EnemyAttributeTargetField
+                      value={targetEnemyAttribute}
+                      onChange={setTargetEnemyAttribute}
+                      attackerAttribute={data?.attribute}
+                      ariaLabel="Enemy Digimon wiki attribute for Vaccine–Data–Virus skill damage advantage"
+                      fieldCaption="Enemy attribute"
+                    />
+                  </div>
+                  <div
+                    className="lab-matchup-section lab-matchup-section--element"
+                    aria-labelledby="lab-matchup-element-heading"
+                  >
+                    <p className="lab-matchup-heading" id="lab-matchup-element-heading">
+                      Target element (True Vice chart)
+                    </p>
+                    <EnemyElementTargetField
+                      value={targetEnemyElement}
+                      onChange={setTargetEnemyElement}
+                      attackerElement={data?.element}
+                      ariaLabel="Enemy wiki element for True Vice element-damage lines on gear"
+                      fieldCaption="Enemy element (True Vice)"
+                      showLegend={true}
+                    />
+                  </div>
                 </div>
                 {rotationMode === 'custom' ? (
                   <>
@@ -1435,13 +1473,21 @@ export function DpsLabPage() {
                   </>
                 ) : null}
               </div>
-              {data &&
-              attributeAdvantageIsActive(data.attribute ?? '', targetEnemyAttribute) ? (
+              {data && attributeAdvantageIsActive(data.attribute ?? '', targetEnemyAttribute) ? (
                 <p className="lab-enemy-attr-active-hint" role="status">
                   {targetEnemyAttribute === 'None'
-                    ? `Neutral enemy (None): skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `
-                    : `Attribute advantage vs ${targetEnemyAttribute}: skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `}
+                    ? `Attribute matchup: neutral enemy (None) — skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `
+                    : `Attribute matchup: your type beats ${targetEnemyAttribute} — skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `}
                   (full skill hit; auto damage unchanged).
+                </p>
+              ) : null}
+              {data &&
+              targetEnemyElement.trim() &&
+              trueViceElementBonusActive(data.element ?? '', targetEnemyElement) ? (
+                <p className="lab-enemy-element-active-hint" role="status">
+                  Element matchup: enemy <strong>{targetEnemyElement}</strong> is the element your digimon beats
+                  on the True Vice chart — True Vice <strong>element</strong> % lines on saved gear can apply in
+                  the sim.
                 </p>
               ) : null}
               <div className="lab-custom-rotation-mode">
@@ -1989,9 +2035,10 @@ export function DpsLabPage() {
             <section className="lab-result">
               <h3>Digimon role skills ({data.role})</h3>
               <p className="muted">
-                Role skills only (no tamer skills). Instant casts (0s), like all buffs in the current sim.
-                Hybrid: one stance at a time. Hit / INT (and skills that only buff those) aren&apos;t in the
-                rotation sim yet. Those rows are informational.
+                Role skills only (no tamer skills). They have no skill levels or scaling in the sim — effects use
+                full description values. Instant casts (0s), like all buffs in the current sim. Hybrid: one
+                stance at a time. Hit / INT (and skills that only buff those) aren&apos;t in the rotation sim
+                yet. Those rows are informational.
               </p>
               {isHybridRole && (
                 <fieldset className="lab-fieldset">

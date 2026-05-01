@@ -1,8 +1,11 @@
 import type { WikiSkill } from '../types/wikiApi'
 import { attributeAdvantageSkillDamageMultiplier } from './attributeAdvantage'
-import { skillDamageAtLevel, skillIsSupportOnly } from './skillDamage'
+import { trueViceDamageFractionsForSkillHit, readGearState } from './gearStats'
+import { wikiSkillHitCoefficient, skillIsSupportOnly } from './skillDamage'
 import {
+  DIGIMON_ROLE_SKILL_SIM_LEVEL,
   digimonRoleWikiSkills,
+  isDigimonRoleSkillId,
   isHybridStanceSkillId,
   normalizeWikiRole,
   type HybridStance,
@@ -110,12 +113,12 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 37
+export const TIER_DPS_SIM_REVISION = 48
 
 /**
- * Wiki INT scaling (combat stat): 100 INT → +1% skill damage, +1% healing amplification.
- * Cooldown reduction from INT applies **only** to **Magia Code: Omega**’s cooldown (caster role skill),
- * including the first press (`×(1 − INT/10000)`). No other skills receive INT CDR.
+ * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
+ * Optional INT CDR on **Magia Code: Omega’s own** cooldown: `×(1 − INT/10000)` when
+ * {@link SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION} is true.
  */
 export const WIKI_INT_PER_PERCENT_POINTS = 100
 
@@ -127,6 +130,23 @@ export function wikiIntSkillDamagePctPoints(wikiInt: number): number {
 /** Damage multiplier on wiki skill hit term from INT (1% per 100 INT). */
 export function wikiIntSkillDamageMultiplier(wikiInt: number): number {
   return 1 + wikiIntSkillDamagePctPoints(wikiInt) / 100
+}
+
+/**
+ * When false, wiki INT does **not** add skill damage % in {@link simulateRotation} (current in-game mismatch).
+ * Set true to restore INT→skill dmg %.
+ */
+export const SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT = false
+
+/**
+ * When false, wiki INT does **not** shorten Magia Code: Omega’s **own** cooldown (`×(1 − INT/10000)`).
+ * Omega’s 33% buff CDR for **other** skills while the buff is active is unchanged.
+ */
+export const SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION = false
+
+function wikiIntSkillDamagePctInRotationSim(wikiInt: number): number {
+  if (!SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT) return 0
+  return wikiIntSkillDamagePctPoints(wikiInt)
 }
 
 /**
@@ -156,17 +176,9 @@ function effectiveSupportCastTime(): number {
   return 0
 }
 
-function skillDamagePerCast(
-  skill: WikiSkill,
-  level: number,
-  targets: number,
-  _baseAttack: number,
-  _perfectAtClone: boolean,
-) {
-  const base = skillDamageAtLevel(skill.base_dmg, skill.scaling, level, skill.max_level)
+function skillDamagePerCast(skill: WikiSkill, level: number, targets: number) {
+  const base = wikiSkillHitCoefficient(skill.base_dmg, skill.scaling, level, skill.max_level)
   const targetHits = skill.radius && skill.radius > 0 ? Math.max(1, targets) : 1
-  void _baseAttack
-  void _perfectAtClone
   return base * targetHits
 }
 
@@ -246,11 +258,6 @@ const CAST_ROLE_ANIM_CANCEL_STUB_IDS = new Set<string>([
 
 const MAGIA_OMEGA_SKILL_ID = 'digimon-role-caster-omega'
 const MAGIA_OMEGA_CDR = 0.33
-/**
- * Parsed Omega buff lines don’t contribute attack/skill % to {@link supportBuffPriorityScore}.
- * Boost so auto-rotation / beam search prioritize it (CDR value shows up in rollout ΔDPS).
- */
-const MAGIA_OMEGA_AUTO_ROTATION_PRIORITY_BOOST = 140
 
 /** Parsed support lines that identify pure-utility buffs (still profiled, but not auto-rotated). */
 function effectIsWeaveUtility(e: { label: string }): boolean {
@@ -271,15 +278,14 @@ function effectIsWeaveUtility(e: { label: string }): boolean {
 /** Greedy / beam ordering for which support to fire when several are off cooldown. */
 function supportBuffPriorityScore(p: SupportBuffProfile, baseAttack: number): number {
   const flatAsPct = baseAttack > 0 ? (p.flatAttack / baseAttack) * 100 : 0
-  let score =
+  return (
     p.attackPct +
     p.skillDamagePct +
     flatAsPct +
     p.atkSpeedPct * 0.12 +
     p.critRatePct * 0.1 +
     p.critDamagePct * 0.12
-  if (p.skill.id === MAGIA_OMEGA_SKILL_ID) score += MAGIA_OMEGA_AUTO_ROTATION_PRIORITY_BOOST
-  return score
+  )
 }
 
 function supportProfiles(
@@ -315,6 +321,10 @@ function supportProfiles(
       } else if (!e.unit && /\battack( power)?\b/.test(label) && !/\battack speed\b/.test(label)) {
         flatAttack += e.valueAtLevel
       }
+    }
+    /** Wiki/API buff blocks sometimes omit skill dmg while flavor has it; merge parser fixes most cases. */
+    if (s.id === MAGIA_OMEGA_SKILL_ID && skillDamagePct <= 1e-9) {
+      skillDamagePct = 70
     }
     const durationSec = s.buff?.duration ?? 0
     const cooldownSec = s.cooldown_sec || 0
@@ -410,6 +420,15 @@ type SimCtx = {
    * (wiki base_dmg/scaling term + ATK term); autos unchanged.
    */
   attributeAdvantageSkillMult: number
+  /** Digimon wiki element; must match True Vice element rolls. */
+  attackerElement: string
+  /** Digimon wiki attribute (Vaccine/Data/Virus/…); must match True Vice attribute rolls. */
+  attackerAttribute: string
+  targetEnemyAttribute: string
+  /** Enemy element for True Vice chart only (empty = no element TV bonus). */
+  targetEnemyElement: string
+  /** When true, apply saved True Vice rolls from {@link readGearState}. */
+  applyGearTrueVice: boolean
   forceAutoCrit: boolean
   perfectAtClone: boolean
   autoAttackAnimationCancel: boolean
@@ -420,7 +439,7 @@ type SimCtx = {
   animCancelOverlapSec: number
   /** Auto-attack interval from wiki atk_speed stat only (no temporary buffs). */
   baseAutoIntervalSec: number
-  /** Wiki combat INT; 100 INT → +1% skill dmg & −1% CD on new cooldowns (see `WIKI_INT_PER_PERCENT_POINTS`). */
+  /** Wiki combat INT; skill dmg % only if {@link SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT}; Omega INT CDR only if {@link SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION}. */
   wikiInt: number
   skillLevel: (skill: WikiSkill) => number
 }
@@ -450,7 +469,7 @@ function omegaBuffActiveAt(m: SimMutable, atSec: number): boolean {
 
 /**
  * Support cast gate: skill off cooldown and (for non-Omega) buff not already active.
- * Omega’s buff duration (30s) exceeds its CD once wiki INT lowers cooldown (~22s); treat like refresh — ready on CD only.
+ * Omega may be recast before its buff expires; treat like refresh — ready on CD only.
  */
 function supportSkillRotationReady(m: SimMutable, skillId: string): boolean {
   const ready = (m.readyAt.get(skillId) ?? 0) <= m.t
@@ -461,7 +480,8 @@ function supportSkillRotationReady(m: SimMutable, skillId: string): boolean {
 
 /**
  * Cooldown duration for a cast starting at `castStartT`.
- * Wiki INT CDR: **Magia Code: Omega only** (first press or repeat). Other skills: optional 33% Omega buff CDR.
+ * Wiki INT CDR: **Magia Code: Omega’s own** cooldown only, when {@link SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION}.
+ * Other skills: optional 33% Omega buff CDR while Omega buff is active.
  */
 function effectiveCooldownSecAfterCast(
   m: SimMutable,
@@ -472,6 +492,7 @@ function effectiveCooldownSecAfterCast(
 ): number {
   const base = Math.max(0, baseCooldownSec)
   if (skillId === MAGIA_OMEGA_SKILL_ID) {
+    if (!SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION) return base
     return base * (1 - Math.max(0, wikiInt) / 10000)
   }
   if (omegaBuffActiveAt(m, castStartT)) {
@@ -542,7 +563,7 @@ function buildBuffContributionsForDamage(
 ): BuffContribution[] {
   const out: BuffContribution[] = []
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
-  const intSkillPct = includeSkillPct ? wikiIntSkillDamagePctPoints(ctx.wikiInt) : 0
+  const intSkillPct = includeSkillPct ? wikiIntSkillDamagePctInRotationSim(ctx.wikiInt) : 0
   const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) + intSkillPct
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
@@ -578,13 +599,29 @@ function buildBuffContributionsForDamage(
 
   if (includeSkillPct && activeSkillPct > BUFF_SPLIT_EPS) {
     const detailLines: string[] = [
-      `Total skill damage % (buffs${ctx.wikiInt > 0 ? ' + wiki INT' : ''}): +${activeSkillPct.toFixed(2)}%.`,
-      ...(ctx.wikiInt > 0
+      SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT
+        ? `Total skill damage % (buffs + wiki INT): +${activeSkillPct.toFixed(2)}%.`
+        : `Total skill damage % (buffs only): +${activeSkillPct.toFixed(2)}%.`,
+      ...(intSkillPct > BUFF_SPLIT_EPS
         ? [
-            `Wiki INT ${ctx.wikiInt}: +${intSkillPct.toFixed(2)}% (${WIKI_INT_PER_PERCENT_POINTS} INT = +1% skill damage).`,
+            `Wiki INT ${ctx.wikiInt}: +${intSkillPct.toFixed(2)}% (${WIKI_INT_PER_PERCENT_POINTS} INT = +1%), added like buff skill damage %.`,
           ]
         : []),
-      'Applied to wiki skill hit only: wikiHit × (1 + skill damage% ÷ 100). Perfect AT clone adds +30% of raw wikiHit separately (not scaled by skill damage%).',
+      ...(!SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT && ctx.wikiInt > 0
+        ? [
+            `Wiki INT skill damage % is off in sim (\`SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT\`)${
+              SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION ? '' : '; Omega INT CDR is off (`SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION`)'
+            }.`,
+          ]
+        : []),
+      ...(SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT &&
+      !SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION &&
+      ctx.wikiInt > 0
+        ? [
+            'Omega INT cooldown reduction is off in sim (`SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION`).',
+          ]
+        : []),
+      'Skill damage % applies only to the wiki coefficient (after level row): (wiki coefficient × clone/TV bonuses) × (1 + skill damage% ÷ 100). ATK term is added unchanged. Clone L15 = ×1.43 as additive +0.43 on the wiki coefficient.',
     ]
     for (const b of m.activeBuffs) {
       if (b.skillDamagePct > BUFF_SPLIT_EPS) {
@@ -671,10 +708,10 @@ function purgeExpiredBuffs(m: SimMutable, t: number) {
 function sortDamageByDpct(ctx: SimCtx, skills: WikiSkill[]) {
   return [...skills].sort((a, b) => {
     const aScore =
-      skillDamagePerCast(a, ctx.skillLevel(a), ctx.targets, ctx.baseAttack, ctx.perfectAtClone) /
+      skillDamagePerCast(a, ctx.skillLevel(a), ctx.targets) /
       effectiveCastTime(a.cast_time_sec)
     const bScore =
-      skillDamagePerCast(b, ctx.skillLevel(b), ctx.targets, ctx.baseAttack, ctx.perfectAtClone) /
+      skillDamagePerCast(b, ctx.skillLevel(b), ctx.targets) /
       effectiveCastTime(b.cast_time_sec)
     return bScore - aScore
   })
@@ -724,20 +761,27 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeSkillPct =
     m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) +
-    wikiIntSkillDamagePctPoints(ctx.wikiInt)
+    wikiIntSkillDamagePctInRotationSim(ctx.wikiInt)
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
   const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
 
-  const baseSkillDamage = skillDamagePerCast(skill, usedLevel, ctx.targets, ctx.baseAttack, ctx.perfectAtClone)
-  const cloneMultiplier = ctx.perfectAtClone ? 1.3 : 1
-  /**
-   * Skill damage % applies only to the wiki skill hit (base_dmg/scaling at level × targets). Perfect AT
-   * clone adds +30% of that **raw** hit; it is not multiplied by skill damage % (avoids double scaling).
-   * Equivalent: baseSkillDamage × (1 + skillDmg%) + baseSkillDamage × (cloneMul − 1).
-   */
-  const baseSkillTerm =
-    baseSkillDamage * (1 + activeSkillPct / 100) + baseSkillDamage * (cloneMultiplier - 1)
+  const baseSkillDamage = skillDamagePerCast(skill, usedLevel, ctx.targets)
+  const cloneMult = ctx.perfectAtClone ? 1.43 : 1
+  const tv = ctx.applyGearTrueVice
+    ? trueViceDamageFractionsForSkillHit(
+        ctx.attackerAttribute,
+        ctx.attackerElement,
+        ctx.targetEnemyAttribute,
+        ctx.targetEnemyElement,
+        readGearState(),
+      )
+    : { element: 0, attribute: 0 }
+  const preSkillBuffMult =
+    1 + (cloneMult - 1) + tv.element + tv.attribute
+  const skillPctMult = 1 + activeSkillPct / 100
+  /** Wiki coefficient × clone/TV × skill damage %; ATK term is separate (no skill-damage % on AT). */
+  const baseSkillTerm = baseSkillDamage * preSkillBuffMult * skillPctMult
 
   const atkBuffed = Math.max(0, ctx.baseAttack + activeFlatAtk) * (1 + activeAttackPct / 100)
   const critCapable = skillCanCrit(skill)
@@ -902,7 +946,7 @@ function castDamageSkill(
   const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
   const activeSkillPct =
     m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) +
-    wikiIntSkillDamagePctPoints(ctx.wikiInt)
+    wikiIntSkillDamagePctInRotationSim(ctx.wikiInt)
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const hit = computeDamageSkillHitSnapshot(ctx, m, skill)
   const dmg = hit.dmg
@@ -925,7 +969,7 @@ function castDamageSkill(
       buffedBy: m.activeBuffs.map((b) => b.skillName),
       totalBuffPct: hit.totalBuffPct,
       buffContributions:
-        m.activeBuffs.length > 0 || ctx.wikiInt > 0
+        m.activeBuffs.length > 0 || (SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT && ctx.wikiInt > 0)
           ? buildBuffContributionsForDamage(ctx, m, true, hit.critCapable)
           : undefined,
       cumulativeDamage: m.totalDamage,
@@ -1216,7 +1260,7 @@ type DamageChoice =
 function nukeSkillIdSet(ctx: SimCtx, damaging: WikiSkill[]): Set<string> {
   const scored = damaging.map((s) => ({
     id: s.id,
-    score: skillDamagePerCast(s, ctx.skillLevel(s), ctx.targets, ctx.baseAttack, ctx.perfectAtClone),
+    score: skillDamagePerCast(s, ctx.skillLevel(s), ctx.targets),
   }))
   scored.sort((a, b) => b.score - a.score)
   return new Set(scored.slice(0, NUKE_TOP_N).map((x) => x.id))
@@ -1380,7 +1424,7 @@ function beamDamageDecision(
 }
 
 export type RotationSimOptions = {
-  /** Wiki combat INT; 100 INT → +1% skill damage & −1% CD on newly applied cooldowns (see `WIKI_INT_PER_PERCENT_POINTS`). */
+  /** Wiki combat INT (skill dmg % & Omega INT CDR are gated by sim flags). */
   wikiInt?: number
   /** Wiki Digimon role; enables Digimon role skills in the sim (not tamer skills). */
   role?: string | null
@@ -1391,7 +1435,7 @@ export type RotationSimOptions = {
    * Skill-vs-auto weaving and lookahead still use natural crit chance on autos.
    */
   forceAutoCrit?: boolean
-  /** Perfect AT clone: apply a 1.3× multiplier to base skill term. */
+  /** Perfect AT clone: +0.43 additive bonus on wiki skill coefficient (×1.43 with base 1). */
   perfectAtClone?: boolean
   /** Assume repeated auto animation cancel with skills whenever available. */
   autoAttackAnimationCancel?: boolean
@@ -1426,6 +1470,15 @@ export type RotationSimOptions = {
    * Vaccine→Virus→Data triangle (or enemy **None**), **skill damage only** (full skill hit) is multiplied by 1.5.
    */
   targetEnemyAttribute?: string | null
+  /** Enemy element for True Vice + element-advantage gating (see Gear page). */
+  targetEnemyElement?: string | null
+  /** Attacker wiki element (Digimon); defaults filled from detail in Lab/tier config. */
+  attackerElement?: string | null
+  /**
+   * Apply True Vice accessory stats from saved gear (localStorage). Tier fetch still ignores gear;
+   * enable this only when you want scoring to include your rolls.
+   */
+  applySavedGearTrueVice?: boolean
 }
 
 type RotationSimCoreOpts = {
@@ -1439,6 +1492,11 @@ type RotationSimCoreOpts = {
   animCancelOverlapSec: number
   /** 1 or 1.5 when attribute advantage applies to skill hits. */
   attributeAdvantageSkillMult: number
+  attackerElement: string
+  attackerAttribute: string
+  targetEnemyAttribute: string
+  targetEnemyElement: string
+  applyGearTrueVice: boolean
   useCustomRotation: boolean
   customRotationSkillIds: string[]
   manualSupportOnly: boolean
@@ -1780,7 +1838,8 @@ function runRotationSim(
   const support = list.filter((s) => skillIsSupportOnly(s.base_dmg, s.scaling))
   const digimonRoleSkills = digimonRoleWikiSkills(core.roleNorm, core.hybridStance)
   const profileLevels: Record<string, number> = { ...levelBySkillId }
-  for (const s of digimonRoleSkills) profileLevels[s.id] = profileLevels[s.id] ?? 25
+  /** Role skills do not use wiki level sliders; fixed {@link DIGIMON_ROLE_SKILL_SIM_LEVEL} for parsing only. */
+  for (const s of digimonRoleSkills) profileLevels[s.id] = DIGIMON_ROLE_SKILL_SIM_LEVEL
 
   const supportBuffs = [
     ...supportProfiles(digimonRoleSkills, profileLevels),
@@ -1788,13 +1847,17 @@ function runRotationSim(
   ]
   const supportMerged = [...digimonRoleSkills, ...support]
   const skillLevel = (skill: WikiSkill) => {
+    if (isDigimonRoleSkillId(skill.id)) {
+      const cap = Math.max(1, Math.min(skill.max_level || 25, 25))
+      return Math.max(1, Math.min(DIGIMON_ROLE_SKILL_SIM_LEVEL, cap))
+    }
     const requested = profileLevels[skill.id] ?? 25
     const cap = Math.max(1, Math.min(skill.max_level || 25, 25))
     return Math.max(1, Math.min(Math.floor(requested), cap))
   }
   if (damaging.length === 0) {
     const buffs = estimateSupportDpsBuffs(supportMerged, profileLevels, baseAttack, baseCritRateStat)
-    const intSkillPct = wikiIntSkillDamagePctPoints(core.wikiInt)
+    const intSkillPct = wikiIntSkillDamagePctInRotationSim(core.wikiInt)
     return {
       totalDamage: 0,
       dps: 0,
@@ -1826,6 +1889,11 @@ function runRotationSim(
     baseAttack,
     baseCritRateStat,
     attributeAdvantageSkillMult: core.attributeAdvantageSkillMult,
+    attackerElement: core.attackerElement,
+    attackerAttribute: core.attackerAttribute,
+    targetEnemyAttribute: core.targetEnemyAttribute,
+    targetEnemyElement: core.targetEnemyElement,
+    applyGearTrueVice: core.applyGearTrueVice,
     forceAutoCrit: core.forceAutoCrit,
     perfectAtClone: core.perfectAtClone,
     autoAttackAnimationCancel: core.autoAttackAnimationCancel,
@@ -2032,7 +2100,7 @@ function runRotationSim(
     skillDamageBuffPct:
       m.damageCastCount > 0
         ? m.skillPctAtDamageCasts / m.damageCastCount
-        : buffs.skillDamagePct + wikiIntSkillDamagePctPoints(core.wikiInt),
+        : buffs.skillDamagePct + wikiIntSkillDamagePctInRotationSim(core.wikiInt),
     attackPowerFlat:
       m.damageCastCount > 0 ? m.flatAtkAtDamageCasts / m.damageCastCount : buffs.flatAttack,
     critRatePct:
@@ -2059,7 +2127,7 @@ function runRotationSim(
   }
   } catch (err) {
     console.error('[dpsSim] runRotationSim failed', err)
-    const intSkillPctErr = wikiIntSkillDamagePctPoints(core.wikiInt)
+    const intSkillPctErr = wikiIntSkillDamagePctInRotationSim(core.wikiInt)
     return {
       totalDamage: 0,
       dps: 0,
@@ -2103,6 +2171,8 @@ function buildRotationSimCore(
     typeof wikiIntRaw === 'number' && Number.isFinite(wikiIntRaw)
       ? Math.max(0, Math.floor(wikiIntRaw))
       : 0
+  const targetAttr = (options?.targetEnemyAttribute ?? '').trim()
+  const targetEl = (options?.targetEnemyElement ?? '').trim()
   return {
     roleNorm,
     hybridStance,
@@ -2115,6 +2185,11 @@ function buildRotationSimCore(
       options?.attackerAttribute,
       options?.targetEnemyAttribute,
     ),
+    attackerElement: (options?.attackerElement ?? '').trim(),
+    attackerAttribute: (options?.attackerAttribute ?? '').trim(),
+    targetEnemyAttribute: targetAttr,
+    targetEnemyElement: targetEl,
+    applyGearTrueVice: options?.applySavedGearTrueVice === true,
     useCustomRotation: Array.isArray(options?.customRotation),
     customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
     manualSupportOnly: options?.manualSupportOnly === true,
