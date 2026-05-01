@@ -169,7 +169,7 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'Magia Code: Omega',
           35,
           30,
-          'Increases Intelligence by 150%. Reduces all skill cooldowns. Intelligence and cooldown reduction are not modeled in this sim; kept for animation-cancel timing.',
+          'Increases Intelligence by 150%. While active, other skills used after activation get 33% cooldown reduction on their new cooldown only; skills already on cooldown are unchanged. Wiki INT reduces only Magia Code: Omega’s own cooldown (100 INT = 1% CDR). Temporary INT from this buff is not modeled.',
         ),
       ]
     case 'hybrid':

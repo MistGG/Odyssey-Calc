@@ -651,6 +651,7 @@ export function DpsLabPage() {
             {
               role: data.role,
               hybridStance: isHybridRole ? hybridStance : 'best',
+              wikiInt: Math.max(0, Math.floor(combatStats?.int ?? data.stats?.int ?? 0)),
               autoAttackAnimationCancel: useAutoAnimCancel,
               animCancelReactionSec: clampAnimCancelReactionMs(animCancelReactionMs) / 1000,
               forceAutoCrit,

@@ -1,4 +1,5 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
+import { wikiIntSkillDamageMultiplier } from './dpsSim'
 import { buildSupportSkillEffects, type ParsedSupportEffect } from './supportEffects'
 import type { HealerTierCategoryScores } from './tierList'
 import {
@@ -113,6 +114,8 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
   const stats = detail.stats
   const hp = Math.max(1, stats?.hp ?? detail.hp ?? 1)
   const intStat = Math.max(0, stats?.int ?? 0)
+  /** 100 wiki INT → +1% healing amplification (same ratio as skill damage % in DPS sim). */
+  const healAmpMult = wikiIntSkillDamageMultiplier(intStat)
 
   let healSustainHps = 0
   let shieldSustainHps = 0
@@ -135,7 +138,7 @@ export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierSco
     }
     if (healPerCast > 0) {
       const periodSec = Math.max(0.75, skill.cooldown_sec + skill.cast_time_sec)
-      healSustainHps += healPerCast / periodSec
+      healSustainHps += (healPerCast * healAmpMult) / periodSec
     }
 
     let shieldPerCast = 0

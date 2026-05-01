@@ -57,6 +57,7 @@ export function buildComparableRotationConfig(
     options: {
       role: detail.role,
       hybridStance: 'melee',
+      wikiInt: floorStat(detail.stats?.int ?? 0),
       forceAutoCrit: options?.forceAutoCrit === true,
       perfectAtClone,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
