@@ -461,7 +461,7 @@ export function DpsLabPage() {
     setCombatStats({
       hp: Math.max(0, Math.floor(data.stats.hp ?? 0)) + sealBonuses.hp,
       ds: Math.max(0, Math.floor(data.stats.ds ?? 0)) + sealBonuses.ds,
-      attack: Math.max(0, Math.floor(data.attack ?? data.stats.attack ?? 0)) + sealBonuses.attack,
+      attack: Math.max(0, Math.floor(data.attack ?? data.stats.attack ?? 0)),
       defense: Math.max(0, Math.floor(data.stats.defense ?? 0)) + sealBonuses.defense,
       crit_rate: Math.max(0, Math.floor(data.stats.crit_rate ?? 0)) + sealBonuses.critRate,
       atk_speed: Math.max(0, Math.floor(data.stats.atk_speed ?? 0)) + sealBonuses.atkSpeed,
@@ -513,20 +513,24 @@ export function DpsLabPage() {
   const roleNorm = useMemo(() => normalizeWikiRole(data?.role), [data?.role])
   const isHybridRole = roleNorm === 'hybrid'
   const simAttackPreview = useMemo(() => {
-    const inputAttack = Math.max(0, combatStats?.attack ?? 0)
+    /** Wiki / base attack only (editable field; excludes seals). */
+    const baseWikiAttack = Math.max(0, combatStats?.attack ?? 0)
     const sealAttackBonus = Math.max(0, sealBonuses.attack)
+    const attackWithSeals = baseWikiAttack + sealAttackBonus
     const gearAttackBonus = Math.max(0, gearAttack.totalAttack)
-    const cloneAttackBonus = perfectAtClone ? Math.round(inputAttack * 1.44) : 0
-    const effectiveAttack = inputAttack + gearAttackBonus + cloneAttackBonus
-    const hasEffectiveOverride = sealAttackBonus > 0 || gearAttackBonus > 0 || cloneAttackBonus > 0
-    // Lab-side Effective AT intentionally includes clone-added attack for preview + sim.
-    const simAttack = hasEffectiveOverride ? effectiveAttack : inputAttack
+    const cloneAttackBonus = perfectAtClone ? Math.round(baseWikiAttack * 1.44) : 0
+    const totalAttackForSim =
+      baseWikiAttack + sealAttackBonus + gearAttackBonus + cloneAttackBonus
+    const hasEffectiveOverride =
+      sealAttackBonus > 0 || gearAttackBonus > 0 || cloneAttackBonus > 0
+    const simAttack = hasEffectiveOverride ? totalAttackForSim : baseWikiAttack
     return {
-      inputAttack,
+      baseWikiAttack,
+      attackWithSeals,
       sealAttackBonus,
       gearAttackBonus,
       cloneAttackBonus,
-      effectiveAttack,
+      effectiveAttack: totalAttackForSim,
       hasEffectiveOverride,
       simAttack,
     }
@@ -1074,7 +1078,7 @@ export function DpsLabPage() {
   )
   const perfectCloneAttackPreview = useMemo(
     () => ({
-      baseAttack: simAttackPreview.inputAttack,
+      baseAttack: simAttackPreview.attackWithSeals,
       bonusAttack: simAttackPreview.cloneAttackBonus,
       effectiveAttack: simAttackPreview.effectiveAttack,
       simAttack: simAttackPreview.simAttack,
