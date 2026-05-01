@@ -3,8 +3,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import {
-  ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
-  attributeAdvantageIsActive,
+  attributeAdvantageSkillDamageMultiplier,
+  attributeAdvantageSkillDamageMultiplierWithFoldedTrueVice,
 } from '../lib/attributeAdvantage'
 import { trueViceElementBonusActive } from '../lib/elementAdvantage'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
@@ -25,7 +25,13 @@ import {
   type RotationResult,
 } from '../lib/dpsSim'
 import { EditableNumberInput } from '../components/EditableNumberInput'
-import { getGearAttackContribution, getGearStatBonuses } from '../lib/gearStats'
+import {
+  GEAR_STORAGE_KEY,
+  getGearAttackContribution,
+  getGearStatBonuses,
+  readGearState,
+  trueViceDamageFractionsForSkillHit,
+} from '../lib/gearStats'
 import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
 import { SKILL_LEVEL_CAP, wikiSkillHitCoefficient, skillIsSupportOnly } from '../lib/skillDamage'
 import { buildSupportSkillEffects } from '../lib/supportEffects'
@@ -327,7 +333,8 @@ const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
 const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-index'
 
 export function DpsLabPage() {
-  const { search } = useLocation()
+  const location = useLocation()
+  const { search } = location
   const params = useMemo(() => new URLSearchParams(search), [search])
   const digimonId = params.get('digimonId')?.trim() ?? ''
   const initialLevel = Math.max(1, Math.min(SKILL_LEVEL_CAP, toInt(params.get('level'), 25)))
@@ -385,8 +392,20 @@ export function DpsLabPage() {
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
-  const gearAttack = useMemo(() => getGearAttackContribution(), [])
-  const sealBonuses = useMemo(() => getGearStatBonuses(), [])
+  /** Reread gear from localStorage when navigating here or when another tab updates saves. */
+  const [gearStorageRevision, setGearStorageRevision] = useState(0)
+  useEffect(() => {
+    setGearStorageRevision((r) => r + 1)
+  }, [location.pathname, location.search, location.key])
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === GEAR_STORAGE_KEY || e.key === null) setGearStorageRevision((x) => x + 1)
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+  const gearAttack = useMemo(() => getGearAttackContribution(), [gearStorageRevision])
+  const sealBonuses = useMemo(() => getGearStatBonuses(), [gearStorageRevision])
 
   useEffect(() => {
     if (durationFromUrl != null) setDurationSec(durationFromUrl)
@@ -757,6 +776,27 @@ export function DpsLabPage() {
       }))
       .sort((a, b) => b.damage - a.damage)
   }, [sim])
+
+  const labTrueViceFrac = useMemo(() => {
+    if (!data) return { element: 0, attribute: 0 }
+    return trueViceDamageFractionsForSkillHit(
+      data.attribute ?? '',
+      data.element ?? '',
+      targetEnemyAttribute.trim(),
+      targetEnemyElement.trim(),
+      readGearState(),
+    )
+  }, [data, targetEnemyAttribute, targetEnemyElement])
+
+  const labAttrSkillDamageMult = useMemo(
+    () =>
+      attributeAdvantageSkillDamageMultiplierWithFoldedTrueVice(
+        data?.attribute,
+        targetEnemyAttribute,
+        labTrueViceFrac.attribute,
+      ),
+    [data?.attribute, targetEnemyAttribute, labTrueViceFrac.attribute],
+  )
 
   const rotationAdvice = useMemo((): LabRotationAdviceItem[] => {
     if (!data || !sim || breakdown.length === 0) return []
@@ -1473,12 +1513,18 @@ export function DpsLabPage() {
                   </>
                 ) : null}
               </div>
-              {data && attributeAdvantageIsActive(data.attribute ?? '', targetEnemyAttribute) ? (
+              {data && labAttrSkillDamageMult > 1 + 1e-9 ? (
                 <p className="lab-enemy-attr-active-hint" role="status">
                   {targetEnemyAttribute === 'None'
-                    ? `Attribute matchup: neutral enemy (None) — skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `
-                    : `Attribute matchup: your type beats ${targetEnemyAttribute} — skill damage ×${ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} `}
-                  (full skill hit; auto damage unchanged).
+                    ? 'Attribute matchup: neutral enemy (None) — '
+                    : `Attribute matchup: your type beats ${targetEnemyAttribute} — `}
+                  skill damage ×
+                  {labAttrSkillDamageMult.toFixed(2).replace(/\.?0+$/, '')} on the full skill hit (
+                  {labTrueViceFrac.attribute > 1e-9 &&
+                  attributeAdvantageSkillDamageMultiplier(data.attribute ?? '', targetEnemyAttribute) > 1 + 1e-9
+                    ? `${Math.round((attributeAdvantageSkillDamageMultiplier(data.attribute ?? '', targetEnemyAttribute) - 1) * 100)}% triangle + ${Math.round(labTrueViceFrac.attribute * 100)}% True Vice attribute from Gear`
+                    : `${Math.round((labAttrSkillDamageMult - 1) * 100)}% if the correct attribute`}
+                  ). Auto damage unchanged.
                 </p>
               ) : null}
               {data &&

@@ -113,7 +113,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 48
+export const TIER_DPS_SIM_REVISION = 49
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -416,10 +416,15 @@ type SimCtx = {
   baseAttack: number
   baseCritRateStat: number
   /**
-   * Vaccine/Data/Virus advantage vs selected enemy attribute: ×1.5 on full skill hit only
-   * (wiki base_dmg/scaling term + ATK term); autos unchanged.
+   * Vaccine/Data/Virus (or None) advantage vs selected enemy attribute on full skill hits.
+   * When True Vice attribute lines apply and triangle applies, TV attribute fraction is added here (e.g. ×1.5 + 0.1)
+   * instead of the wiki stack — see `trueViceFoldAttributeIntoTriangle`.
    */
   attributeAdvantageSkillMult: number
+  /**
+   * True Vice attribute % is folded into {@link attributeAdvantageSkillMult} (not duplicated on wiki coefficient).
+   */
+  trueViceFoldAttributeIntoTriangle: boolean
   /** Digimon wiki element; must match True Vice element rolls. */
   attackerElement: string
   /** Digimon wiki attribute (Vaccine/Data/Virus/…); must match True Vice attribute rolls. */
@@ -777,8 +782,9 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
         readGearState(),
       )
     : { element: 0, attribute: 0 }
+  const tvAttrOnWiki = ctx.trueViceFoldAttributeIntoTriangle ? 0 : tv.attribute
   const preSkillBuffMult =
-    1 + (cloneMult - 1) + tv.element + tv.attribute
+    1 + (cloneMult - 1) + tv.element + tvAttrOnWiki
   const skillPctMult = 1 + activeSkillPct / 100
   /** Wiki coefficient × clone/TV × skill damage %; ATK term is separate (no skill-damage % on AT). */
   const baseSkillTerm = baseSkillDamage * preSkillBuffMult * skillPctMult
@@ -1490,8 +1496,9 @@ type RotationSimCoreOpts = {
   autoAttackAnimationCancel: boolean
   /** Seconds; clamped; used when `autoAttackAnimationCancel` is true. */
   animCancelOverlapSec: number
-  /** 1 or 1.5 when attribute advantage applies to skill hits. */
+  /** ×1, ×1.5, or higher when triangle + True Vice attribute are folded together. */
   attributeAdvantageSkillMult: number
+  trueViceFoldAttributeIntoTriangle: boolean
   attackerElement: string
   attackerAttribute: string
   targetEnemyAttribute: string
@@ -1889,6 +1896,7 @@ function runRotationSim(
     baseAttack,
     baseCritRateStat,
     attributeAdvantageSkillMult: core.attributeAdvantageSkillMult,
+    trueViceFoldAttributeIntoTriangle: core.trueViceFoldAttributeIntoTriangle,
     attackerElement: core.attackerElement,
     attackerAttribute: core.attackerAttribute,
     targetEnemyAttribute: core.targetEnemyAttribute,
@@ -2173,6 +2181,25 @@ function buildRotationSimCore(
       : 0
   const targetAttr = (options?.targetEnemyAttribute ?? '').trim()
   const targetEl = (options?.targetEnemyElement ?? '').trim()
+  const tri = attributeAdvantageSkillDamageMultiplier(
+    options?.attackerAttribute,
+    options?.targetEnemyAttribute,
+  )
+  let attributeAdvantageSkillMult = tri
+  let trueViceFoldAttributeIntoTriangle = false
+  if (options?.applySavedGearTrueVice === true) {
+    const tv = trueViceDamageFractionsForSkillHit(
+      (options?.attackerAttribute ?? '').trim(),
+      (options?.attackerElement ?? '').trim(),
+      targetAttr,
+      targetEl,
+      readGearState(),
+    )
+    if (tri > 1 + 1e-9 && tv.attribute > 1e-12) {
+      attributeAdvantageSkillMult = tri + tv.attribute
+      trueViceFoldAttributeIntoTriangle = true
+    }
+  }
   return {
     roleNorm,
     hybridStance,
@@ -2181,10 +2208,8 @@ function buildRotationSimCore(
     perfectAtClone: options?.perfectAtClone === true,
     autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,
     animCancelOverlapSec,
-    attributeAdvantageSkillMult: attributeAdvantageSkillDamageMultiplier(
-      options?.attackerAttribute,
-      options?.targetEnemyAttribute,
-    ),
+    attributeAdvantageSkillMult,
+    trueViceFoldAttributeIntoTriangle,
     attackerElement: (options?.attackerElement ?? '').trim(),
     attackerAttribute: (options?.attackerAttribute ?? '').trim(),
     targetEnemyAttribute: targetAttr,

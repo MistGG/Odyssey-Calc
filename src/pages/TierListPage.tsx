@@ -1854,8 +1854,10 @@ export function TierListPage() {
                     </li>
                     <li>
                       <strong>Attribute damage:</strong> optional <em>DPS target</em> below applies the
-                      Vaccine/Data/Virus triangle and neutral <strong>None</strong> (everyone gets ×
-                      {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} on full skill hits).
+                      Vaccine/Data/Virus triangle and neutral <strong>None</strong> (×
+                      {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} on full skill hits when the matchup applies).
+                      True Vice <strong>attribute</strong> % from Gear adds on top of that multiplier when the
+                      enemy attribute matches your roll (same as Lab).
                     </li>
                     <li>
                       <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
@@ -2107,14 +2109,17 @@ export function TierListPage() {
               </span>
               <div className="tier-dps-enemy-attr-stack">
                 <div className="tier-dps-target-selects-row">
-                  <EnemyAttributeTargetField
-                    fieldCaption="Enemy attribute"
-                    value={dpsTargetEnemyAttribute}
-                    onChange={setDpsTargetEnemyAttributePersist}
-                    selectClassName="tier-dps-enemy-attr-select"
-                    ariaLabel="Enemy wiki attribute for Vaccine–Data–Virus skill damage"
-                    showLegend={false}
-                  />
+                  <div className="tier-dps-attribute-column">
+                    <EnemyAttributeTargetField
+                      fieldCaption="Enemy attribute"
+                      value={dpsTargetEnemyAttribute}
+                      onChange={setDpsTargetEnemyAttributePersist}
+                      selectClassName="tier-dps-enemy-attr-select"
+                      ariaLabel="Enemy wiki attribute for Vaccine–Data–Virus skill damage"
+                      showLegend={false}
+                    />
+                    <p className="tier-dps-attr-hint muted">(50% if the correct attribute)</p>
+                  </div>
                   <div className="tier-dps-element-column">
                     <EnemyElementTargetField
                       fieldCaption="Enemy element"

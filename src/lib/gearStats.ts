@@ -1,4 +1,7 @@
-import { normalizeWikiAttribute } from './attributeAdvantage'
+import {
+  attributeAdvantageSkillDamageMultiplier,
+  normalizeWikiAttribute,
+} from './attributeAdvantage'
 import { normalizeWikiElement, trueViceElementBonusActive } from './elementAdvantage'
 
 export const GEAR_STORAGE_KEY = 'gear-v1'
@@ -169,7 +172,8 @@ export function trueViceDamageFractionsForSkillHit(
 }
 
 /**
- * Matches {@link dpsSim} `preSkillBuffMult`: clone tier bonus + True Vice element/attribute fractions on the wiki skill coefficient.
+ * Matches {@link dpsSim} `preSkillBuffMult`: clone tier bonus + True Vice element on wiki; TV attribute is
+ * omitted here when it is folded into the skill-hit triangle multiplier (same as sim).
  */
 export function wikiTrueVicePreSkillBuffMultiplier(
   perfectAtClone: boolean,
@@ -180,6 +184,7 @@ export function wikiTrueVicePreSkillBuffMultiplier(
   gear: GearState,
 ): number {
   const cloneMult = perfectAtClone ? 1.43 : 1
+  const tri = attributeAdvantageSkillDamageMultiplier(attackerAttribute, targetEnemyAttribute)
   const tv = trueViceDamageFractionsForSkillHit(
     attackerAttribute,
     attackerElement,
@@ -187,7 +192,11 @@ export function wikiTrueVicePreSkillBuffMultiplier(
     targetEnemyElement,
     gear,
   )
-  return 1 + (cloneMult - 1) + tv.element + tv.attribute
+  const cloneOff = cloneMult - 1
+  if (tri > 1 + 1e-9 && tv.attribute > 1e-12) {
+    return 1 + cloneOff + tv.element
+  }
+  return 1 + cloneOff + tv.element + tv.attribute
 }
 
 /**

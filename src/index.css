@@ -1595,9 +1595,23 @@ code {
   width: 100%;
 }
 
-.tier-dps-target-selects-row > .enemy-attr-target-field {
+.tier-dps-attribute-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   flex: 1 1 11rem;
   min-width: min(100%, 9.5rem);
+  align-self: flex-start;
+}
+
+.tier-dps-attribute-column > .enemy-attr-target-field {
+  width: 100%;
+}
+
+.tier-dps-attr-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .tier-dps-element-column {

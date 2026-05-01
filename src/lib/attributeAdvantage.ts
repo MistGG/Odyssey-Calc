@@ -65,6 +65,26 @@ export function attributeAdvantageIsActive(
 }
 
 /**
+ * Full skill-hit multiplier when Vaccine/Data/Virus (or None) triangle applies and True Vice attribute
+ * lines also apply: triangle multiplier plus TV attribute fraction (same stacking as {@link dpsSim} — folded
+ * off the wiki stack onto the skill-hit multiplier). When the triangle does not apply, returns `tri` only
+ * (TV attribute stays on the wiki coefficient only in sim).
+ */
+export function attributeAdvantageSkillDamageMultiplierWithFoldedTrueVice(
+  attackerAttribute: string | null | undefined,
+  targetEnemyAttribute: string | null | undefined,
+  trueViceAttributeFraction: number,
+): number {
+  const tri = attributeAdvantageSkillDamageMultiplier(attackerAttribute, targetEnemyAttribute)
+  const f =
+    typeof trueViceAttributeFraction === 'number' && Number.isFinite(trueViceAttributeFraction)
+      ? Math.max(0, trueViceAttributeFraction)
+      : 0
+  if (tri > 1 + 1e-9 && f > 1e-12) return tri + f
+  return tri
+}
+
+/**
  * Scale rotation **total** DPS for a UI attribute target. Uses auto DPS vs skill DPS split from sim
  * (`RotationResult.autoDps`); if `autoDps` is missing (legacy cache), returns `totalDps` unchanged.
  */
