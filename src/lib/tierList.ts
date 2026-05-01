@@ -182,6 +182,11 @@ export type TierListCache = {
   entries: Record<string, SustainedDpsEntry>
   listSignatures: Record<string, string>
   lastCheckedAt?: string
+  /**
+   * Enemy wiki element target used when cached rotation DPS rows were last computed (tier update batch).
+   * The tier matrix adjusts True Vice element damage live from this baseline when you change the dropdown.
+   */
+  dpsTargetEnemyElementWhenScored?: string
 }
 
 export type TierGroup = {

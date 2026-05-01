@@ -168,6 +168,62 @@ export function trueViceDamageFractionsForSkillHit(
   return { element: elementFrac, attribute: attrFrac }
 }
 
+/**
+ * Matches {@link dpsSim} `preSkillBuffMult`: clone tier bonus + True Vice element/attribute fractions on the wiki skill coefficient.
+ */
+export function wikiTrueVicePreSkillBuffMultiplier(
+  perfectAtClone: boolean,
+  attackerAttribute: string,
+  attackerElement: string,
+  targetEnemyAttribute: string,
+  targetEnemyElement: string,
+  gear: GearState,
+): number {
+  const cloneMult = perfectAtClone ? 1.43 : 1
+  const tv = trueViceDamageFractionsForSkillHit(
+    attackerAttribute,
+    attackerElement,
+    targetEnemyAttribute,
+    targetEnemyElement,
+    gear,
+  )
+  return 1 + (cloneMult - 1) + tv.element + tv.attribute
+}
+
+/**
+ * Rescale cached rotation DPS when True Vice wiki multiplier changes (enemy element or gear), same heuristic as attribute targeting: scale non-auto portion.
+ */
+export function adjustRotationDpsForTrueViceWikiMultRatio(
+  totalDps: number,
+  autoDps: number | undefined,
+  ratio: number,
+): number {
+  if (!Number.isFinite(ratio) || ratio <= 0 || Math.abs(ratio - 1) < 1e-12) return totalDps
+  if (autoDps == null || !Number.isFinite(autoDps) || !Number.isFinite(totalDps)) return totalDps
+  const skillDps = Math.max(0, totalDps - autoDps)
+  return autoDps + skillDps * ratio
+}
+
+export function adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio<
+  T extends {
+    sustained: number
+    burst: number
+    sustainedAutoDps?: number
+    burstAutoDps?: number
+  },
+>(scores: T | undefined, ratio: number): T | undefined {
+  if (!scores) return undefined
+  return {
+    ...scores,
+    sustained: adjustRotationDpsForTrueViceWikiMultRatio(
+      scores.sustained,
+      scores.sustainedAutoDps,
+      ratio,
+    ),
+    burst: adjustRotationDpsForTrueViceWikiMultRatio(scores.burst, scores.burstAutoDps, ratio),
+  }
+}
+
 export function initialGearState(): GearState {
   return {
     left: {

@@ -9,6 +9,13 @@ import {
   adjustRotationDpsForAttributeTarget,
   ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
 } from '../lib/attributeAdvantage'
+import {
+  adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio,
+  adjustRotationDpsForTrueViceWikiMultRatio,
+  readGearState,
+  wikiTrueVicePreSkillBuffMultiplier,
+  type GearState,
+} from '../lib/gearStats'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
@@ -234,6 +241,69 @@ function tierEntryWithAttributeTarget(
       e.dpsCategoryScoresPerfectAtCloneAnimationCancel,
     dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit:
       adj(e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit) ??
+      e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit,
+  }
+}
+
+/** Live-adjust cached rotation DPS when enemy element (True Vice) differs from the snapshot taken at last tier update. */
+function tierEntryWithTrueViceElementTarget(
+  e: SustainedDpsEntry,
+  attackerAttr: string | undefined,
+  attackerEl: string | undefined,
+  targetEnemyAttr: string,
+  targetElBuild: string,
+  targetElUi: string,
+  gear: GearState,
+): SustainedDpsEntry {
+  const aa = attackerAttr ?? ''
+  const ae = attackerEl ?? ''
+  const ta = targetEnemyAttr.trim()
+  const elB = targetElBuild.trim()
+  const elU = targetElUi.trim()
+  if (elB === elU) return e
+
+  const ratioPlain =
+    wikiTrueVicePreSkillBuffMultiplier(false, aa, ae, ta, elU, gear) /
+    wikiTrueVicePreSkillBuffMultiplier(false, aa, ae, ta, elB, gear)
+  const ratioPac =
+    wikiTrueVicePreSkillBuffMultiplier(true, aa, ae, ta, elU, gear) /
+    wikiTrueVicePreSkillBuffMultiplier(true, aa, ae, ta, elB, gear)
+
+  if (
+    !Number.isFinite(ratioPlain) ||
+    !Number.isFinite(ratioPac) ||
+    (Math.abs(ratioPlain - 1) < 1e-12 && Math.abs(ratioPac - 1) < 1e-12)
+  ) {
+    return e
+  }
+
+  const adjP = (s?: DpsRotationCategoryScores) =>
+    adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio(s, ratioPlain) ?? s
+  const adjPa = (s?: DpsRotationCategoryScores) =>
+    adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio(s, ratioPac) ?? s
+
+  const base = e.dpsCategoryScores
+  const adjBase = adjP(base)
+  return {
+    ...e,
+    dps:
+      adjBase?.sustained ??
+      adjustRotationDpsForTrueViceWikiMultRatio(e.dps, base?.sustainedAutoDps, ratioPlain),
+    dpsCategoryScores: adjBase ?? base,
+    dpsCategoryScoresAutoCrit: adjP(e.dpsCategoryScoresAutoCrit) ?? e.dpsCategoryScoresAutoCrit,
+    dpsCategoryScoresPerfectAtClone:
+      adjPa(e.dpsCategoryScoresPerfectAtClone) ?? e.dpsCategoryScoresPerfectAtClone,
+    dpsCategoryScoresPerfectAtCloneAutoCrit:
+      adjPa(e.dpsCategoryScoresPerfectAtCloneAutoCrit) ?? e.dpsCategoryScoresPerfectAtCloneAutoCrit,
+    dpsCategoryScoresAnimationCancel:
+      adjP(e.dpsCategoryScoresAnimationCancel) ?? e.dpsCategoryScoresAnimationCancel,
+    dpsCategoryScoresAnimationCancelAutoCrit:
+      adjP(e.dpsCategoryScoresAnimationCancelAutoCrit) ?? e.dpsCategoryScoresAnimationCancelAutoCrit,
+    dpsCategoryScoresPerfectAtCloneAnimationCancel:
+      adjPa(e.dpsCategoryScoresPerfectAtCloneAnimationCancel) ??
+      e.dpsCategoryScoresPerfectAtCloneAnimationCancel,
+    dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit:
+      adjPa(e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit) ??
       e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit,
   }
 }
@@ -482,6 +552,7 @@ export function TierListPage() {
       }
 
       working.queue = plannedQueue
+      working.dpsTargetEnemyElementWhenScored = readTierDpsTargetEnemyElement()
       const initialBuildQueueTotal = plannedQueue.length
       setTierBuildQueueTotal(initialBuildQueueTotal > 0 ? initialBuildQueueTotal : null)
       if (mode === 'force' || hadPriorSignatures) {
@@ -964,6 +1035,24 @@ export function TierListPage() {
           out[id] = tierEntryWithAttributeTarget(out[id], target, attacker)
         }
       }
+
+      const targetAttrForTv = dpsTargetEnemyAttribute.trim()
+      const elBuild = cache?.dpsTargetEnemyElementWhenScored ?? ''
+      const elUi = dpsTargetEnemyElement.trim()
+      const gear = readGearState()
+      for (const id of Object.keys(out)) {
+        const attacker = listMeta[id]?.attribute?.trim()
+        const attackerEl = listMeta[id]?.element?.trim()
+        out[id] = tierEntryWithTrueViceElementTarget(
+          out[id],
+          attacker,
+          attackerEl,
+          targetAttrForTv,
+          elBuild,
+          elUi,
+          gear,
+        )
+      }
       return out
     }
     const out: Record<string, SustainedDpsEntry> = {}
@@ -981,6 +1070,8 @@ export function TierListPage() {
     dpsAutoAnimCancel,
     dpsTierCategory,
     dpsTargetEnemyAttribute,
+    dpsTargetEnemyElement,
+    cache,
     listMeta,
   ])
 
