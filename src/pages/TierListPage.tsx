@@ -3,19 +3,11 @@ import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
-import { EnemyElementTargetField } from '../components/EnemyElementTargetField'
 import {
   adjustDpsRotationCategoryScoresForAttributeTarget,
   adjustRotationDpsForAttributeTarget,
   ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
 } from '../lib/attributeAdvantage'
-import {
-  adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio,
-  adjustRotationDpsForTrueViceWikiMultRatio,
-  readGearState,
-  wikiTrueVicePreSkillBuffMultiplier,
-  type GearState,
-} from '../lib/gearStats'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
@@ -78,7 +70,6 @@ import {
   readDpsForceAutoCrit,
   readDpsPerfectAtClone,
   readTierDpsTargetEnemyAttribute,
-  readTierDpsTargetEnemyElement,
   readTierIgnoreIncomplete,
   readTierListMode,
   readTierUpdatePanelMinimized,
@@ -90,7 +81,6 @@ import {
   writeDpsForceAutoCrit,
   writeDpsPerfectAtClone,
   writeTierDpsTargetEnemyAttribute,
-  writeTierDpsTargetEnemyElement,
   writeTierIgnoreIncomplete,
   writeTierListMode,
   writeTierUpdatePanelMinimized,
@@ -245,69 +235,6 @@ function tierEntryWithAttributeTarget(
   }
 }
 
-/** Live-adjust cached rotation DPS when enemy element (True Vice) differs from the snapshot taken at last tier update. */
-function tierEntryWithTrueViceElementTarget(
-  e: SustainedDpsEntry,
-  attackerAttr: string | undefined,
-  attackerEl: string | undefined,
-  targetEnemyAttr: string,
-  targetElBuild: string,
-  targetElUi: string,
-  gear: GearState,
-): SustainedDpsEntry {
-  const aa = attackerAttr ?? ''
-  const ae = attackerEl ?? ''
-  const ta = targetEnemyAttr.trim()
-  const elB = targetElBuild.trim()
-  const elU = targetElUi.trim()
-  if (elB === elU) return e
-
-  const ratioPlain =
-    wikiTrueVicePreSkillBuffMultiplier(false, aa, ae, ta, elU, gear) /
-    wikiTrueVicePreSkillBuffMultiplier(false, aa, ae, ta, elB, gear)
-  const ratioPac =
-    wikiTrueVicePreSkillBuffMultiplier(true, aa, ae, ta, elU, gear) /
-    wikiTrueVicePreSkillBuffMultiplier(true, aa, ae, ta, elB, gear)
-
-  if (
-    !Number.isFinite(ratioPlain) ||
-    !Number.isFinite(ratioPac) ||
-    (Math.abs(ratioPlain - 1) < 1e-12 && Math.abs(ratioPac - 1) < 1e-12)
-  ) {
-    return e
-  }
-
-  const adjP = (s?: DpsRotationCategoryScores) =>
-    adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio(s, ratioPlain) ?? s
-  const adjPa = (s?: DpsRotationCategoryScores) =>
-    adjustDpsRotationCategoryScoresForTrueViceWikiMultRatio(s, ratioPac) ?? s
-
-  const base = e.dpsCategoryScores
-  const adjBase = adjP(base)
-  return {
-    ...e,
-    dps:
-      adjBase?.sustained ??
-      adjustRotationDpsForTrueViceWikiMultRatio(e.dps, base?.sustainedAutoDps, ratioPlain),
-    dpsCategoryScores: adjBase ?? base,
-    dpsCategoryScoresAutoCrit: adjP(e.dpsCategoryScoresAutoCrit) ?? e.dpsCategoryScoresAutoCrit,
-    dpsCategoryScoresPerfectAtClone:
-      adjPa(e.dpsCategoryScoresPerfectAtClone) ?? e.dpsCategoryScoresPerfectAtClone,
-    dpsCategoryScoresPerfectAtCloneAutoCrit:
-      adjPa(e.dpsCategoryScoresPerfectAtCloneAutoCrit) ?? e.dpsCategoryScoresPerfectAtCloneAutoCrit,
-    dpsCategoryScoresAnimationCancel:
-      adjP(e.dpsCategoryScoresAnimationCancel) ?? e.dpsCategoryScoresAnimationCancel,
-    dpsCategoryScoresAnimationCancelAutoCrit:
-      adjP(e.dpsCategoryScoresAnimationCancelAutoCrit) ?? e.dpsCategoryScoresAnimationCancelAutoCrit,
-    dpsCategoryScoresPerfectAtCloneAnimationCancel:
-      adjPa(e.dpsCategoryScoresPerfectAtCloneAnimationCancel) ??
-      e.dpsCategoryScoresPerfectAtCloneAnimationCancel,
-    dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit:
-      adjPa(e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit) ??
-      e.dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit,
-  }
-}
-
 export function TierListPage() {
   const [cache, setCache] = useState<TierListCache | null>(null)
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
@@ -340,9 +267,6 @@ export function TierListPage() {
   const [dpsTargetEnemyAttribute, setDpsTargetEnemyAttribute] = useState<string>(() =>
     readTierDpsTargetEnemyAttribute(),
   )
-  const [dpsTargetEnemyElement, setDpsTargetEnemyElement] = useState<string>(() =>
-    readTierDpsTargetEnemyElement(),
-  )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
 
   function setTierModePersist(next: TierListMode) {
@@ -373,11 +297,6 @@ export function TierListPage() {
   function setDpsTargetEnemyAttributePersist(next: string) {
     setDpsTargetEnemyAttribute(next)
     writeTierDpsTargetEnemyAttribute(next)
-  }
-
-  function setDpsTargetEnemyElementPersist(next: string) {
-    setDpsTargetEnemyElement(next)
-    writeTierDpsTargetEnemyElement(next)
   }
 
   function setIgnoreIncompletePersist(next: boolean) {
@@ -508,7 +427,7 @@ export function TierListPage() {
             !!entry &&
             (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
               tierEntryNeedsDpsSimRefresh(entry) ||
-              tierEntryNeedsGearScoringRefresh(entry, true) ||
+              tierEntryNeedsGearScoringRefresh(entry, false) ||
               tierEntryNeedsAutoCritScores(entry) ||
               tierEntryNeedsPerfectAtCloneScores(entry) ||
               tierEntryNeedsAnimationCancelScores(entry))
@@ -539,7 +458,7 @@ export function TierListPage() {
             !!entry &&
             (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
               tierEntryNeedsDpsSimRefresh(entry) ||
-              tierEntryNeedsGearScoringRefresh(entry, true) ||
+              tierEntryNeedsGearScoringRefresh(entry, false) ||
               tierEntryNeedsAutoCritScores(entry) ||
               tierEntryNeedsPerfectAtCloneScores(entry) ||
               tierEntryNeedsAnimationCancelScores(entry))
@@ -552,7 +471,6 @@ export function TierListPage() {
       }
 
       working.queue = plannedQueue
-      working.dpsTargetEnemyElementWhenScored = readTierDpsTargetEnemyElement()
       const initialBuildQueueTotal = plannedQueue.length
       setTierBuildQueueTotal(initialBuildQueueTotal > 0 ? initialBuildQueueTotal : null)
       if (mode === 'force' || hadPriorSignatures) {
@@ -626,8 +544,6 @@ export function TierListPage() {
             const cfg = buildComparableRotationConfig(detail, durationSec, 1, {
               ...options,
               targetEnemyAttribute: readTierDpsTargetEnemyAttribute(),
-              targetEnemyElement: readTierDpsTargetEnemyElement(),
-              applySavedGearTrueVice: true,
             })
             return simulateRotation(
               detail.skills,
@@ -775,7 +691,7 @@ export function TierListPage() {
             skillsSignature: tierSkillsSignature(detail.skills),
             supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
             dpsSimRevision: TIER_DPS_SIM_REVISION,
-            dpsScoredWithGear: true,
+            dpsScoredWithGear: false,
             apiSnapshot: nextApiSnapshot,
           }
           const apiDiffLines = diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
@@ -1036,23 +952,6 @@ export function TierListPage() {
         }
       }
 
-      const targetAttrForTv = dpsTargetEnemyAttribute.trim()
-      const elBuild = cache?.dpsTargetEnemyElementWhenScored ?? ''
-      const elUi = dpsTargetEnemyElement.trim()
-      const gear = readGearState()
-      for (const id of Object.keys(out)) {
-        const attacker = listMeta[id]?.attribute?.trim()
-        const attackerEl = listMeta[id]?.element?.trim()
-        out[id] = tierEntryWithTrueViceElementTarget(
-          out[id],
-          attacker,
-          attackerEl,
-          targetAttrForTv,
-          elBuild,
-          elUi,
-          gear,
-        )
-      }
       return out
     }
     const out: Record<string, SustainedDpsEntry> = {}
@@ -1070,7 +969,6 @@ export function TierListPage() {
     dpsAutoAnimCancel,
     dpsTierCategory,
     dpsTargetEnemyAttribute,
-    dpsTargetEnemyElement,
     cache,
     listMeta,
   ])
@@ -1138,7 +1036,7 @@ export function TierListPage() {
       (e) =>
         !tierEntryDpsCategoryScoresComplete(e) ||
         tierEntryNeedsDpsSimRefresh(e) ||
-        tierEntryNeedsGearScoringRefresh(e, true) ||
+        tierEntryNeedsGearScoringRefresh(e, false) ||
         tierEntryNeedsAutoCritScores(e) ||
         tierEntryNeedsPerfectAtCloneScores(e) ||
         tierEntryNeedsAnimationCancelScores(e),
@@ -1856,8 +1754,8 @@ export function TierListPage() {
                       <strong>Attribute damage:</strong> optional <em>DPS target</em> below applies the
                       Vaccine/Data/Virus triangle and neutral <strong>None</strong> (×
                       {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} on full skill hits when the matchup applies).
-                      True Vice <strong>attribute</strong> % from Gear adds on top of that multiplier when the
-                      enemy attribute matches your roll (same as Lab).
+                      Tier list rotation DPS uses <strong>wiki stats only</strong> — no saved gear (including True
+                      Vice). DPS Lab can still apply True Vice from the Gear page when you run a sim there.
                     </li>
                     <li>
                       <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
@@ -2119,20 +2017,6 @@ export function TierListPage() {
                       showLegend={false}
                     />
                     <p className="tier-dps-attr-hint muted">(50% if the correct attribute)</p>
-                  </div>
-                  <div className="tier-dps-element-column">
-                    <EnemyElementTargetField
-                      fieldCaption="Enemy element"
-                      value={dpsTargetEnemyElement}
-                      onChange={setDpsTargetEnemyElementPersist}
-                      selectClassName="tier-dps-enemy-attr-select"
-                      ariaLabel="Enemy element for True Vice accessory lines in DPS sim"
-                      unsetOptionLabel="None"
-                      showLegend={false}
-                    />
-                    <p className="tier-dps-tv-hint muted">
-                      (Element bonus only applies True Vice element % when applicable from the Gear page.)
-                    </p>
                   </div>
                 </div>
               </div>

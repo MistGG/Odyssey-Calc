@@ -169,7 +169,10 @@ export type SustainedDpsEntry = {
   supportScoreRevision?: number
   /** Last DPS row used this revision of `simulateRotation` (see `TIER_DPS_SIM_REVISION` in dpsSim). */
   dpsSimRevision?: number
-  /** DPS sim included saved True Vice gear (`applySavedGearTrueVice`). */
+  /**
+   * Historical: whether this row was scored with `applySavedGearTrueVice` (tier list no longer uses gear;
+   * mismatch vs current policy triggers a refresh).
+   */
   dpsScoredWithGear?: boolean
   /** Compact API snapshot used to show field-level wiki changes on the Changes page. */
   apiSnapshot?: TierApiSnapshot
@@ -182,11 +185,6 @@ export type TierListCache = {
   entries: Record<string, SustainedDpsEntry>
   listSignatures: Record<string, string>
   lastCheckedAt?: string
-  /**
-   * Enemy wiki element target used when cached rotation DPS rows were last computed (tier update batch).
-   * The tier matrix adjusts True Vice element damage live from this baseline when you change the dropdown.
-   */
-  dpsTargetEnemyElementWhenScored?: string
 }
 
 export type TierGroup = {
@@ -330,7 +328,10 @@ export function tierEntryNeedsDpsSimRefresh(entry: SustainedDpsEntry): boolean {
   return (entry.dpsSimRevision ?? 0) !== TIER_DPS_SIM_REVISION
 }
 
-/** Re-run DPS when tier “use gear” preference no longer matches how this entry was scored. */
+/**
+ * Re-run DPS when the tier list’s “score with saved True Vice gear” policy no longer matches how this entry
+ * was built (`dpsScoredWithGear`). Tier list currently always uses `wantGearScoring === false`.
+ */
 export function tierEntryNeedsGearScoringRefresh(
   entry: SustainedDpsEntry | undefined,
   wantGearScoring: boolean,

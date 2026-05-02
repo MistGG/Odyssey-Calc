@@ -2,7 +2,7 @@ import {
   attributeAdvantageSkillDamageMultiplier,
   normalizeWikiAttribute,
 } from './attributeAdvantage'
-import { normalizeWikiElement, trueViceElementBonusActive } from './elementAdvantage'
+import { normalizeWikiElement } from './elementAdvantage'
 
 export const GEAR_STORAGE_KEY = 'gear-v1'
 
@@ -133,16 +133,14 @@ export function aggregateTrueViceDamagePercents(gear: GearState): {
 
 /**
  * Fractional bonuses (0–0.3 etc.) on the wiki skill coefficient stack.
- * Element: digimon **element** must match the True Vice element stat, and the True Vice chart must say
- * the digimon **beats** the enemy element. Attribute: digimon **attribute** must match the True Vice
- * attribute stat; triangle targets need the same enemy attribute; Unknown uses Free/Unknown digimon vs
- * neutral enemy bucket.
+ * Element: digimon **element** must match the True Vice element stat (enemy element is not used).
+ * Attribute: digimon **attribute** must match the True Vice attribute stat; triangle targets need the same
+ * enemy attribute; Unknown uses Free/Unknown digimon vs neutral enemy bucket.
  */
 export function trueViceDamageFractionsForSkillHit(
   attackerAttribute: string,
   attackerElement: string,
   targetEnemyAttribute: string,
-  targetEnemyElement: string,
   gear: GearState,
 ): { element: number; attribute: number } {
   const agg = aggregateTrueViceDamagePercents(gear)
@@ -151,7 +149,6 @@ export function trueViceDamageFractionsForSkillHit(
   for (const [rollKey, pct] of Object.entries(agg.elements)) {
     if (!pct || pct <= 0) continue
     if (normalizeWikiElement(rollKey) !== digiEl) continue
-    if (!trueViceElementBonusActive(attackerElement, targetEnemyElement)) continue
     elementFrac += pct / 100
   }
 
@@ -180,7 +177,6 @@ export function wikiTrueVicePreSkillBuffMultiplier(
   attackerAttribute: string,
   attackerElement: string,
   targetEnemyAttribute: string,
-  targetEnemyElement: string,
   gear: GearState,
 ): number {
   const cloneMult = perfectAtClone ? 1.43 : 1
@@ -189,7 +185,6 @@ export function wikiTrueVicePreSkillBuffMultiplier(
     attackerAttribute,
     attackerElement,
     targetEnemyAttribute,
-    targetEnemyElement,
     gear,
   )
   const cloneOff = cloneMult - 1
@@ -200,7 +195,7 @@ export function wikiTrueVicePreSkillBuffMultiplier(
 }
 
 /**
- * Rescale cached rotation DPS when True Vice wiki multiplier changes (enemy element or gear), same heuristic as attribute targeting: scale non-auto portion.
+ * Rescale cached rotation DPS when True Vice wiki multiplier changes (gear), same heuristic as attribute targeting: scale non-auto portion.
  */
 export function adjustRotationDpsForTrueViceWikiMultRatio(
   totalDps: number,

@@ -30,6 +30,37 @@ export type BuffContribution = {
   detailLines: string[]
 }
 
+/** Intermediate numbers for one damaging hit (Lab timeline breakdown). */
+export type RotationDamageBreakdown =
+  | RotationDamageBreakdownSkill
+  | RotationDamageBreakdownAuto
+
+export type RotationDamageBreakdownSkill = {
+  kind: 'skill'
+  wikiCoefficientTotal: number
+  preSkillBuffMult: number
+  skillPctMult: number
+  baseSkillTerm: number
+  atkBuffedWithBuffs: number
+  critMult: number
+  targetHits: number
+  atkTerm: number
+  rawSkillHit: number
+  attributeAdvantageSkillMult: number
+  finalDamage: number
+}
+
+export type RotationDamageBreakdownAuto = {
+  kind: 'auto'
+  simBaseAttack: number
+  buffFlatAttack: number
+  attackPctFromBuffs: number
+  atkAfterFlatAndPct: number
+  critMult: number
+  targetMultiplier: number
+  finalDamage: number
+}
+
 export type RotationEvent = {
   atSec: number
   skillId: string
@@ -43,6 +74,8 @@ export type RotationEvent = {
   totalBuffPct: number
   /** Per-category numbers from active buffs only; see `buildBuffContributionsForDamage`. */
   buffContributions?: BuffContribution[]
+  /** Wiki / AT split and multipliers for this hit (damage and auto rows only). */
+  damageBreakdown?: RotationDamageBreakdown
   cumulativeDamage: number
   /** When present, this auto attack was animation-cancelled into the named skill. */
   cancelledBySkillName?: string
@@ -113,7 +146,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 49
+export const TIER_DPS_SIM_REVISION = 50
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -430,8 +463,6 @@ type SimCtx = {
   /** Digimon wiki attribute (Vaccine/Data/Virus/…); must match True Vice attribute rolls. */
   attackerAttribute: string
   targetEnemyAttribute: string
-  /** Enemy element for True Vice chart only (empty = no element TV bonus). */
-  targetEnemyElement: string
   /** When true, apply saved True Vice rolls from {@link readGearState}. */
   applyGearTrueVice: boolean
   forceAutoCrit: boolean
@@ -759,6 +790,7 @@ type DamageSkillHitSnapshot = {
   dmg: number
   totalBuffPct: number
   critCapable: boolean
+  breakdown: RotationDamageBreakdownSkill
 }
 
 function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSkill): DamageSkillHitSnapshot {
@@ -778,7 +810,6 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
         ctx.attackerAttribute,
         ctx.attackerElement,
         ctx.targetEnemyAttribute,
-        ctx.targetEnemyElement,
         readGearState(),
       )
     : { element: 0, attribute: 0 }
@@ -802,7 +833,21 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
   const baselineAtkTerm = Math.max(0, ctx.baseAttack) * targetHits
   const baselineDmg = baseSkillDamage + baselineAtkTerm
   const totalBuffPct = baselineDmg > 0 ? Math.max(0, ((dmg - baselineDmg) / baselineDmg) * 100) : 0
-  return { dmg, totalBuffPct, critCapable }
+  const breakdown: RotationDamageBreakdownSkill = {
+    kind: 'skill',
+    wikiCoefficientTotal: baseSkillDamage,
+    preSkillBuffMult,
+    skillPctMult,
+    baseSkillTerm,
+    atkBuffedWithBuffs: atkBuffed,
+    critMult,
+    targetHits,
+    atkTerm,
+    rawSkillHit,
+    attributeAdvantageSkillMult: ctx.attributeAdvantageSkillMult,
+    finalDamage: dmg,
+  }
+  return { dmg, totalBuffPct, critCapable, breakdown }
 }
 
 function computeDamageSkillHit(ctx: SimCtx, m: SimMutable, skill: WikiSkill): number {
@@ -817,6 +862,7 @@ type AutoHitSnapshot = {
   activeFlatAtk: number
   critChance: number
   activeCritDamagePct: number
+  breakdown: RotationDamageBreakdownAuto
 }
 
 /** Wiki stat + buff crit rate % → auto crit chance (0–1). */
@@ -846,7 +892,19 @@ function computeAutoHit(ctx: SimCtx, m: SimMutable, purpose: 'damage' | 'plannin
     flatPct +
     buffCritMarginalDamagePct(ctx.baseCritRateStat, activeCritRatePct, activeCritDamagePct)
   const autoBase = Math.max(0, ctx.baseAttack + activeFlatAtk)
-  const dmg = autoBase * (1 + activeAttackPct / 100) * critMult * Math.max(1, ctx.targets)
+  const targetMultiplier = Math.max(1, ctx.targets)
+  const atkAfterFlatAndPct = autoBase * (1 + activeAttackPct / 100)
+  const dmg = atkAfterFlatAndPct * critMult * targetMultiplier
+  const breakdown: RotationDamageBreakdownAuto = {
+    kind: 'auto',
+    simBaseAttack: ctx.baseAttack,
+    buffFlatAttack: activeFlatAtk,
+    attackPctFromBuffs: activeAttackPct,
+    atkAfterFlatAndPct,
+    critMult,
+    targetMultiplier,
+    finalDamage: dmg,
+  }
   return {
     dmg,
     totalBuffPct,
@@ -855,6 +913,7 @@ function computeAutoHit(ctx: SimCtx, m: SimMutable, purpose: 'damage' | 'plannin
     activeFlatAtk,
     critChance,
     activeCritDamagePct,
+    breakdown,
   }
 }
 
@@ -883,6 +942,7 @@ function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
       totalBuffPct: snap.totalBuffPct,
       buffContributions:
         m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false, true) : undefined,
+      damageBreakdown: snap.breakdown,
       cumulativeDamage: m.totalDamage,
     })
   }
@@ -931,6 +991,7 @@ function performAutoIntoSkillCancel(
       totalBuffPct: snap.totalBuffPct,
       buffContributions:
         m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false, true) : undefined,
+      damageBreakdown: snap.breakdown,
       cumulativeDamage: m.totalDamage,
       cancelledBySkillName: skill.name,
     })
@@ -978,6 +1039,7 @@ function castDamageSkill(
         m.activeBuffs.length > 0 || (SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT && ctx.wikiInt > 0)
           ? buildBuffContributionsForDamage(ctx, m, true, hit.critCapable)
           : undefined,
+      damageBreakdown: hit.breakdown,
       cumulativeDamage: m.totalDamage,
       cancelledFromAuto,
     })
@@ -1099,6 +1161,7 @@ function performAutoIntoSupportCancel(
       totalBuffPct: snap.totalBuffPct,
       buffContributions:
         m.activeBuffs.length > 0 ? buildBuffContributionsForDamage(ctx, m, false, true) : undefined,
+      damageBreakdown: snap.breakdown,
       cumulativeDamage: m.totalDamage,
       cancelledBySkillName: chosen.skill.name,
     })
@@ -1476,8 +1539,6 @@ export type RotationSimOptions = {
    * Vaccine→Virus→Data triangle (or enemy **None**), **skill damage only** (full skill hit) is multiplied by 1.5.
    */
   targetEnemyAttribute?: string | null
-  /** Enemy element for True Vice + element-advantage gating (see Gear page). */
-  targetEnemyElement?: string | null
   /** Attacker wiki element (Digimon); defaults filled from detail in Lab/tier config. */
   attackerElement?: string | null
   /**
@@ -1502,7 +1563,6 @@ type RotationSimCoreOpts = {
   attackerElement: string
   attackerAttribute: string
   targetEnemyAttribute: string
-  targetEnemyElement: string
   applyGearTrueVice: boolean
   useCustomRotation: boolean
   customRotationSkillIds: string[]
@@ -1900,7 +1960,6 @@ function runRotationSim(
     attackerElement: core.attackerElement,
     attackerAttribute: core.attackerAttribute,
     targetEnemyAttribute: core.targetEnemyAttribute,
-    targetEnemyElement: core.targetEnemyElement,
     applyGearTrueVice: core.applyGearTrueVice,
     forceAutoCrit: core.forceAutoCrit,
     perfectAtClone: core.perfectAtClone,
@@ -2180,7 +2239,6 @@ function buildRotationSimCore(
       ? Math.max(0, Math.floor(wikiIntRaw))
       : 0
   const targetAttr = (options?.targetEnemyAttribute ?? '').trim()
-  const targetEl = (options?.targetEnemyElement ?? '').trim()
   const tri = attributeAdvantageSkillDamageMultiplier(
     options?.attackerAttribute,
     options?.targetEnemyAttribute,
@@ -2192,7 +2250,6 @@ function buildRotationSimCore(
       (options?.attackerAttribute ?? '').trim(),
       (options?.attackerElement ?? '').trim(),
       targetAttr,
-      targetEl,
       readGearState(),
     )
     if (tri > 1 + 1e-9 && tv.attribute > 1e-12) {
@@ -2213,7 +2270,6 @@ function buildRotationSimCore(
     attackerElement: (options?.attackerElement ?? '').trim(),
     attackerAttribute: (options?.attackerAttribute ?? '').trim(),
     targetEnemyAttribute: targetAttr,
-    targetEnemyElement: targetEl,
     applyGearTrueVice: options?.applySavedGearTrueVice === true,
     useCustomRotation: Array.isArray(options?.customRotation),
     customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),

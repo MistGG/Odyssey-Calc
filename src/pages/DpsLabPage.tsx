@@ -1,12 +1,19 @@
 import { createPortal } from 'react-dom'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
 import {
   attributeAdvantageSkillDamageMultiplier,
   attributeAdvantageSkillDamageMultiplierWithFoldedTrueVice,
 } from '../lib/attributeAdvantage'
-import { trueViceElementBonusActive } from '../lib/elementAdvantage'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
 import {
@@ -35,13 +42,9 @@ import {
 import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
 import { SKILL_LEVEL_CAP, wikiSkillHitCoefficient, skillIsSupportOnly } from '../lib/skillDamage'
 import { buildSupportSkillEffects } from '../lib/supportEffects'
-import type { RotationEvent } from '../lib/dpsSim'
+import type { RotationDamageBreakdown, RotationEvent } from '../lib/dpsSim'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
-import { EnemyElementTargetField } from '../components/EnemyElementTargetField'
-import {
-  DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS,
-  sanitizeDpsTargetEnemyElement,
-} from '../lib/wikiListFacetOptions'
+import { DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 /** One line of text, or a titled block with sub-bullets (e.g. animation-cancel priority). */
@@ -180,6 +183,7 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
         className="lab-event-tag lab-event-tag-buffed buff-breakdown-trigger"
         aria-expanded={open}
         aria-haspopup="dialog"
+        onClick={(ev) => ev.stopPropagation()}
         onMouseEnter={() => {
           clearClose()
           setOpen(true)
@@ -218,6 +222,158 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
           document.body,
         )}
     </>
+  )
+}
+
+function fmtTimelineBreakdownNum(n: number, maxFrac: number) {
+  if (!Number.isFinite(n)) return '—'
+  const a = Math.abs(n)
+  if (a >= 10_000 || (a > 0 && a < 0.001)) {
+    return n.toLocaleString(undefined, { maximumFractionDigits: maxFrac })
+  }
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxFrac,
+  })
+}
+
+const BK_MULT_IS_ONE_EPS = 1e-5
+
+/** Hide multiplier rows that are effectively ×1 (no effect on damage). */
+function approxUnityMultiplier(x: number): boolean {
+  return Number.isFinite(x) && Math.abs(x - 1) < BK_MULT_IS_ONE_EPS
+}
+
+function BreakdownDt({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <dt>
+      <div className="lab-timeline-breakdown-label">{title}</div>
+      {hint ? <div className="lab-timeline-breakdown-hint">{hint}</div> : null}
+    </dt>
+  )
+}
+
+/** Expanded row: intermediate numbers from the same step as the damage sim. */
+function TimelineDamageBreakdownPanel({ b }: { b: RotationDamageBreakdown }) {
+  if (b.kind === 'auto') {
+    const showCritMult = !approxUnityMultiplier(b.critMult)
+    const showTargetMult = !approxUnityMultiplier(b.targetMultiplier)
+    return (
+      <div className="lab-timeline-breakdown">
+        <div className="lab-timeline-breakdown-title">Auto attack damage</div>
+        <dl className="lab-timeline-breakdown-dl">
+          <BreakdownDt title="Base ATK (sim)" />
+          <dd>{fmtTimelineBreakdownNum(b.simBaseAttack, 2)}</dd>
+          <BreakdownDt title="+ Flat ATK from buffs" />
+          <dd>{fmtTimelineBreakdownNum(b.buffFlatAttack, 2)}</dd>
+          <BreakdownDt title="ATK % from buffs" />
+          <dd>{fmtTimelineBreakdownNum(b.attackPctFromBuffs, 2)}%</dd>
+          <BreakdownDt title="ATK after flat &amp; %" />
+          <dd>{fmtTimelineBreakdownNum(b.atkAfterFlatAndPct, 2)}</dd>
+          {showCritMult ? (
+            <>
+              <BreakdownDt
+                title="Crit multiplier"
+                hint="Expected damage vs never critting: blends non-crit and crit using crit chance (wiki crit stat + buff %) and buff crit damage. Same formula as autos in the sim."
+              />
+              <dd>×{fmtTimelineBreakdownNum(b.critMult, 4)}</dd>
+            </>
+          ) : null}
+          {showTargetMult ? (
+            <>
+              <BreakdownDt title="Target / hits multiplier" hint="Extra enemies when the sim uses multiple targets." />
+              <dd>×{fmtTimelineBreakdownNum(b.targetMultiplier, 4)}</dd>
+            </>
+          ) : null}
+          <BreakdownDt title="Final damage" />
+          <dd className="lab-timeline-breakdown-dd-strong">
+            {fmtTimelineBreakdownNum(b.finalDamage, 2)}
+          </dd>
+        </dl>
+        {!showCritMult ? (
+          <p className="lab-timeline-breakdown-footnote">
+            Crit line omitted when the multiplier is ×1 (0% crit chance and no extra crit damage, or
+            crit effectively neutral).
+          </p>
+        ) : null}
+      </div>
+    )
+  }
+
+  const showPreSkill = !approxUnityMultiplier(b.preSkillBuffMult)
+  const showSkillPct = !approxUnityMultiplier(b.skillPctMult)
+  const showCritMult = !approxUnityMultiplier(b.critMult)
+  const showTargetHits = !approxUnityMultiplier(b.targetHits)
+  const showAttrAdv = !approxUnityMultiplier(b.attributeAdvantageSkillMult)
+
+  return (
+    <div className="lab-timeline-breakdown">
+      <div className="lab-timeline-breakdown-title">Skill hit damage</div>
+      <dl className="lab-timeline-breakdown-dl">
+        <BreakdownDt
+          title="Wiki Skill Damage x Target Count"
+          hint="Wiki base/scaling at your skill level, times how many enemies this cast hits in the sim (1 for single-target)."
+        />
+        <dd>{fmtTimelineBreakdownNum(b.wikiCoefficientTotal, 2)}</dd>
+        {showPreSkill ? (
+          <>
+            <BreakdownDt
+              title="Clone / True Vice (pre–skill-damage)"
+              hint="Extra fraction applied to the wiki portion before skill-damage % (clone stance, True Vice chip)."
+            />
+            <dd>×{fmtTimelineBreakdownNum(b.preSkillBuffMult, 4)}</dd>
+          </>
+        ) : null}
+        {showSkillPct ? (
+          <>
+            <BreakdownDt title="Skill damage % (buffs + INT)" />
+            <dd>×{fmtTimelineBreakdownNum(b.skillPctMult, 4)}</dd>
+          </>
+        ) : null}
+        <BreakdownDt
+          title="Wiki damage after clone, TV, and skill %"
+          hint="Previous row × clone/True Vice mult × skill damage % (buffs + INT). This is only the wiki-based slice of the skill, before adding the ATK-scaling slice."
+        />
+        <dd>{fmtTimelineBreakdownNum(b.baseSkillTerm, 2)}</dd>
+        <BreakdownDt title="ATK after buffs" hint="Sim ATK with flat and attack % from buffs." />
+        <dd>{fmtTimelineBreakdownNum(b.atkBuffedWithBuffs, 2)}</dd>
+        {showCritMult ? (
+          <>
+            <BreakdownDt
+              title="Crit multiplier"
+              hint="Same expected crit blending as autos when this skill can crit; omitted at ×1 if the skill cannot crit."
+            />
+            <dd>×{fmtTimelineBreakdownNum(b.critMult, 4)}</dd>
+          </>
+        ) : null}
+        {showTargetHits ? (
+          <>
+            <BreakdownDt
+              title="AoE target factor"
+              hint="Hit count for radius skills (extra targets in the sim)."
+            />
+            <dd>×{fmtTimelineBreakdownNum(b.targetHits, 4)}</dd>
+          </>
+        ) : null}
+        <BreakdownDt
+          title="ATK-scaling portion"
+          hint="Buffed ATK × crit mult × target factor — the part of the skill that scales off ATK. Added to the wiki portion above (not another × on the whole hit)."
+        />
+        <dd>{fmtTimelineBreakdownNum(b.atkTerm, 2)}</dd>
+        <BreakdownDt title="Wiki portion + ATK portion" />
+        <dd>{fmtTimelineBreakdownNum(b.rawSkillHit, 2)}</dd>
+        {showAttrAdv ? (
+          <>
+            <BreakdownDt title="Attribute advantage (skill)" />
+            <dd>×{fmtTimelineBreakdownNum(b.attributeAdvantageSkillMult, 4)}</dd>
+          </>
+        ) : null}
+        <BreakdownDt title="Final damage" />
+        <dd className="lab-timeline-breakdown-dd-strong">
+          {fmtTimelineBreakdownNum(b.finalDamage, 2)}
+        </dd>
+      </dl>
+    </div>
   )
 }
 
@@ -266,9 +422,9 @@ function parseToggleFromParams(params: URLSearchParams, key: string): boolean {
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
 }
 
-/** Default on: instant buffs + cancel meta; set animCancel=0 in URL to disable. */
+/** Default off (matches tier list). Add `animCancel=1` to the URL to enable. */
 function parseAnimCancelFromParams(params: URLSearchParams): boolean {
-  if (!params.has('animCancel')) return true
+  if (!params.has('animCancel')) return false
   const raw = (params.get('animCancel') ?? '').trim().toLowerCase()
   if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
@@ -325,10 +481,6 @@ function parseEnemyAttrFromSearch(search: string): string {
   return ''
 }
 
-function parseEnemyElementFromSearch(search: string): string {
-  return sanitizeDpsTargetEnemyElement(new URLSearchParams(search).get('enemyElement')?.trim() ?? '')
-}
-
 const LAB_ROTATION_DND_MIME = 'application/x-odyssey-lab-rotation-index'
 const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-index'
 
@@ -383,12 +535,10 @@ export function DpsLabPage() {
   const [targetEnemyAttribute, setTargetEnemyAttribute] = useState(() =>
     parseEnemyAttrFromSearch(search),
   )
-  const [targetEnemyElement, setTargetEnemyElement] = useState(() =>
-    parseEnemyElementFromSearch(search),
-  )
   const [sim, setSim] = useState<RotationResult | null>(null)
   const [simBusy, setSimBusy] = useState(false)
   const [simSlowHint, setSimSlowHint] = useState(false)
+  const [expandedTimelineIdx, setExpandedTimelineIdx] = useState<number | null>(null)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
@@ -404,6 +554,9 @@ export function DpsLabPage() {
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
+  useEffect(() => {
+    setExpandedTimelineIdx(null)
+  }, [sim])
   const gearAttack = useMemo(() => getGearAttackContribution(), [gearStorageRevision])
   const sealBonuses = useMemo(() => getGearStatBonuses(), [gearStorageRevision])
 
@@ -446,7 +599,6 @@ export function DpsLabPage() {
         ? rawEnemy
         : '',
     )
-    setTargetEnemyElement(sanitizeDpsTargetEnemyElement(next.get('enemyElement')?.trim() ?? ''))
   }, [search])
 
   useEffect(() => {
@@ -707,7 +859,6 @@ export function DpsLabPage() {
               attackerAttribute: data.attribute ?? '',
               attackerElement: data.element ?? '',
               targetEnemyAttribute: targetEnemyAttribute.trim() || undefined,
-              targetEnemyElement: targetEnemyElement.trim() || undefined,
               applySavedGearTrueVice: true,
             },
           )
@@ -749,7 +900,6 @@ export function DpsLabPage() {
     customRotationFullCycles,
     customRotationFillerValidRows,
     targetEnemyAttribute,
-    targetEnemyElement,
   ])
 
   const breakdown = useMemo(() => {
@@ -787,10 +937,9 @@ export function DpsLabPage() {
       data.attribute ?? '',
       data.element ?? '',
       targetEnemyAttribute.trim(),
-      targetEnemyElement.trim(),
       readGearState(),
     )
-  }, [data, targetEnemyAttribute, targetEnemyElement])
+  }, [data, targetEnemyAttribute])
 
   const labAttrSkillDamageMult = useMemo(
     () =>
@@ -1162,7 +1311,6 @@ export function DpsLabPage() {
     if (forceAutoCrit) next.set('forceAutoCrit', '1')
     if (perfectAtClone) next.set('perfectAtClone', '1')
     if (targetEnemyAttribute.trim()) next.set('enemyAttr', targetEnemyAttribute.trim())
-    if (targetEnemyElement.trim()) next.set('enemyElement', targetEnemyElement.trim())
     /** Canonical GitHub Pages URL so shared links work outside localhost. */
     const shareBase = 'https://mistgg.github.io/Odyssey-Calc'
     return `${shareBase}#/lab?${next.toString()}`
@@ -1181,7 +1329,6 @@ export function DpsLabPage() {
     forceAutoCrit,
     perfectAtClone,
     targetEnemyAttribute,
-    targetEnemyElement,
   ])
 
   const onShareLabUrl = useCallback(async () => {
@@ -1457,22 +1604,6 @@ export function DpsLabPage() {
                       fieldCaption="Enemy attribute"
                     />
                   </div>
-                  <div
-                    className="lab-matchup-section lab-matchup-section--element"
-                    aria-labelledby="lab-matchup-element-heading"
-                  >
-                    <p className="lab-matchup-heading" id="lab-matchup-element-heading">
-                      Target element (True Vice chart)
-                    </p>
-                    <EnemyElementTargetField
-                      value={targetEnemyElement}
-                      onChange={setTargetEnemyElement}
-                      attackerElement={data?.element}
-                      ariaLabel="Enemy wiki element for True Vice element-damage lines on gear"
-                      fieldCaption="Enemy element (True Vice)"
-                      showLegend={true}
-                    />
-                  </div>
                 </div>
                 {rotationMode === 'custom' ? (
                   <>
@@ -1531,13 +1662,10 @@ export function DpsLabPage() {
                   ). Auto damage unchanged.
                 </p>
               ) : null}
-              {data &&
-              targetEnemyElement.trim() &&
-              trueViceElementBonusActive(data.element ?? '', targetEnemyElement) ? (
+              {data && labTrueViceFrac.element > 1e-9 ? (
                 <p className="lab-enemy-element-active-hint" role="status">
-                  Element matchup: enemy <strong>{targetEnemyElement}</strong> is the element your digimon beats
-                  on the True Vice chart — True Vice <strong>element</strong> % lines on saved gear can apply in
-                  the sim.
+                  True Vice <strong>element</strong> % from saved gear applies: your digimon&apos;s element matches
+                  your True Vice element rolls (enemy element is not used).
                 </p>
               ) : null}
               <div className="lab-custom-rotation-mode">
@@ -2424,22 +2552,48 @@ export function DpsLabPage() {
             <section className="lab-result">
               <h3>Rotation timeline</h3>
               <p className="muted timeline-buff-hint">
-                Icons only here. In the table below, hover the buff % on a row for a full breakdown.
+                Icons only here. Click a damage or auto row (or its icon) for the damage formula; hover
+                the buff % in the table for buff sources.
               </p>
               <div className="timeline-sequence" aria-label="Sequential skill icon order">
                 {sim.events.map((e, idx) => {
                   const icon = skillIconUrl(e.iconId)
+                  const expandable = e.damageBreakdown != null
+                  const seqExpanded = expandedTimelineIdx === idx
                   return (
                     <span key={`seq-${e.skillId}-${idx}`} className="timeline-seq-node">
                       <span
                         className={
                           e.eventType === 'support'
                             ? 'timeline-seq-item timeline-seq-support'
-                            : e.buffedBy.length > 0
-                              ? 'timeline-seq-item timeline-seq-buffed'
-                              : 'timeline-seq-item'
+                            : expandable && seqExpanded
+                              ? 'timeline-seq-item timeline-seq-item--expanded'
+                              : e.buffedBy.length > 0
+                                ? 'timeline-seq-item timeline-seq-buffed'
+                                : expandable
+                                  ? 'timeline-seq-item timeline-seq-expandable'
+                                  : 'timeline-seq-item'
                         }
-                        title={`${e.atSec.toFixed(1)}s · ${e.skillName}`}
+                        title={`${e.atSec.toFixed(1)}s · ${e.skillName}${expandable ? ' · click for damage breakdown' : ''}`}
+                        role={expandable ? 'button' : undefined}
+                        tabIndex={expandable ? 0 : undefined}
+                        aria-expanded={expandable ? seqExpanded : undefined}
+                        onClick={
+                          expandable
+                            ? () =>
+                                setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+                            : undefined
+                        }
+                        onKeyDown={
+                          expandable
+                            ? (ev) => {
+                                if (ev.key === 'Enter' || ev.key === ' ') {
+                                  ev.preventDefault()
+                                  setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+                                }
+                              }
+                            : undefined
+                        }
                       >
                         {icon ? (
                           <img className="timeline-skill-icon" src={icon} alt="" />
@@ -2473,59 +2627,96 @@ export function DpsLabPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sim.events.map((e, idx) => (
-                      <tr
-                        key={`${e.skillId}-${idx}`}
-                        className={
-                          e.eventType === 'support'
-                            ? 'lab-row-support'
-                            : e.cancelledFromAuto
-                              ? 'lab-row-cancel-sub'
+                    {sim.events.map((e, idx) => {
+                      const hasBreakdown = e.damageBreakdown != null
+                      const rowExpanded = expandedTimelineIdx === idx
+                      const rowClass =
+                        e.eventType === 'support'
+                          ? 'lab-row-support'
+                          : e.cancelledFromAuto
+                            ? 'lab-row-cancel-sub'
                             : e.buffedBy.length > 0
                               ? 'lab-row-buffed'
                               : undefined
-                        }
-                      >
-                        <td>{e.atSec.toFixed(1)}</td>
-                        <td>
-                          <span className={e.cancelledFromAuto ? 'timeline-skill-subline' : undefined}>
-                            {e.cancelledFromAuto ? <span className="timeline-skill-subline-arrow">↳</span> : null}
-                            {skillIconUrl(e.iconId) && (
-                              <img
-                                className="timeline-row-icon"
-                                src={skillIconUrl(e.iconId)}
-                                alt=""
-                              />
-                            )}
-                            {e.skillName}
-                          </span>
-                          {e.eventType === 'support' && (
-                            <span className="lab-event-tag lab-event-tag-support">Buff</span>
-                          )}
-                          {e.eventType === 'auto' && e.cancelledBySkillName && (
-                            <span className="lab-inline-tooltip-wrap">
-                              <span
-                                className="lab-event-tag lab-event-tag-cancel"
-                                aria-describedby={`ac-tip-${idx}`}
-                              >
-                                AC
+                      return (
+                        <Fragment key={`tl-${e.skillId}-${idx}`}>
+                          <tr
+                            className={
+                              hasBreakdown
+                                ? [rowClass, 'lab-row-expandable', rowExpanded ? 'lab-row-expanded' : '']
+                                    .filter(Boolean)
+                                    .join(' ')
+                                : rowClass
+                            }
+                            onClick={
+                              hasBreakdown
+                                ? () =>
+                                    setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+                                : undefined
+                            }
+                            tabIndex={hasBreakdown ? 0 : undefined}
+                            role={hasBreakdown ? 'button' : undefined}
+                            aria-expanded={hasBreakdown ? rowExpanded : undefined}
+                            onKeyDown={
+                              hasBreakdown
+                                ? (ev) => {
+                                    if (ev.key === 'Enter' || ev.key === ' ') {
+                                      ev.preventDefault()
+                                      setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+                                    }
+                                  }
+                                : undefined
+                            }
+                          >
+                            <td>{e.atSec.toFixed(1)}</td>
+                            <td>
+                              <span className={e.cancelledFromAuto ? 'timeline-skill-subline' : undefined}>
+                                {e.cancelledFromAuto ? <span className="timeline-skill-subline-arrow">↳</span> : null}
+                                {skillIconUrl(e.iconId) && (
+                                  <img
+                                    className="timeline-row-icon"
+                                    src={skillIconUrl(e.iconId)}
+                                    alt=""
+                                  />
+                                )}
+                                {e.skillName}
                               </span>
-                              <span id={`ac-tip-${idx}`} role="tooltip" className="lab-inline-tooltip">
-                                Auto attack animation-cancelled into {e.cancelledBySkillName}
-                              </span>
-                            </span>
-                          )}
-                          <BuffBreakdownBadge e={e} />
-                        </td>
-                        <td>{e.castTimeSec.toFixed(1)}s</td>
-                        <td>{e.damage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                        <td>
-                          {e.cumulativeDamage.toLocaleString(undefined, {
-                            maximumFractionDigits: 0,
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                              {e.eventType === 'support' && (
+                                <span className="lab-event-tag lab-event-tag-support">Buff</span>
+                              )}
+                              {e.eventType === 'auto' && e.cancelledBySkillName && (
+                                <span className="lab-inline-tooltip-wrap">
+                                  <span
+                                    className="lab-event-tag lab-event-tag-cancel"
+                                    aria-describedby={`ac-tip-${idx}`}
+                                  >
+                                    AC
+                                  </span>
+                                  <span id={`ac-tip-${idx}`} role="tooltip" className="lab-inline-tooltip">
+                                    Auto attack animation-cancelled into {e.cancelledBySkillName}
+                                  </span>
+                                </span>
+                              )}
+                              <BuffBreakdownBadge e={e} />
+                            </td>
+                            <td>{e.castTimeSec.toFixed(1)}s</td>
+                            <td>{e.damage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td>
+                              {e.cumulativeDamage.toLocaleString(undefined, {
+                                maximumFractionDigits: 0,
+                              })}
+                            </td>
+                          </tr>
+                          {hasBreakdown && rowExpanded && e.damageBreakdown ? (
+                            <tr key={`detail-${e.skillId}-${idx}`} className="lab-row-detail">
+                              <td colSpan={5}>
+                                <TimelineDamageBreakdownPanel b={e.damageBreakdown} />
+                              </td>
+                            </tr>
+                          ) : null}
+                        </Fragment>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

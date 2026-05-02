@@ -43,7 +43,6 @@ export function buildComparableRotationConfig(
     | 'forceAutoCrit'
     | 'perfectAtClone'
     | 'autoAttackAnimationCancel'
-    | 'targetEnemyElement'
     | 'applySavedGearTrueVice'
   > & {
     /** Wiki attribute of the enemy (Vaccine/Data/Virus/…). Empty = no attribute advantage. */
@@ -52,7 +51,6 @@ export function buildComparableRotationConfig(
 ): ComparableRotationConfig {
   const perfectAtClone = options?.perfectAtClone === true
   const targetAttr = (options?.targetEnemyAttribute ?? '').trim()
-  const targetEl = (options?.targetEnemyElement ?? '').trim()
   return {
     durationSec,
     targets: Math.max(1, Math.floor(targets)),
@@ -69,7 +67,6 @@ export function buildComparableRotationConfig(
       attackerAttribute: detail.attribute ?? '',
       attackerElement: detail.element ?? '',
       targetEnemyAttribute: targetAttr || undefined,
-      targetEnemyElement: targetEl || undefined,
       applySavedGearTrueVice: options?.applySavedGearTrueVice === true,
     },
   }

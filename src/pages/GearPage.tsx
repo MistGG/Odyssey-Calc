@@ -190,12 +190,11 @@ export function GearPage() {
         <h3>True Vice</h3>
         <p className="muted">
           Up to {TRUE_VICE_SLOT_COUNT} lines. <strong>Element</strong> lines: max 30% each — your{' '}
-          <strong>digimon element</strong> must match the roll, and the enemy element must be the one your
-          digimon beats on the True Vice chart (see Lab). <strong>Attribute</strong> lines: max 20%
-          (Vaccine / Virus / Data) or 14% (Unknown) — your <strong>digimon attribute</strong> must match that
-          roll (enemy attribute must match for V/V/D; Unknown uses Free/Unknown digimon vs neutral enemy).
-          Used by DPS Lab automatically and by the DPS tier list (enemy element target applies True Vice element %
-          when your accessory rolls match).
+          <strong>digimon element</strong> must match the roll (enemy element is not used).{' '}
+          <strong>Attribute</strong> lines: max 20% (Vaccine / Virus / Data) or 14% (Unknown) — your{' '}
+          <strong>digimon attribute</strong> must match that roll (enemy attribute must match for V/V/D;
+          Unknown uses Free/Unknown digimon vs neutral enemy). Used by DPS Lab when saved gear is applied
+          (tier list DPS uses wiki stats only).
         </p>
         <div className="gear-true-vice-grid">
           {gear.trueVice.map((slot, idx) => (

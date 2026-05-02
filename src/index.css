@@ -4611,6 +4611,101 @@ code {
   background: rgba(56, 189, 248, 0.08);
 }
 
+.lab-row-expandable {
+  cursor: pointer;
+}
+
+.lab-row-expandable:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.85);
+  outline-offset: -2px;
+}
+
+.lab-row-expanded td {
+  border-bottom-color: transparent;
+}
+
+.lab-row-detail td {
+  padding-top: 0.35rem;
+  padding-bottom: 0.65rem;
+  vertical-align: top;
+  white-space: normal;
+  background: rgba(15, 23, 42, 0.55);
+  border-bottom: 1px solid var(--border);
+}
+
+.lab-timeline-breakdown {
+  max-width: 36rem;
+}
+
+.lab-timeline-breakdown-title {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-bottom: 0.45rem;
+}
+
+.lab-timeline-breakdown-dl {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto;
+  gap: 0.35rem 1rem;
+  align-items: start;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.lab-timeline-breakdown-dl dt {
+  margin: 0;
+  color: var(--muted);
+}
+
+.lab-timeline-breakdown-label {
+  color: #cbd5e1;
+}
+
+.lab-timeline-breakdown-hint {
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.lab-timeline-breakdown-footnote {
+  margin: 0.55rem 0 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.lab-timeline-breakdown-dl dd {
+  margin: 0;
+  padding-top: 0.12rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lab-timeline-breakdown-dd-strong {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.timeline-seq-expandable {
+  cursor: pointer;
+}
+
+.timeline-seq-expandable:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.85);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.timeline-seq-item--expanded {
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.55);
+}
+
 .timeline-skill-subline {
   display: inline-flex;
   align-items: center;
