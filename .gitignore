@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local API dumps / ad-hoc fixtures (not for production)
+tmp-*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
