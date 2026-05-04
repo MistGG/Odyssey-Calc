@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "bench:planner": "npx tsx scripts/planner-bench.ts",
     "preview": "vite preview"
   },
   "dependencies": {

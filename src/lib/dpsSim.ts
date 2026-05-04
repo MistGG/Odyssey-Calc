@@ -147,7 +147,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 58
+export const TIER_DPS_SIM_REVISION = 62
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -1296,10 +1296,15 @@ function performAutoIntoSupportCancel(
 }
 
 /**
- * Keep in sync with {@link SUPPORT_BEAM_HORIZON_SEC} (defined later in this file): same lookahead for
- * chain-vs-sequential buff macro comparison.
+ * Shared rollout window for: immediate/delay support comparison, chain-vs-sequential macro, and global-delay clone.
+ * Kept in one place so macro and main planner never drift.
+ *
+ * **Fixed (not buff-duration–scaled):** greedy support clones do not use the main loop’s beam search. Any
+ * extension of this window mis-aligns clone marginals with the real sim and has regressed DPS in practice.
  */
-const SUPPORT_MACRO_COMPARE_HORIZON_SEC = 20
+const SUPPORT_PLANNER_ROLLOUT_HORIZON_SEC = 22
+/** Greedy rollout horizon for support cast vs delay (alias of {@link SUPPORT_PLANNER_ROLLOUT_HORIZON_SEC}). */
+const SUPPORT_BEAM_HORIZON_SEC = SUPPORT_PLANNER_ROLLOUT_HORIZON_SEC
 
 /**
  * Models casting each initial buff with auto→support cancel when enabled (one buff per macro step).
@@ -1340,7 +1345,7 @@ function compareChainVsSequentialSupportRollout(
   m: SimMutable,
   sortedAvail: SupportBuffProfile[],
 ): 'chain' | 'sequential' {
-  const wall = Math.min(ctx.durationSec, m.t + SUPPORT_MACRO_COMPARE_HORIZON_SEC)
+  const wall = Math.min(ctx.durationSec, m.t + SUPPORT_PLANNER_ROLLOUT_HORIZON_SEC)
 
   const shChain = cloneSim(m)
   chainInstantSupportsIfReady(ctx, shChain, sortedAvail, false)
@@ -1371,8 +1376,11 @@ function castGreedySupportStep(
     return supportSkillRotationReady(m, p.skill.id)
   })
   if (availableSupport.length === 0) return false
+  const nukeSoonGs = nukeReadyOrWithinSec(m, ctx, NUKE_SOON_SUPPORT_SORT_SEC)
   availableSupport.sort(
-    (a, b) => supportBuffPriorityScore(b, ctx.baseAttack) - supportBuffPriorityScore(a, ctx.baseAttack),
+    (a, b) =>
+      supportBuffPriorityScoreForPlanner(b, ctx.baseAttack, nukeSoonGs) -
+      supportBuffPriorityScoreForPlanner(a, ctx.baseAttack, nukeSoonGs),
   )
   if (supportsCastInstant() && availableSupport.length >= 2) {
     if (compareChainVsSequentialSupportRollout(ctx, m, availableSupport) === 'chain') {
@@ -1495,8 +1503,6 @@ const PLANNER_REPLAN_HORIZON_MULT = 1.28
 
 /** Max support profiles tried when several buffs are ready at once (order matters). */
 const SUPPORT_BEAM_TRY = 5
-/** Greedy rollout horizon when comparing support cast vs delay. */
-const SUPPORT_BEAM_HORIZON_SEC = 20
 /** First phase of “delay buff”: damage-only greedy for this many seconds, then normal greedy to horizon. */
 const SUPPORT_DELAY_DAMAGE_ONLY_SEC = 5
 
@@ -1504,6 +1510,23 @@ const SUPPORT_DELAY_DAMAGE_ONLY_SEC = 5
 const NUKE_TOP_N = 2
 /** Scales buff-strength bonus when a nuke is scheduled in the beam prefix (AT+Skill+½·CritDmg). */
 const NUKE_BUFF_ALIGN_WEIGHT = 0.14
+
+/**
+ * When a top-{@link NUKE_TOP_N} nuke is castable or lands within this many seconds, offensive planners
+ * boost supports whose parsed strength includes **skill damage %** so wiki buffs (e.g. Devil's Resolve)
+ * sort ahead of pure AT/ASPD role buffs before Pandemonium-style windows.
+ */
+const NUKE_SOON_SUPPORT_SORT_SEC = 8
+
+/** Extra score added per point of {@link SupportBuffProfile.skillDamagePct} when {@link nukeReadyOrWithinSec} is true. */
+const NUKE_SOON_SKILL_DMG_PRIORITY_BOOST = 0.32
+
+/**
+ * When a skill-damage-heavy support would cast immediately but global “delay all buffs” barely wins,
+ * keep the immediate buff if the improvement is below this fraction of {@link SimMutable.totalDamage}
+ * (nuke-alignment; planner bench on Beelze BM).
+ */
+const NUKE_SOON_DELAY_IMMEDIATE_MARGIN_FRAC = 0.0004
 
 type DamageChoice =
   | { kind: 'skill'; skill: WikiSkill }
@@ -1517,6 +1540,34 @@ function nukeSkillIdSet(ctx: SimCtx, damaging: WikiSkill[]): Set<string> {
   }))
   scored.sort((a, b) => b.score - a.score)
   return new Set(scored.slice(0, NUKE_TOP_N).map((x) => x.id))
+}
+
+/** True if any top-N nuke is castable now or its cooldown ends within `withinSec`. */
+function nukeReadyOrWithinSec(m: SimMutable, ctx: SimCtx, withinSec: number): boolean {
+  const nukes = nukeSkillIdSet(ctx, ctx.damaging)
+  for (const id of nukes) {
+    const ready = m.readyAt.get(id) ?? 0
+    if (ready <= m.t + 1e-9) return true
+    const dt = ready - m.t
+    if (dt > 0 && dt <= withinSec) return true
+  }
+  return false
+}
+
+/**
+ * Same as {@link supportBuffPriorityScore} plus a burst-alignment bias: when a nuke window is near,
+ * buffs that contribute skill damage % rank higher so “hold for Barrage” matches human openers.
+ */
+function supportBuffPriorityScoreForPlanner(
+  p: SupportBuffProfile,
+  baseAttack: number,
+  nukeSoon: boolean,
+): number {
+  let s = supportBuffPriorityScore(p, baseAttack)
+  if (nukeSoon && p.skillDamagePct > 1e-6) {
+    s += p.skillDamagePct * NUKE_SOON_SKILL_DMG_PRIORITY_BOOST
+  }
+  return s
 }
 
 function nukeBuffAlignmentScore(m: SimMutable): number {
@@ -2161,8 +2212,11 @@ function runRotationSim(
     })
 
     if (availableSupport.length > 0) {
+      const nukeSoonMain = nukeReadyOrWithinSec(m, ctx, NUKE_SOON_SUPPORT_SORT_SEC)
       availableSupport.sort(
-        (a, b) => supportBuffPriorityScore(b, baseAttack) - supportBuffPriorityScore(a, baseAttack),
+        (a, b) =>
+          supportBuffPriorityScoreForPlanner(b, baseAttack, nukeSoonMain) -
+          supportBuffPriorityScoreForPlanner(a, baseAttack, nukeSoonMain),
       )
       if (supportsCastInstant() && availableSupport.length >= 2) {
         if (compareChainVsSequentialSupportRollout(ctx, m, availableSupport) === 'chain') {
@@ -2195,8 +2249,16 @@ function runRotationSim(
       runGreedyUntilWall(ctx, shDelay, supWall, damageHold, false, false)
       const delayDelta = shDelay.totalDamage - m.totalDamage
       if (delayDelta > bestDelta + 1e-9) {
-        useDelay = true
-        bestDelta = delayDelta
+        const edge = delayDelta - bestDelta
+        const scale = Math.max(m.totalDamage, 1)
+        const preferImmediateBuff =
+          nukeSoonMain &&
+          bestP.skillDamagePct > 3 &&
+          edge <= scale * NUKE_SOON_DELAY_IMMEDIATE_MARGIN_FRAC
+        if (!preferImmediateBuff) {
+          useDelay = true
+          bestDelta = delayDelta
+        }
       }
 
       if (useDelay) {
