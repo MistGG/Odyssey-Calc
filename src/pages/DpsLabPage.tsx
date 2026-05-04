@@ -97,7 +97,14 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
   useLayoutEffect(() => {
     if (!open) return
     updatePos()
-    const onScroll = () => setOpen(false)
+    /** Capture-phase listener sees scroll on every scrollable subtree; ignore panel/trigger so wheel scrolling inside the breakdown works. */
+    const onScroll = (ev: Event) => {
+      const target = ev.target
+      if (!(target instanceof Node)) return
+      if (panelRef.current?.contains(target)) return
+      if (triggerRef.current?.contains(target)) return
+      setOpen(false)
+    }
     const onResize = () => setOpen(false)
     window.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onResize)
@@ -216,6 +223,9 @@ function BuffBreakdownBadge({ e }: { e: RotationEvent }) {
             }}
             onMouseEnter={clearClose}
             onMouseLeave={() => setOpen(false)}
+            onWheel={(ev) => {
+              ev.stopPropagation()
+            }}
           >
             <div className="buff-breakdown-panel">{panelInner}</div>
           </div>,
