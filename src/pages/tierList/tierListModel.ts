@@ -176,9 +176,11 @@ export function writeDpsTierCategory(cat: DpsTierCategoryKey) {
 
 export function readDpsForceAutoCrit(): boolean {
   try {
-    return localStorage.getItem(TIER_DPS_FORCE_AUTO_CRIT_KEY) === '1'
+    const v = localStorage.getItem(TIER_DPS_FORCE_AUTO_CRIT_KEY)
+    if (v === null) return true
+    return v === '1'
   } catch {
-    return false
+    return true
   }
 }
 
@@ -192,9 +194,11 @@ export function writeDpsForceAutoCrit(on: boolean) {
 
 export function readDpsPerfectAtClone(): boolean {
   try {
-    return localStorage.getItem(TIER_DPS_PERFECT_AT_CLONE_KEY) === '1'
+    const v = localStorage.getItem(TIER_DPS_PERFECT_AT_CLONE_KEY)
+    if (v === null) return true
+    return v === '1'
   } catch {
-    return false
+    return true
   }
 }
 
@@ -208,9 +212,11 @@ export function writeDpsPerfectAtClone(on: boolean) {
 
 export function readDpsAutoAnimCancel(): boolean {
   try {
-    return localStorage.getItem(TIER_DPS_AUTO_ANIM_CANCEL_KEY) === '1'
+    const v = localStorage.getItem(TIER_DPS_AUTO_ANIM_CANCEL_KEY)
+    if (v === null) return true
+    return v === '1'
   } catch {
-    return false
+    return true
   }
 }
 

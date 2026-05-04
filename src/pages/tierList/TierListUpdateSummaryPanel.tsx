@@ -42,7 +42,7 @@ export function TierListUpdateSummaryPanel({
             <p className="muted tier-update-summary-meta">
               {new Date(updateSummary.finishedAt).toLocaleString()}
               {' · '}
-              {updateSummary.mode === 'force' ? 'Force check' : 'Incremental update'}
+              {updateSummary.mode === 'force' ? 'Full refresh' : 'Legacy incremental'}
               {' · '}
               {updateSummary.refreshedCount} Digimon refreshed
             </p>

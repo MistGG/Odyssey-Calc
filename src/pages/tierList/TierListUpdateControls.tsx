@@ -10,11 +10,9 @@ type Props = {
   lastCheckedAt: string | undefined
   initializing: boolean
   building: boolean
-  buildMode: 'incremental' | 'force'
   cache: TierListCache | null
   error: string | null
-  onUpdateIncremental: () => void
-  onUpdateForce: () => void
+  onRefresh: () => void
 }
 
 export function TierListUpdateControls({
@@ -27,15 +25,13 @@ export function TierListUpdateControls({
   lastCheckedAt,
   initializing,
   building,
-  buildMode,
   cache,
   error,
-  onUpdateIncremental,
-  onUpdateForce,
+  onRefresh,
 }: Props) {
   return (
     <section className="lab-result">
-      <h3>Update tier list</h3>
+      <h3>Refresh tier list</h3>
       <p className="muted">{status}</p>
       <p>
         Progress:{' '}
@@ -56,19 +52,9 @@ export function TierListUpdateControls({
         type="button"
         className="tier-update-btn"
         disabled={initializing || building || !cache}
-        onClick={onUpdateIncremental}
+        onClick={onRefresh}
       >
-        {building && buildMode === 'incremental'
-          ? 'Updating changed Digimon…'
-          : 'Update tier list'}
-      </button>
-      <button
-        type="button"
-        className="tier-update-btn tier-update-btn-secondary"
-        disabled={initializing || building || !cache}
-        onClick={onUpdateForce}
-      >
-        {building && buildMode === 'force' ? 'Force checking all…' : 'Force check all'}
+        {building ? 'Checking all Digimon…' : 'Refresh tier list'}
       </button>
       {error && (
         <p className="error" role="alert">

@@ -34,7 +34,6 @@ import {
   tierEntryNeedsAnimationCancelScores,
   tierEntryNeedsAutoCritScores,
   tierEntryNeedsPerfectAtCloneScores,
-  tierEntryIsStaleForDetailFetch,
   tierEntryNeedsDpsSimRefresh,
   tierEntryNeedsGearScoringRefresh,
   formatAoeTierMatrixCell,
@@ -240,7 +239,6 @@ export function TierListPage() {
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
   const [initializing, setInitializing] = useState(true)
   const [building, setBuilding] = useState(false)
-  const [buildMode, setBuildMode] = useState<'incremental' | 'force'>('incremental')
   const [status, setStatus] = useState<string>('Preparing tier list cache…')
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
@@ -268,6 +266,7 @@ export function TierListPage() {
     readTierDpsTargetEnemyAttribute(),
   )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
+  const [tierFiltersOpen, setTierFiltersOpen] = useState(true)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -364,10 +363,10 @@ export function TierListPage() {
     }
   }, [cache, listMeta])
 
-  async function updateTierList(mode: 'incremental' | 'force' = 'incremental') {
+  /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
+  async function updateTierList() {
     if (!cache || building || initializing) return
     setBuilding(true)
-    setBuildMode(mode)
     setError(null)
     const working: TierListCache = {
       ...cache,
@@ -396,7 +395,7 @@ export function TierListPage() {
       }
       const refreshedIds = new Set<string>()
 
-      setStatus('Checking index for updates…')
+      setStatus('Fetching Digimon index…')
       const { all, meta, signatures } = await fetchAllDigimonIndex()
       setListMeta(meta)
 
@@ -412,70 +411,33 @@ export function TierListPage() {
       const hadPriorSignatures = Object.keys(working.listSignatures).length > 0
       const refreshCauseById = new Map<string, TierRefreshCauseFlags>()
       const apiDiffById = new Map<string, string[]>()
-      // Migration safety: if signatures were not present in an older cache,
-      // baseline them now so incremental mode does not force a full rebuild.
-      if (!hadPriorSignatures && mode === 'incremental') {
-        working.listSignatures = { ...signatures }
-      }
 
-      const changedOrMissing = all
-        .map((d) => d.id)
-        .filter((id) => {
-          const entry = working.entries[id]
-          const apiChanged = !entry || (hadPriorSignatures && working.listSignatures[id] !== signatures[id])
-          const formulaChanged =
-            !!entry &&
-            (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
-              tierEntryNeedsDpsSimRefresh(entry) ||
-              tierEntryNeedsGearScoringRefresh(entry, false) ||
-              tierEntryNeedsAutoCritScores(entry) ||
-              tierEntryNeedsPerfectAtCloneScores(entry) ||
-              tierEntryNeedsAnimationCancelScores(entry))
-          const scheduledRefresh = !!entry && (!entry.status || tierEntryIsStaleForDetailFetch(entry))
-          const needsRefresh = apiChanged || formulaChanged || scheduledRefresh
-          if (needsRefresh) {
-            refreshCauseById.set(id, {
-              api: apiChanged,
-              tier: formulaChanged,
-              other: scheduledRefresh,
-            })
-          }
-          return needsRefresh
+      const plannedQueue = all.map((d) => d.id)
+
+      for (const d of all) {
+        const id = d.id
+        if (refreshCauseById.has(id)) continue
+        const entry = working.entries[id]
+        const apiChanged = !entry || (hadPriorSignatures && working.listSignatures[id] !== signatures[id])
+        const formulaChanged =
+          !!entry &&
+          (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
+            tierEntryNeedsDpsSimRefresh(entry) ||
+            tierEntryNeedsGearScoringRefresh(entry, false) ||
+            tierEntryNeedsAutoCritScores(entry) ||
+            tierEntryNeedsPerfectAtCloneScores(entry) ||
+            tierEntryNeedsAnimationCancelScores(entry))
+        refreshCauseById.set(id, {
+          api: apiChanged,
+          tier: formulaChanged,
+          other: !apiChanged && !formulaChanged,
         })
-      const carryOverQueue = working.queue.filter((id) => latestIds.has(id))
-      const plannedQueue =
-        mode === 'force'
-          ? all.map((d) => d.id)
-          : [...new Set([...carryOverQueue, ...changedOrMissing])]
-
-      if (mode === 'force') {
-        for (const d of all) {
-          const id = d.id
-          if (refreshCauseById.has(id)) continue
-          const entry = working.entries[id]
-          const apiChanged = !entry || (hadPriorSignatures && working.listSignatures[id] !== signatures[id])
-          const formulaChanged =
-            !!entry &&
-            (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
-              tierEntryNeedsDpsSimRefresh(entry) ||
-              tierEntryNeedsGearScoringRefresh(entry, false) ||
-              tierEntryNeedsAutoCritScores(entry) ||
-              tierEntryNeedsPerfectAtCloneScores(entry) ||
-              tierEntryNeedsAnimationCancelScores(entry))
-          refreshCauseById.set(id, {
-            api: apiChanged,
-            tier: formulaChanged,
-            other: !apiChanged && !formulaChanged,
-          })
-        }
       }
 
       working.queue = plannedQueue
       const initialBuildQueueTotal = plannedQueue.length
       setTierBuildQueueTotal(initialBuildQueueTotal > 0 ? initialBuildQueueTotal : null)
-      if (mode === 'force' || hadPriorSignatures) {
-        working.listSignatures = signatures
-      }
+      working.listSignatures = signatures
       working.lastCheckedAt = new Date().toISOString()
       saveTierListCache(working)
       setCache({
@@ -486,7 +448,7 @@ export function TierListPage() {
       })
 
       if (working.queue.length === 0) {
-        setStatus('Tier list is already up to date. No changed Digimon found.')
+        setStatus('Digimon index is empty — nothing to refresh.')
         setTierBuildQueueTotal(null)
         return
       }
@@ -502,11 +464,7 @@ export function TierListPage() {
             : 0
         const runTotalForMsg =
           initialBuildQueueTotal > 0 ? initialBuildQueueTotal : working.queue.length
-        setStatus(
-          mode === 'force'
-            ? `Force checking all… ${runDone}/${runTotalForMsg} (checking ${meta?.name ?? id})`
-            : `Updating tier list… ${runDone}/${runTotalForMsg} (checking ${meta?.name ?? id})`,
-        )
+        setStatus(`Checking all Digimon… ${runDone}/${runTotalForMsg} (checking ${meta?.name ?? id})`)
 
         if (backoffMs > 0) {
           const runTotal = runTotalForMsg
@@ -519,10 +477,7 @@ export function TierListPage() {
 
         const checkingLabel = meta?.name ?? id
         const slowHintSuffix = ' (Taking longer than expected, please wait.)'
-        const slowStatusLine =
-          mode === 'force'
-            ? `Force checking all… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
-            : `Updating tier list… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
+        const slowStatusLine = `Checking all Digimon… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
         const slowHintTimer = window.setTimeout(() => {
           setStatus(slowStatusLine)
         }, TIER_UPDATE_SLOW_HINT_MS)
@@ -745,14 +700,10 @@ export function TierListPage() {
       }
 
       if (working.queue.length === 0) {
-        setStatus(
-          mode === 'force'
-            ? 'Force check complete. All Digimon were recalculated.'
-            : 'Tier list update complete. Changed Digimon were refreshed.',
-        )
+        setStatus('Tier list refresh complete. All Digimon were recalculated.')
         if (refreshedIds.size > 0) {
           const nextSummary = buildTierListUpdateSummary(
-            mode,
+            'force',
             snapshotBefore,
             working.entries,
             refreshedIds,
@@ -788,7 +739,7 @@ export function TierListPage() {
           appendTierChangeHistory({
             id: `${nextSummary.finishedAt}-${Math.random().toString(36).slice(2, 8)}`,
             finishedAt: nextSummary.finishedAt,
-            mode,
+            mode: 'force',
             refreshedCount: refreshedIds.size,
             apiCount,
             tierCount,
@@ -803,7 +754,6 @@ export function TierListPage() {
       setError(e instanceof Error ? e.message : 'Tier update failed.')
     } finally {
       setBuilding(false)
-      setBuildMode('incremental')
       setTierBuildQueueTotal(null)
     }
   }
@@ -1194,61 +1144,64 @@ export function TierListPage() {
           <strong>Disclaimer:</strong> We are investigating the new patch, the tier list will likely change again.
         </p>
         <p>
-          ASB, Attributes, Variance damage and latency are not considered at this time. If you feel something
+          ASB, Variance damage and latency are not considered at this time. If you feel something
           is out of place, please contact Mist on the Digital Odyssey Discord.
         </p>
       </div>
 
-      <section className="lab-result">
-        <h3>Update tier list</h3>
-        <p className="muted">{status}</p>
-        <p>
-          Progress:{' '}
-          <strong>
-            {progressNumerator}/{progressDenominator || '…'} ({progress.toFixed(1)}%)
-          </strong>
-        </p>
-        {showProgressBar && (
-          <div className={`tier-progress ${fadeProgressBar ? 'tier-progress-fade' : ''}`}>
-            <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
-          </div>
-        )}
-        <p className="muted">
-          Last checked:{' '}
-          {cache?.lastCheckedAt
-            ? new Date(cache.lastCheckedAt).toLocaleString()
-            : 'Never'}
-        </p>
-        <button
-          type="button"
-          className="tier-update-btn"
-          disabled={initializing || building || !cache}
-          onClick={() => void updateTierList('incremental')}
-        >
-          {building && buildMode === 'incremental'
-            ? 'Updating changed Digimon…'
-            : 'Update tier list'}
-        </button>
-        <button
-          type="button"
-          className="tier-update-btn tier-update-btn-secondary"
-          disabled={initializing || building || !cache}
-          onClick={() => void updateTierList('force')}
-        >
-          {building && buildMode === 'force' ? 'Force checking all…' : 'Force check all'}
-        </button>
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
-      </section>
-
-      <section
-        className="lab-result tier-special-modifiers"
-        aria-labelledby="tier-special-modifiers-heading"
+      <div className="tier-page-body">
+      <div className="tier-page-top-tools">
+      <details
+        className="lab-result tier-tools-details tier-refresh-details tier-refresh-details--inline"
+        aria-label="Wiki refresh"
       >
-        <h3 id="tier-special-modifiers-heading">Special modifiers</h3>
+        <summary className="tier-tools-details-summary">Refresh tier list</summary>
+        <div className="tier-tools-details-body">
+          <div className="tier-refresh-toolbar tier-refresh-toolbar--inline">
+            <div className="tier-refresh-toolbar-main">
+              <button
+                type="button"
+                className="tier-update-btn"
+                disabled={initializing || building || !cache}
+                onClick={() => void updateTierList()}
+              >
+                {building ? 'Checking all Digimon…' : 'Refresh tier list'}
+              </button>
+              <p className="tier-refresh-meta muted">
+                Last checked:{' '}
+                {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
+              </p>
+            </div>
+            <p className="tier-refresh-status muted">{status}</p>
+            <div className="tier-refresh-progress-row">
+              <span className="tier-refresh-progress-label">
+                Progress:{' '}
+                <strong>
+                  {progressNumerator}/{progressDenominator || '…'} ({progress.toFixed(1)}%)
+                </strong>
+              </span>
+              {showProgressBar ? (
+                <div
+                  className={`tier-progress tier-progress--toolbar ${fadeProgressBar ? 'tier-progress-fade' : ''}`}
+                >
+                  <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
+                </div>
+              ) : null}
+            </div>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
+        </div>
+      </details>
+
+      <details className="lab-result tier-tools-details tier-special-modifiers-details tier-special-modifiers--inline">
+        <summary id="tier-special-modifiers-heading" className="tier-tools-details-summary">
+          Special Modifiers
+        </summary>
+        <div className="tier-tools-details-body tier-special-modifiers">
         {tierMode === 'dps' ? (
           <>
             <p className="muted">Optional tweaks for DPS tier simulations.</p>
@@ -1297,7 +1250,9 @@ export function TierListPage() {
         ) : (
           <p className="muted">These options apply when the DPS tier list is selected.</p>
         )}
-      </section>
+        </div>
+      </details>
+      </div>
 
       {updateSummary && (
         <section
@@ -1311,7 +1266,7 @@ export function TierListPage() {
                 <p className="muted tier-update-summary-meta">
                   {new Date(updateSummary.finishedAt).toLocaleString()}
                   {' · '}
-                  {updateSummary.mode === 'force' ? 'Force check' : 'Incremental update'}
+                  Full refresh
                   {' · '}
                   {updateSummary.refreshedCount} Digimon refreshed
                 </p>
@@ -1731,15 +1686,30 @@ export function TierListPage() {
 
       {cache && !initializing && checkedCount > 0 && (
         <section className="lab-result tier-matrix-section">
-          <h3>
-            {tierMode === 'dps'
-              ? dpsTierCategory === 'aoe'
-                ? 'DPS tier list: AoE (Damage / Uptime / Farming / Radius)'
-                : `DPS tier list: ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
-              : tierMode === 'tank'
-                ? 'Tank tier list'
-                : 'Healer tier list'}
-          </h3>
+          <div className="tier-matrix-head">
+            <h3 className="tier-matrix-title">
+              {tierMode === 'dps'
+                ? dpsTierCategory === 'aoe'
+                  ? 'DPS tier list: AoE (Damage / Uptime / Farming / Radius)'
+                  : `DPS tier list: ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
+                : tierMode === 'tank'
+                  ? 'Tank tier list'
+                  : 'Healer tier list'}
+            </h3>
+            <div className="tier-status-legend tier-status-legend--compact" role="note" aria-label="Status criteria">
+              <span className="tier-status-legend-item">
+                <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
+                <span>{contentStatusLabel('complete')}</span>
+              </span>
+              <span className="tier-status-legend-item">
+                <span className="tier-status-dot tier-status-dot-incomplete" aria-hidden="true" />
+                <span>{contentStatusLabel('incomplete')}</span>
+              </span>
+              <span className="muted tier-status-legend-hint">
+                Incomplete if skills &lt; 5 or any skill name contains “placeholder”.
+              </span>
+            </div>
+          </div>
           {tierMode === 'dps' ? (
             <>
               <details className="tier-score-explainer">
@@ -1781,7 +1751,7 @@ export function TierListPage() {
               {dpsScoresStale && (
                 <p className="tier-stale-note" role="status">
                   Some rows need a DPS refresh (missing category scores or an older rotation sim).
-                  Run <strong>Update tier list</strong> (or <strong>Force check all</strong>) to recalculate.
+                  Run <strong>Refresh tier list</strong> (full wiki pass) to recalculate.
                 </p>
               )}
             </>
@@ -1827,15 +1797,14 @@ export function TierListPage() {
                     </li>
                     <li>
                       Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
-                      Refresh scores after wiki changes via Update tier list.
+                      Refresh scores after wiki changes via <strong>Refresh tier list</strong>.
                     </li>
                   </ul>
                 </div>
               </details>
               {tankScoresStale && (
                 <p className="tier-stale-note" role="status">
-                  Some rows are missing tank scores. Run <strong>Update tier list</strong> (or{' '}
-                  <strong>Force check all</strong>) to recalculate.
+                  Some rows are missing tank scores. Run <strong>Refresh tier list</strong> to recalculate.
                 </p>
               )}
             </>
@@ -1888,26 +1857,18 @@ export function TierListPage() {
               </details>
               {healerScoresStale && (
                 <p className="tier-stale-note" role="status">
-                  Some rows are missing healer scores. Run <strong>Update tier list</strong> (or{' '}
-                  <strong>Force check all</strong>) to recalculate.
+                  Some rows are missing healer scores. Run <strong>Refresh tier list</strong> to recalculate.
                 </p>
               )}
             </>
           ) : null}
-          <div className="tier-status-legend" role="note" aria-label="Status criteria">
-            <span className="tier-status-legend-item">
-              <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
-              <span>{contentStatusLabel('complete')}</span>
-            </span>
-            <span className="tier-status-legend-item">
-              <span className="tier-status-dot tier-status-dot-incomplete" aria-hidden="true" />
-              <span>{contentStatusLabel('incomplete')}</span>
-            </span>
-            <span className="muted">
-              Incomplete if skills &lt; 5 or any skill name contains “placeholder”.
-            </span>
-          </div>
-          <div className="tier-filter-panel">
+          <details
+            className="tier-filters-details"
+            open={tierFiltersOpen}
+            onToggle={(e) => setTierFiltersOpen(e.currentTarget.open)}
+          >
+            <summary className="tier-filters-details-summary">Filters</summary>
+            <div className="tier-filter-panel tier-filter-panel--details-inner">
             <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-stage-label">
               <span className="tier-filter-label" id="tier-filter-stage-label">
                 Stage
@@ -2035,6 +1996,7 @@ export function TierListPage() {
               </div>
             </div>
           </div>
+          </details>
           {roles.length === 0 ? (
             <p className="muted tier-matrix-empty">
               No Digimon match this view. Try clearing filters
@@ -2194,12 +2156,12 @@ export function TierListPage() {
                                               }`}
                                               title={
                                                 status === 'unknown'
-                                                  ? 'Status pending (run Update tier list)'
+                                                  ? 'Status pending (run Refresh tier list)'
                                                   : contentStatusLabel(status)
                                               }
                                               aria-label={
                                                 status === 'unknown'
-                                                  ? 'Status pending (run Update tier list)'
+                                                  ? 'Status pending (run Refresh tier list)'
                                                   : contentStatusLabel(status)
                                               }
                                             />
@@ -2222,6 +2184,7 @@ export function TierListPage() {
           )}
         </section>
       )}
+      </div>
     </div>
   )
 }

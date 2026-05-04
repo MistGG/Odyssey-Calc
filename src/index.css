@@ -422,6 +422,230 @@ code {
   margin-bottom: 1.2rem;
 }
 
+.tier-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tier-page-body > .lab-result {
+  margin-bottom: 0;
+}
+
+.tier-page-top-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+}
+
+.tier-page-top-tools .lab-result {
+  margin-bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .tier-page-top-tools {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tier-refresh-toolbar {
+  padding: 0.65rem 0.85rem;
+}
+
+.tier-refresh-toolbar--inline {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.tier-refresh-toolbar--inline .tier-refresh-meta,
+.tier-refresh-toolbar--inline .tier-refresh-status,
+.tier-refresh-toolbar--inline .tier-refresh-progress-label {
+  font-size: 0.74rem;
+}
+
+.tier-refresh-toolbar--inline .tier-update-btn {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.76rem;
+}
+
+.tier-refresh-toolbar--inline .tier-refresh-progress-row {
+  margin-top: 0.35rem;
+}
+
+.tier-special-modifiers--inline.tier-tools-details > .tier-tools-details-summary,
+.tier-refresh-details--inline.tier-tools-details > .tier-tools-details-summary {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+.tier-special-modifiers--inline .tier-tools-details-body,
+.tier-refresh-details--inline .tier-tools-details-body {
+  padding: 0 0.6rem 0.5rem;
+}
+
+.tier-refresh-details--inline .tier-refresh-toolbar.tier-refresh-toolbar--inline {
+  padding: 0;
+}
+
+.tier-special-modifiers--inline .tier-special-modifiers-list {
+  gap: 0.32rem;
+  margin-top: 0.3rem;
+}
+
+.tier-special-modifiers--inline .tier-special-modifier-toggle {
+  padding: 0.42rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.28;
+}
+
+.tier-special-modifiers--inline .tier-special-modifiers > .muted:first-child {
+  margin-top: 0;
+  font-size: 0.72rem;
+}
+
+.tier-refresh-toolbar .tier-update-btn {
+  margin-top: 0;
+}
+
+.tier-refresh-toolbar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+
+.tier-refresh-meta {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.tier-refresh-status {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+}
+
+.tier-refresh-progress-row {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tier-refresh-progress-label {
+  font-size: 0.82rem;
+}
+
+.tier-progress--toolbar {
+  margin-top: 0;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.tier-matrix-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.tier-matrix-section .tier-matrix-title {
+  margin: 0;
+  flex: 1 1 12rem;
+}
+
+.tier-status-legend--compact {
+  flex: 1 1 16rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  justify-content: flex-end;
+}
+
+.tier-status-legend-hint {
+  flex: 1 1 100%;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+@media (min-width: 900px) {
+  .tier-status-legend-hint {
+    flex: 1 1 12rem;
+  }
+}
+
+.tier-tools-details.tier-special-modifiers-details,
+.tier-tools-details.tier-refresh-details {
+  padding: 0;
+}
+
+.tier-tools-details-summary {
+  cursor: pointer;
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  list-style: none;
+}
+
+.tier-tools-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tier-tools-details > .tier-tools-details-summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s ease;
+  opacity: 0.75;
+}
+
+.tier-tools-details[open] > .tier-tools-details-summary::before {
+  transform: rotate(90deg);
+}
+
+.tier-tools-details-body {
+  padding: 0 0.85rem 0.75rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.45);
+}
+
+.tier-filters-details {
+  margin: 0.45rem 0 0.5rem;
+}
+
+.tier-filters-details-summary {
+  cursor: pointer;
+  padding: 0.4rem 0;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--cyan);
+  list-style: none;
+}
+
+.tier-filters-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.tier-filters-details > .tier-filters-details-summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s ease;
+  opacity: 0.7;
+  margin-right: 0.15rem;
+}
+
+.tier-filters-details[open] > .tier-filters-details-summary::before {
+  transform: rotate(90deg);
+}
+
+.tier-filter-panel.tier-filter-panel--details-inner {
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+}
+
 .tier-page-head {
   display: flex;
   flex-wrap: wrap;

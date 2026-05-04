@@ -757,7 +757,7 @@ export function TierChangesPage() {
           <p className="muted">
             {rows.length === 0 ? (
               <>
-                No tier change history yet. Run <Link to="/tier-list">Update tier list</Link> to create
+                No tier change history yet. Run <Link to="/tier-list">Refresh tier list</Link> to create
                 an entry.
               </>
             ) : searchNorm ? (
@@ -779,7 +779,7 @@ export function TierChangesPage() {
                       {finished.toLocaleString()}
                     </time>
                     <span className={`tier-changes-mode-badge tier-changes-mode-badge--${row.mode}`}>
-                      {row.mode === 'force' ? 'Force check' : 'Incremental'}
+                      {row.mode === 'force' ? 'Full refresh' : 'Legacy incremental'}
                     </span>
                   </div>
                   <div className="tier-changes-run-header-meta">

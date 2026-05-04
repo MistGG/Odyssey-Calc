@@ -235,12 +235,12 @@ export function TierListMatrixTable({
                                           }`}
                                           title={
                                             status === 'unknown'
-                                              ? 'Status pending (run Update tier list)'
+                                              ? 'Status pending (run Refresh tier list)'
                                               : contentStatusLabel(status)
                                           }
                                           aria-label={
                                             status === 'unknown'
-                                              ? 'Status pending (run Update tier list)'
+                                              ? 'Status pending (run Refresh tier list)'
                                               : contentStatusLabel(status)
                                           }
                                         />
