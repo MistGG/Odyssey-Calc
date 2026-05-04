@@ -12,6 +12,7 @@ import {
 } from './digimonRoleSkills'
 import {
   buildSupportSkillEffects,
+  effectLabelIsAttackSpeed,
   parseSupportEffectsFromSkill,
 } from './supportEffects'
 
@@ -146,7 +147,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 50
+export const TIER_DPS_SIM_REVISION = 58
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -203,10 +204,30 @@ function effectiveCastTime(castTimeSec: number) {
 
 /**
  * Support/buff-only casts are instant (0s) in current game. Wiki/API may still list legacy cast times;
- * rotation sim ignores them so buffs chain with auto cancels (~300ms) without extra cast dead time.
+ * rotation sim ignores them so multiple buffs can chain at the same clock without cast dead time.
  */
 function effectiveSupportCastTime(): number {
   return 0
+}
+
+const SUPPORT_CAST_INSTANT_EPS_SEC = 1e-9
+
+function supportsCastInstant(): boolean {
+  return effectiveSupportCastTime() <= SUPPORT_CAST_INSTANT_EPS_SEC
+}
+
+/** Cast every profile that is still rotation-ready in priority order (same sim time between instant casts). */
+function chainInstantSupportsIfReady(
+  ctx: SimCtx,
+  m: SimMutable,
+  sortedProfiles: SupportBuffProfile[],
+  recordEvents: boolean,
+) {
+  for (const p of sortedProfiles) {
+    purgeExpiredBuffs(m, m.t)
+    if (!supportSkillRotationReady(m, p.skill.id)) continue
+    castSupportProfile(ctx, m, p, recordEvents)
+  }
 }
 
 function skillDamagePerCast(skill: WikiSkill, level: number, targets: number) {
@@ -343,15 +364,15 @@ function supportProfiles(
         critDamagePct += e.valueAtLevel
       } else if (e.unit === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) {
         critRatePct += e.valueAtLevel
-      } else if (e.unit === '%' && /\battack speed\b/.test(label)) {
+      } else if (e.unit === '%' && effectLabelIsAttackSpeed(e.label)) {
         atkSpeedPct += e.valueAtLevel
       } else if (
         e.unit === '%' &&
         /\battack( power)?\b/.test(label) &&
-        !/\battack speed\b/.test(label)
+        !effectLabelIsAttackSpeed(e.label)
       ) {
         attackPct += e.valueAtLevel
-      } else if (!e.unit && /\battack( power)?\b/.test(label) && !/\battack speed\b/.test(label)) {
+      } else if (!e.unit && /\battack( power)?\b/.test(label) && !effectLabelIsAttackSpeed(e.label)) {
         flatAttack += e.valueAtLevel
       }
     }
@@ -482,6 +503,11 @@ type SimCtx = {
 
 type SimMutable = {
   t: number
+  /**
+   * Earliest sim time at which a new auto swing may begin. Damage/support casts may occur at `t`
+   * before this time (e.g. buff-cancel → buff resolves → skill immediately); only autos wait here.
+   */
+  nextAutoSwingNotBeforeSec: number
   totalDamage: number
   casts: number
   readyAt: Map<string, number>
@@ -568,17 +594,104 @@ function animCancelSkillReadyMaxDt(ctx: SimCtx): number {
 
 function autoIntervalFor(ctx: SimCtx, m: SimMutable): number {
   const atkSpdPct = m.activeBuffs.reduce((sum, b) => sum + (b.atkSpeedPct ?? 0), 0)
-  const mult = 1 + Math.max(-0.85, atkSpdPct) / 100
-  return Math.max(0.15, ctx.baseAutoIntervalSec / mult)
+  /**
+   * Attack-speed % from buffs stacks additively (e.g. +15% + +20% = +35%), then swing time is:
+   * `wiki_interval × (1 − AS%/100)` — not `wiki_interval ÷ (1 + AS%/100)`.
+   */
+  const intervalSec = ctx.baseAutoIntervalSec * (1 - atkSpdPct / 100)
+  return Math.max(0.15, intervalSec)
 }
 
 /**
- * The next auto cannot occur until one full attack-speed period after the previous auto swing
- * (sim time at the auto hit), even if a 0s support or cancel path uses only the overlap window.
- * Interval uses buffs as of the current `m` (e.g. atk speed from a buff applied after the swing).
+ * Wiki ATK speed is shown as raw/1000 = seconds between auto swings (see {@link wikiCombatStatRows}).
+ * Comparing instantaneous auto rate (`dmg / interval`) to skill `damage / castTime` only matches rotation
+ * quality when swing time is in this “fast weave” band; slower autos should cast skills when ready unless
+ * animation-cancel or lookahead chooses otherwise.
  */
-function enforceNextAutoSwingGate(ctx: SimCtx, m: SimMutable, autoSwingAtT: number) {
-  m.t = Math.max(m.t, autoSwingAtT + autoIntervalFor(ctx, m))
+export const AUTO_WEAVE_VS_SKILL_DPCT_THRESHOLD_SEC = 0.985
+
+/** True when effective auto interval is fast enough that greedy auto-vs-skill DPCT comparison is valid. */
+export function autoWeaveRateComparableToSkillDpct(effectiveAutoIntervalSec: number): boolean {
+  return effectiveAutoIntervalSec <= AUTO_WEAVE_VS_SKILL_DPCT_THRESHOLD_SEC + 1e-9
+}
+
+/**
+ * While stacked attack-speed buffs (additive %) reach this total, or swing time falls below
+ * {@link AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC}, sustained autos beat weaving damage skills — skip nukes
+ * until buffs drop (supports still cast earlier in the greedy step).
+ */
+export const AUTO_PHASE_DEFER_DAMAGE_SKILLS_MIN_ATK_SPEED_BUFF_PCT = 25
+
+/**
+ * Effective auto interval at or below this (seconds) counts as a “high AS phase” for deferring damage skills.
+ * Example: wiki 1.4s base with ~35% additive AS → ~0.91s; triple AS stacks can reach ~0.7s.
+ */
+export const AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC = 0.93
+
+function inHighAttackSpeedAutoPhase(ctx: SimCtx, m: SimMutable): boolean {
+  const atkSpdBuffPct = m.activeBuffs.reduce((sum, b) => sum + (b.atkSpeedPct ?? 0), 0)
+  const swingSec = autoIntervalFor(ctx, m)
+  return (
+    atkSpdBuffPct >= AUTO_PHASE_DEFER_DAMAGE_SKILLS_MIN_ATK_SPEED_BUFF_PCT ||
+    swingSec <= AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC + 1e-9
+  )
+}
+
+/**
+ * When a damage skill is selected by the planner/greedy step: non-cancel mode uses auto vs skill DPCT when the
+ * swing is in the fast band; cancel mode additionally allows auto→skill cancel only when swing is **slow**
+ * (above fast-weave threshold) and rCancelCombo beats skill DPCT — fast swings skip that naive combo and pick
+ * pure auto vs plain skill by rate so high attack speed does not force skills over autos.
+ */
+function resolveDamageSkillVsAutoAnimCancel(
+  ctx: SimCtx,
+  m: SimMutable,
+  skill: WikiSkill,
+  recordEvents: boolean,
+  cancelledFromAuto = false,
+): void {
+  if (inHighAttackSpeedAutoPhase(ctx, m)) {
+    performAutoAttack(ctx, m, recordEvents)
+    return
+  }
+
+  const castT = effectiveCastTime(skill.cast_time_sec)
+  const skillDmg = computeDamageSkillHit(ctx, m, skill)
+  const snap = computeAutoHit(ctx, m, 'planning')
+  const rAuto = snap.dmg / snap.step
+  const rSkill = skillDmg / castT
+  const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
+  const fastSwing = autoWeaveRateComparableToSkillDpct(snap.step)
+
+  if (!ctx.autoAttackAnimationCancel) {
+    if (fastSwing && rAuto > rSkill + 1e-9) {
+      performAutoAttack(ctx, m, recordEvents)
+      return
+    }
+    castDamageSkill(ctx, m, skill, recordEvents, cancelledFromAuto)
+    return
+  }
+
+  if (!fastSwing && rCancelCombo > rSkill + 1e-9) {
+    performAutoIntoSkillCancel(ctx, m, skill, recordEvents)
+    return
+  }
+  if (fastSwing && rAuto > rSkill + 1e-9) {
+    performAutoAttack(ctx, m, recordEvents)
+    return
+  }
+  castDamageSkill(ctx, m, skill, recordEvents, cancelledFromAuto)
+}
+
+/**
+ * After an auto swing at `autoSwingAtT`, the next auto swing cannot start until `intervalSecAtSwing`
+ * later — use the swing-period **at the hit** (e.g. {@link computeAutoHit}'s `step`), **not** after a
+ * cancel skill applies buffs that change attack speed. Does **not** advance `m.t`; damage skills may
+ * still resolve immediately after supports under buffs.
+ */
+function commitAutoSwingCooldown(m: SimMutable, autoSwingAtT: number, intervalSecAtSwing: number) {
+  const earliestNextSwing = autoSwingAtT + intervalSecAtSwing
+  m.nextAutoSwingNotBeforeSec = Math.max(m.nextAutoSwingNotBeforeSec, earliestNextSwing)
   purgeExpiredBuffs(m, m.t)
 }
 
@@ -719,6 +832,7 @@ function buildBuffContributionsForDamage(
 function cloneSim(m: SimMutable): SimMutable {
   return {
     t: m.t,
+    nextAutoSwingNotBeforeSec: m.nextAutoSwingNotBeforeSec,
     totalDamage: m.totalDamage,
     casts: m.casts,
     readyAt: new Map(m.readyAt),
@@ -918,6 +1032,11 @@ function computeAutoHit(ctx: SimCtx, m: SimMutable, purpose: 'damage' | 'plannin
 }
 
 function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
+  if (m.t < m.nextAutoSwingNotBeforeSec - 1e-9) {
+    m.t = m.nextAutoSwingNotBeforeSec
+    purgeExpiredBuffs(m, m.t)
+  }
+  const swingAt = m.t
   const snap = computeAutoHit(ctx, m, 'damage')
   m.totalDamage += snap.dmg
   m.autoDamageTotal += snap.dmg
@@ -947,6 +1066,7 @@ function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
     })
   }
   m.t += snap.step
+  m.nextAutoSwingNotBeforeSec = swingAt + snap.step
   purgeExpiredBuffs(m, m.t)
 }
 
@@ -956,6 +1076,7 @@ function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
  * - skill begins after ~300ms overlap window (inside observed 200–500ms range)
  * - next auto must still wait for the skill cast to finish
  * - after the skill resolves, the next auto is still gated by full attack-speed interval from swing start
+ *   (`nextAutoSwingNotBeforeSec`); sim time does not jump to that gate so further skills/buffs can resolve first.
  */
 function performAutoIntoSkillCancel(
   ctx: SimCtx,
@@ -999,7 +1120,7 @@ function performAutoIntoSkillCancel(
   m.t += ov + waitUntilSkillReady
   purgeExpiredBuffs(m, m.t)
   castDamageSkill(ctx, m, skill, recordEvents, true)
-  enforceNextAutoSwingGate(ctx, m, tAuto)
+  commitAutoSwingCooldown(m, tAuto, snap.step)
 }
 
 function castDamageSkill(
@@ -1138,6 +1259,8 @@ function performAutoIntoSupportCancel(
 ) {
   const tAuto = m.t
   const snap = computeAutoHit(ctx, m, 'damage')
+  /** Full swing period from auto hit — support buff must not shorten this gate when buff adds atk spd. */
+  const intervalAtSwing = snap.step
   m.totalDamage += snap.dmg
   m.autoDamageTotal += snap.dmg
   m.autoHitCount += 1
@@ -1169,14 +1292,111 @@ function performAutoIntoSupportCancel(
   m.t += ctx.animCancelOverlapSec
   purgeExpiredBuffs(m, m.t)
   castSupportProfile(ctx, m, chosen, recordEvents, true)
-  enforceNextAutoSwingGate(ctx, m, tAuto)
+  commitAutoSwingCooldown(m, tAuto, intervalAtSwing)
 }
 
+/**
+ * Keep in sync with {@link SUPPORT_BEAM_HORIZON_SEC} (defined later in this file): same lookahead for
+ * chain-vs-sequential buff macro comparison.
+ */
+const SUPPORT_MACRO_COMPARE_HORIZON_SEC = 20
+
+/**
+ * Models casting each initial buff with auto→support cancel when enabled (one buff per macro step).
+ */
+function rolloutSequentialSupportsUntilDone(
+  ctx: SimCtx,
+  m: SimMutable,
+  sortedPriority: SupportBuffProfile[],
+  recordEvents: boolean,
+): void {
+  const pending = new Set(sortedPriority.map((p) => p.skill.id))
+  let guard = 0
+  while (pending.size > 0 && guard++ < 64) {
+    purgeExpiredBuffs(m, m.t)
+    let progressed = false
+    for (const p of sortedPriority) {
+      if (!pending.has(p.skill.id)) continue
+      if (!supportSkillRotationReady(m, p.skill.id)) {
+        pending.delete(p.skill.id)
+        continue
+      }
+      if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, m, p, recordEvents)
+      else castSupportProfile(ctx, m, p, recordEvents)
+      pending.delete(p.skill.id)
+      progressed = true
+      break
+    }
+    if (!progressed) break
+  }
+}
+
+/**
+ * Returns `'chain'` only if instant dumping all ready buffs beats sequential auto→buff on total damage
+ * over a short greedy continuation — otherwise prefer sequential (safer default).
+ */
+function compareChainVsSequentialSupportRollout(
+  ctx: SimCtx,
+  m: SimMutable,
+  sortedAvail: SupportBuffProfile[],
+): 'chain' | 'sequential' {
+  const wall = Math.min(ctx.durationSec, m.t + SUPPORT_MACRO_COMPARE_HORIZON_SEC)
+
+  const shChain = cloneSim(m)
+  chainInstantSupportsIfReady(ctx, shChain, sortedAvail, false)
+  runGreedyUntilWall(ctx, shChain, wall, null, false, false)
+
+  const shSeq = cloneSim(m)
+  rolloutSequentialSupportsUntilDone(ctx, shSeq, sortedAvail, false)
+  runGreedyUntilWall(ctx, shSeq, wall, null, false, false)
+
+  const scale = Math.max(shChain.totalDamage, shSeq.totalDamage, 1)
+  const eps = Math.max(1e-6, scale * 1e-9)
+  return shChain.totalDamage > shSeq.totalDamage + eps ? 'chain' : 'sequential'
+}
+
+/**
+ * One greedy support decision: with several instant buffs ready, chain only if {@link compareChainVsSequentialSupportRollout}
+ * says it beats sequential auto→buff; otherwise one buff this step. Single buff: auto-cancel when enabled.
+ */
+function castGreedySupportStep(
+  ctx: SimCtx,
+  m: SimMutable,
+  recordEvents: boolean,
+  skipSupport: boolean,
+): boolean {
+  if (skipSupport) return false
+  const availableSupport = ctx.supportBuffs.filter((p) => {
+    if (!p.rotationEligible) return false
+    return supportSkillRotationReady(m, p.skill.id)
+  })
+  if (availableSupport.length === 0) return false
+  availableSupport.sort(
+    (a, b) => supportBuffPriorityScore(b, ctx.baseAttack) - supportBuffPriorityScore(a, ctx.baseAttack),
+  )
+  if (supportsCastInstant() && availableSupport.length >= 2) {
+    if (compareChainVsSequentialSupportRollout(ctx, m, availableSupport) === 'chain') {
+      chainInstantSupportsIfReady(ctx, m, availableSupport, recordEvents)
+    } else {
+      const p = availableSupport[0]
+      if (ctx.autoAttackAnimationCancel) performAutoIntoSupportCancel(ctx, m, p, recordEvents)
+      else castSupportProfile(ctx, m, p, recordEvents)
+    }
+    return true
+  }
+  if (ctx.autoAttackAnimationCancel) {
+    performAutoIntoSupportCancel(ctx, m, availableSupport[0], recordEvents)
+    return true
+  }
+  castSupportProfile(ctx, m, availableSupport[0], recordEvents)
+  return true
+}
 
 /**
  * Greedy timeline without lookahead: supports > damage (DPCT, optional ban) > autos / jump.
- * When a damage skill is ready, if current auto damage rate (per wiki atk_speed + attack-speed
- * buffs) exceeds that skill’s damage ÷ cast time, we weave an auto instead of casting that skill.
+ * When a damage skill is ready and animation cancel is off, we weave an auto only if swing time is in the
+ * fast-weave band ({@link autoWeaveRateComparableToSkillDpct}) **and** auto rate beats skill DPCT; slower
+ * swing timers cast the skill. Cancel mode uses cancel-combo vs skill only (unchanged).
  * Stops when t >= wallTime or duration ends.
  */
 function runGreedyUntilWall(
@@ -1197,20 +1417,7 @@ function runGreedyUntilWall(
     }
     purgeExpiredBuffs(m, m.t)
 
-    const availableSupport = ctx.supportBuffs.filter((p) => {
-      if (!p.rotationEligible) return false
-      return supportSkillRotationReady(m, p.skill.id)
-    })
-
-    if (!skipSupport && availableSupport.length > 0) {
-      availableSupport.sort(
-        (a, b) => supportBuffPriorityScore(b, ctx.baseAttack) - supportBuffPriorityScore(a, ctx.baseAttack),
-      )
-      if (ctx.autoAttackAnimationCancel) {
-        performAutoIntoSupportCancel(ctx, m, availableSupport[0], recordEvents)
-        continue
-      }
-      castSupportProfile(ctx, m, availableSupport[0], recordEvents)
+    if (castGreedySupportStep(ctx, m, recordEvents, skipSupport)) {
       continue
     }
 
@@ -1244,7 +1451,8 @@ function runGreedyUntilWall(
     if (available.length === 0) {
       if (ctx.autoAttackAnimationCancel) {
         const soon = soonReadyDamageWithinCancelWindow(ctx, m, damageBan)
-        if (soon) {
+        const snapGate = computeAutoHit(ctx, m, 'planning')
+        if (soon && !autoWeaveRateComparableToSkillDpct(snapGate.step)) {
           performAutoIntoSkillCancel(ctx, m, soon, recordEvents)
           continue
         }
@@ -1265,31 +1473,7 @@ function runGreedyUntilWall(
     }
 
     const chosen = available[0]
-    const castT = effectiveCastTime(chosen.cast_time_sec)
-    const skillDmg = computeDamageSkillHit(ctx, m, chosen)
-    const snap = computeAutoHit(ctx, m, 'planning')
-    const rAuto = snap.dmg / snap.step
-    const rSkill = skillDmg / castT
-    const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
-
-    if (
-      ctx.autoAttackAnimationCancel &&
-      rCancelCombo > rSkill + 1e-9
-    ) {
-      performAutoIntoSkillCancel(ctx, m, chosen, recordEvents)
-      continue
-    }
-    // In animation-cancel mode, avoid uncancelled auto weaving when a skill is ready.
-    // If auto->skill cancel is not better, cast the skill directly.
-    if (ctx.autoAttackAnimationCancel) {
-      castDamageSkill(ctx, m, chosen, recordEvents)
-      continue
-    }
-    if (rAuto > rSkill + 1e-9) {
-      performAutoAttack(ctx, m, recordEvents)
-      continue
-    }
-    castDamageSkill(ctx, m, chosen, recordEvents)
+    resolveDamageSkillVsAutoAnimCancel(ctx, m, chosen, recordEvents)
   }
 }
 
@@ -1356,18 +1540,7 @@ function applyDamageChoice(ctx: SimCtx, m: SimMutable, ch: DamageChoice, recordE
     return
   }
   const sk = ch.skill
-  const castT = effectiveCastTime(sk.cast_time_sec)
-  const skillDmg = computeDamageSkillHit(ctx, m, sk)
-  const snap = computeAutoHit(ctx, m, 'planning')
-  const rSkill = skillDmg / castT
-  const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
-  if (ctx.autoAttackAnimationCancel && rCancelCombo > rSkill + 1e-9) {
-    performAutoIntoSkillCancel(ctx, m, sk, recordEvents)
-  } else if (ctx.autoAttackAnimationCancel) {
-    castDamageSkill(ctx, m, sk, recordEvents)
-  } else {
-    castDamageSkill(ctx, m, sk, recordEvents)
-  }
+  resolveDamageSkillVsAutoAnimCancel(ctx, m, sk, recordEvents)
 }
 
 function enumerateDamageChoices(
@@ -1383,7 +1556,10 @@ function enumerateDamageChoices(
   for (let i = 0; i < lim; i += 1) {
     out.push({ kind: 'skill', skill: available[i] })
   }
-  out.push({ kind: 'auto' })
+  const interval = autoIntervalFor(ctx, _m)
+  if (ctx.autoAttackAnimationCancel || autoWeaveRateComparableToSkillDpct(interval)) {
+    out.push({ kind: 'auto' })
+  }
   if (!ctx.autoAttackAnimationCancel && primary) {
     out.push({ kind: 'hold', skillId: primary.id, until: branchWall })
   }
@@ -1590,20 +1766,7 @@ function castFillerDamageWhenReady(
   skill: WikiSkill,
   recordEvents: boolean,
 ) {
-  if (ctx.autoAttackAnimationCancel) {
-    const castT = effectiveCastTime(skill.cast_time_sec)
-    const skillDmg = computeDamageSkillHit(ctx, m, skill)
-    const snap = computeAutoHit(ctx, m, 'planning')
-    const rSkill = skillDmg / castT
-    const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
-    if (rCancelCombo > rSkill + 1e-9) {
-      performAutoIntoSkillCancel(ctx, m, skill, recordEvents)
-      return
-    }
-    castDamageSkill(ctx, m, skill, recordEvents)
-    return
-  }
-  castDamageSkill(ctx, m, skill, recordEvents)
+  resolveDamageSkillVsAutoAnimCancel(ctx, m, skill, recordEvents)
 }
 
 /** One filler action from a non-empty user-defined gap priority list. */
@@ -1642,8 +1805,10 @@ function tryCustomFillerAction(
     if (!skill) continue
     const readyAt = m.readyAt.get(skill.id) ?? 0
     if (readyAt > m.t + 1e-9) {
+      const snapGate = computeAutoHit(ctx, m, 'planning')
       if (
         ctx.autoAttackAnimationCancel &&
+        !autoWeaveRateComparableToSkillDpct(snapGate.step) &&
         readyAt - m.t <= animCancelSkillReadyMaxDt(ctx) + 1e-9
       ) {
         performAutoIntoSkillCancel(ctx, m, skill, recordEvents)
@@ -1777,22 +1942,8 @@ function runCustomRotationSequence(
     }
     purgeExpiredBuffs(m, m.t)
 
-    if (!manualSupportOnly) {
-      const availableSupport = supportBuffs.filter((p) => {
-        if (!p.rotationEligible) return false
-        return supportSkillRotationReady(m, p.skill.id)
-      })
-      if (availableSupport.length > 0) {
-        availableSupport.sort(
-          (a, b) => supportBuffPriorityScore(b, ctx.baseAttack) - supportBuffPriorityScore(a, ctx.baseAttack),
-        )
-        if (ctx.autoAttackAnimationCancel) {
-          performAutoIntoSupportCancel(ctx, m, availableSupport[0], true)
-          continue
-        }
-        castSupportProfile(ctx, m, availableSupport[0], true)
-        continue
-      }
+    if (!manualSupportOnly && castGreedySupportStep(ctx, m, true, false)) {
+      continue
     }
 
     const chosenId = usableIds[seqIdx]
@@ -1837,8 +1988,10 @@ function runCustomRotationSequence(
     const readyAt = m.readyAt.get(skill.id) ?? 0
     if (readyAt > m.t + 1e-9) {
       const dt = readyAt - m.t
+      const snapGate = computeAutoHit(ctx, m, 'planning')
       if (
         ctx.autoAttackAnimationCancel &&
+        !autoWeaveRateComparableToSkillDpct(snapGate.step) &&
         dt <= animCancelSkillReadyMaxDt(ctx) + 1e-9 &&
         dt > 0
       ) {
@@ -1863,27 +2016,7 @@ function runCustomRotationSequence(
       continue
     }
 
-    const castT = effectiveCastTime(skill.cast_time_sec)
-    const skillDmg = computeDamageSkillHit(ctx, m, skill)
-    const snap = computeAutoHit(ctx, m, 'planning')
-    const rAuto = snap.dmg / snap.step
-    const rSkill = skillDmg / castT
-    const rCancelCombo = (snap.dmg + skillDmg) / (ctx.animCancelOverlapSec + castT)
-    if (ctx.autoAttackAnimationCancel && rCancelCombo > rSkill + 1e-9) {
-      performAutoIntoSkillCancel(ctx, m, skill, true)
-      bumpSeq()
-      continue
-    }
-    if (ctx.autoAttackAnimationCancel) {
-      castDamageSkill(ctx, m, skill, true)
-      bumpSeq()
-      continue
-    }
-    if (rAuto > rSkill + 1e-9) {
-      performAutoAttack(ctx, m, true)
-      continue
-    }
-    castDamageSkill(ctx, m, skill, true)
+    resolveDamageSkillVsAutoAnimCancel(ctx, m, skill, true)
     bumpSeq()
   }
 
@@ -1972,6 +2105,7 @@ function runRotationSim(
 
   const m: SimMutable = {
     t: 0,
+    nextAutoSwingNotBeforeSec: 0,
     totalDamage: 0,
     casts: 0,
     readyAt: new Map(),
@@ -2030,6 +2164,12 @@ function runRotationSim(
       availableSupport.sort(
         (a, b) => supportBuffPriorityScore(b, baseAttack) - supportBuffPriorityScore(a, baseAttack),
       )
+      if (supportsCastInstant() && availableSupport.length >= 2) {
+        if (compareChainVsSequentialSupportRollout(ctx, m, availableSupport) === 'chain') {
+          chainInstantSupportsIfReady(ctx, m, availableSupport, true)
+          continue
+        }
+      }
       const trySupport = availableSupport.slice(0, SUPPORT_BEAM_TRY)
       let bestP = trySupport[0]
       let bestDelta = -Infinity
@@ -2097,7 +2237,8 @@ function runRotationSim(
     if (available.length === 0) {
       if (ctx.autoAttackAnimationCancel) {
         const soon = soonReadyDamageWithinCancelWindow(ctx, m, damageHold)
-        if (soon) {
+        const snapGate = computeAutoHit(ctx, m, 'planning')
+        if (soon && !autoWeaveRateComparableToSkillDpct(snapGate.step)) {
           performAutoIntoSkillCancel(ctx, m, soon, true)
           continue
         }

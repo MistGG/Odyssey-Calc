@@ -1,6 +1,10 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
 import { wikiIntSkillDamageMultiplier } from './dpsSim'
-import { buildSupportSkillEffects, type ParsedSupportEffect } from './supportEffects'
+import {
+  buildSupportSkillEffects,
+  effectLabelIsAttackSpeed,
+  type ParsedSupportEffect,
+} from './supportEffects'
 import type { HealerTierCategoryScores } from './tierList'
 import {
   healOverTimeTicksDuringBuff,
@@ -22,17 +26,17 @@ function damageBuffRawFromEffect(e: ParsedSupportEffect, uptime: number): number
   if (u === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) pts += v * 1.05
   else if (u === '%' && /(\bcritical damage\b|\bcrit damage\b|\bcd\b)/.test(label)) pts += v * 0.88
   else if (u === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) pts += v * 0.92
-  else if (u === '%' && /\battack speed\b/.test(label)) pts += v * 0.78
+  else if (u === '%' && effectLabelIsAttackSpeed(e.label)) pts += v * 0.78
   else if (
     u === '%' &&
     /\battack( power)?\b/.test(label) &&
-    !/\battack speed\b/.test(label)
+    !effectLabelIsAttackSpeed(e.label)
   ) {
     pts += v * 1.0
   } else if (
     u === '' &&
     /\battack( power)?\b/.test(label) &&
-    !/\battack speed\b/.test(label)
+    !effectLabelIsAttackSpeed(e.label)
   ) {
     pts += Math.max(0, v) * 0.02
   }
@@ -47,18 +51,18 @@ function damageBuffDisplayPctFromEffect(e: ParsedSupportEffect, uptime: number):
   if (u === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) return v * uptime
   if (u === '%' && /(\bcritical damage\b|\bcrit damage\b|\bcd\b)/.test(label)) return v * uptime
   if (u === '%' && /(\bcritical rate\b|\bcrit rate\b|\bct\b)/.test(label)) return v * uptime
-  if (u === '%' && /\battack speed\b/.test(label)) return v * uptime
+  if (u === '%' && effectLabelIsAttackSpeed(e.label)) return v * uptime
   if (
     u === '%' &&
     /\battack( power)?\b/.test(label) &&
-    !/\battack speed\b/.test(label)
+    !effectLabelIsAttackSpeed(e.label)
   ) {
     return v * uptime
   }
   if (
     u === '' &&
     /\battack( power)?\b/.test(label) &&
-    !/\battack speed\b/.test(label)
+    !effectLabelIsAttackSpeed(e.label)
   ) {
     return Math.max(0, v) * 0.02 * uptime
   }

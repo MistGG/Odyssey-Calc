@@ -94,6 +94,39 @@ export function normalizeWikiDpAsDeLabel(label: string): string {
   return label.replace(/\bdp\b/gi, 'DE')
 }
 
+/**
+ * Wiki/API often phrases faster autos as "Increases Attack Speed by -20%" — the minus is misleading;
+ * the buff still speeds up cadence. Never label as "Decreases Attack Speed" for that pattern.
+ */
+function normalizeAttackSpeedBuffLabel(label: string): string {
+  const t = label.trim()
+  if (/^Decreases\s+Attack\s+Speed\b/i.test(t)) {
+    return t.replace(/^Decreases\s+/i, 'Increases ')
+  }
+  return label
+}
+
+/** UI labels from text ("Attack Speed") or buff keys ("Atk Speed Pct"). */
+export function effectLabelIsAttackSpeed(label: string): boolean {
+  const l = label.toLowerCase()
+  return /\battack\s+speed\b/.test(l) || /\batk\s+speed\b/.test(l)
+}
+
+/**
+ * Attack-speed % from buff text/API may be stored negative though it behaves as a speed-up; use magnitude
+ * so UI shows +20% and DPS sim adds positive atk-speed %.
+ */
+function normalizeAttackSpeedPctMagnitudes(e: ParsedSupportEffect): ParsedSupportEffect {
+  if (e.unit !== '%') return e
+  if (!effectLabelIsAttackSpeed(e.label)) return e
+  return {
+    ...e,
+    base: Math.abs(e.base),
+    perLevel: Math.abs(e.perLevel),
+    valueAtLevel: Math.abs(e.valueAtLevel),
+  }
+}
+
 function normalizeEffectLabel(raw: string) {
   const text = raw.trim().replace(/\s+/g, ' ')
   if (/^AT$/i.test(text)) return 'Attack Power'
@@ -245,9 +278,9 @@ export function parseSupportEffects(
     })
   }
 
-  // Example: "Reduces all damage taken by 6%"
+  // Example: "Reduces all damage taken by 6%", "Increases Attack Speed by -20%"
   const flatRe =
-    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s%/-]*?)\s+by\s+(\d+(?:\.\d+)?)\s*(%?)/gi
+    /(Increases|Raises|Boosts|Increasing|Raising|Boosting|Reduces|Decreases|Reducing|Decreasing|Recovers?|Restores?|Heals?)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s%/-]*?)\s+by\s+(-?\d+(?:\.\d+)?)\s*(%?)/gi
   for (const m of description.matchAll(flatRe)) {
     const phrase = m[0]
     if (/at\s+Lv1,\s+increasing\s+by/i.test(phrase)) continue
@@ -571,8 +604,9 @@ export function parseSupportEffects(
     const sign = m[2] === '-' ? -1 : 1
     const base = sign * toNum(m[3])
     const unit = ((m[4] as '%' | '') || '') as '%' | ''
+    const atkSpd = effectLabelIsAttackSpeed(target)
     out.push({
-      label: sign < 0 ? `Decreases ${target}` : `Increases ${target}`,
+      label: atkSpd ? 'Increases Attack Speed' : sign < 0 ? `Decreases ${target}` : `Increases ${target}`,
       base,
       perLevel: 0,
       unit,
@@ -585,8 +619,10 @@ export function parseSupportEffects(
   return out
     .map((e) => ({
       ...e,
-      label: normalizeHealOverTimeDisplayLabel(
-        normalizeWikiDpAsDeLabel(normalizeDamageReductionDisplayLabel(e.label)),
+      label: normalizeAttackSpeedBuffLabel(
+        normalizeHealOverTimeDisplayLabel(
+          normalizeWikiDpAsDeLabel(normalizeDamageReductionDisplayLabel(e.label)),
+        ),
       ),
     }))
     .filter((e) => {
@@ -654,8 +690,10 @@ export function parseBuffNumericEffects(
   return out
     .map((e) => ({
       ...e,
-      label: normalizeHealOverTimeDisplayLabel(
-        normalizeWikiDpAsDeLabel(normalizeDamageReductionDisplayLabel(e.label)),
+      label: normalizeAttackSpeedBuffLabel(
+        normalizeHealOverTimeDisplayLabel(
+          normalizeWikiDpAsDeLabel(normalizeDamageReductionDisplayLabel(e.label)),
+        ),
       ),
     }))
     .filter((e) => {
@@ -934,5 +972,5 @@ export function buildSupportSkillEffects(
   const merged = mergeFlatWhenScaledExists(
     filterJunkSupportEffects(dedupeSupportEffectsByStat([...fromText, ...fromNums])),
   )
-  return resolvePctOfMaxHpShields(merged, hostMaxHp)
+  return resolvePctOfMaxHpShields(merged, hostMaxHp).map(normalizeAttackSpeedPctMagnitudes)
 }
