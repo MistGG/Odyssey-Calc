@@ -1139,13 +1139,14 @@ export function TierListPage() {
           ) : null}
         </div>
       </div>
-      <div className="tier-wip-note tier-wip-note-wide tier-wip-note--alert" role="note">
+      <div className="tier-wip-note tier-wip-note-wide tier-wip-note--success" role="note">
         <p>
-          <strong>Disclaimer:</strong> We are investigating the new patch, the tier list will likely change again.
+          Tier list has been updated for this patch. However, INT and DEX are not currently considered. They
+          will be implemented at a later date once both are working appropriately.
         </p>
         <p>
-          ASB, Variance damage and latency are not considered at this time. If you feel something
-          is out of place, please contact Mist on the Digital Odyssey Discord.
+          ASB, Variance damage and latency are not considered at this time. If you feel something is out of
+          place, please contact Mist on the Digital Odyssey Discord.
         </p>
       </div>
 

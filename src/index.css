@@ -806,6 +806,12 @@ code {
   color: #fecaca;
 }
 
+.tier-wip-note--success {
+  border-color: rgba(52, 211, 153, 0.42);
+  background: rgba(16, 185, 129, 0.12);
+  color: #a7f3d0;
+}
+
 .tier-changes-list {
   display: flex;
   flex-direction: column;
