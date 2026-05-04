@@ -433,20 +433,86 @@ code {
 }
 
 .tier-page-top-tools {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.65rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .tier-page-top-tools .lab-result {
   margin-bottom: 0;
 }
 
-@media (max-width: 720px) {
-  .tier-page-top-tools {
-    grid-template-columns: 1fr;
-  }
+.tier-refresh-strip {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.tier-refresh-strip-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.tier-update-btn--strip {
+  margin-top: 0;
+  padding: 0.48rem 0.85rem;
+  font-size: 0.81rem;
+  flex: 0 0 auto;
+}
+
+.tier-refresh-meta-line {
+  margin: 0;
+  width: 100%;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.tier-refresh-building {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.tier-refresh-building-stats {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.tier-refresh-building-stats-strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tier-progress.tier-progress--strip {
+  width: 100%;
+  height: 8px;
+  max-width: 22rem;
+  margin: 0;
+}
+
+.tier-refresh-status-line {
+  margin: 0;
+  width: 100%;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.tier-refresh-error {
+  margin: 0;
+  width: 100%;
+  font-size: 0.82rem;
 }
 
 .tier-refresh-toolbar {
@@ -474,19 +540,13 @@ code {
   margin-top: 0.35rem;
 }
 
-.tier-special-modifiers--inline.tier-tools-details > .tier-tools-details-summary,
-.tier-refresh-details--inline.tier-tools-details > .tier-tools-details-summary {
+.tier-special-modifiers--inline.tier-tools-details > .tier-tools-details-summary {
   padding: 0.45rem 0.6rem;
   font-size: 0.78rem;
 }
 
-.tier-special-modifiers--inline .tier-tools-details-body,
-.tier-refresh-details--inline .tier-tools-details-body {
+.tier-special-modifiers--inline .tier-tools-details-body {
   padding: 0 0.6rem 0.5rem;
-}
-
-.tier-refresh-details--inline .tier-refresh-toolbar.tier-refresh-toolbar--inline {
-  padding: 0;
 }
 
 .tier-special-modifiers--inline .tier-special-modifiers-list {
@@ -579,8 +639,7 @@ code {
   }
 }
 
-.tier-tools-details.tier-special-modifiers-details,
-.tier-tools-details.tier-refresh-details {
+.tier-tools-details.tier-special-modifiers-details {
   padding: 0;
 }
 
@@ -5599,6 +5658,10 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     width: 100%;
     text-align: center;
     box-sizing: border-box;
+  }
+
+  .tier-refresh-strip .tier-update-btn {
+    width: auto;
   }
 
   .tier-update-btn + .tier-update-btn {

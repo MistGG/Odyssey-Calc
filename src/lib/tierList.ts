@@ -144,7 +144,7 @@ export type SustainedDpsEntry = {
   tankScore?: number
   /** Heuristic support/healer index (see healerTierScore); equals categoryScores.general. */
   healerScore?: number
-  /** Per–sub-mode tank ranks (refresh tier list after scoring changes). */
+  /** Per–sub-mode tank ranks (update tier list after scoring changes). */
   tankCategoryScores?: TankTierCategoryScores
   healerCategoryScores?: HealerTierCategoryScores
   /** Wiki base + uptime-weighted buffs for tank matrix cells (HP / def / eva / block). */

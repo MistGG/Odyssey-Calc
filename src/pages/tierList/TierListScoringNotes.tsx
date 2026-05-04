@@ -45,7 +45,7 @@ export function TierListScoringNotes({
           {dpsScoresStale && (
             <p className="tier-stale-note" role="status">
               Some rows need a DPS refresh (missing category scores or an older rotation sim). Run{' '}
-              <strong>Refresh tier list</strong> to recalculate.
+              <strong>Update tier list</strong> to recalculate.
             </p>
           )}
         </>
@@ -84,14 +84,14 @@ export function TierListScoringNotes({
                 </li>
                 <li>
                   Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling. Refresh scores
-                  after wiki changes via <strong>Refresh tier list</strong>.
+                  after wiki changes via <strong>Update tier list</strong>.
                 </li>
               </ul>
             </div>
           </details>
           {tankScoresStale && (
             <p className="tier-stale-note" role="status">
-              Some rows are missing tank scores. Run <strong>Refresh tier list</strong> to recalculate.
+              Some rows are missing tank scores. Run <strong>Update tier list</strong> to recalculate.
             </p>
           )}
         </>
@@ -151,7 +151,7 @@ export function TierListScoringNotes({
           </details>
           {healerScoresStale && (
             <p className="tier-stale-note" role="status">
-              Some rows are missing healer scores. Run <strong>Refresh tier list</strong> to recalculate.
+              Some rows are missing healer scores. Run <strong>Update tier list</strong> to recalculate.
             </p>
           )}
         </>

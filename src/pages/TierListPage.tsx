@@ -1152,51 +1152,52 @@ export function TierListPage() {
 
       <div className="tier-page-body">
       <div className="tier-page-top-tools">
-      <details
-        className="lab-result tier-tools-details tier-refresh-details tier-refresh-details--inline"
-        aria-label="Wiki refresh"
-      >
-        <summary className="tier-tools-details-summary">Refresh tier list</summary>
-        <div className="tier-tools-details-body">
-          <div className="tier-refresh-toolbar tier-refresh-toolbar--inline">
-            <div className="tier-refresh-toolbar-main">
-              <button
-                type="button"
-                className="tier-update-btn"
-                disabled={initializing || building || !cache}
-                onClick={() => void updateTierList()}
-              >
-                {building ? 'Checking all Digimon…' : 'Refresh tier list'}
-              </button>
-              <p className="tier-refresh-meta muted">
-                Last checked:{' '}
-                {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
-              </p>
-            </div>
-            <p className="tier-refresh-status muted">{status}</p>
-            <div className="tier-refresh-progress-row">
-              <span className="tier-refresh-progress-label">
-                Progress:{' '}
-                <strong>
+      <div className="lab-result tier-refresh-strip" aria-label="Update tier list from wiki">
+        <div className="tier-refresh-strip-stack">
+          <button
+            type="button"
+            className="tier-update-btn tier-update-btn--strip"
+            disabled={initializing || building || !cache}
+            onClick={() => void updateTierList()}
+          >
+            {building ? 'Checking…' : 'Update tier list'}
+          </button>
+          {building ? (
+            <div className="tier-refresh-building">
+              <p className="tier-refresh-building-stats muted" aria-live="polite">
+                Progress{' '}
+                <strong className="tier-refresh-building-stats-strong">
                   {progressNumerator}/{progressDenominator || '…'} ({progress.toFixed(1)}%)
                 </strong>
-              </span>
+              </p>
               {showProgressBar ? (
                 <div
-                  className={`tier-progress tier-progress--toolbar ${fadeProgressBar ? 'tier-progress-fade' : ''}`}
+                  className={`tier-progress tier-progress--strip ${fadeProgressBar ? 'tier-progress-fade' : ''}`}
+                  aria-hidden
                 >
                   <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
                 </div>
               ) : null}
             </div>
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
-          </div>
+          ) : (
+            <p
+              className="tier-refresh-meta-line muted"
+              title={
+                cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never refreshed'
+              }
+            >
+              Last checked:{' '}
+              {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
+            </p>
+          )}
+          {status ? <p className="tier-refresh-status-line muted">{status}</p> : null}
+          {error ? (
+            <p className="error tier-refresh-error" role="alert">
+              {error}
+            </p>
+          ) : null}
         </div>
-      </details>
+      </div>
 
       <details className="lab-result tier-tools-details tier-special-modifiers-details tier-special-modifiers--inline">
         <summary id="tier-special-modifiers-heading" className="tier-tools-details-summary">
@@ -1752,7 +1753,7 @@ export function TierListPage() {
               {dpsScoresStale && (
                 <p className="tier-stale-note" role="status">
                   Some rows need a DPS refresh (missing category scores or an older rotation sim).
-                  Run <strong>Refresh tier list</strong> (full wiki pass) to recalculate.
+                  Run <strong>Update tier list</strong> (full wiki pass) to recalculate.
                 </p>
               )}
             </>
@@ -1798,14 +1799,14 @@ export function TierListPage() {
                     </li>
                     <li>
                       Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
-                      Refresh scores after wiki changes via <strong>Refresh tier list</strong>.
+                      Refresh scores after wiki changes via <strong>Update tier list</strong>.
                     </li>
                   </ul>
                 </div>
               </details>
               {tankScoresStale && (
                 <p className="tier-stale-note" role="status">
-                  Some rows are missing tank scores. Run <strong>Refresh tier list</strong> to recalculate.
+                  Some rows are missing tank scores. Run <strong>Update tier list</strong> to recalculate.
                 </p>
               )}
             </>
@@ -1858,7 +1859,7 @@ export function TierListPage() {
               </details>
               {healerScoresStale && (
                 <p className="tier-stale-note" role="status">
-                  Some rows are missing healer scores. Run <strong>Refresh tier list</strong> to recalculate.
+                  Some rows are missing healer scores. Run <strong>Update tier list</strong> to recalculate.
                 </p>
               )}
             </>
@@ -2157,12 +2158,12 @@ export function TierListPage() {
                                               }`}
                                               title={
                                                 status === 'unknown'
-                                                  ? 'Status pending (run Refresh tier list)'
+                                                  ? 'Status pending (run Update tier list)'
                                                   : contentStatusLabel(status)
                                               }
                                               aria-label={
                                                 status === 'unknown'
-                                                  ? 'Status pending (run Refresh tier list)'
+                                                  ? 'Status pending (run Update tier list)'
                                                   : contentStatusLabel(status)
                                               }
                                             />

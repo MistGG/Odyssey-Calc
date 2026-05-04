@@ -31,7 +31,7 @@ export function TierListUpdateControls({
 }: Props) {
   return (
     <section className="lab-result">
-      <h3>Refresh tier list</h3>
+      <h3>Update tier list</h3>
       <p className="muted">{status}</p>
       <p>
         Progress:{' '}
@@ -54,7 +54,7 @@ export function TierListUpdateControls({
         disabled={initializing || building || !cache}
         onClick={onRefresh}
       >
-        {building ? 'Checking all Digimon…' : 'Refresh tier list'}
+        {building ? 'Checking all Digimon…' : 'Update tier list'}
       </button>
       {error && (
         <p className="error" role="alert">

@@ -757,7 +757,7 @@ export function TierChangesPage() {
           <p className="muted">
             {rows.length === 0 ? (
               <>
-                No tier change history yet. Run <Link to="/tier-list">Refresh tier list</Link> to create
+                No tier change history yet. Run <Link to="/tier-list">Update tier list</Link> to create
                 an entry.
               </>
             ) : searchNorm ? (
