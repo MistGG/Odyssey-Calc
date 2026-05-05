@@ -457,11 +457,40 @@ code {
   width: 100%;
 }
 
+.tier-refresh-strip-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tier-refresh-strip-actions .tier-update-btn {
+  margin-left: 0;
+  margin-top: 0;
+}
+
+/* Override global `.tier-update-btn + .tier-update-btn` (and mobile margin-top) so pair stays baseline-aligned. */
+.tier-refresh-strip-actions .tier-update-btn + .tier-update-btn {
+  margin-left: 0;
+  margin-top: 0;
+}
+
 .tier-update-btn--strip {
   margin-top: 0;
   padding: 0.48rem 0.85rem;
   font-size: 0.81rem;
   flex: 0 0 auto;
+}
+
+/* Same optical box for primary + secondary (flex centers label vertically). */
+.tier-refresh-strip-actions .tier-update-btn.tier-update-btn--strip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.375rem;
+  padding: 0.5rem 0.9rem;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .tier-refresh-meta-line {

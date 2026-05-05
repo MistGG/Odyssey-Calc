@@ -58,6 +58,7 @@ import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
+  clearAllTierListStoredCaches,
   fetchAllDigimonIndex,
   formatTierStatus,
   labHrefForTierEntry,
@@ -267,6 +268,7 @@ export function TierListPage() {
   )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
   const [tierFiltersOpen, setTierFiltersOpen] = useState(true)
+  const [clearingTierCache, setClearingTierCache] = useState(false)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -362,6 +364,36 @@ export function TierListPage() {
       cancelled = true
     }
   }, [cache, listMeta])
+
+  /** Tier matrix + wiki fallback cache + changelog; then empty queue + fresh index (same as first visit). */
+  async function clearTierCachesAndReinit() {
+    if (building || clearingTierCache) return
+    setClearingTierCache(true)
+    setError(null)
+    try {
+      clearAllTierListStoredCaches()
+      setUpdateSummary(null)
+      saveTierUpdateSummaryToStorage(null)
+      setCache(null)
+      setListMeta({})
+      setInitializing(true)
+      setStatus('Fetching Digimon index…')
+      const { all, meta, signatures } = await fetchAllDigimonIndex()
+      const ids = all.map((d) => d.id)
+      const created = createEmptyTierListCache(ids)
+      created.listSignatures = signatures
+      saveTierListCache(created)
+      setListMeta(meta)
+      setCache(created)
+      setStatus('Cache cleared. Press Update tier list to rebuild.')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to reload index after clearing cache.')
+      setStatus('Could not fetch Digimon index after clearing cache. Try again or refresh the page.')
+    } finally {
+      setInitializing(false)
+      setClearingTierCache(false)
+    }
+  }
 
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {
@@ -1154,14 +1186,26 @@ export function TierListPage() {
       <div className="tier-page-top-tools">
       <div className="lab-result tier-refresh-strip" aria-label="Update tier list from wiki">
         <div className="tier-refresh-strip-stack">
-          <button
-            type="button"
-            className="tier-update-btn tier-update-btn--strip"
-            disabled={initializing || building || !cache}
-            onClick={() => void updateTierList()}
-          >
-            {building ? 'Checking…' : 'Update tier list'}
-          </button>
+          <div className="tier-refresh-strip-actions">
+            <button
+              type="button"
+              className="tier-update-btn tier-update-btn--strip"
+              disabled={initializing || building || clearingTierCache || !cache}
+              onClick={() => void updateTierList()}
+            >
+              {building ? 'Checking…' : 'Update tier list'}
+            </button>
+            <button
+              type="button"
+              className="tier-update-btn tier-update-btn--strip tier-update-btn-secondary"
+              disabled={building || clearingTierCache || initializing}
+              aria-busy={clearingTierCache}
+              title="Remove saved tier results, wiki fallback cache, and tier changelog from this browser, then reload the Digimon index. Filter toggles are kept."
+              onClick={() => void clearTierCachesAndReinit()}
+            >
+              {clearingTierCache ? 'Clearing…' : 'Clear cache'}
+            </button>
+          </div>
           {building ? (
             <div className="tier-refresh-building">
               <p className="tier-refresh-building-stats muted" aria-live="polite">

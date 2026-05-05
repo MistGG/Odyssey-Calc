@@ -1,7 +1,9 @@
 import { fetchDigimonPage } from '../../api/digimonService'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
+import { clearTierListCacheFromStorage } from '../../lib/tierList'
 import type { DpsTierCategoryKey, SustainedDpsEntry, TierListMode } from '../../lib/tierList'
+import { wikiHttpCacheClear } from '../../lib/wikiHttpCache'
 import { sanitizeDpsTargetEnemyAttribute } from '../../lib/wikiListFacetOptions'
 import type { WikiDigimonListItem } from '../../types/wikiApi'
 
@@ -12,6 +14,21 @@ export const RATE_LIMIT_COOLDOWN_MS = 10_000
 export const TIER_UPDATE_PANEL_MINIMIZED_KEY = 'odysseyCalc.tierUpdatePanel.minimized.v1'
 export const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1'
 export const TIER_CHANGE_HISTORY_STORAGE_KEY = 'odysseyCalc.tierChangeHistory.v1'
+
+/**
+ * Tier matrix, wiki GET fallback cache, update summary, and tier changelog.
+ * Does **not** remove filter toggles / DPS modifier prefs (`odysseyCalc.tierList.*` except summary keys above).
+ */
+export function clearAllTierListStoredCaches(): void {
+  clearTierListCacheFromStorage()
+  wikiHttpCacheClear()
+  try {
+    localStorage.removeItem(TIER_UPDATE_SUMMARY_STORAGE_KEY)
+    localStorage.removeItem(TIER_CHANGE_HISTORY_STORAGE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
 export const TIER_LIST_MODE_KEY = 'odysseyCalc.tierList.mode.v1'
 export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'

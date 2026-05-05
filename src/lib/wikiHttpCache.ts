@@ -52,6 +52,15 @@ export function wikiHttpCacheGet<T>(url: string): T | null {
   return e ? (e.body as T) : null
 }
 
+/** Clears fallback wiki GET responses (used after rate limits / transient errors). */
+export function wikiHttpCacheClear(): void {
+  try {
+    localStorage.removeItem(WIKI_HTTP_CACHE_KEY)
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 export function wikiHttpCacheSet(url: string, body: unknown): void {
   const map = readMap()
   map[url] = { body, storedAt: Date.now() }

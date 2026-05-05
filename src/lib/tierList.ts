@@ -419,6 +419,15 @@ export function saveTierListCache(cache: TierListCache) {
   localStorage.setItem(TIER_LIST_CACHE_KEY, JSON.stringify(cache))
 }
 
+/** Drops persisted tier matrix only (filters / toggles in other keys are unchanged). */
+export function clearTierListCacheFromStorage(): void {
+  try {
+    localStorage.removeItem(TIER_LIST_CACHE_KEY)
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 export function createEmptyTierListCache(ids: string[]): TierListCache {
   return {
     version: 3,
