@@ -35,7 +35,6 @@ import {
   tierEntryNeedsAutoCritScores,
   tierEntryNeedsPerfectAtCloneScores,
   tierEntryNeedsDpsSimRefresh,
-  tierEntryNeedsGearScoringRefresh,
   formatAoeTierMatrixCell,
   TIER_SUPPORT_SCORE_REVISION,
   type BuildTierGroupsOptions,
@@ -371,6 +370,8 @@ export function TierListPage() {
     setClearingTierCache(true)
     setError(null)
     try {
+      setDpsTargetEnemyAttribute('')
+      writeTierDpsTargetEnemyAttribute('')
       clearAllTierListStoredCaches()
       setUpdateSummary(null)
       saveTierUpdateSummaryToStorage(null)
@@ -398,6 +399,12 @@ export function TierListPage() {
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {
     if (!cache || building || initializing) return
+    /**
+     * Only DPS “Enemy attribute” is cleared — stage/element/family filters and Ignore incomplete persist.
+     * Baked scores stay neutral; the dropdown applies triangle scaling live after refresh.
+     */
+    setDpsTargetEnemyAttribute('')
+    writeTierDpsTargetEnemyAttribute('')
     setBuilding(true)
     setError(null)
     const working: TierListCache = {
@@ -455,7 +462,6 @@ export function TierListPage() {
           !!entry &&
           (entry.supportScoreRevision !== TIER_SUPPORT_SCORE_REVISION ||
             tierEntryNeedsDpsSimRefresh(entry) ||
-            tierEntryNeedsGearScoringRefresh(entry, false) ||
             tierEntryNeedsAutoCritScores(entry) ||
             tierEntryNeedsPerfectAtCloneScores(entry) ||
             tierEntryNeedsAnimationCancelScores(entry))
@@ -530,7 +536,7 @@ export function TierListPage() {
           ) => {
             const cfg = buildComparableRotationConfig(detail, durationSec, 1, {
               ...options,
-              targetEnemyAttribute: readTierDpsTargetEnemyAttribute(),
+              targetEnemyAttribute: '',
             })
             return simulateRotation(
               detail.skills,
@@ -678,7 +684,6 @@ export function TierListPage() {
             skillsSignature: tierSkillsSignature(detail.skills),
             supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
             dpsSimRevision: TIER_DPS_SIM_REVISION,
-            dpsScoredWithGear: false,
             apiSnapshot: nextApiSnapshot,
           }
           const apiDiffLines = diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
@@ -1018,7 +1023,6 @@ export function TierListPage() {
       (e) =>
         !tierEntryDpsCategoryScoresComplete(e) ||
         tierEntryNeedsDpsSimRefresh(e) ||
-        tierEntryNeedsGearScoringRefresh(e, false) ||
         tierEntryNeedsAutoCritScores(e) ||
         tierEntryNeedsPerfectAtCloneScores(e) ||
         tierEntryNeedsAnimationCancelScores(e),
@@ -1767,11 +1771,13 @@ export function TierListPage() {
                       {DEFAULT_ROTATION_SIM_DURATION_SEC}s; Hybrid defaults to melee stance).
                     </li>
                     <li>
-                      <strong>Attribute damage:</strong> optional <em>DPS target</em> below applies the
-                      Vaccine/Data/Virus triangle and neutral <strong>None</strong> (×
+                      <strong>Attribute damage:</strong> <strong>Update tier list</strong> stores{' '}
+                      <strong>neutral</strong> matchup (no triangle inside the sim). Use <em>DPS target → Enemy
+                      attribute</em> below to preview triangle scaling <strong>live</strong> (no second refresh).
+                      Vaccine/Data/Virus and neutral <strong>None</strong> (×
                       {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} on full skill hits when the matchup applies).
-                      Tier list rotation DPS uses <strong>wiki stats only</strong> — no saved gear (including True
-                      Vice). DPS Lab can still apply True Vice from the Gear page when you run a sim there.
+                      Rotation DPS uses <strong>wiki stats only</strong> — no saved gear (including True Vice).
+                      DPS Lab can still apply True Vice from the Gear page when you run a sim there.
                     </li>
                     <li>
                       <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
@@ -2023,7 +2029,7 @@ export function TierListPage() {
                       ariaLabel="Enemy wiki attribute for Vaccine–Data–Virus skill damage"
                       showLegend={false}
                     />
-                    <p className="tier-dps-attr-hint muted">(50% if the correct attribute)</p>
+                    <p className="tier-dps-attr-hint muted">(Skill portion ×1.5 for advantage Digimon).</p>
                   </div>
                 </div>
               </div>
