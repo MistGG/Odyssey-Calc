@@ -4,6 +4,7 @@ import { BrowsePage } from './pages/BrowsePage'
 import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
 import { GearPage } from './pages/GearPage'
+import { MeterParsesPage } from './pages/MeterParsesPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="gear" element={<GearPage />} />
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
+          <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

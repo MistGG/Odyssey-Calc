@@ -1,6 +1,11 @@
 import { Link, Outlet } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 
 export function Layout() {
+  const { user, authReady, signOut, profileDisplayName } = useAuth()
+
+  const navUserLabel = profileDisplayName?.trim() || user?.email || user?.id || ''
+
   return (
     <div className="layout app-shell">
       <div className="app-shell-bg" aria-hidden="true" />
@@ -22,6 +27,20 @@ export function Layout() {
           <Link to="/gear">Gear</Link>
           <Link to="/tier-list">Tier list</Link>
           <Link to="/changes">Changes</Link>
+          <Link to="/meter-parses">Meter</Link>
+          {authReady && user ? (
+            <>
+              <span
+                className="nav-auth-display"
+                title={profileDisplayName?.trim() ? (user.email ?? user.id) : undefined}
+              >
+                {navUserLabel}
+              </span>
+              <button type="button" className="nav-sign-out" onClick={() => void signOut()}>
+                Sign out
+              </button>
+            </>
+          ) : null}
           <a
             className="nav-link-official"
             href="https://thedigitalodyssey.com/"
