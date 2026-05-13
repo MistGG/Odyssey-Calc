@@ -427,8 +427,19 @@ export function MeterParsesPage() {
           <div className="meter-parses-login-corner meter-parses-login-corner--br" aria-hidden />
           <h2 className="meter-parses-login-title">Meter</h2>
           <p className="meter-parses-login-hint">
-            Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in{' '}
-            <code>.env.local</code> (same project as Odyssey Companion), then restart <code>npm run dev</code>.
+            {import.meta.env.DEV ? (
+              <>
+                Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in{' '}
+                <code>.env.local</code> (same project as Odyssey Companion), then restart{' '}
+                <code>npm run dev</code>.
+              </>
+            ) : (
+              <>
+                This site build does not include Supabase credentials. Add repository secrets{' '}
+                <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> (same values as
+                in your local <code>.env.local</code>), then run the GitHub Pages deploy workflow again.
+              </>
+            )}
           </p>
         </div>
       </div>

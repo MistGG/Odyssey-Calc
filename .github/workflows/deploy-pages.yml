@@ -30,11 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Vite bakes VITE_* in at build time. GitHub Pages never reads .env.local — add the same
+      # two vars as repository Actions secrets (Settings → Secrets and variables → Actions).
       - name: Build app
         run: npm run build
         env:
           VITE_BASE_PATH: /Odyssey-Calc/
           VITE_WIKI_API_BASE: https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
