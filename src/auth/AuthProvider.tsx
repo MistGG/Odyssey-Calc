@@ -8,6 +8,10 @@ import {
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@supabase/supabase-js'
 import { AuthContext } from './authContext'
+import {
+  displayNameFromUserMetadata,
+  ensureUserProfile,
+} from './ensureUserProfile'
 
 const PROFILE_NAME_CACHE_PREFIX = 'odyssey-profile-display-name:'
 
@@ -26,13 +30,6 @@ function writeCachedProfileName(userId: string, name: string): void {
   } catch {
     /* private mode / quota */
   }
-}
-
-function displayNameFromUserMetadata(user: User): string | null {
-  const raw = user.user_metadata?.display_name
-  if (typeof raw !== 'string') return null
-  const trimmed = raw.trim()
-  return trimmed || null
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -61,14 +58,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     void supabase.auth.getSession().then(({ data }) => {
       if (!cancelled) {
-        setUser(data.session?.user ?? null)
+        const sessionUser = data.session?.user ?? null
+        setUser(sessionUser)
         setAuthReady(true)
+        if (sessionUser) {
+          void ensureUserProfile(supabase, sessionUser).then(({ error }) => {
+            if (error && import.meta.env.DEV) {
+              console.warn('[auth] ensureUserProfile (session):', error)
+            }
+          })
+        }
       }
     })
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      const signedIn =
+        session?.user &&
+        (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED')
+      if (signedIn && session.user) {
+        void ensureUserProfile(supabase, session.user).then(({ error }) => {
+          if (error && import.meta.env.DEV) {
+            console.warn('[auth] ensureUserProfile:', error)
+          }
+        })
+      }
     })
     return () => {
       cancelled = true
@@ -123,11 +138,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string) => {
       if (!supabase) return { error: 'Supabase is not configured.' }
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       })
-      return { error: error?.message ?? null }
+      if (error) return { error: error.message }
+      if (data.user) {
+        const { error: profileErr } = await ensureUserProfile(supabase, data.user)
+        if (profileErr) return { error: profileErr }
+      }
+      return { error: null }
     },
     [supabase],
   )
@@ -146,9 +166,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const name = trimmedName || displayNameFromUserMetadata(data.user) || 'Player'
         writeCachedProfileName(data.user.id, name)
         setProfileDisplayName(name)
-        await supabase
-          .from('profiles')
-          .upsert({ id: data.user.id, display_name: name }, { onConflict: 'id' })
+        // With email confirmation, signUp often has no session yet — RLS blocks client insert.
+        // ensureUserProfile runs again on first sign-in / session (see onAuthStateChange).
+        if (data.session?.user) {
+          const { error: profileErr } = await ensureUserProfile(
+            supabase,
+            data.session.user,
+            name,
+          )
+          if (profileErr) return { error: profileErr }
+        }
       }
       return { error: null }
     },
