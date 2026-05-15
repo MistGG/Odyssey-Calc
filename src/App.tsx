@@ -1,5 +1,6 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { AuthPage } from './pages/AuthPage'
 import { BrowsePage } from './pages/BrowsePage'
 import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
@@ -14,6 +15,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<BrowsePage />} />
+          <Route path="auth" element={<AuthPage />} />
           <Route path="digimon/:id" element={<DigimonDetailPage />} />
           <Route path="lab" element={<DpsLabPage />} />
           <Route path="gear" element={<GearPage />} />

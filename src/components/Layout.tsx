@@ -40,6 +40,10 @@ export function Layout() {
                 Sign out
               </button>
             </>
+          ) : authReady ? (
+            <Link to="/auth" className="nav-sign-in">
+              Sign in
+            </Link>
           ) : null}
           <a
             className="nav-link-official"

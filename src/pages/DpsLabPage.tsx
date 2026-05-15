@@ -8,8 +8,12 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
+import { submitCommunityRotation } from '../lib/communityRotations'
+import { useAuth } from '../auth/useAuth'
+import { buildComparableRotationConfig } from '../lib/rotationComparable'
+import { TIER_DPS_SIM_REVISION } from '../lib/dpsSim'
 import {
   attributeAdvantageSkillDamageMultiplier,
   attributeAdvantageSkillDamageMultiplierWithFoldedTrueVice,
@@ -496,6 +500,8 @@ const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-
 
 export function DpsLabPage() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, supabase, profileDisplayName } = useAuth()
   const { search } = location
   const params = useMemo(() => new URLSearchParams(search), [search])
   const digimonId = params.get('digimonId')?.trim() ?? ''
@@ -550,6 +556,8 @@ export function DpsLabPage() {
   const [simSlowHint, setSimSlowHint] = useState(false)
   const [expandedTimelineIdx, setExpandedTimelineIdx] = useState<number | null>(null)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const [submitBusy, setSubmitBusy] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
   /** Reread gear from localStorage when navigating here or when another tab updates saves. */
@@ -1353,6 +1361,94 @@ export function DpsLabPage() {
     window.setTimeout(() => setShareStatus(null), 2200)
   }, [buildShareUrl])
 
+  const canSubmitRotation =
+    rotationMode === 'custom' &&
+    customRotationSkillIds.length > 0 &&
+    !!digimonId &&
+    !!data &&
+    !!sim &&
+    !!user &&
+    !!supabase
+
+  const onSubmitRotation = useCallback(async () => {
+    if (!canSubmitRotation || !data || !supabase || !user) return
+    if (!user) {
+      navigate(`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`)
+      return
+    }
+
+    setSubmitBusy(true)
+    setSubmitStatus(null)
+
+    // Re-sim under comparable rules (wiki stats, no gear, neutral target, 180s, 1 target, melee hybrid)
+    const cfg = buildComparableRotationConfig(data, 180, 1)
+    const levels = Object.fromEntries(
+      (data.skills ?? []).map((s: { id: string; max_level?: number }) => [
+        s.id,
+        Math.min(25, s.max_level ?? 25),
+      ]),
+    )
+    const comparableSim = simulateRotation(
+      data.skills ?? [],
+      levels,
+      cfg.durationSec,
+      cfg.targets,
+      cfg.baseAttack,
+      cfg.attackSpeed,
+      cfg.baseCritRateStat,
+      {
+        ...cfg.options,
+        customRotation: customRotationSkillIds.map((id) => ({ skillId: id })),
+        customRotationFiller:
+          customRotationFillerSkillIds.length > 0
+            ? customRotationFillerSkillIds.map((id) => ({ skillId: id }))
+            : undefined,
+        customRotationFullCycles: customRotationFullCycles,
+        manualSupportOnly: true,
+      },
+    )
+
+    const authorName =
+      profileDisplayName?.trim() || user.email?.split('@')[0] || 'Player'
+
+    const result = await submitCommunityRotation(supabase, user.id, {
+      digimonId: digimonId,
+      authorName,
+      skillIds: customRotationSkillIds,
+      fillerIds: customRotationFillerSkillIds,
+      fullCycles: customRotationFullCycles,
+      comparableDps: comparableSim.dps,
+      simRevision: TIER_DPS_SIM_REVISION,
+    })
+
+    setSubmitBusy(false)
+    if (result.status === 'submitted') {
+      setSubmitStatus(
+        `Submitted! Comparable DPS: ${comparableSim.dps.toFixed(1)}. It will be used on the next tier list refresh.`,
+      )
+    } else if (result.status === 'not_better') {
+      setSubmitStatus(
+        `Not submitted — comparable DPS (${comparableSim.dps.toFixed(1)}) doesn't beat the current best approved rotation for this Digimon.`,
+      )
+    } else {
+      setSubmitStatus(`Error: ${result.message}`)
+    }
+    window.setTimeout(() => setSubmitStatus(null), 8000)
+  }, [
+    canSubmitRotation,
+    customRotationFillerSkillIds,
+    customRotationFullCycles,
+    customRotationSkillIds,
+    data,
+    digimonId,
+    location.pathname,
+    location.search,
+    navigate,
+    profileDisplayName,
+    supabase,
+    user,
+  ])
+
   return (
     <div className="lab lab-page">
       <div className="lab-page-head">
@@ -1361,6 +1457,24 @@ export function DpsLabPage() {
           <button type="button" className="lab-share-btn" onClick={onShareLabUrl}>
             Share Lab Sim
           </button>
+          {canSubmitRotation ? (
+            <button
+              type="button"
+              className="lab-submit-rotation-btn"
+              onClick={() => void onSubmitRotation()}
+              disabled={submitBusy}
+              title="Submit this custom rotation as the optimal tier list rotation for this Digimon"
+            >
+              {submitBusy ? 'Submitting…' : '↑ Submit as tier rotation'}
+            </button>
+          ) : rotationMode === 'custom' && !user ? (
+            <Link
+              to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+              className="lab-submit-rotation-btn lab-submit-rotation-btn--login"
+            >
+              Sign in to submit rotation
+            </Link>
+          ) : null}
           {data && (
             <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
               Go back to {`${data.name}'s page`} →
@@ -1369,6 +1483,11 @@ export function DpsLabPage() {
         </div>
       </div>
       {shareStatus ? <p className="muted lab-share-status">{shareStatus}</p> : null}
+      {submitStatus ? (
+        <p className={`lab-submit-status${submitStatus.startsWith('Error') || submitStatus.startsWith('Not') ? ' lab-submit-status--warn' : ' lab-submit-status--ok'}`}>
+          {submitStatus}
+        </p>
+      ) : null}
 
       {!digimonId && (
         <p className="error">

@@ -88,14 +88,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase],
   )
 
+  const signUp = useCallback(
+    async (email: string, password: string, displayName: string) => {
+      if (!supabase) return { error: 'Supabase is not configured.' }
+      const trimmedName = displayName.trim().slice(0, 64)
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { data: { display_name: trimmedName || undefined } },
+      })
+      if (error) return { error: error.message }
+      if (data.user) {
+        const name = trimmedName || data.user.email?.split('@')[0] || 'Player'
+        await supabase
+          .from('profiles')
+          .upsert({ id: data.user.id, display_name: name }, { onConflict: 'id' })
+      }
+      return { error: null }
+    },
+    [supabase],
+  )
+
   const signOut = useCallback(async () => {
     if (!supabase) return
     await supabase.auth.signOut()
   }, [supabase])
 
   const value = useMemo(
-    () => ({ supabase, user, profileDisplayName, authReady, signIn, signOut }),
-    [supabase, user, profileDisplayName, authReady, signIn, signOut],
+    () => ({ supabase, user, profileDisplayName, authReady, signIn, signUp, signOut }),
+    [supabase, user, profileDisplayName, authReady, signIn, signUp, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

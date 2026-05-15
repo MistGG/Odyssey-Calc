@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import {
   isPartyParsePayload,
@@ -131,11 +132,8 @@ function SkillBreakdownTable({
 }
 
 export function MeterParsesPage() {
-  const { supabase, user, authReady, signIn } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [authError, setAuthError] = useState<string | null>(null)
-  const [authBusy, setAuthBusy] = useState(false)
+  const { supabase, user, authReady } = useAuth()
+  const location = useLocation()
 
   const [rows, setRows] = useState<MeterParseListRow[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -409,94 +407,22 @@ export function MeterParsesPage() {
 
   if (!authReady) {
     return (
-      <div className="meter-parses-login-shell">
-        <div className="meter-parses-login-card meter-parses-login-card--compact">
-          <div className="meter-parses-login-corner meter-parses-login-corner--tl" aria-hidden />
-          <div className="meter-parses-login-corner meter-parses-login-corner--br" aria-hidden />
-          <p className="meter-parses-login-wait">Loading…</p>
+      <div className="auth-shell">
+        <div className="auth-card auth-card--compact">
+          <div className="auth-corner auth-corner--tl" aria-hidden />
+          <div className="auth-corner auth-corner--br" aria-hidden />
+          <p className="auth-wait">Loading…</p>
         </div>
       </div>
     )
   }
 
-  if (!supabase) {
+  if (!supabase || !user) {
     return (
-      <div className="meter-parses-login-shell">
-        <div className="meter-parses-login-card">
-          <div className="meter-parses-login-corner meter-parses-login-corner--tl" aria-hidden />
-          <div className="meter-parses-login-corner meter-parses-login-corner--br" aria-hidden />
-          <h2 className="meter-parses-login-title">Meter</h2>
-          <p className="meter-parses-login-hint">
-            {import.meta.env.DEV ? (
-              <>
-                Set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in{' '}
-                <code>.env.local</code> (same project as Odyssey Companion), then restart{' '}
-                <code>npm run dev</code>.
-              </>
-            ) : (
-              <>
-                This site build does not include Supabase credentials. Add repository secrets{' '}
-                <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> (same values as
-                in your local <code>.env.local</code>), then run the GitHub Pages deploy workflow again.
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="meter-parses-login-shell">
-        <div className="meter-parses-login-card">
-          <div className="meter-parses-login-corner meter-parses-login-corner--tl" aria-hidden />
-          <div className="meter-parses-login-corner meter-parses-login-corner--br" aria-hidden />
-          <h2 className="meter-parses-login-title">Login</h2>
-          <p className="meter-parses-login-sub">
-            Sign in with the same email and password you used in Odyssey Companions Meter settings.
-          </p>
-          <form
-            className="meter-parses-login-form"
-            onSubmit={(e) => {
-              e.preventDefault()
-              setAuthError(null)
-              setAuthBusy(true)
-              void signIn(email, password).then(({ error }) => {
-                setAuthBusy(false)
-                if (error) setAuthError(error)
-              })
-            }}
-          >
-            <label className="meter-parses-login-field">
-              <span className="meter-parses-login-label">Email</span>
-              <input
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </label>
-            <label className="meter-parses-login-field">
-              <span className="meter-parses-login-label">Password</span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </label>
-            {authError ? <p className="meter-parses-login-error">{authError}</p> : null}
-            <div className="meter-parses-login-submit-row">
-              <button type="submit" className="meter-parses-login-btn" disabled={authBusy}>
-                {authBusy ? 'Signing in…' : 'Login'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+      <Navigate
+        to={`/auth?returnTo=${encodeURIComponent(location.pathname)}`}
+        replace
+      />
     )
   }
 

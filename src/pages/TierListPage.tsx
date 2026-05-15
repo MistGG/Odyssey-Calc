@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchApprovedRotations, type CommunityRotation } from '../lib/communityRotations'
+import { useAuth } from '../auth/useAuth'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
 import {
@@ -235,6 +237,7 @@ function tierEntryWithAttributeTarget(
 }
 
 export function TierListPage() {
+  const { supabase } = useAuth()
   const [cache, setCache] = useState<TierListCache | null>(null)
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
   const [initializing, setInitializing] = useState(true)
@@ -435,6 +438,15 @@ export function TierListPage() {
       const refreshedIds = new Set<string>()
 
       setStatus('Fetching Digimon index…')
+      // Load approved community rotations (if Supabase is configured); used per-Digimon below
+      let communityRotations = new Map<string, CommunityRotation>()
+      if (supabase) {
+        try {
+          communityRotations = await fetchApprovedRotations(supabase)
+        } catch {
+          // Non-fatal: fall back to auto planner if Supabase fetch fails
+        }
+      }
       const { all, meta, signatures } = await fetchAllDigimonIndex()
       setListMeta(meta)
 
@@ -526,6 +538,7 @@ export function TierListPage() {
           const prevApiSnapshot = working.entries[id]?.apiSnapshot
           const nextApiSnapshot = buildTierApiSnapshot(detail)
           const levels = levelMapForSkills(detail.skills)
+          const communityRotation = communityRotations.get(id)
           const runComparableSim = (
             durationSec: number,
             options?: {
@@ -546,7 +559,20 @@ export function TierListPage() {
               cfg.baseAttack,
               cfg.attackSpeed,
               cfg.baseCritRateStat,
-              cfg.options,
+              {
+                ...cfg.options,
+                ...(communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
+                  ? {
+                      customRotation: communityRotation.skill_ids.map((sid) => ({ skillId: sid })),
+                      customRotationFiller:
+                        communityRotation.filler_ids.length > 0
+                          ? communityRotation.filler_ids.map((sid) => ({ skillId: sid }))
+                          : undefined,
+                      customRotationFullCycles: communityRotation.full_cycles,
+                      manualSupportOnly: true,
+                    }
+                  : {}),
+              },
             )
           }
           const sim = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC)
@@ -684,6 +710,14 @@ export function TierListPage() {
             skillsSignature: tierSkillsSignature(detail.skills),
             supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
             dpsSimRevision: TIER_DPS_SIM_REVISION,
+            communityRotationAuthor:
+              communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
+                ? communityRotation.author_name
+                : undefined,
+            communityRotationId:
+              communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
+                ? communityRotation.id
+                : undefined,
             apiSnapshot: nextApiSnapshot,
           }
           const apiDiffLines = diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
@@ -2198,6 +2232,15 @@ export function TierListPage() {
                                           <span className="tier-entry-name">{e.name}</span>
                                           <span className="tier-entry-dps-wrap">
                                             <span className="tier-entry-dps">{scoreLabel}</span>
+                                            {e.communityRotationAuthor && tierMode === 'dps' ? (
+                                              <span
+                                                className="tier-community-badge"
+                                                title={`Community rotation by ${e.communityRotationAuthor}`}
+                                                aria-label={`Community rotation by ${e.communityRotationAuthor}`}
+                                              >
+                                                ★
+                                              </span>
+                                            ) : null}
                                             <span
                                               className={`tier-status-dot ${
                                                 status === 'incomplete'
