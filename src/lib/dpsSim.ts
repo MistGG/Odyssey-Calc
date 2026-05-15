@@ -649,9 +649,20 @@ function resolveDamageSkillVsAutoAnimCancel(
   skill: WikiSkill,
   recordEvents: boolean,
   cancelledFromAuto = false,
+  /** Custom rotation: always cast the sequence damage step (do not weave autos instead). */
+  honorSequenceStep = false,
 ): void {
-  if (inHighAttackSpeedAutoPhase(ctx, m)) {
+  if (!honorSequenceStep && inHighAttackSpeedAutoPhase(ctx, m)) {
     performAutoAttack(ctx, m, recordEvents)
+    return
+  }
+
+  if (honorSequenceStep) {
+    if (ctx.autoAttackAnimationCancel) {
+      performAutoIntoSkillCancel(ctx, m, skill, recordEvents)
+    } else {
+      castDamageSkill(ctx, m, skill, recordEvents, cancelledFromAuto)
+    }
     return
   }
 
@@ -2067,7 +2078,7 @@ function runCustomRotationSequence(
       continue
     }
 
-    resolveDamageSkillVsAutoAnimCancel(ctx, m, skill, true)
+    resolveDamageSkillVsAutoAnimCancel(ctx, m, skill, true, false, true)
     bumpSeq()
   }
 
@@ -2424,7 +2435,8 @@ function resolveCustomRotationFullCycles(
   raw: number | undefined,
 ): number | undefined {
   if (!Array.isArray(customRotation) || customRotation.length === 0) return undefined
-  if (raw === 0) return undefined
+  const cycles = typeof raw === 'number' ? raw : Number(raw)
+  if (cycles === 0) return undefined
   if (raw === undefined) return DEFAULT_CUSTOM_ROTATION_FULL_CYCLES
   return clampCustomRotationFullCycles(raw)
 }

@@ -474,12 +474,20 @@ function parseRotationModeFromParams(params: URLSearchParams): LabRotationMode {
   return params.get('rotationMode')?.trim().toLowerCase() === 'custom' ? 'custom' : 'auto'
 }
 
+/** Expand `auto-attack×7` / `auto-attackx7` tokens into repeated auto steps for shared URLs. */
+function expandCustomRotationSeqToken(token: string): string[] {
+  const m = /^auto-attack\s*[×x]\s*(\d+)$/i.exec(token.trim())
+  if (!m) return [token]
+  const n = Math.min(100, Math.max(1, Number.parseInt(m[1], 10) || 1))
+  return Array.from({ length: n }, () => 'auto-attack')
+}
+
 function parseCustomRotationFromParams(params: URLSearchParams): string[] {
   const raw = params.get('rotationSeq')?.trim() ?? ''
   if (!raw) return []
   return raw
     .split(',')
-    .map((s) => s.trim())
+    .flatMap((s) => expandCustomRotationSeqToken(s.trim()))
     .filter(Boolean)
 }
 
@@ -2049,8 +2057,38 @@ export function DpsLabPage() {
                     </span>
                     Tier rotation by <strong>{labCommunityRotation.author_name}</strong>
                   </p>
+                  {communityFillerRows.length > 0 ? (
+                    <div className="lab-rotation-timeline-wrap">
+                      <p className="lab-rotation-timeline-label">Gap priority</p>
+                      <div
+                        className="lab-rotation-timeline lab-rotation-timeline--readonly"
+                        aria-label="Tier rotation gap priority"
+                      >
+                        {communityFillerRows.map((row, idx) => {
+                          const meta = skillByIdForLab.get(row.skillId)
+                          const icon = skillIconUrl(meta?.icon_id ?? '')
+                          const label =
+                            meta?.name ??
+                            (data?.skills ?? []).find((s) => s.id === row.skillId)?.name ??
+                            row.skillId
+                          return (
+                            <div key={`filler-${row.skillId}-${idx}`} className="lab-rotation-tile" title={label}>
+                              {icon ? (
+                                <img src={icon} alt="" className="lab-rotation-tile-icon" />
+                              ) : (
+                                <span className="lab-rotation-tile-icon-fallback" aria-hidden>
+                                  {row.skillId === 'auto-attack' ? 'A' : label.slice(0, 2)}
+                                </span>
+                              )}
+                              <span className="lab-rotation-tile-name">{label}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-                            ) : rotationMode === 'auto' ? (
+              ) : rotationMode === 'auto' ? (
                 <p className="lab-community-rotation-fallback muted">
                   No tier rotation for this Digimon at these special modifiers — using wiki optimal auto.
                 </p>
