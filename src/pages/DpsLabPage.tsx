@@ -8,11 +8,27 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { fetchDigimonDetail } from '../api/digimonService'
-import { submitCommunityRotation } from '../lib/communityRotations'
+import {
+  communityRotationMatchesLabSubmission,
+  communityRotationUsableInLab,
+  fetchBestApprovedRotation,
+  formatCommunityRotationError,
+  isRotationSubmittedLocally,
+  labRotationRowsFromSkillIds,
+  markRotationSubmitted,
+  submitCommunityRotation,
+  tierSubmissionAlreadyCovered,
+  type CommunityRotation,
+} from '../lib/communityRotations'
+import { refreshTierListDigimonInCache } from '../lib/tierListDigimonEntry'
 import { useAuth } from '../auth/useAuth'
-import { buildComparableRotationConfig } from '../lib/rotationComparable'
+import {
+  compareTierSubmissionRotations,
+  tierSubmissionModifiersFromLab,
+  type TierSubmissionRotationCompare,
+} from '../lib/tierSubmissionSim'
 import { TIER_DPS_SIM_REVISION } from '../lib/dpsSim'
 import {
   attributeAdvantageSkillDamageMultiplier,
@@ -500,7 +516,6 @@ const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-
 
 export function DpsLabPage() {
   const location = useLocation()
-  const navigate = useNavigate()
   const { user, supabase, profileDisplayName } = useAuth()
   const { search } = location
   const params = useMemo(() => new URLSearchParams(search), [search])
@@ -557,7 +572,18 @@ export function DpsLabPage() {
   const [expandedTimelineIdx, setExpandedTimelineIdx] = useState<number | null>(null)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [submitBusy, setSubmitBusy] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
+  type RotationSubmitToast =
+    | { kind: 'prompt'; compare: TierSubmissionRotationCompare }
+    | { kind: 'success'; message: string }
+    | { kind: 'error'; message: string }
+  const [rotationSubmitToast, setRotationSubmitToast] = useState<RotationSubmitToast | null>(null)
+  const [compareBusy, setCompareBusy] = useState(false)
+  /** Set when tier-rules compare finishes but custom does not beat auto (no toast). */
+  const [tierSubmitBlockReason, setTierSubmitBlockReason] = useState<string | null>(null)
+  const dismissedRotationKeyRef = useRef<string | null>(null)
+  const tierCompareGenRef = useRef(0)
+  const suppressTierCompareRef = useRef(false)
+  const [labApprovedRotation, setLabApprovedRotation] = useState<CommunityRotation | null>(null)
   const [portraitBroken, setPortraitBroken] = useState(false)
   const [combatStats, setCombatStats] = useState<CombatStatsState | null>(null)
   /** Reread gear from localStorage when navigating here or when another tab updates saves. */
@@ -823,6 +849,65 @@ export function DpsLabPage() {
   )
   const customRotationFillerInvalidCount = customRotationFillerResolved.filter((row) => !row.option).length
 
+  /** Wiki-valid skill ids only — tier submit compare ignores Lab gear / edited combat stats. */
+  const tierSubmissionSkillIds = useMemo(
+    () => customRotationValidRows.map((r) => r.skillId),
+    [customRotationValidRows],
+  )
+  const tierSubmissionFillerIds = useMemo(
+    () => customRotationFillerValidRows.map((r) => r.skillId),
+    [customRotationFillerValidRows],
+  )
+
+  /** Special modifiers from Lab — used for submit compare (wiki stats only, no gear). */
+  const tierSubmissionModifiers = useMemo(
+    () => tierSubmissionModifiersFromLab(forceAutoCrit, perfectAtClone, useAutoAnimCancel),
+    [forceAutoCrit, perfectAtClone, useAutoAnimCancel],
+  )
+
+  const customRotationOptionIds = useMemo(
+    () => new Set(customRotationSkillOptions.map((o) => o.id)),
+    [customRotationSkillOptions],
+  )
+
+  useEffect(() => {
+    if (!supabase || !digimonId) {
+      setLabApprovedRotation(null)
+      return
+    }
+    let cancelled = false
+    void fetchBestApprovedRotation(supabase, digimonId, tierSubmissionModifiers).then((row) => {
+      if (!cancelled) setLabApprovedRotation(row)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, digimonId, tierSubmissionModifiers])
+
+  const labCommunityRotation = useMemo(
+    () => (communityRotationUsableInLab(labApprovedRotation) ? labApprovedRotation : null),
+    [labApprovedRotation],
+  )
+
+  const communityRotationRows = useMemo(
+    () =>
+      labCommunityRotation
+        ? labRotationRowsFromSkillIds(labCommunityRotation.skill_ids, customRotationOptionIds)
+        : [],
+    [labCommunityRotation, customRotationOptionIds],
+  )
+
+  const communityFillerRows = useMemo(
+    () =>
+      labCommunityRotation
+        ? labRotationRowsFromSkillIds(labCommunityRotation.filler_ids, customRotationOptionIds)
+        : [],
+    [labCommunityRotation, customRotationOptionIds],
+  )
+
+  const useCommunityRotationInAuto =
+    rotationMode === 'auto' && labCommunityRotation != null && communityRotationRows.length > 0
+
   useEffect(() => {
     if (!data || data.id !== digimonId) {
       setSim(null)
@@ -862,18 +947,27 @@ export function DpsLabPage() {
               animCancelReactionSec: clampAnimCancelReactionMs(animCancelReactionMs) / 1000,
               forceAutoCrit,
               perfectAtClone,
-              customRotation: rotationMode === 'custom' ? customRotationValidRows : undefined,
-              manualSupportOnly: rotationMode === 'custom',
+              customRotation:
+                rotationMode === 'custom'
+                  ? customRotationValidRows
+                  : useCommunityRotationInAuto
+                    ? communityRotationRows
+                    : undefined,
+              manualSupportOnly: rotationMode === 'custom' || useCommunityRotationInAuto,
               customRotationFullCycles:
                 rotationMode === 'custom'
                   ? customRotationFullCycles === 0
                     ? 0
                     : clampCustomRotationFullCycles(customRotationFullCycles)
-                  : undefined,
+                  : useCommunityRotationInAuto
+                    ? 0
+                    : undefined,
               customRotationFiller:
                 rotationMode === 'custom' && customRotationFillerValidRows.length > 0
                   ? customRotationFillerValidRows
-                  : undefined,
+                  : useCommunityRotationInAuto && communityFillerRows.length > 0
+                    ? communityFillerRows
+                    : undefined,
               attackerAttribute: data.attribute ?? '',
               attackerElement: data.element ?? '',
               targetEnemyAttribute: targetEnemyAttribute.trim() || undefined,
@@ -917,6 +1011,9 @@ export function DpsLabPage() {
     customRotationValidRows,
     customRotationFullCycles,
     customRotationFillerValidRows,
+    useCommunityRotationInAuto,
+    communityRotationRows,
+    communityFillerRows,
     targetEnemyAttribute,
   ])
 
@@ -1064,6 +1161,22 @@ export function DpsLabPage() {
       return lines
     }
 
+    if (useCommunityRotationInAuto && labCommunityRotation) {
+      const seq = communityRotationRows.map((r) => nameForSkillId(r.skillId)).join(' → ')
+      lines.push(
+        `Tier rotation by ${labCommunityRotation.author_name}: ${seq}.`,
+      )
+      if (communityFillerRows.length > 0) {
+        lines.push(
+          `Gap priority: ${communityFillerRows.map((r) => nameForSkillId(r.skillId)).join(' → ')}.`,
+        )
+      }
+      lines.push(
+        `Largest damage share in this window: ${top.name} (${top.pct.toFixed(1)}%).`,
+      )
+      return lines
+    }
+
     if (top.skillId === 'auto-attack') {
       lines.push(
         `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window.`,
@@ -1198,6 +1311,10 @@ export function DpsLabPage() {
     combatStats?.crit_rate,
     perfectAtClone,
     targets,
+    useCommunityRotationInAuto,
+    labCommunityRotation,
+    communityRotationRows,
+    communityFillerRows,
   ])
 
   const combatStatRows = useMemo(
@@ -1361,52 +1478,155 @@ export function DpsLabPage() {
     window.setTimeout(() => setShareStatus(null), 2200)
   }, [buildShareUrl])
 
-  const canSubmitRotation =
-    rotationMode === 'custom' &&
-    customRotationSkillIds.length > 0 &&
-    !!digimonId &&
-    !!data &&
-    !!sim &&
-    !!user &&
-    !!supabase
+  const rotationCompareKey = useMemo(() => {
+    if (rotationMode !== 'custom' || tierSubmissionSkillIds.length === 0 || !digimonId) return ''
+    return JSON.stringify({
+      digimonId,
+      ids: tierSubmissionSkillIds,
+      filler: tierSubmissionFillerIds,
+      cycles: customRotationFullCycles,
+      mods: tierSubmissionModifiers,
+    })
+  }, [
+    rotationMode,
+    digimonId,
+    tierSubmissionSkillIds,
+    tierSubmissionFillerIds,
+    customRotationFullCycles,
+    tierSubmissionModifiers,
+  ])
 
-  const onSubmitRotation = useCallback(async () => {
-    if (!canSubmitRotation || !data || !supabase || !user) return
-    if (!user) {
-      navigate(`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`)
+  useEffect(() => {
+    suppressTierCompareRef.current = false
+  }, [rotationCompareKey])
+
+  useEffect(() => {
+    if (rotationMode !== 'custom' || !data || tierSubmissionSkillIds.length === 0 || simBusy) {
+      if (rotationMode !== 'custom') {
+        setRotationSubmitToast(null)
+        setTierSubmitBlockReason(null)
+      }
+      return
+    }
+    if (!sim) return
+    if (suppressTierCompareRef.current) return
+    const key = rotationCompareKey
+    if (!key || key === dismissedRotationKeyRef.current || isRotationSubmittedLocally(key)) {
+      setRotationSubmitToast(null)
+      if (isRotationSubmittedLocally(key)) {
+        setTierSubmitBlockReason(null)
+      }
       return
     }
 
-    setSubmitBusy(true)
-    setSubmitStatus(null)
+    let cancelled = false
+    const gen = ++tierCompareGenRef.current
+    setCompareBusy(true)
 
-    // Re-sim under comparable rules (wiki stats, no gear, neutral target, 180s, 1 target, melee hybrid)
-    const cfg = buildComparableRotationConfig(data, 180, 1)
-    const levels = Object.fromEntries(
-      (data.skills ?? []).map((s: { id: string; max_level?: number }) => [
-        s.id,
-        Math.min(25, s.max_level ?? 25),
-      ]),
+    void (async () => {
+      try {
+        const result = compareTierSubmissionRotations(
+          data,
+          tierSubmissionSkillIds,
+          tierSubmissionFillerIds,
+          tierSubmissionModifiers,
+        )
+        if (cancelled || gen !== tierCompareGenRef.current || suppressTierCompareRef.current) return
+
+        if (!result.isBetter) {
+          setRotationSubmitToast(null)
+          if (!result.hitDurationCap) {
+            setTierSubmitBlockReason(
+              'Current rotation does not run the full 180s window required for tier submit.',
+            )
+          } else {
+            setTierSubmitBlockReason(
+              'Current rotation is not better than Auto. A 180s rotation that is better than auto may be submitted for the tier list.',
+            )
+          }
+          return
+        }
+
+        let skipPrompt = false
+        if (supabase && digimonId) {
+          const approved = await fetchBestApprovedRotation(
+            supabase,
+            digimonId,
+            tierSubmissionModifiers,
+          )
+          if (cancelled || gen !== tierCompareGenRef.current || suppressTierCompareRef.current) return
+          if (approved) {
+            if (
+              communityRotationMatchesLabSubmission(
+                approved,
+                tierSubmissionSkillIds,
+                tierSubmissionFillerIds,
+                tierSubmissionModifiers,
+              ) ||
+              tierSubmissionAlreadyCovered(approved.comparable_dps, result.customDps)
+            ) {
+              skipPrompt = true
+              markRotationSubmitted(key)
+            }
+          }
+        }
+
+        if (skipPrompt) {
+          setRotationSubmitToast(null)
+          setTierSubmitBlockReason(null)
+          return
+        }
+
+        setTierSubmitBlockReason(null)
+        setRotationSubmitToast({ kind: 'prompt', compare: result })
+      } finally {
+        if (!cancelled && gen === tierCompareGenRef.current) setCompareBusy(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      setCompareBusy(false)
+    }
+  }, [
+    rotationMode,
+    data,
+    tierSubmissionSkillIds,
+    tierSubmissionFillerIds,
+    tierSubmissionModifiers,
+    simBusy,
+    sim,
+    rotationCompareKey,
+    supabase,
+    digimonId,
+  ])
+
+  const dismissRotationSubmitToast = useCallback(() => {
+    dismissedRotationKeyRef.current = rotationCompareKey
+    setRotationSubmitToast(null)
+  }, [rotationCompareKey])
+
+  const onSubmitRotation = useCallback(async () => {
+    if (!data || !supabase || !user || rotationSubmitToast?.kind !== 'prompt') return
+
+    setSubmitBusy(true)
+    tierCompareGenRef.current += 1
+    suppressTierCompareRef.current = true
+
+    const compare = compareTierSubmissionRotations(
+      data,
+      tierSubmissionSkillIds,
+      tierSubmissionFillerIds,
+      tierSubmissionModifiers,
     )
-    const comparableSim = simulateRotation(
-      data.skills ?? [],
-      levels,
-      cfg.durationSec,
-      cfg.targets,
-      cfg.baseAttack,
-      cfg.attackSpeed,
-      cfg.baseCritRateStat,
-      {
-        ...cfg.options,
-        customRotation: customRotationSkillIds.map((id) => ({ skillId: id })),
-        customRotationFiller:
-          customRotationFillerSkillIds.length > 0
-            ? customRotationFillerSkillIds.map((id) => ({ skillId: id }))
-            : undefined,
-        customRotationFullCycles: customRotationFullCycles,
-        manualSupportOnly: true,
-      },
-    )
+    if (!compare.isBetter) {
+      setSubmitBusy(false)
+      setRotationSubmitToast({
+        kind: 'error',
+        message: 'This rotation no longer beats auto under tier rules. Try simulating again.',
+      })
+      return
+    }
 
     const authorName =
       profileDisplayName?.trim() || user.email?.split('@')[0] || 'Player'
@@ -1414,37 +1634,52 @@ export function DpsLabPage() {
     const result = await submitCommunityRotation(supabase, user.id, {
       digimonId: digimonId,
       authorName,
-      skillIds: customRotationSkillIds,
-      fillerIds: customRotationFillerSkillIds,
-      fullCycles: customRotationFullCycles,
-      comparableDps: comparableSim.dps,
+      skillIds: tierSubmissionSkillIds,
+      fillerIds: tierSubmissionFillerIds,
+      fullCycles: 0,
+      comparableDps: compare.customDps,
       simRevision: TIER_DPS_SIM_REVISION,
+      modifiers: tierSubmissionModifiers,
     })
 
     setSubmitBusy(false)
+
     if (result.status === 'submitted') {
-      setSubmitStatus(
-        `Submitted! Comparable DPS: ${comparableSim.dps.toFixed(1)}. It will be used on the next tier list refresh.`,
-      )
+      dismissedRotationKeyRef.current = rotationCompareKey
+      markRotationSubmitted(rotationCompareKey)
+      const approved = await fetchBestApprovedRotation(supabase, digimonId, tierSubmissionModifiers)
+      setLabApprovedRotation(approved)
+      const cacheResult = await refreshTierListDigimonInCache(supabase, digimonId)
+      let message = `Rotation submitted (${compare.customDps.toFixed(1)} DPS at tier rules).`
+      if (cacheResult.status === 'updated') {
+        message += ' Local tier list cache updated — open Tier list to see the ★ and new DPS.'
+      } else if (cacheResult.status === 'no-cache') {
+        message += ' Open Tier list and run Update tier list to apply it everywhere.'
+      } else if (cacheResult.status === 'error') {
+        message += ` Run Update tier list to refresh (${cacheResult.message}).`
+      }
+      setRotationSubmitToast({ kind: 'success', message })
+      window.setTimeout(() => setRotationSubmitToast(null), 7000)
     } else if (result.status === 'not_better') {
-      setSubmitStatus(
-        `Not submitted — comparable DPS (${comparableSim.dps.toFixed(1)}) doesn't beat the current best approved rotation for this Digimon.`,
-      )
+      setRotationSubmitToast({
+        kind: 'error',
+        message: `Not saved — another approved rotation for this Digimon already has higher DPS at these modifiers (${compare.customDps.toFixed(1)} vs existing best).`,
+      })
     } else {
-      setSubmitStatus(`Error: ${result.message}`)
+      setRotationSubmitToast({
+        kind: 'error',
+        message: formatCommunityRotationError(result.message),
+      })
     }
-    window.setTimeout(() => setSubmitStatus(null), 8000)
   }, [
-    canSubmitRotation,
-    customRotationFillerSkillIds,
-    customRotationFullCycles,
-    customRotationSkillIds,
+    rotationSubmitToast,
+    tierSubmissionFillerIds,
+    tierSubmissionSkillIds,
+    tierSubmissionModifiers,
     data,
     digimonId,
-    location.pathname,
-    location.search,
-    navigate,
     profileDisplayName,
+    rotationCompareKey,
     supabase,
     user,
   ])
@@ -1457,24 +1692,6 @@ export function DpsLabPage() {
           <button type="button" className="lab-share-btn" onClick={onShareLabUrl}>
             Share Lab Sim
           </button>
-          {canSubmitRotation ? (
-            <button
-              type="button"
-              className="lab-submit-rotation-btn"
-              onClick={() => void onSubmitRotation()}
-              disabled={submitBusy}
-              title="Submit this custom rotation as the optimal tier list rotation for this Digimon"
-            >
-              {submitBusy ? 'Submitting…' : '↑ Submit as tier rotation'}
-            </button>
-          ) : rotationMode === 'custom' && !user ? (
-            <Link
-              to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
-              className="lab-submit-rotation-btn lab-submit-rotation-btn--login"
-            >
-              Sign in to submit rotation
-            </Link>
-          ) : null}
           {data && (
             <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
               Go back to {`${data.name}'s page`} →
@@ -1483,12 +1700,6 @@ export function DpsLabPage() {
         </div>
       </div>
       {shareStatus ? <p className="muted lab-share-status">{shareStatus}</p> : null}
-      {submitStatus ? (
-        <p className={`lab-submit-status${submitStatus.startsWith('Error') || submitStatus.startsWith('Not') ? ' lab-submit-status--warn' : ' lab-submit-status--ok'}`}>
-          {submitStatus}
-        </p>
-      ) : null}
-
       {!digimonId && (
         <p className="error">
           Open this page from the Digimon detail button (uses
@@ -1812,6 +2023,15 @@ export function DpsLabPage() {
                     onClick={() => setRotationMode('auto')}
                   >
                     Auto
+                    {labCommunityRotation ? (
+                      <span
+                        className="tier-community-badge lab-rotation-mode-community-badge"
+                        title={`Tier rotation by ${labCommunityRotation.author_name}`}
+                        aria-hidden
+                      >
+                        ★
+                      </span>
+                    ) : null}
                   </button>
                   <button
                     type="button"
@@ -1828,6 +2048,85 @@ export function DpsLabPage() {
                   </button>
                 </div>
               </div>
+              {rotationMode === 'auto' && labCommunityRotation && communityRotationRows.length > 0 ? (
+                <div className="lab-community-rotation-card">
+                  <p className="lab-community-rotation-card-title">
+                    <span
+                      className="tier-community-badge"
+                      title={`Community rotation by ${labCommunityRotation.author_name}`}
+                    >
+                      ★
+                    </span>
+                    Tier rotation by <strong>{labCommunityRotation.author_name}</strong>
+                  </p>
+                  <p className="lab-community-rotation-card-sub muted">
+                    Auto mode uses this submitted sequence (same rules as the tier list at your current
+                    special modifiers).
+                  </p>
+                  <div className="lab-rotation-timeline-wrap">
+                    <p className="lab-rotation-timeline-label">Main sequence</p>
+                    <div
+                      className="lab-rotation-timeline lab-rotation-timeline--readonly"
+                      aria-label="Tier rotation sequence"
+                    >
+                      {communityRotationRows.map((row, idx) => {
+                        const meta = skillByIdForLab.get(row.skillId)
+                        const icon = skillIconUrl(meta?.icon_id ?? '')
+                        const label =
+                          meta?.name ??
+                          (data?.skills ?? []).find((s) => s.id === row.skillId)?.name ??
+                          row.skillId
+                        return (
+                          <div key={`${row.skillId}-${idx}`} className="lab-rotation-tile" title={label}>
+                            {icon ? (
+                              <img src={icon} alt="" className="lab-rotation-tile-icon" />
+                            ) : (
+                              <span className="lab-rotation-tile-icon-fallback" aria-hidden>
+                                {row.skillId === 'auto-attack' ? 'A' : label.slice(0, 2)}
+                              </span>
+                            )}
+                            <span className="lab-rotation-tile-name">{label}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  {communityFillerRows.length > 0 ? (
+                    <div className="lab-rotation-timeline-wrap">
+                      <p className="lab-rotation-timeline-label">Gap priority</p>
+                      <div
+                        className="lab-rotation-timeline lab-rotation-timeline--readonly"
+                        aria-label="Tier rotation gap priority"
+                      >
+                        {communityFillerRows.map((row, idx) => {
+                          const meta = skillByIdForLab.get(row.skillId)
+                          const icon = skillIconUrl(meta?.icon_id ?? '')
+                          const label =
+                            meta?.name ??
+                            (data?.skills ?? []).find((s) => s.id === row.skillId)?.name ??
+                            row.skillId
+                          return (
+                            <div key={`filler-${row.skillId}-${idx}`} className="lab-rotation-tile" title={label}>
+                              {icon ? (
+                                <img src={icon} alt="" className="lab-rotation-tile-icon" />
+                              ) : (
+                                <span className="lab-rotation-tile-icon-fallback" aria-hidden>
+                                  {row.skillId === 'auto-attack' ? 'A' : label.slice(0, 2)}
+                                </span>
+                              )}
+                              <span className="lab-rotation-tile-name">{label}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : rotationMode === 'auto' ? (
+                <p className="lab-community-rotation-fallback muted">
+                  No tier rotation for this Digimon at these special modifiers — using wiki optimal auto.
+                </p>
+              ) : null}
               {rotationMode === 'custom' && (
                 <div className="lab-custom-rotation-card">
                   <div className="lab-custom-rotation-card-head">
@@ -2449,7 +2748,11 @@ export function DpsLabPage() {
             >
               <section className="lab-result lab-result--sim-summary">
                 <h3>
-                  {rotationMode === 'custom' ? 'Custom rotation simulation' : 'Optimal rotation simulation'}
+                  {rotationMode === 'custom'
+                    ? 'Custom rotation simulation'
+                    : useCommunityRotationInAuto && labCommunityRotation
+                      ? `Tier rotation by ${labCommunityRotation.author_name}`
+                      : 'Optimal rotation simulation'}
                 </h3>
                 <p className="lab-sim-window-meta">
                   Simulated time:{' '}
@@ -2857,6 +3160,80 @@ export function DpsLabPage() {
           </p>
         </>
       )}
+
+      {rotationSubmitToast ? (
+        <div
+          className={`lab-rotation-toast lab-rotation-toast--${rotationSubmitToast.kind}`}
+          role={rotationSubmitToast.kind === 'prompt' ? 'dialog' : 'status'}
+          aria-labelledby="lab-rotation-toast-title"
+          aria-live="polite"
+        >
+          {rotationSubmitToast.kind === 'prompt' ? (
+            <>
+              <p id="lab-rotation-toast-title" className="lab-rotation-toast-title">
+                Detected a better rotation, would you like to submit this?
+              </p>
+          <p className="lab-rotation-toast-detail">
+                Custom <strong>{rotationSubmitToast.compare.customDps.toFixed(1)}</strong> DPS vs auto{' '}
+                <strong>{rotationSubmitToast.compare.autoDps.toFixed(1)}</strong> DPS
+          </p>
+          <div className="lab-rotation-toast-actions">
+            {user && supabase ? (
+              <button
+                type="button"
+                className="lab-rotation-toast-submit"
+                onClick={() => void onSubmitRotation()}
+                disabled={submitBusy}
+              >
+                {submitBusy ? 'Submitting…' : 'Submit rotation'}
+              </button>
+            ) : (
+              <Link
+                to={`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`}
+                className="lab-rotation-toast-submit"
+              >
+                Sign in to submit
+              </Link>
+            )}
+            <button
+              type="button"
+              className="lab-rotation-toast-dismiss"
+              onClick={dismissRotationSubmitToast}
+              disabled={submitBusy}
+            >
+              Not now
+            </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p id="lab-rotation-toast-title" className="lab-rotation-toast-title">
+                {rotationSubmitToast.kind === 'success' ? 'Rotation submitted' : 'Could not submit'}
+              </p>
+              <p className="lab-rotation-toast-detail">{rotationSubmitToast.message}</p>
+              <div className="lab-rotation-toast-actions">
+                <button
+                  type="button"
+                  className="lab-rotation-toast-dismiss"
+                  onClick={() => setRotationSubmitToast(null)}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ) : null}
+      {rotationMode === 'custom' && compareBusy && rotationSubmitToast?.kind !== 'prompt' ? (
+        <p className="lab-rotation-compare-hint muted" role="status">
+          Checking vs tier auto rotation (180s, wiki stats)…
+        </p>
+      ) : null}
+      {rotationMode === 'custom' && tierSubmitBlockReason && rotationSubmitToast?.kind !== 'prompt' ? (
+        <p className="lab-rotation-compare-hint lab-rotation-compare-hint--block muted" role="status">
+          {tierSubmitBlockReason}
+        </p>
+      ) : null}
     </div>
   )
 }

@@ -4,7 +4,10 @@ import { useAuth } from '../auth/useAuth'
 export function Layout() {
   const { user, authReady, signOut, profileDisplayName } = useAuth()
 
-  const navUserLabel = profileDisplayName?.trim() || user?.email || user?.id || ''
+  const navUserLabel =
+    profileDisplayName?.trim() || user?.email?.split('@')[0] || 'Account'
+  const navUserInitial = navUserLabel.charAt(0).toUpperCase() || '?'
+  const navUserTitle = user?.email ?? undefined
 
   return (
     <div className="layout app-shell">
@@ -29,17 +32,17 @@ export function Layout() {
           <Link to="/changes">Changes</Link>
           <Link to="/meter-parses">Meter</Link>
           {authReady && user ? (
-            <>
-              <span
-                className="nav-auth-display"
-                title={profileDisplayName?.trim() ? (user.email ?? user.id) : undefined}
-              >
-                {navUserLabel}
+            <div className="nav-user-cluster" role="group" aria-label="Signed in account">
+              <span className="nav-user-pill" title={navUserTitle}>
+                <span className="nav-user-avatar" aria-hidden>
+                  {navUserInitial}
+                </span>
+                <span className="nav-user-name">{navUserLabel}</span>
               </span>
               <button type="button" className="nav-sign-out" onClick={() => void signOut()}>
                 Sign out
               </button>
-            </>
+            </div>
           ) : authReady ? (
             <Link to="/auth" className="nav-sign-in">
               Sign in

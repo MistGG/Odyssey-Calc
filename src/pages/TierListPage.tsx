@@ -568,7 +568,7 @@ export function TierListPage() {
                         communityRotation.filler_ids.length > 0
                           ? communityRotation.filler_ids.map((sid) => ({ skillId: sid }))
                           : undefined,
-                      customRotationFullCycles: communityRotation.full_cycles,
+                      customRotationFullCycles: 0,
                       manualSupportOnly: true,
                     }
                   : {}),

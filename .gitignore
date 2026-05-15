@@ -15,6 +15,9 @@ dist-ssr
 # Local API dumps / ad-hoc fixtures (not for production)
 tmp-*.json
 
+# Backend schema/setup (not published with the site)
+supabase/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

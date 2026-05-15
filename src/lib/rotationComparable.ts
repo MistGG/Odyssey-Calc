@@ -30,9 +30,12 @@ function comparableBaseAttack(
 
 /**
  * Canonical baseline config for Tier/Lab comparable DPS:
- * - wiki/base combat stats only (no gear/seals)
+ * - wiki/base combat stats only (no gear/seals; never pass Lab `combatStats` or gear here)
  * - role-enabled rotation with Hybrid fixed to melee
  * - optional special modifiers mapped 1:1 into sim options
+ *
+ * Community rotation submit / sustained tier column: use `compareTierSubmissionRotations` in
+ * tierSubmissionSim.ts (wiki stats, max skill levels, modifiers default off).
  */
 export function buildComparableRotationConfig(
   detail: Pick<WikiDigimonDetail, 'role' | 'attack' | 'stats' | 'attribute' | 'element'>,
