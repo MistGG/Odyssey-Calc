@@ -447,14 +447,16 @@ const COMBAT_STAT_FIELDS: Array<{ key: keyof CombatStatsState; label: string }> 
   { key: 'block_rate', label: 'Block rate' },
 ]
 
+/** Lab special modifiers default on; URL can disable with `key=0`. */
 function parseToggleFromParams(params: URLSearchParams, key: string): boolean {
+  if (!params.has(key)) return true
   const raw = (params.get(key) ?? '').trim().toLowerCase()
+  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
 }
 
-/** Default off (matches tier list). Add `animCancel=1` to the URL to enable. */
 function parseAnimCancelFromParams(params: URLSearchParams): boolean {
-  if (!params.has('animCancel')) return false
+  if (!params.has('animCancel')) return true
   const raw = (params.get('animCancel') ?? '').trim().toLowerCase()
   if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
@@ -1162,19 +1164,7 @@ export function DpsLabPage() {
     }
 
     if (useCommunityRotationInAuto && labCommunityRotation) {
-      const seq = communityRotationRows.map((r) => nameForSkillId(r.skillId)).join(' → ')
-      lines.push(
-        `Tier rotation by ${labCommunityRotation.author_name}: ${seq}.`,
-      )
-      if (communityFillerRows.length > 0) {
-        lines.push(
-          `Gap priority: ${communityFillerRows.map((r) => nameForSkillId(r.skillId)).join(' → ')}.`,
-        )
-      }
-      lines.push(
-        `Largest damage share in this window: ${top.name} (${top.pct.toFixed(1)}%).`,
-      )
-      return lines
+      return []
     }
 
     if (top.skillId === 'auto-attack') {

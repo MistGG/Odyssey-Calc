@@ -4546,16 +4546,8 @@ code {
   cursor: default;
 }
 
-.lab-community-rotation-card {
-  margin-top: 0.65rem;
-  padding: 0.85rem 0.95rem;
-  border-radius: 10px;
-  border: 1px solid rgba(234, 179, 8, 0.35);
-  background: rgba(15, 23, 42, 0.55);
-}
-
-.lab-community-rotation-card-title {
-  margin: 0 0 0.35rem;
+.lab-community-rotation-attribution {
+  margin: 0.65rem 0 0;
   font-size: 0.88rem;
   font-weight: 600;
   color: #fef9c3;
@@ -4565,14 +4557,8 @@ code {
   flex-wrap: wrap;
 }
 
-.lab-community-rotation-card-title strong {
+.lab-community-rotation-attribution strong {
   color: #fde68a;
-}
-
-.lab-community-rotation-card-sub {
-  margin: 0 0 0.5rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
 }
 
 .lab-community-rotation-fallback {
