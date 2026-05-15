@@ -2049,70 +2049,8 @@ export function DpsLabPage() {
                     </span>
                     Tier rotation by <strong>{labCommunityRotation.author_name}</strong>
                   </p>
-                  <p className="lab-community-rotation-card-sub muted">
-                    Auto mode uses this submitted sequence (same rules as the tier list at your current
-                    special modifiers).
-                  </p>
-                  <div className="lab-rotation-timeline-wrap">
-                    <p className="lab-rotation-timeline-label">Main sequence</p>
-                    <div
-                      className="lab-rotation-timeline lab-rotation-timeline--readonly"
-                      aria-label="Tier rotation sequence"
-                    >
-                      {communityRotationRows.map((row, idx) => {
-                        const meta = skillByIdForLab.get(row.skillId)
-                        const icon = skillIconUrl(meta?.icon_id ?? '')
-                        const label =
-                          meta?.name ??
-                          (data?.skills ?? []).find((s) => s.id === row.skillId)?.name ??
-                          row.skillId
-                        return (
-                          <div key={`${row.skillId}-${idx}`} className="lab-rotation-tile" title={label}>
-                            {icon ? (
-                              <img src={icon} alt="" className="lab-rotation-tile-icon" />
-                            ) : (
-                              <span className="lab-rotation-tile-icon-fallback" aria-hidden>
-                                {row.skillId === 'auto-attack' ? 'A' : label.slice(0, 2)}
-                              </span>
-                            )}
-                            <span className="lab-rotation-tile-name">{label}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  {communityFillerRows.length > 0 ? (
-                    <div className="lab-rotation-timeline-wrap">
-                      <p className="lab-rotation-timeline-label">Gap priority</p>
-                      <div
-                        className="lab-rotation-timeline lab-rotation-timeline--readonly"
-                        aria-label="Tier rotation gap priority"
-                      >
-                        {communityFillerRows.map((row, idx) => {
-                          const meta = skillByIdForLab.get(row.skillId)
-                          const icon = skillIconUrl(meta?.icon_id ?? '')
-                          const label =
-                            meta?.name ??
-                            (data?.skills ?? []).find((s) => s.id === row.skillId)?.name ??
-                            row.skillId
-                          return (
-                            <div key={`filler-${row.skillId}-${idx}`} className="lab-rotation-tile" title={label}>
-                              {icon ? (
-                                <img src={icon} alt="" className="lab-rotation-tile-icon" />
-                              ) : (
-                                <span className="lab-rotation-tile-icon-fallback" aria-hidden>
-                                  {row.skillId === 'auto-attack' ? 'A' : label.slice(0, 2)}
-                                </span>
-                              )}
-                              <span className="lab-rotation-tile-name">{label}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
-              ) : rotationMode === 'auto' ? (
+                            ) : rotationMode === 'auto' ? (
                 <p className="lab-community-rotation-fallback muted">
                   No tier rotation for this Digimon at these special modifiers — using wiki optimal auto.
                 </p>

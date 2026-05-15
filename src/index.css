@@ -4546,8 +4546,16 @@ code {
   cursor: default;
 }
 
-.lab-community-rotation-attribution {
-  margin: 0.65rem 0 0;
+.lab-community-rotation-card {
+  margin-top: 0.65rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.lab-community-rotation-card-title {
+  margin: 0;
   font-size: 0.88rem;
   font-weight: 600;
   color: #fef9c3;
@@ -4557,7 +4565,7 @@ code {
   flex-wrap: wrap;
 }
 
-.lab-community-rotation-attribution strong {
+.lab-community-rotation-card-title strong {
   color: #fde68a;
 }
 
