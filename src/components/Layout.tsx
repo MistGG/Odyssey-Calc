@@ -2,12 +2,11 @@ import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
 export function Layout() {
-  const { user, authReady, signOut, profileDisplayName } = useAuth()
+  const { user, authReady, signOut, profileDisplayName, profileReady } = useAuth()
 
-  const navUserLabel =
-    profileDisplayName?.trim() || user?.email?.split('@')[0] || 'Account'
+  const navUserLabel = profileDisplayName?.trim() || 'Account'
   const navUserInitial = navUserLabel.charAt(0).toUpperCase() || '?'
-  const navUserTitle = user?.email ?? undefined
+  const showAccountNav = authReady && user && profileReady
 
   return (
     <div className="layout app-shell">
@@ -31,9 +30,9 @@ export function Layout() {
           <Link to="/tier-list">Tier list</Link>
           <Link to="/changes">Changes</Link>
           <Link to="/meter-parses">Meter</Link>
-          {authReady && user ? (
+          {showAccountNav ? (
             <div className="nav-user-cluster" role="group" aria-label="Signed in account">
-              <span className="nav-user-pill" title={navUserTitle}>
+              <span className="nav-user-pill">
                 <span className="nav-user-avatar" aria-hidden>
                   {navUserInitial}
                 </span>

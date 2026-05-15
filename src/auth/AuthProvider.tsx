@@ -9,6 +9,32 @@ import type { User } from '@supabase/supabase-js'
 import { createClient } from '@supabase/supabase-js'
 import { AuthContext } from './authContext'
 
+const PROFILE_NAME_CACHE_PREFIX = 'odyssey-profile-display-name:'
+
+function readCachedProfileName(userId: string): string | null {
+  try {
+    const name = sessionStorage.getItem(`${PROFILE_NAME_CACHE_PREFIX}${userId}`)?.trim()
+    return name || null
+  } catch {
+    return null
+  }
+}
+
+function writeCachedProfileName(userId: string, name: string): void {
+  try {
+    sessionStorage.setItem(`${PROFILE_NAME_CACHE_PREFIX}${userId}`, name)
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+function displayNameFromUserMetadata(user: User): string | null {
+  const raw = user.user_metadata?.display_name
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  return trimmed || null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => {
     const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
@@ -22,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [authReady, setAuthReady] = useState(false)
   const [profileDisplayName, setProfileDisplayName] = useState<string | null>(null)
+  const [profileReady, setProfileReady] = useState(false)
 
   useEffect(() => {
     if (!supabase) {
@@ -50,31 +77,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase])
 
   useEffect(() => {
-    if (!supabase || !user?.id) {
+    if (!user?.id) {
       setProfileDisplayName(null)
+      setProfileReady(true)
       return
     }
     const uid = user.id
+    const cached = readCachedProfileName(uid)
+    const fromMeta = displayNameFromUserMetadata(user)
+    setProfileDisplayName(cached ?? fromMeta ?? null)
+    setProfileReady(false)
+
+    if (!supabase) {
+      setProfileReady(true)
+      return
+    }
+
     let cancelled = false
-    void supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', uid)
-      .maybeSingle()
-      .then(({ data, error }) => {
+    void (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', uid)
+          .maybeSingle()
         if (cancelled) return
         if (error || !data) {
-          setProfileDisplayName(null)
+          setProfileDisplayName(fromMeta ?? cached ?? null)
           return
         }
         const row = data as { display_name?: string | null }
         const trimmed = typeof row.display_name === 'string' ? row.display_name.trim() : ''
-        setProfileDisplayName(trimmed || null)
-      })
+        const name = trimmed || fromMeta || cached || null
+        setProfileDisplayName(name)
+        if (name) writeCachedProfileName(uid, name)
+      } finally {
+        if (!cancelled) setProfileReady(true)
+      }
+    })()
     return () => {
       cancelled = true
     }
-  }, [supabase, user?.id])
+  }, [supabase, user])
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -99,7 +143,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       if (error) return { error: error.message }
       if (data.user) {
-        const name = trimmedName || data.user.email?.split('@')[0] || 'Player'
+        const name = trimmedName || displayNameFromUserMetadata(data.user) || 'Player'
+        writeCachedProfileName(data.user.id, name)
+        setProfileDisplayName(name)
         await supabase
           .from('profiles')
           .upsert({ id: data.user.id, display_name: name }, { onConflict: 'id' })
@@ -115,8 +161,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase])
 
   const value = useMemo(
-    () => ({ supabase, user, profileDisplayName, authReady, signIn, signUp, signOut }),
-    [supabase, user, profileDisplayName, authReady, signIn, signUp, signOut],
+    () => ({
+      supabase,
+      user,
+      profileDisplayName,
+      profileReady,
+      authReady,
+      signIn,
+      signUp,
+      signOut,
+    }),
+    [supabase, user, profileDisplayName, profileReady, authReady, signIn, signUp, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
