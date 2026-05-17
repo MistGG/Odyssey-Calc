@@ -7016,3 +7016,325 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* --- Boss timers --- */
+.boss-timers-page {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 1.5rem 0 3rem;
+}
+
+.boss-timers-hero,
+.boss-timer-card-site {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background:
+    linear-gradient(145deg, rgba(15, 23, 42, 0.88), rgba(8, 13, 26, 0.72)),
+    radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 40%);
+  box-shadow: var(--shadow-card);
+}
+
+.boss-timers-hero {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.boss-timers-hero h1,
+.boss-timer-card-site h2,
+.boss-timer-card-site__drops h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.boss-timers-hero h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.boss-timers-hero p {
+  max-width: 44rem;
+  margin: 0.65rem 0 0;
+  color: var(--text-soft);
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.boss-timers-hero__status {
+  min-width: 15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.boss-timers-hero__status strong {
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.boss-timers-hero__status span:last-child {
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.boss-status-pill {
+  width: fit-content;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #bae6fd;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(14, 165, 233, 0.16);
+}
+
+.boss-status-pill--alive {
+  color: #bbf7d0;
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(22, 163, 74, 0.2);
+}
+
+.boss-timer-card-site {
+  display: grid;
+  grid-template-columns: minmax(190px, 260px) 1fr;
+  gap: 1.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.boss-timer-card-site__art {
+  min-height: 250px;
+  display: grid;
+  place-items: end center;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(34, 211, 238, 0.22), transparent 45%),
+    rgba(2, 6, 23, 0.58);
+  border: 1px solid rgba(56, 189, 248, 0.14);
+}
+
+.boss-timer-card-site__art img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+}
+
+.boss-timer-card-site__art span {
+  align-self: center;
+  justify-self: center;
+  font-family: var(--font-display);
+  font-size: 4rem;
+  color: var(--cyan);
+}
+
+.boss-timer-card-site__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.25rem;
+}
+
+.boss-timer-card-site__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.boss-timer-card-site__top p {
+  margin: 0.25rem 0 0;
+  color: var(--text-soft);
+}
+
+.boss-timer-count-site {
+  min-width: 12rem;
+  text-align: right;
+}
+
+.boss-timer-count-site span,
+.boss-timer-meta-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.boss-timer-count-site strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 2rem;
+  color: var(--cyan);
+}
+
+.boss-timer-meta-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.boss-timer-meta-grid > div {
+  min-width: 0;
+  padding: 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.boss-timer-meta-grid strong {
+  display: block;
+  margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.boss-timer-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+.boss-report-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  color: #04111f;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.boss-report-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.boss-report-btn--spawn {
+  background: linear-gradient(135deg, #86efac, #22c55e);
+}
+
+.boss-report-btn--death {
+  background: linear-gradient(135deg, #fda4af, #fb7185);
+}
+
+.boss-timer-report-actions p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.boss-timer-card-site__drops {
+  grid-column: 1 / -1;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.boss-drops-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.boss-drops-error,
+.boss-drops-empty {
+  margin: 0;
+  color: var(--danger);
+}
+
+.boss-drops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: 0.65rem;
+}
+
+.boss-drop-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.7rem;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.boss-drop-card img,
+.boss-drop-card > span {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.boss-drop-card div {
+  min-width: 0;
+}
+
+.boss-drop-card strong,
+.boss-drop-card span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boss-drop-card strong {
+  font-size: 0.92rem;
+}
+
+.boss-drop-card div span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 820px) {
+  .boss-timers-hero,
+  .boss-timer-card-site__top {
+    flex-direction: column;
+  }
+
+  .boss-timer-card-site {
+    grid-template-columns: 1fr;
+  }
+
+  .boss-timer-count-site {
+    text-align: left;
+  }
+
+  .boss-timer-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .boss-timer-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
