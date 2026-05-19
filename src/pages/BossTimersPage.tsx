@@ -7,12 +7,14 @@ import {
   getDefaultBossSchedule,
   isBossAlive,
   itemIconUrl,
-  lastBossSpawnUtcMs,
   monsterModelUrl,
   nextBossSpawnUtcMs,
+  readPendingBossSpawnUtcMs,
   submitBossTimerReport,
   type BossInfo,
   type BossSchedule,
+  clearPendingBossSpawnUtcMs,
+  writePendingBossSpawnUtcMs,
 } from '../lib/bossTimers'
 
 function formatTime(ms: number): string {
@@ -29,9 +31,16 @@ function qtyRange(min: number, max: number): string {
   return min === max ? `x${min}` : `x${min}-${max}`
 }
 
+function validObservedAliveMs(now: number, spawnUtcMs: number): number | null {
+  const aliveWindowMs = Math.round((now - spawnUtcMs) / 1000) * 1000
+  if (aliveWindowMs < 5_000 || aliveWindowMs > 15 * 60_000) return null
+  return aliveWindowMs
+}
+
 export function BossTimersPage() {
   const { supabase, user, authReady } = useAuth()
   const scheduleRef = useRef<BossSchedule>(getDefaultBossSchedule())
+  const pendingSpawnRef = useRef<number | null>(readPendingBossSpawnUtcMs())
   const [schedule, setSchedule] = useState<BossSchedule>(() => scheduleRef.current)
   const [bossInfo, setBossInfo] = useState<BossInfo | null>(null)
   const [infoError, setInfoError] = useState<string | null>(null)
@@ -99,25 +108,29 @@ export function BossTimersPage() {
       const current = scheduleRef.current
       let nextSchedule: BossSchedule
       if (eventType === 'spawn') {
+        pendingSpawnRef.current = observed
+        writePendingBossSpawnUtcMs(observed)
         nextSchedule = {
           ...current,
           anchorUtcMs: observed,
           updatedAtMs: observed,
         }
       } else {
-        const lastSpawn = lastBossSpawnUtcMs(observed, current)
-        if (lastSpawn === null) {
-          setReportStatus('No active spawn window to measure yet.')
+        const observedSpawn = pendingSpawnRef.current ?? readPendingBossSpawnUtcMs()
+        if (observedSpawn === null) {
+          setReportStatus('Click Spawn now first, then Death now when the boss dies.')
           return
         }
-        const aliveWindowMs = Math.round((observed - lastSpawn) / 1000) * 1000
-        if (aliveWindowMs < 5_000 || aliveWindowMs > 15 * 60_000) {
+        const aliveWindowMs = validObservedAliveMs(observed, observedSpawn)
+        if (aliveWindowMs === null) {
+          pendingSpawnRef.current = null
+          clearPendingBossSpawnUtcMs()
           setReportStatus('Death report is outside the expected alive window.')
           return
         }
         nextSchedule = {
           ...current,
-          anchorUtcMs: lastSpawn,
+          anchorUtcMs: observedSpawn,
           aliveWindowMs,
           respawnWaitMs: 90 * 60_000,
           updatedAtMs: observed,
@@ -134,6 +147,10 @@ export function BossTimersPage() {
             ? 'Report submitted with your account.'
             : 'Anonymous report submitted.',
         )
+        if (eventType === 'death') {
+          pendingSpawnRef.current = null
+          clearPendingBossSpawnUtcMs()
+        }
         refreshRemoteSchedule()
       } catch (e) {
         setReportStatus(e instanceof Error ? e.message : String(e))

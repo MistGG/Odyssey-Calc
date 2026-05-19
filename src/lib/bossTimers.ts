@@ -5,6 +5,7 @@ import { fetchJson } from '../api/http'
 export const NEPTUNEMON_BOSS_ID = 'neptunemon'
 export const NEPTUNEMON_MONSTER_ID = 'm4vc8mv'
 const DEVICE_KEY = 'odyssey-calc-boss-timer-device-id-v1'
+const PENDING_SPAWN_KEY = 'odyssey-calc-neptunemon-pending-spawn-v1'
 
 export type BossTimerEvent = 'spawn' | 'death'
 
@@ -175,6 +176,31 @@ function readDeviceId(): string {
     return next
   } catch {
     return 'restricted-storage'
+  }
+}
+
+export function readPendingBossSpawnUtcMs(): number | null {
+  try {
+    const n = Number(localStorage.getItem(PENDING_SPAWN_KEY))
+    return Number.isFinite(n) ? Math.round(n) : null
+  } catch {
+    return null
+  }
+}
+
+export function writePendingBossSpawnUtcMs(spawnUtcMs: number): void {
+  try {
+    localStorage.setItem(PENDING_SPAWN_KEY, String(Math.round(spawnUtcMs)))
+  } catch {
+    /* storage can fail in restricted modes */
+  }
+}
+
+export function clearPendingBossSpawnUtcMs(): void {
+  try {
+    localStorage.removeItem(PENDING_SPAWN_KEY)
+  } catch {
+    /* storage can fail in restricted modes */
   }
 }
 
