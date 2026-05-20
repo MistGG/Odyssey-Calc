@@ -9025,6 +9025,32 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.meter-parses-meter-chrome .meter-party-back {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(248, 252, 255, 0.95);
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid rgba(62, 224, 255, 0.35);
+  background: rgba(7, 10, 18, 0.75);
+}
+
+.meter-parses-meter-chrome .meter-party-back:hover {
+  background: rgba(34, 211, 238, 0.12);
+  border-color: rgba(62, 224, 255, 0.55);
+}
+
+.meter-parses-meter-chrome .meter-party-back:focus-visible {
+  outline: 2px solid rgba(62, 224, 255, 0.65);
+  outline-offset: 2px;
 }
 
 /* Public meter leaderboard */
@@ -9133,6 +9159,13 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+}
+
+@media (min-width: 1100px) {
+  .meter-public-charts-2col,
+  .meter-public-ranks-2col {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 900px) {

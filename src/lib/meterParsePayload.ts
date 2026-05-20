@@ -1,4 +1,9 @@
 import { digimonPortraitUrl, skillIconUrl } from './digimonImage'
+import {
+  isCompanionOnlyAutoAttackIconUrl,
+  isMeterAutoAttackSkill,
+  meterAutoAttackIconUrl,
+} from './meterBasicAttack'
 
 export type MeterSkillRow = {
   skill: string
@@ -131,6 +136,15 @@ export function dungeonFromPayload(payload: unknown): MeterParseDungeonStored | 
   return payload.dungeon
 }
 
+export function parseRunOutcomeFromPayload(payload: unknown): MeterParseDungeonStored['runOutcome'] {
+  return dungeonFromPayload(payload)?.runOutcome ?? null
+}
+
+/** Failed dungeon runs are shown in My Parses only — never leaderboard or percentile coloring. */
+export function isFailedDungeonParseRow(row: { payload: unknown }): boolean {
+  return parseRunOutcomeFromPayload(row.payload) === 'fail'
+}
+
 export function raidTotalFromPayload(
   payload: unknown,
   members: MeterPartyMemberStored[],
@@ -200,7 +214,9 @@ export function resolveDigimonPortraitUrl(d: DigimonSkillBreakdownStored): strin
 }
 
 export function resolveSkillIconUrl(skill: MeterSkillRow): string | undefined {
-  if (skill.iconUrl?.trim()) return skill.iconUrl.trim()
+  if (isMeterAutoAttackSkill(skill)) return meterAutoAttackIconUrl()
+  const stored = skill.iconUrl?.trim()
+  if (stored && !isCompanionOnlyAutoAttackIconUrl(stored)) return stored
   const id = skill.skillIconId?.trim() || ''
   return id ? skillIconUrl(id) : undefined
 }

@@ -78,9 +78,6 @@ export function MeterPublicPage() {
 
   return (
     <div className="meter-parses-page meter-public-page">
-      <div className="tier-wip-note tier-wip-note-wide tier-wip-note--alert" role="note">
-        <p>Public leaderboard from uploaded Normal and Hard dungeon runs.</p>
-      </div>
       <header className="meter-parses-logged-head meter-parses-logged-head--bar meter-public-head">
         <h1 className="meter-parses-title">Meter</h1>
         <MeterSubNav />

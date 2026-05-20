@@ -21,7 +21,11 @@ import {
   filterMyDungeonParses,
 } from '../lib/meterMyParsesFilters'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
-import type { MeterParseListRow, PublicMeterParseRow } from '../lib/meterPublicStats'
+import {
+  leaderboardEligibleParses,
+  type MeterParseListRow,
+  type PublicMeterParseRow,
+} from '../lib/meterPublicStats'
 
 function formatFixed(n: number, digits: number) {
   return n.toLocaleString(undefined, {
@@ -56,6 +60,9 @@ export function MeterMyParsesPage() {
     () => filterMyDungeonParses(allDungeonRows, filterDungeonId, filterDifficultyId),
     [allDungeonRows, filterDungeonId, filterDifficultyId],
   )
+
+  /** Percentile name colors — failed runs are display-only and must not affect aggregates. */
+  const leaderboardRows = useMemo(() => leaderboardEligibleParses(publicRows), [publicRows])
 
   const loadParses = useCallback(async () => {
     if (!supabase || !user) return
@@ -139,20 +146,25 @@ export function MeterMyParsesPage() {
           </span>
         </button>
         {open ? (
-          <div className="meter-parses-session-body">
+          <div
+            className="meter-parses-session-body"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <MeterDungeonPartyReplay
               row={row}
-              publicRows={publicRows}
+              publicRows={leaderboardRows}
               digimonRoleById={digimonRoleById}
               selectedMemberKey={memberKey ?? null}
               onSelectMember={(key) => setPartyMemberByParseId((p) => ({ ...p, [row.id]: key }))}
-              onBackFromMember={() =>
+              onBackFromMember={() => {
                 setPartyMemberByParseId((p) => {
                   if (!(row.id in p)) return p
-                  const { [row.id]: _, ...rest } = p
-                  return rest
+                  const next = { ...p }
+                  delete next[row.id]
+                  return next
                 })
-              }
+              }}
             />
           </div>
         ) : null}
@@ -185,9 +197,6 @@ export function MeterMyParsesPage() {
 
   return (
     <div className="meter-parses-page meter-parses-page--logged meter-my-parses-page">
-      <div className="tier-wip-note tier-wip-note-wide tier-wip-note--alert" role="note">
-        <p>Your uploaded dungeon runs. Party names use parse colors for that dungeon and difficulty.</p>
-      </div>
       <header className="meter-parses-logged-head meter-parses-logged-head--bar meter-public-head">
         <h1 className="meter-parses-title">Meter</h1>
         <MeterSubNav />

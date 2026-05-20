@@ -270,7 +270,14 @@ export function MeterMemberDetailHeader({
   const digimon = member.currentDigimonName?.trim() || ''
   return (
     <div className="meter-party-back-row">
-      <button type="button" className="btn ghost meter-party-back" onClick={onBack}>
+      <button
+        type="button"
+        className="meter-party-back"
+        onClick={(e) => {
+          e.stopPropagation()
+          onBack()
+        }}
+      >
         ← Back
       </button>
       <span className="meter-party-detail-head">

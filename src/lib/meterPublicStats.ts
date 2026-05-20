@@ -1,5 +1,6 @@
 import {
   isDungeonPartyParsePayload,
+  isFailedDungeonParseRow,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
   sessionDurationFromPayload,
@@ -39,6 +40,11 @@ export type MeterParseListRow = PublicMeterParseRow & {
   hit_count: number
 }
 
+/** Clears only — excludes failed runs (My Parses may still list those for display). */
+export function leaderboardEligibleParses(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
+  return rows.filter((r) => !isFailedDungeonParseRow(r))
+}
+
 export type DigimonBarEntry = {
   digimonId: string
   digimonName: string
@@ -65,7 +71,14 @@ const TOP_DIGIMON = 10
 const TOP_PLAYERS = 100
 
 function emptyBucketRecord<T>(): Record<MeterRoleBucket, T> {
-  return { dps: [] as T, hybrid: [] as T, tank: [] as T, healer: [] as T }
+  return {
+    melee: [] as T,
+    ranged: [] as T,
+    caster: [] as T,
+    hybrid: [] as T,
+    tank: [] as T,
+    healer: [] as T,
+  }
 }
 
 function topDigimonEntries(map: Map<string, DigimonBarEntry>): DigimonBarEntry[] {
@@ -90,6 +103,7 @@ export function aggregatePublicMeterStats(
   }
 
   for (const row of rows) {
+    if (isFailedDungeonParseRow(row)) continue
     if (row.dungeon_id !== dungeonId) continue
     if (row.difficulty_id !== difficultyId) continue
     if (!isDungeonPartyParsePayload(row.payload)) continue
@@ -152,7 +166,7 @@ export type DungeonOption = {
 
 export function dungeonOptionsFromRows(rows: PublicMeterParseRow[]): DungeonOption[] {
   const seen = new Map<string, string>()
-  for (const r of rows) {
+  for (const r of leaderboardEligibleParses(rows)) {
     const id = r.dungeon_id?.trim()
     if (!id) continue
     const name =

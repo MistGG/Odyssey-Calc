@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { PublicMeterParseRow } from './meterPublicStats'
+import { leaderboardEligibleParses, type PublicMeterParseRow } from './meterPublicStats'
 import { fetchDigimonRoleMap } from './meterRoleBuckets'
 
 const PARSE_SELECT =
@@ -19,7 +19,7 @@ export async function fetchPublicDungeonParses(
     .order('created_at', { ascending: false })
     .limit(2000)
   if (error) return { rows: [], error: error.message }
-  return { rows: (data ?? []) as PublicMeterParseRow[], error: null }
+  return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
 }
 
 export async function fetchMyMeterParses(
