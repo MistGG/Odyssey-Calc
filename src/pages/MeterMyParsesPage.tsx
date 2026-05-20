@@ -69,8 +69,8 @@ export function MeterMyParsesPage() {
     setLoading(true)
     setLoadError(null)
     const [mine, pub, roles, dungeons] = await Promise.all([
-      fetchMyMeterParses(supabase, user?.id),
-      fetchPublicDungeonParses(supabase),
+      fetchMyMeterParses(supabase),
+      fetchPublicDungeonParses(),
       loadDigimonRoleMapForMeter(),
       loadWikiDungeonsForMeter().catch(() => []),
     ])
@@ -80,7 +80,7 @@ export function MeterMyParsesPage() {
     if (mine.error) setLoadError(mine.error)
     setRows(mine.rows as MeterParseListRow[])
     setLoading(false)
-  }, [supabase, user?.id])
+  }, [supabase, user])
 
   useEffect(() => {
     void loadParses()

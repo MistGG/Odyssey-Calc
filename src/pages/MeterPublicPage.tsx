@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAuth } from '../auth/useAuth'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
-import { fetchPublicDungeonParses, loadDigimonRoleMapForMeter } from '../lib/meterDataSource'
+import {
+  fetchPublicDungeonParses,
+  isMeterSupabaseConfigured,
+  loadDigimonRoleMapForMeter,
+} from '../lib/meterDataSource'
 import {
   aggregatePublicMeterStats,
   type PublicMeterParseRow,
@@ -16,7 +19,7 @@ import {
 } from '../lib/wikiDungeons'
 
 export function MeterPublicPage() {
-  const { supabase } = useAuth()
+  const meterConfigured = isMeterSupabaseConfigured()
   const [rows, setRows] = useState<PublicMeterParseRow[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,7 +32,7 @@ export function MeterPublicPage() {
     setLoading(true)
     setLoadError(null)
     const [parseRes, roles, dungeons] = await Promise.all([
-      fetchPublicDungeonParses(supabase),
+      fetchPublicDungeonParses(),
       loadDigimonRoleMapForMeter(),
       loadWikiDungeonsForMeter().catch(() => []),
     ])
@@ -38,7 +41,7 @@ export function MeterPublicPage() {
     if (parseRes.error) setLoadError(parseRes.error)
     setRows(parseRes.rows)
     setLoading(false)
-  }, [supabase])
+  }, [meterConfigured])
 
   useEffect(() => {
     void load()
