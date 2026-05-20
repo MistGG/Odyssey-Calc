@@ -6,6 +6,7 @@ import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
 import { GearPage } from './pages/GearPage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
+import { CompanionPage } from './pages/CompanionPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />
+          <Route path="companion" element={<CompanionPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

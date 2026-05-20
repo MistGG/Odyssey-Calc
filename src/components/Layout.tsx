@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
 export function Layout() {
@@ -30,6 +30,15 @@ export function Layout() {
           <Link to="/tier-list">Tier list</Link>
           <Link to="/changes">Changes</Link>
           <Link to="/meter-parses">Meter</Link>
+          <NavLink
+            to="/companion"
+            className={({ isActive }) =>
+              `nav-link-companion${isActive ? ' nav-link-companion--active' : ''}`
+            }
+          >
+            <span className="nav-link-companion__badge">App</span>
+            Companion
+          </NavLink>
           {showAccountNav ? (
             <div className="nav-user-cluster" role="group" aria-label="Signed in account">
               <span className="nav-user-pill">
