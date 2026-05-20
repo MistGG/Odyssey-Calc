@@ -9154,6 +9154,49 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   gap: 32px;
 }
 
+.meter-public-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.meter-public-section-head .meter-parses-section-title {
+  margin: 0;
+}
+
+.meter-public-digimon-sort {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  overflow: hidden;
+  background: rgba(8, 18, 32, 0.65);
+}
+
+.meter-public-digimon-sort-btn {
+  padding: 0.32rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--muted, #8b9cb3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.meter-public-digimon-sort-btn:hover {
+  color: var(--text, #e2e8f0);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.meter-public-digimon-sort-btn--active {
+  color: var(--cyan, #5eb3ff);
+  background: rgba(56, 189, 248, 0.18);
+}
+
 .meter-public-charts-2col,
 .meter-public-ranks-2col {
   display: grid;
@@ -9266,11 +9309,31 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 }
 
 .meter-public-rank.meter-parses-meter-chrome .meter-public-rank-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-weight: 600;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-portrait {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-name-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  min-width: 0;
+}
+
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-digimon {
+  font-weight: 500;
+  opacity: 0.88;
 }
 
 .meter-public-rank.meter-parses-meter-chrome .meter-public-rank-dps {

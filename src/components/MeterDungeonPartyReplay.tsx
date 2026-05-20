@@ -64,7 +64,11 @@ export function MeterDungeonPartyReplay({
     const diffId = row.difficulty_id ?? dungeon?.difficultyId
     if (!dId || diffId == null || !digimonRoleById.size) return undefined
     const agg = aggregatePublicMeterStats(publicRows, digimonRoleById, dId, diffId)
-    return memberNameColor(m, digimonRoleById, agg)
+    return memberNameColor(m, digimonRoleById, agg, {
+      payload: row.payload,
+      rowDurationSec: row.duration_sec,
+      members,
+    })
   }
 
   return (

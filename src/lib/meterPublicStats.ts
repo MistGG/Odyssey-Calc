@@ -1,4 +1,5 @@
 import {
+  isBrokenMeterPartyParse,
   isDungeonPartyParsePayload,
   isFailedDungeonParseRow,
   memberDigimonBreakdowns,
@@ -10,7 +11,9 @@ import { dpsToPercentile, parseScoreColor } from './meterParseScoreColor'
 import {
   digimonIdToBucket,
   memberDps,
+  memberDpsInParse,
   memberRoleBucket,
+  memberTopDigimonUsed,
   METER_ROLE_BUCKETS,
   normalizePlayerKey,
   playerDisplayName,
@@ -57,12 +60,20 @@ export type PlayerRankEntry = {
   playerKey: string
   displayName: string
   dps: number
+  /** Top-DPS digimon from this player's best parse in the bucket. */
+  digimonId: string
+  digimonName: string
+  iconId: string | null
+  portraitUrl?: string
 }
 
 type PlayerRankBase = PlayerRankEntry
 
+export type DigimonDpsSortMode = 'average' | 'best'
+
 export type MeterPublicAggregates = {
-  digimonByBucket: Record<MeterRoleBucket, DigimonBarEntry[]>
+  digimonByBucketAverage: Record<MeterRoleBucket, DigimonBarEntry[]>
+  digimonByBucketBest: Record<MeterRoleBucket, DigimonBarEntry[]>
   playersByBucket: Record<MeterRoleBucket, PlayerRankBase[]>
   sortedDpsByBucket: Record<MeterRoleBucket, number[]>
 }
@@ -81,8 +92,32 @@ function emptyBucketRecord<T>(): Record<MeterRoleBucket, T> {
   }
 }
 
-function topDigimonEntries(map: Map<string, DigimonBarEntry>): DigimonBarEntry[] {
-  return [...map.values()].sort((a, b) => b.dps - a.dps).slice(0, TOP_DIGIMON)
+type DigimonDpsAccum = {
+  digimonId: string
+  digimonName: string
+  iconId: string | null
+  portraitUrl?: string
+  dpsSum: number
+  dpsBestMax: number
+  sampleCount: number
+}
+
+function topDigimonEntries(map: Map<string, DigimonDpsAccum>, mode: DigimonDpsSortMode): DigimonBarEntry[] {
+  return [...map.values()]
+    .map((a) => ({
+      digimonId: a.digimonId,
+      digimonName: a.digimonName,
+      iconId: a.iconId,
+      portraitUrl: a.portraitUrl,
+      dps:
+        mode === 'best'
+          ? a.dpsBestMax
+          : a.sampleCount > 0
+            ? a.dpsSum / a.sampleCount
+            : 0,
+    }))
+    .sort((a, b) => b.dps - a.dps)
+    .slice(0, TOP_DIGIMON)
 }
 
 function topPlayerEntries(map: Map<string, PlayerRankBase>): PlayerRankBase[] {
@@ -95,10 +130,10 @@ export function aggregatePublicMeterStats(
   dungeonId: string,
   difficultyId: number,
 ): MeterPublicAggregates {
-  const digimonMax = emptyBucketRecord<Map<string, DigimonBarEntry>>()
+  const digimonAvg = emptyBucketRecord<Map<string, DigimonDpsAccum>>()
   const playerBest = emptyBucketRecord<Map<string, PlayerRankBase>>()
   for (const b of METER_ROLE_BUCKETS) {
-    digimonMax[b] = new Map()
+    digimonAvg[b] = new Map()
     playerBest[b] = new Map()
   }
 
@@ -109,19 +144,26 @@ export function aggregatePublicMeterStats(
     if (!isDungeonPartyParsePayload(row.payload)) continue
 
     const members = partyMembersFromPayload(row.payload)
+    if (isBrokenMeterPartyParse(row.payload, members)) continue
+
     const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
 
     for (const member of members) {
       const bucket = memberRoleBucket(member, digimonRoleById)
       if (!bucket) continue
-      const dps = memberDps(member)
+      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
       const pKey = normalizePlayerKey(member)
       const prev = playerBest[bucket].get(pKey)
       if (!prev || dps > prev.dps) {
+        const topDg = memberTopDigimonUsed(member)
         playerBest[bucket].set(pKey, {
           playerKey: pKey,
           displayName: playerDisplayName(member),
           dps,
+          digimonId: topDg?.digimonId ?? '',
+          digimonName: topDg?.digimonName ?? '',
+          iconId: topDg?.iconId ?? null,
+          portraitUrl: topDg?.portraitUrl,
         })
       }
 
@@ -130,33 +172,44 @@ export function aggregatePublicMeterStats(
         const dBucket = digimonIdToBucket(dg.digimonId, digimonRoleById)
         if (!dBucket) continue
         const dDps = dg.totalDamage / memberDur
-        const existing = digimonMax[dBucket].get(dg.digimonId)
-        if (!existing || dDps > existing.dps) {
-          digimonMax[dBucket].set(dg.digimonId, {
+        const existing = digimonAvg[dBucket].get(dg.digimonId)
+        if (!existing) {
+          digimonAvg[dBucket].set(dg.digimonId, {
             digimonId: dg.digimonId,
             digimonName: dg.digimonName,
             iconId: dg.iconId,
             portraitUrl: dg.portraitUrl,
-            dps: dDps,
+            dpsSum: dDps,
+            dpsBestMax: dDps,
+            sampleCount: 1,
           })
+        } else {
+          existing.dpsSum += dDps
+          existing.dpsBestMax = Math.max(existing.dpsBestMax, dDps)
+          existing.sampleCount += 1
+          if (dg.digimonName.trim()) existing.digimonName = dg.digimonName
+          if (dg.iconId) existing.iconId = dg.iconId
+          if (dg.portraitUrl) existing.portraitUrl = dg.portraitUrl
         }
       }
     }
   }
 
-  const digimonByBucket = emptyBucketRecord<DigimonBarEntry[]>()
+  const digimonByBucketAverage = emptyBucketRecord<DigimonBarEntry[]>()
+  const digimonByBucketBest = emptyBucketRecord<DigimonBarEntry[]>()
   const playersByBucket = emptyBucketRecord<PlayerRankBase[]>()
   const sortedDpsByBucket = emptyBucketRecord<number[]>()
 
   for (const b of METER_ROLE_BUCKETS) {
-    digimonByBucket[b] = topDigimonEntries(digimonMax[b])
+    digimonByBucketAverage[b] = topDigimonEntries(digimonAvg[b], 'average')
+    digimonByBucketBest[b] = topDigimonEntries(digimonAvg[b], 'best')
     playersByBucket[b] = topPlayerEntries(playerBest[b])
     sortedDpsByBucket[b] = topPlayerEntries(playerBest[b])
       .map((p) => p.dps)
       .sort((a, c) => a - c)
   }
 
-  return { digimonByBucket, playersByBucket, sortedDpsByBucket }
+  return { digimonByBucketAverage, digimonByBucketBest, playersByBucket, sortedDpsByBucket }
 }
 
 export type DungeonOption = {
@@ -186,12 +239,18 @@ export function memberNameColor(
   member: MeterPartyMemberStored,
   digimonRoleById: Map<string, string>,
   aggregates: MeterPublicAggregates | null,
+  parseContext?: {
+    payload: unknown
+    rowDurationSec: number
+    members: MeterPartyMemberStored[]
+  },
 ): string | undefined {
   if (!aggregates) return undefined
   const bucket = memberRoleBucket(member, digimonRoleById)
   if (!bucket) return undefined
-  const dps = memberDps(member)
-  const sortedDesc = [...aggregates.sortedDpsByBucket[bucket]].sort((a, c) => c - a)
-  const pct = dpsToPercentile(dps, sortedDesc)
+  const dps = parseContext
+    ? memberDpsInParse(member, parseContext.payload, parseContext.rowDurationSec, parseContext.members)
+    : memberDps(member)
+  const pct = dpsToPercentile(dps, aggregates.sortedDpsByBucket[bucket] ?? [])
   return parseScoreColor(pct)
 }

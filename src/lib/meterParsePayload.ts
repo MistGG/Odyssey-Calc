@@ -125,15 +125,42 @@ export function isDungeonPartyParsePayload(
   return p.members.every(isPartyMemberRow)
 }
 
+function normalizeSkillRows(skills: unknown): MeterSkillRow[] {
+  if (!Array.isArray(skills)) return []
+  return skills.filter(isSkillRow)
+}
+
+function normalizeDigimonBreakdown(d: DigimonSkillBreakdownStored): DigimonSkillBreakdownStored {
+  return { ...d, skills: normalizeSkillRows(d.skills) }
+}
+
+/** Ensures `skills` is always an array (uploads may only include `digimons`). */
+export function normalizePartyMember(member: MeterPartyMemberStored): MeterPartyMemberStored {
+  const digimons = Array.isArray(member.digimons)
+    ? member.digimons.map(normalizeDigimonBreakdown)
+    : undefined
+  return {
+    ...member,
+    skills: normalizeSkillRows(member.skills),
+    digimons: digimons?.length ? digimons : undefined,
+  }
+}
+
 export function partyMembersFromPayload(payload: unknown): MeterPartyMemberStored[] {
-  if (isDungeonPartyParsePayload(payload)) return payload.members
+  if (isDungeonPartyParsePayload(payload)) {
+    return payload.members.map(normalizePartyMember)
+  }
   if (!isPartyParsePayload(payload)) return []
-  return payload.members
+  return payload.members.map(normalizePartyMember)
 }
 
 export function dungeonFromPayload(payload: unknown): MeterParseDungeonStored | null {
   if (!isDungeonPartyParsePayload(payload)) return null
-  return payload.dungeon
+  const d = payload.dungeon
+  const bosses = Array.isArray(d.bossTargets)
+    ? d.bossTargets.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
+    : []
+  return { ...d, bossTargets: bosses }
 }
 
 export function parseRunOutcomeFromPayload(payload: unknown): MeterParseDungeonStored['runOutcome'] {
@@ -181,20 +208,64 @@ export function skillsFromPayload(payload: unknown): MeterSkillRow[] {
   return raw.filter(isSkillRow)
 }
 
+/**
+ * Broken meter attribution: one member is credited with ~all raid damage, everyone else ~0.
+ * Those parses are excluded from public leaderboard / percentile aggregates.
+ */
+export function isBrokenMeterPartyParse(
+  payload: unknown,
+  members: MeterPartyMemberStored[],
+): boolean {
+  if (!isDungeonPartyParsePayload(payload)) return false
+  if (members.length < 2) return false
+
+  const damages = members.map((m) => memberDamageTotal(m))
+  const sumMember = damages.reduce((s, d) => s + d, 0)
+  const raidTotal = Math.max(raidTotalFromPayload(payload, members), sumMember, 1)
+  const maxDmg = Math.max(0, ...damages)
+  if (maxDmg <= 0) return false
+
+  const nearZeroCount = damages.filter((d) => d < raidTotal * 0.02).length
+  const nonzeroCount = damages.filter((d) => d >= raidTotal * 0.02).length
+
+  if (nonzeroCount <= 1 && maxDmg >= raidTotal * 0.88) return true
+  if (maxDmg >= raidTotal * 0.9 && nearZeroCount >= members.length - 1) return true
+
+  return false
+}
+
+/** Per-player damage: prefer digimon breakdown sum, then skills, then stored total. */
+export function memberDamageTotal(member: MeterPartyMemberStored): number {
+  const normalized = normalizePartyMember(member)
+  const digimons = memberDigimonBreakdowns(normalized)
+  if (digimons.length) {
+    const sum = digimons.reduce((s, d) => s + Math.max(0, d.totalDamage), 0)
+    if (sum > 0) return Math.round(sum)
+  }
+  if (normalized.skills.length) {
+    return totalDamageFromSkills(normalized.skills)
+  }
+  return Math.round(Math.max(0, normalized.totalDamage))
+}
+
 export function memberDigimonBreakdowns(member: MeterPartyMemberStored): DigimonSkillBreakdownStored[] {
-  if (member.digimons?.length) return member.digimons
-  if (!member.skills.length) return []
-  const iconId = member.portraitIconId?.trim() || ''
+  const normalized = normalizePartyMember(member)
+  if (normalized.digimons?.length) return normalized.digimons
+  const skills = normalized.skills
+  if (!skills.length) return []
+  const iconId = normalized.portraitIconId?.trim() || ''
   return [
     {
-      digimonId: member.currentDigimonId?.trim() || 'unknown',
-      digimonName: member.currentDigimonName?.trim() || member.displayLabel,
+      digimonId: normalized.currentDigimonId?.trim() || 'unknown',
+      digimonName: normalized.currentDigimonName?.trim() || normalized.displayLabel,
       iconId: iconId || null,
       portraitUrl:
-        member.portraitUrl ||
-        (iconId ? digimonPortraitUrl(iconId, member.currentDigimonId ?? '', member.currentDigimonName ?? '') : undefined),
-      totalDamage: member.totalDamage,
-      skills: member.skills,
+        normalized.portraitUrl ||
+        (iconId
+          ? digimonPortraitUrl(iconId, normalized.currentDigimonId ?? '', normalized.currentDigimonName ?? '')
+          : undefined),
+      totalDamage: normalized.totalDamage,
+      skills,
     },
   ]
 }

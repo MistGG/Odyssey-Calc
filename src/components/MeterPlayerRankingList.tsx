@@ -1,18 +1,27 @@
+import { digimonPortraitUrl } from '../lib/digimonImage'
 import { dpsToPercentile, parseScoreColor, type PlayerRankEntry } from '../lib/meterPublicStats'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
+function portraitForPlayerEntry(e: PlayerRankEntry): string | undefined {
+  if (e.portraitUrl?.trim()) return e.portraitUrl
+  const iconId = e.iconId?.trim()
+  if (iconId) return digimonPortraitUrl(iconId, e.digimonId, e.digimonName)
+  return undefined
+}
+
 export function MeterPlayerRankingList({
   title,
   entries,
-  sortedDpsAsc,
+  poolDps,
   emptyLabel = 'No rankings yet.',
 }: {
   title: string
   entries: PlayerRankEntry[]
-  sortedDpsAsc: number[]
+  /** All best-parse DPS values in this role bucket (used for parse % vs top). */
+  poolDps: number[]
   emptyLabel?: string
 }) {
   return (
@@ -28,16 +37,32 @@ export function MeterPlayerRankingList({
       ) : (
         <ol className="meter-public-rank-list meter-scroll--themed">
           {entries.map((e, i) => {
-            const pct = dpsToPercentile(e.dps, sortedDpsAsc)
+            const pct = dpsToPercentile(e.dps, poolDps)
+            const portrait = portraitForPlayerEntry(e)
+            const digimonLabel = e.digimonName.trim()
             return (
               <li key={`${e.playerKey}-${i}`} className="meter-public-rank-row">
                 <span className="meter-public-rank-num">{i + 1}</span>
                 <span
                   className="meter-public-rank-name"
                   style={{ color: parseScoreColor(pct) }}
-                  title={`${pct} parse`}
+                  title={
+                    digimonLabel
+                      ? `${e.displayName} (${digimonLabel}) · ${pct} parse`
+                      : `${e.displayName} · ${pct} parse`
+                  }
                 >
-                  {e.displayName}
+                  {portrait ? (
+                    <img className="meter-party-portrait meter-public-rank-portrait" src={portrait} alt="" width={20} height={20} />
+                  ) : (
+                    <span className="meter-party-portrait meter-party-portrait--empty meter-public-rank-portrait" aria-hidden />
+                  )}
+                  <span className="meter-public-rank-name-text">
+                    {e.displayName}
+                    {digimonLabel ? (
+                      <span className="meter-public-rank-digimon"> ({digimonLabel})</span>
+                    ) : null}
+                  </span>
                 </span>
                 <span className="meter-public-rank-dps">{formatInt(e.dps)} DPS</span>
               </li>

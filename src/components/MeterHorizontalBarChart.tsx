@@ -22,7 +22,8 @@ export function MeterHorizontalBarChart({
   entries: DigimonBarEntry[]
   emptyLabel?: string
 }) {
-  const max = entries.length ? Math.max(...entries.map((e) => e.dps), 1) : 1
+  const list = entries ?? []
+  const max = list.length ? Math.max(...list.map((e) => e.dps), 1) : 1
 
   return (
     <section
@@ -32,11 +33,11 @@ export function MeterHorizontalBarChart({
       <h3 id={`chart-${title.replace(/\s/g, '-')}`} className="meter-public-chart-title">
         {title}
       </h3>
-      {entries.length === 0 ? (
+      {list.length === 0 ? (
         <p className="meter-parses-muted">{emptyLabel}</p>
       ) : (
         <div className="meter-breakdown-scroll meter-breakdown-scroll--compact meter-scroll--themed meter-public-digimon-scroll">
-          {entries.map((e, i) => {
+          {list.map((e, i) => {
             const pct = Math.min(100, (100 * e.dps) / max)
             const portrait = portraitForEntry(e)
             return (

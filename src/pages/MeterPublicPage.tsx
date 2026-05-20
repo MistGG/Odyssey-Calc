@@ -9,6 +9,7 @@ import {
 } from '../lib/meterDataSource'
 import {
   aggregatePublicMeterStats,
+  type DigimonDpsSortMode,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
@@ -27,6 +28,7 @@ export function MeterPublicPage() {
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
   const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
+  const [digimonDpsSort, setDigimonDpsSort] = useState<DigimonDpsSortMode>('best')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -73,6 +75,11 @@ export function MeterPublicPage() {
     if (!dungeonId || difficultyId == null || !digimonRoleById.size) return null
     return aggregatePublicMeterStats(rows, digimonRoleById, dungeonId, difficultyId)
   }, [rows, digimonRoleById, dungeonId, difficultyId])
+
+  const digimonByBucket = useMemo(() => {
+    if (!stats) return null
+    return digimonDpsSort === 'best' ? stats.digimonByBucketBest : stats.digimonByBucketAverage
+  }, [stats, digimonDpsSort])
 
   const selectedDungeonName =
     dungeonOptions.find((d) => d.dungeonId === dungeonId)?.dungeonName ?? dungeonId
@@ -135,13 +142,33 @@ export function MeterPublicPage() {
           </p>
           <div className="meter-public-grid">
             <div className="meter-public-section">
-              <h2 className="meter-parses-section-title">Top Digimon DPS</h2>
+              <div className="meter-public-section-head">
+                <h2 className="meter-parses-section-title">Top Digimon DPS</h2>
+                <div className="meter-public-digimon-sort" role="group" aria-label="Sort top digimon by">
+                  <button
+                    type="button"
+                    className={`meter-public-digimon-sort-btn${digimonDpsSort === 'best' ? ' meter-public-digimon-sort-btn--active' : ''}`}
+                    aria-pressed={digimonDpsSort === 'best'}
+                    onClick={() => setDigimonDpsSort('best')}
+                  >
+                    Best DPS
+                  </button>
+                  <button
+                    type="button"
+                    className={`meter-public-digimon-sort-btn${digimonDpsSort === 'average' ? ' meter-public-digimon-sort-btn--active' : ''}`}
+                    aria-pressed={digimonDpsSort === 'average'}
+                    onClick={() => setDigimonDpsSort('average')}
+                  >
+                    Average DPS
+                  </button>
+                </div>
+              </div>
               <div className="meter-public-charts-2col">
                 {METER_ROLE_BUCKETS.map((b) => (
                   <MeterHorizontalBarChart
                     key={b}
                     title={METER_ROLE_BUCKET_LABELS[b]}
-                    entries={stats.digimonByBucket[b]}
+                    entries={digimonByBucket![b]}
                   />
                 ))}
               </div>
@@ -154,7 +181,7 @@ export function MeterPublicPage() {
                     key={b}
                     title={METER_ROLE_BUCKET_LABELS[b]}
                     entries={stats.playersByBucket[b]}
-                    sortedDpsAsc={stats.sortedDpsByBucket[b]}
+                    poolDps={stats.sortedDpsByBucket[b]}
                   />
                 ))}
               </div>

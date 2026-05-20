@@ -10,21 +10,19 @@ export function parseScoreColor(percentile: number): string {
   return '#666666'
 }
 
-/** Percentile 0–100 from position in ascending DPS distribution. */
-export function dpsToPercentile(dps: number, sortedDpsAsc: number[]): number {
-  const arr = sortedDpsAsc.filter((x) => Number.isFinite(x))
-  const n = arr.length
-  if (n === 0) return 0
-  if (n === 1) return dps >= arr[0]! ? 100 : 0
-  let below = 0
-  for (const v of arr) {
-    if (v < dps) below++
-  }
-  return Math.min(100, Math.max(0, Math.round((below / (n - 1)) * 100)))
+/**
+ * Parse percentile 0–100 for coloring: linear vs the best DPS in the pool, floor at 0.
+ * Top parse → 100; 0 DPS → 0; others scale in between (two players no longer 100 vs 0 only).
+ */
+export function dpsToPercentile(dps: number, poolDps: readonly number[]): number {
+  const arr = poolDps.filter((x) => Number.isFinite(x) && x >= 0)
+  const max = arr.length > 0 ? Math.max(...arr) : 0
+  const value = Math.max(0, dps)
+  if (max <= 0) return value > 0 ? 100 : 0
+  return Math.min(100, Math.max(0, Math.round((value / max) * 100)))
 }
 
-/** Percentile when leaderboard is sorted descending (best first). */
+/** @deprecated Use {@link dpsToPercentile}; order of `poolDps` does not matter. */
 export function dpsToPercentileDesc(dps: number, sortedDpsDesc: number[]): number {
-  const asc = [...sortedDpsDesc].sort((a, b) => a - b)
-  return dpsToPercentile(dps, asc)
+  return dpsToPercentile(dps, sortedDpsDesc)
 }
