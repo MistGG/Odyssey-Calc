@@ -708,13 +708,6 @@ code {
   color: var(--text);
 }
 
-.tier-progress.tier-progress--strip {
-  width: 100%;
-  height: 8px;
-  max-width: 22rem;
-  margin: 0;
-}
-
 .tier-refresh-status-line {
   margin: 0;
   width: 100%;
@@ -812,12 +805,6 @@ code {
 
 .tier-refresh-progress-label {
   font-size: 0.82rem;
-}
-
-.tier-progress--toolbar {
-  margin-top: 0;
-  width: 100%;
-  max-width: 28rem;
 }
 
 .tier-matrix-head {
@@ -1120,14 +1107,6 @@ code {
   align-items: center;
   gap: 0.45rem 0.75rem;
   margin-left: auto;
-}
-
-.tier-progress--inline {
-  display: inline-block;
-  vertical-align: middle;
-  width: 4.5rem;
-  height: 5px;
-  margin-left: 0.35rem;
 }
 
 .tier-shell-status,
@@ -2461,27 +2440,6 @@ code {
   background: rgba(30, 41, 59, 0.65);
   padding: 0.05rem 0.28rem;
   border-radius: 4px;
-}
-
-.tier-progress {
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(30, 41, 59, 0.75);
-  border: 1px solid var(--border);
-  overflow: hidden;
-  margin: 0.45rem 0 0.7rem;
-  opacity: 1;
-  transition: opacity 0.9s ease;
-}
-
-.tier-progress-fade {
-  opacity: 0;
-}
-
-.tier-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #0ea5e9, #22d3ee);
 }
 
 .tier-update-btn {

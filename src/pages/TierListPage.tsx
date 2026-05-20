@@ -260,9 +260,6 @@ export function TierListPage() {
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([])
   const [selectedElements, setSelectedElements] = useState<string[]>([])
   const [selectedFamilies, setSelectedFamilies] = useState<string[]>([])
-  const [showProgressBar, setShowProgressBar] = useState(true)
-  const [fadeProgressBar, setFadeProgressBar] = useState(false)
-  const sawIncompleteProgress = useRef(false)
   /** Planned queue length for the in-flight tier build (for progress UI; cleared when build ends). */
   const [tierBuildQueueTotal, setTierBuildQueueTotal] = useState<number | null>(null)
   const [updateSummary, setUpdateSummary] = useState<TierListUpdateSummary | null>(
@@ -894,7 +891,7 @@ export function TierListPage() {
   const checkedCount = cache ? Object.keys(cache.entries).length : 0
   const total = cache?.total ?? 0
   const runTotal = tierBuildQueueTotal
-  /** Set when a build has a non-empty planned queue; pairs with `cache.queue` for the bar. */
+  /** Set when a build has a non-empty planned queue; pairs with `cache.queue` for progress text. */
   const hasActiveBuildRun = Boolean(building && runTotal !== null && runTotal > 0)
   const progressNumerator = hasActiveBuildRun
     ? Math.min(runTotal!, runTotal! - (cache?.queue.length ?? runTotal!))
@@ -907,7 +904,6 @@ export function TierListPage() {
       ? Math.max(1, total || 1)
       : total
   const progress = progressDenominator > 0 ? (progressNumerator / progressDenominator) * 100 : 0
-  const tierBuildComplete = Boolean(cache && total > 0 && cache.queue.length === 0 && checkedCount >= total)
   const tierEntryIds = useMemo(() => Object.keys(cache?.entries ?? {}), [cache?.entries])
 
   const stageOptions = useMemo(() => {
@@ -1225,38 +1221,6 @@ export function TierListPage() {
     }
   }, [autoStarted, building, cache, initializing])
 
-  useEffect(() => {
-    if (!cache || total <= 0) {
-      setShowProgressBar(true)
-      setFadeProgressBar(false)
-      sawIncompleteProgress.current = false
-      return
-    }
-
-    if (!tierBuildComplete) {
-      sawIncompleteProgress.current = true
-      setShowProgressBar(true)
-      setFadeProgressBar(false)
-      return
-    }
-
-    // On refresh when cache is already complete, hide immediately.
-    if (!sawIncompleteProgress.current) {
-      setShowProgressBar(false)
-      setFadeProgressBar(false)
-      return
-    }
-
-    setShowProgressBar(true)
-    setFadeProgressBar(true)
-    const t = window.setTimeout(() => {
-      setShowProgressBar(false)
-    }, 900)
-    return () => {
-      window.clearTimeout(t)
-    }
-  }, [cache, tierBuildComplete, total])
-
   return (
     <div className="tier-page">
       <div className="tier-shell">
@@ -1317,11 +1281,6 @@ export function TierListPage() {
             {building ? (
               <span className="tier-shell-meta muted" aria-live="polite">
                 <strong>{progressNumerator}/{progressDenominator || '…'}</strong> ({progress.toFixed(0)}%)
-                {showProgressBar ? (
-                  <span className={`tier-progress tier-progress--inline ${fadeProgressBar ? 'tier-progress-fade' : ''}`} aria-hidden>
-                    <span className="tier-progress-bar" style={{ width: `${progress}%` }} />
-                  </span>
-                ) : null}
               </span>
             ) : (
               <span className="tier-shell-meta muted" title={cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never refreshed'}>
