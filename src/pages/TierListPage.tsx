@@ -5,13 +5,18 @@ import { fetchApprovedRotations, type CommunityRotation } from '../lib/community
 import { useAuth } from '../auth/useAuth'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
+import { TierDpsModifiersControls } from './tierList/TierDpsModifiersControls'
 import {
   adjustDpsRotationCategoryScoresForAttributeTarget,
   adjustRotationDpsForAttributeTarget,
-  ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
 } from '../lib/attributeAdvantage'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
+import {
+  clampTierFightDurationSec,
+  TIER_FIGHT_DURATION_DEFAULT_SEC,
+} from '../lib/tierFightDurationScale'
+import { resimTierEntrySustainedAtFightDuration } from '../lib/tierListFightDurationResim'
 import {
   DEFAULT_ROTATION_SIM_DURATION_SEC,
   simulateRotation,
@@ -70,6 +75,7 @@ import {
   readDpsAutoAnimCancel,
   readDpsForceAutoCrit,
   readDpsPerfectAtClone,
+  readTierFightDurationSec,
   readTierDpsTargetEnemyAttribute,
   readTierIgnoreIncomplete,
   readTierListMode,
@@ -81,6 +87,7 @@ import {
   writeDpsAutoAnimCancel,
   writeDpsForceAutoCrit,
   writeDpsPerfectAtClone,
+  writeTierFightDurationSec,
   writeTierDpsTargetEnemyAttribute,
   writeTierIgnoreIncomplete,
   writeTierListMode,
@@ -93,6 +100,9 @@ import {
 
 /** After this many ms on one Digimon, append a reassurance line (heavy DPS sims can block the UI). */
 const TIER_UPDATE_SLOW_HINT_MS = 5_000
+
+/** Matrix fight-length resims run after the slider stops moving for this long (keeps dragging smooth). */
+const TIER_FIGHT_DURATION_MATRIX_DEBOUNCE_MS = 400
 
 type TierRefreshCauseFlags = {
   api: boolean
@@ -242,7 +252,7 @@ export function TierListPage() {
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
   const [initializing, setInitializing] = useState(true)
   const [building, setBuilding] = useState(false)
-  const [status, setStatus] = useState<string>('Preparing tier list cache…')
+  const [, setStatus] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
   /** Empty = show all. Otherwise OR-filter by listed values (multi-select). */
@@ -265,12 +275,20 @@ export function TierListPage() {
   const [dpsForceAutoCrit, setDpsForceAutoCrit] = useState<boolean>(readDpsForceAutoCrit)
   const [dpsPerfectAtClone, setDpsPerfectAtClone] = useState<boolean>(readDpsPerfectAtClone)
   const [dpsAutoAnimCancel, setDpsAutoAnimCancel] = useState<boolean>(readDpsAutoAnimCancel)
+  const initialFightDurationSec = readTierFightDurationSec()
+  const [tierFightDurationSec, setTierFightDurationSec] = useState<number>(initialFightDurationSec)
+  const [fightDurationAppliedSec, setFightDurationAppliedSec] = useState<number>(initialFightDurationSec)
+  const tierFightDurationSliderRef = useRef(initialFightDurationSec)
+  tierFightDurationSliderRef.current = clampTierFightDurationSec(tierFightDurationSec)
   const [dpsTargetEnemyAttribute, setDpsTargetEnemyAttribute] = useState<string>(() =>
     readTierDpsTargetEnemyAttribute(),
   )
+  const [communityRotationsMap, setCommunityRotationsMap] = useState<Map<string, CommunityRotation>>(
+    () => new Map(),
+  )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
-  const [tierFiltersOpen, setTierFiltersOpen] = useState(true)
   const [clearingTierCache, setClearingTierCache] = useState(false)
+  const [clearCacheConfirmPending, setClearCacheConfirmPending] = useState(false)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -295,6 +313,19 @@ export function TierListPage() {
   function setDpsAutoAnimCancelPersist(next: boolean) {
     setDpsAutoAnimCancel(next)
     writeDpsAutoAnimCancel(next)
+  }
+
+  function setTierFightDurationSecPersist(next: number) {
+    setTierFightDurationSec(clampTierFightDurationSec(next))
+  }
+
+  function commitFightDurationFromSlider() {
+    const v = clampTierFightDurationSec(tierFightDurationSliderRef.current)
+    setFightDurationAppliedSec((prev) => {
+      if (v === prev) return prev
+      writeTierFightDurationSec(v)
+      return v
+    })
   }
 
   function setDpsTargetEnemyAttributePersist(next: string) {
@@ -348,6 +379,32 @@ export function TierListPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!supabase) {
+      setCommunityRotationsMap(new Map())
+      return
+    }
+    let cancelled = false
+    void fetchApprovedRotations(supabase).then((m) => {
+      if (!cancelled) setCommunityRotationsMap(m)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const v = clampTierFightDurationSec(tierFightDurationSliderRef.current)
+      setFightDurationAppliedSec((prev) => {
+        if (v === prev) return prev
+        writeTierFightDurationSec(v)
+        return v
+      })
+    }, TIER_FIGHT_DURATION_MATRIX_DEBOUNCE_MS)
+    return () => window.clearTimeout(id)
+  }, [tierFightDurationSec])
+
   // If cache loaded first (from local storage), lazily fetch meta list for names/roles of pending queue.
   useEffect(() => {
     if (!cache || Object.keys(listMeta).length > 0) return
@@ -370,6 +427,7 @@ export function TierListPage() {
   /** Tier matrix + wiki fallback cache + changelog; then empty queue + fresh index (same as first visit). */
   async function clearTierCachesAndReinit() {
     if (building || clearingTierCache) return
+    setClearCacheConfirmPending(false)
     setClearingTierCache(true)
     setError(null)
     try {
@@ -408,6 +466,10 @@ export function TierListPage() {
      */
     setDpsTargetEnemyAttribute('')
     writeTierDpsTargetEnemyAttribute('')
+    setTierFightDurationSec(TIER_FIGHT_DURATION_DEFAULT_SEC)
+    setFightDurationAppliedSec(TIER_FIGHT_DURATION_DEFAULT_SEC)
+    writeTierFightDurationSec(TIER_FIGHT_DURATION_DEFAULT_SEC)
+    setClearCacheConfirmPending(false)
     setBuilding(true)
     setError(null)
     const working: TierListCache = {
@@ -965,11 +1027,51 @@ export function TierListPage() {
         }
       }
 
-      const target = dpsTargetEnemyAttribute.trim()
-      if (target) {
-        for (const id of Object.keys(out)) {
+      const targetTrim = dpsTargetEnemyAttribute.trim()
+      const needFightResim =
+        dpsTierCategory === 'sustained' &&
+        clampTierFightDurationSec(fightDurationAppliedSec) !== TIER_FIGHT_DURATION_DEFAULT_SEC
+
+      const resimDoneIds = new Set<string>()
+      if (needFightResim) {
+        const dur = clampTierFightDurationSec(fightDurationAppliedSec)
+        const modifiers = {
+          forceAutoCrit: dpsForceAutoCrit,
+          perfectAtClone: dpsPerfectAtClone,
+          autoAttackAnimationCancel: dpsAutoAnimCancel,
+        }
+        for (const [id, e] of Object.entries(out)) {
+          const base = e.dpsCategoryScores
+          if (!base) continue
+          const sim = resimTierEntrySustainedAtFightDuration(e, dur, {
+            modifiers,
+            targetEnemyAttribute: dpsTargetEnemyAttribute,
+            communityRotation: communityRotationsMap.get(id),
+          })
+          if (!sim) continue
+          resimDoneIds.add(id)
           const attacker = listMeta[id]?.attribute?.trim()
-          out[id] = tierEntryWithAttributeTarget(out[id], target, attacker)
+          let nextScores = { ...base, sustained: sim.sustained, sustainedAutoDps: sim.sustainedAutoDps }
+          if (targetTrim) {
+            nextScores = {
+              ...nextScores,
+              burst: adjustRotationDpsForAttributeTarget(
+                nextScores.burst,
+                nextScores.burstAutoDps,
+                attacker,
+                targetTrim,
+              ),
+            }
+          }
+          out[id] = { ...e, dps: sim.sustained, dpsCategoryScores: nextScores }
+        }
+      }
+
+      if (targetTrim) {
+        for (const id of Object.keys(out)) {
+          if (resimDoneIds.has(id)) continue
+          const attacker = listMeta[id]?.attribute?.trim()
+          out[id] = tierEntryWithAttributeTarget(out[id], targetTrim, attacker)
         }
       }
 
@@ -990,6 +1092,8 @@ export function TierListPage() {
     dpsAutoAnimCancel,
     dpsTierCategory,
     dpsTargetEnemyAttribute,
+    fightDurationAppliedSec,
+    communityRotationsMap,
     cache,
     listMeta,
   ])
@@ -1154,193 +1258,84 @@ export function TierListPage() {
   }, [cache, tierBuildComplete, total])
 
   return (
-    <div className="lab tier-page">
-      <div className="tier-page-head">
-        <h1>Tier lists</h1>
-        <div className="tier-page-head-controls">
-          <div className="tier-mode-tabs" role="tablist" aria-label="Tier list type">
-            <button
-              type="button"
-              role="tab"
-              className="tier-mode-tab"
-              aria-selected={tierMode === 'dps'}
-              onClick={() => setTierModePersist('dps')}
-            >
-              DPS (all roles)
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className="tier-mode-tab"
-              aria-selected={tierMode === 'tank'}
-              onClick={() => setTierModePersist('tank')}
-            >
-              Tank
-            </button>
-            <button
-              type="button"
-              role="tab"
-              className="tier-mode-tab"
-              aria-selected={tierMode === 'healer'}
-              onClick={() => setTierModePersist('healer')}
-            >
-              Healer
-            </button>
+    <div className="tier-page">
+      <div className="tier-shell">
+        <div className="tier-shell-nav">
+          <div
+            className={
+              tierMode === 'dps'
+                ? 'tier-shell-tab-strip tier-shell-tab-strip--has-subtabs'
+                : 'tier-shell-tab-strip tier-shell-tab-strip--solo'
+            }
+          >
+            <nav className="tier-shell-tabs" role="tablist" aria-label="Tier list type">
+              <button type="button" role="tab" className="tier-shell-tab" aria-selected={tierMode === 'dps'} onClick={() => setTierModePersist('dps')}>DPS</button>
+              <button type="button" role="tab" className="tier-shell-tab" aria-selected={tierMode === 'tank'} onClick={() => setTierModePersist('tank')}>Tank</button>
+              <button type="button" role="tab" className="tier-shell-tab" aria-selected={tierMode === 'healer'} onClick={() => setTierModePersist('healer')}>Healer</button>
+            </nav>
+            {tierMode === 'dps' ? (
+              <nav className="tier-shell-subtabs" role="tablist" aria-label="DPS ranking metric">
+                {DPS_TIER_CATEGORY_ORDER.map((key) => (
+                  <button key={key} type="button" role="tab" className="tier-shell-subtab" aria-selected={dpsTierCategory === key} onClick={() => setDpsTierCategoryPersist(key)}>
+                    {DPS_TIER_MATRIX_COLUMN_LABELS[key]}
+                  </button>
+                ))}
+              </nav>
+            ) : null}
           </div>
-          {tierMode === 'dps' ? (
-            <div
-              className="tier-mode-tabs tier-submode-tabs"
-              role="tablist"
-              aria-label="DPS ranking metric"
-            >
-              {DPS_TIER_CATEGORY_ORDER.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  className="tier-mode-tab"
-                  aria-selected={dpsTierCategory === key}
-                  onClick={() => setDpsTierCategoryPersist(key)}
-                >
-                  {DPS_TIER_MATRIX_COLUMN_LABELS[key]}
-                </button>
-              ))}
-            </div>
-          ) : null}
         </div>
-      </div>
-      <div className="tier-wip-note tier-wip-note-wide tier-wip-note--success" role="note">
-        <p>
-          Tier list has been updated for this patch. However, INT and DEX are not currently considered. They
-          will be implemented at a later date once both are working appropriately.
-        </p>
-        <p>
-          ASB, Variance damage and latency are not considered at this time. If you feel something is out of
-          place, please contact Mist on the Digital Odyssey Discord.
-        </p>
-      </div>
-
-      <div className="tier-page-body">
-      <div className="tier-page-top-tools">
-      <div className="lab-result tier-refresh-strip" aria-label="Update tier list from wiki">
-        <div className="tier-refresh-strip-stack">
-          <div className="tier-refresh-strip-actions">
-            <button
-              type="button"
-              className="tier-update-btn tier-update-btn--strip"
-              disabled={initializing || building || clearingTierCache || !cache}
-              onClick={() => void updateTierList()}
-            >
+        <div className="tier-shell-bar" aria-label="Tier list actions">
+          {clearCacheConfirmPending ? (
+            <p className="tier-clear-cache-warning" role="status">
+              Clearing cache will reset the Changes page.
+            </p>
+          ) : null}
+          <div className="tier-shell-bar-main">
+            <button type="button" className="tier-update-btn" disabled={initializing || building || clearingTierCache || !cache} onClick={() => void updateTierList()}>
               {building ? 'Checking…' : 'Update tier list'}
             </button>
             <button
               type="button"
-              className="tier-update-btn tier-update-btn--strip tier-update-btn-secondary"
+              className={clearCacheConfirmPending ? 'tier-update-btn tier-update-btn-danger' : 'tier-update-btn tier-update-btn-secondary'}
               disabled={building || clearingTierCache || initializing}
               aria-busy={clearingTierCache}
-              title="Remove saved tier results, wiki fallback cache, and tier changelog from this browser, then reload the Digimon index. Filter toggles are kept."
-              onClick={() => void clearTierCachesAndReinit()}
+              title={clearCacheConfirmPending ? 'Confirm clearing tier results, wiki cache, and changelog' : 'Remove saved tier results, wiki fallback cache, and tier changelog from this browser, then reload the Digimon index. Filter toggles are kept.'}
+              onClick={() => { if (clearCacheConfirmPending) void clearTierCachesAndReinit(); else setClearCacheConfirmPending(true) }}
             >
-              {clearingTierCache ? 'Clearing…' : 'Clear cache'}
+              {clearingTierCache ? 'Clearing…' : clearCacheConfirmPending ? 'Confirm' : 'Clear cache'}
             </button>
+            {clearCacheConfirmPending ? (
+              <button
+                type="button"
+                className="tier-update-btn tier-update-btn-cancel"
+                disabled={building || clearingTierCache || initializing}
+                onClick={() => setClearCacheConfirmPending(false)}
+              >
+                Cancel
+              </button>
+            ) : null}
+            {building ? (
+              <span className="tier-shell-meta muted" aria-live="polite">
+                <strong>{progressNumerator}/{progressDenominator || '…'}</strong> ({progress.toFixed(0)}%)
+                {showProgressBar ? (
+                  <span className={`tier-progress tier-progress--inline ${fadeProgressBar ? 'tier-progress-fade' : ''}`} aria-hidden>
+                    <span className="tier-progress-bar" style={{ width: `${progress}%` }} />
+                  </span>
+                ) : null}
+              </span>
+            ) : (
+              <span className="tier-shell-meta muted" title={cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never refreshed'}>
+                Last checked: {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
+              </span>
+            )}
           </div>
-          {building ? (
-            <div className="tier-refresh-building">
-              <p className="tier-refresh-building-stats muted" aria-live="polite">
-                Progress{' '}
-                <strong className="tier-refresh-building-stats-strong">
-                  {progressNumerator}/{progressDenominator || '…'} ({progress.toFixed(1)}%)
-                </strong>
-              </p>
-              {showProgressBar ? (
-                <div
-                  className={`tier-progress tier-progress--strip ${fadeProgressBar ? 'tier-progress-fade' : ''}`}
-                  aria-hidden
-                >
-                  <div className="tier-progress-bar" style={{ width: `${progress}%` }} />
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <p
-              className="tier-refresh-meta-line muted"
-              title={
-                cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never refreshed'
-              }
-            >
-              Last checked:{' '}
-              {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
-            </p>
-          )}
-          {status ? <p className="tier-refresh-status-line muted">{status}</p> : null}
-          {error ? (
-            <p className="error tier-refresh-error" role="alert">
-              {error}
-            </p>
-          ) : null}
         </div>
-      </div>
-
-      <details className="lab-result tier-tools-details tier-special-modifiers-details tier-special-modifiers--inline">
-        <summary id="tier-special-modifiers-heading" className="tier-tools-details-summary">
-          Special Modifiers
-        </summary>
-        <div className="tier-tools-details-body tier-special-modifiers">
-        {tierMode === 'dps' ? (
-          <>
-            <p className="muted">Optional tweaks for DPS tier simulations.</p>
-            <div className="tier-special-modifiers-list">
-              <label
-                className={`tier-auto-crit-toggle tier-special-modifier-toggle${
-                  dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={dpsForceAutoCrit}
-                  onChange={(e) => setDpsForceAutoCritPersist(e.target.checked)}
-                  disabled={dpsTierCategory === 'aoe'}
-                />
-                Guaranteed Crit
-              </label>
-              <label
-                className={`tier-auto-crit-toggle tier-special-modifier-toggle${
-                  dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={dpsPerfectAtClone}
-                  onChange={(e) => setDpsPerfectAtClonePersist(e.target.checked)}
-                  disabled={dpsTierCategory === 'aoe'}
-                />
-                Perfect AT clone
-              </label>
-              <label
-                className={`tier-auto-crit-toggle tier-special-modifier-toggle${
-                  dpsTierCategory === 'aoe' ? ' tier-auto-crit-toggle-disabled' : ''
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={dpsAutoAnimCancel}
-                  onChange={(e) => setDpsAutoAnimCancelPersist(e.target.checked)}
-                  disabled={dpsTierCategory === 'aoe'}
-                />
-                Auto attack animation cancelling (Special thanks to Yvelchrome for bringing this to my attention and testing it!)
-              </label>
-            </div>
-          </>
-        ) : (
-          <p className="muted">These options apply when the DPS tier list is selected.</p>
-        )}
-        </div>
-      </details>
+        {error ? <p className="error tier-shell-error" role="alert">{error}</p> : null}
       </div>
 
       {updateSummary && (
         <section
-          className="lab-result tier-update-summary"
+          className="tier-update-banner"
           aria-label="Last tier list update summary"
         >
           <div className="tier-update-summary-head">
@@ -1769,192 +1764,24 @@ export function TierListPage() {
       )}
 
       {cache && !initializing && checkedCount > 0 && (
-        <section className="lab-result tier-matrix-section">
-          <div className="tier-matrix-head">
-            <h3 className="tier-matrix-title">
-              {tierMode === 'dps'
-                ? dpsTierCategory === 'aoe'
-                  ? 'DPS tier list: AoE (Damage / Uptime / Farming / Radius)'
-                  : `DPS tier list: ${DPS_TIER_MATRIX_COLUMN_LABELS[dpsTierCategory]}`
-                : tierMode === 'tank'
-                  ? 'Tank tier list'
-                  : 'Healer tier list'}
-            </h3>
-            <div className="tier-status-legend tier-status-legend--compact" role="note" aria-label="Status criteria">
-              <span className="tier-status-legend-item">
-                <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
-                <span>{contentStatusLabel('complete')}</span>
-              </span>
-              <span className="tier-status-legend-item">
-                <span className="tier-status-dot tier-status-dot-incomplete" aria-hidden="true" />
-                <span>{contentStatusLabel('incomplete')}</span>
-              </span>
-              <span className="muted tier-status-legend-hint">
-                Incomplete if skills &lt; 5 or any skill name contains “placeholder”.
-              </span>
-            </div>
-          </div>
-          {tierMode === 'dps' ? (
-            <>
-              <details className="tier-score-explainer">
-                <summary>DPS Scoring</summary>
-                <div className="tier-score-explainer-body">
-                  <ul className="tier-score-explainer-list">
-                    <li>
-                      <strong>Sustained:</strong> same simulation as Lab default (greedy rotation over{' '}
-                      {DEFAULT_ROTATION_SIM_DURATION_SEC}s; Hybrid defaults to melee stance).
-                    </li>
-                    <li>
-                      <strong>Attribute damage:</strong> <strong>Update tier list</strong> stores{' '}
-                      <strong>neutral</strong> matchup (no triangle inside the sim). Use <em>DPS target → Enemy
-                      attribute</em> below to preview triangle scaling <strong>live</strong> (no second refresh).
-                      Vaccine/Data/Virus and neutral <strong>None</strong> (×
-                      {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} on full skill hits when the matchup applies).
-                      Rotation DPS uses <strong>wiki stats only</strong> — no saved gear (including True Vice).
-                      DPS Lab can still apply True Vice from the Gear page when you run a sim there.
-                    </li>
-                    <li>
-                      <strong>Burst ({BURST_DPS_WINDOW_SEC}s):</strong> same rotation rules with a shorter
-                      horizon (openers / short burst bias).
-                    </li>
-                    <li>
-                      <strong>AoE:</strong> choose the <strong>AoE</strong> sub-tab for four columns (wiki{' '}
-                      <code>radius</code> &gt; 0 only). <strong>Damage</strong> is per-cast damage of the{' '}
-                      <strong>hardest-hitting</strong> damaging AoE (tie-break higher <code>damage ÷ (cast + cooldown)</code>
-                      ). <strong>Uptime</strong> is{' '}
-                      <code>cast_time ÷ (cast + cooldown)</code> for that same skill (share of each cycle in cast);{' '}
-                      <strong>Farming</strong> is an arbitrary rank score: buckets by{' '}
-                      <strong>cooldown only</strong> (fast ≤8s, then (8,10], (10,12], &gt;12s; cast ignored for bucket
-                      edges). Best damaging AoE in each bucket uses <code>damage</code>,{' '}
-                      <code>DPS</code> (<code>damage ÷ (cast + cooldown)</code>), and <code>radius</code>.
-                      Support-only kits
-                      use a legacy cadence blend. <strong>Radius</strong> and <strong>Uptime</strong> use that same
-                      damaging skill only (support/buff AoE radii are ignored; no damaging AoE → 0).
-                    </li>
-                  </ul>
-                </div>
-              </details>
-              {dpsScoresStale && (
-                <p className="tier-stale-note" role="status">
-                  Some rows need a DPS refresh (missing category scores or an older rotation sim).
-                  Run <strong>Update tier list</strong> (full wiki pass) to recalculate.
-                </p>
-              )}
-            </>
+        <section className="tier-matrix-section">
+          {dpsScoresStale && tierMode === 'dps' ? (
+            <p className="tier-stale-note" role="status">
+              Some rows need a DPS refresh (missing category scores or an older rotation sim). Run{' '}
+              <strong>Update tier list</strong> (full wiki pass) to recalculate.
+            </p>
           ) : null}
-          {tierMode === 'tank' ? (
-            <>
-              <details className="tier-score-explainer">
-                <summary>Tank Scoring</summary>
-                <div className="tier-score-explainer-body">
-                  <ul className="tier-score-explainer-list">
-                    <li>
-                      Parses skill/buff text and numbers, mixes in base stats; used only to order rows.
-                    </li>
-                    <li>
-                      Base HP (~65%): wiki combat max HP, main tankiness signal.
-                    </li>
-                    <li>
-                      Mitigation (~22%): damage reduction, shields, heals, Max HP% from skills; each
-                      scaled by estimated uptime (buff duration ÷ cooldown+cast, max 100%; fallback if
-                      duration missing).
-                    </li>
-                    <li>Defense (~9%): defense × 6, then scaled like HP (log1p(defenseRaw/1000)).</li>
-                    <li>Avoidance (~4%): block + evasion (down-weighted).</li>
-                    <li>
-                      Combined with <code>log1p</code> so one huge value does not decide everything:{' '}
-                      <code>
-                        0.65·log1p(HP/1000) + 0.22·log1p(mit) + 0.09·log1p(def×6/1000) +
-                        0.04·log1p(avoid)
-                      </code>
-                      .
-                    </li>
-                    <li>
-                      S/A/B/C: same cutoffs as DPS (~10% / ~20% / ~30% / rest) within each column among
-                      filtered Tanks (order differs per column).
-                    </li>
-                    <li>
-                      <strong>Overall</strong> is a calculation of all parameters.{' '}
-                      <strong>Effective HP / Defense / Evasion / Block</strong> columns show wiki base plus
-                      uptime-weighted parsed buffs to that stat (same linear sum the column sort is derived
-                      from, before <code>log1p</code>). <strong>Effective HP</strong> also adds self-shields:
-                      parsed barrier size per cast (with tick counts for multi-tick shields) times the same
-                      estimated buff uptime.
-                    </li>
-                    <li>
-                      Limits: imperfect text parsing; no party vs self, overheal, or enemy modeling.
-                      Refresh scores after wiki changes via <strong>Update tier list</strong>.
-                    </li>
-                  </ul>
-                </div>
-              </details>
-              {tankScoresStale && (
-                <p className="tier-stale-note" role="status">
-                  Some rows are missing tank scores. Run <strong>Update tier list</strong> to recalculate.
-                </p>
-              )}
-            </>
+          {tankScoresStale && tierMode === 'tank' ? (
+            <p className="tier-stale-note" role="status">
+              Some rows are missing tank scores. Run <strong>Update tier list</strong> to recalculate.
+            </p>
           ) : null}
-          {tierMode === 'healer' ? (
-            <>
-              <details className="tier-score-explainer">
-                <summary>Healer Scoring</summary>
-                <div className="tier-score-explainer-body">
-                  <ul className="tier-score-explainer-list">
-                    <li>
-                      Healing (~74%): Each skill with heal text contributes HP per cast ÷ (cooldown +
-                      cast, min 0.75s). Per cast: % lines use this Digimon&apos;s max HP as the scale;
-                      flat lines use the number as-is. Those rates are summed across heal skills
-                      (simple sustain, not a full rotation solver).
-                    </li>
-                    <li>
-                      Shields and damage reduction (~16%): barriers and DR only (healing not counted
-                      again here), still using buff uptime vs cooldown.
-                    </li>
-                    <li>
-                      Damage buffs (~7%): skill damage, ATK%, crit, attack speed, flat ATK × uptime.
-                    </li>
-                    <li>INT (~3%): small tie-breaker from wiki combat stats.</li>
-                    <li>
-                      Blend with <code>log1p</code>:{' '}
-                      <code>
-                        0.74·log1p(heal/s) + 0.16·log1p(mit) + 0.07·log1p(buff) + 0.03·log1p(INT)
-                      </code>
-                      .
-                    </li>
-                    <li>
-                      S/A/B/C: same cutoffs as DPS within each column among filtered Support rows (order
-                      differs per column).
-                    </li>
-                    <li>
-                      <strong>Overall</strong> is a calculation of all parameters. <strong>Healing</strong>{' '}
-                      shows modeled HPS; <strong>Shielding</strong> shows modeled SPS (barrier HP per cast ÷
-                      cooldown+cast, summed across shield skills; same value used to sort that column).{' '}
-                      <strong>Buffing</strong> shows summed %-uptime (plus scaled flat ATK) from
-                      offensive buff lines: a rough &quot;how much damage buff&quot; footprint, not in-game
-                      DPS. <strong>INT</strong> is wiki combat INT.
-                    </li>
-                    <li>
-                      Limits: adding all heal skills can overstate if they share one GCD; HoTs, targets,
-                      DS heals, passives not modeled; odd skill text may parse wrong.
-                    </li>
-                  </ul>
-                </div>
-              </details>
-              {healerScoresStale && (
-                <p className="tier-stale-note" role="status">
-                  Some rows are missing healer scores. Run <strong>Update tier list</strong> to recalculate.
-                </p>
-              )}
-            </>
+          {healerScoresStale && tierMode === 'healer' ? (
+            <p className="tier-stale-note" role="status">
+              Some rows are missing healer scores. Run <strong>Update tier list</strong> to recalculate.
+            </p>
           ) : null}
-          <details
-            className="tier-filters-details"
-            open={tierFiltersOpen}
-            onToggle={(e) => setTierFiltersOpen(e.currentTarget.open)}
-          >
-            <summary className="tier-filters-details-summary">Filters</summary>
-            <div className="tier-filter-panel tier-filter-panel--details-inner">
+          <div className="tier-filters-compact">
             <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-stage-label">
               <span className="tier-filter-label" id="tier-filter-stage-label">
                 Stage
@@ -2050,21 +1877,19 @@ export function TierListPage() {
               aria-labelledby="tier-dps-enemy-attr-label"
             >
               <span className="tier-filter-label" id="tier-dps-enemy-attr-label">
-                DPS target
+                ENEMY ATT
               </span>
               <div className="tier-dps-enemy-attr-stack">
                 <div className="tier-dps-target-selects-row">
                   <div className="tier-dps-attribute-column">
                     <EnemyAttributeTargetField
-                      fieldCaption="Enemy attribute"
                       value={dpsTargetEnemyAttribute}
                       onChange={setDpsTargetEnemyAttributePersist}
                       selectClassName="tier-dps-enemy-attr-select"
                       ariaLabel="Enemy wiki attribute for Vaccine–Data–Virus skill damage"
                       showLegend={false}
                     />
-                    <p className="tier-dps-attr-hint muted">(Skill portion ×1.5 for advantage Digimon).</p>
-                  </div>
+</div>
                 </div>
               </div>
             </div>
@@ -2081,8 +1906,48 @@ export function TierListPage() {
                 </button>
               </div>
             </div>
+            {tierMode === 'dps' ? (
+              <div className="tier-filter-row tier-filter-row--modifiers" role="group" aria-label="DPS modifiers">
+                <span className="tier-filter-label">Modifiers</span>
+                <TierDpsModifiersControls
+                  dpsTierCategory={dpsTierCategory}
+                  tierFightDurationSec={tierFightDurationSec}
+                  onFightDurationChange={setTierFightDurationSecPersist}
+                  onFightDurationPointerUp={commitFightDurationFromSlider}
+                  dpsForceAutoCrit={dpsForceAutoCrit}
+                  onDpsForceAutoCritChange={setDpsForceAutoCritPersist}
+                  dpsPerfectAtClone={dpsPerfectAtClone}
+                  onDpsPerfectAtCloneChange={setDpsPerfectAtClonePersist}
+                  dpsAutoAnimCancel={dpsAutoAnimCancel}
+                  onDpsAutoAnimCancelChange={setDpsAutoAnimCancelPersist}
+                />
+              </div>
+            ) : null}
+            <div
+              className="tier-status-legend tier-status-legend--compact tier-status-legend--filters-corner"
+              role="note"
+              aria-label="Status criteria"
+            >
+              <span className="tier-status-legend-item">
+                <span className="tier-status-dot tier-status-dot-complete" aria-hidden="true" />
+                <span className="lab-inline-tooltip-wrap tier-status-legend-tooltip tier-status-legend-tooltip--complete">
+                  <span>Complete</span>
+                  <span role="tooltip" className="lab-inline-tooltip">
+                    Can change
+                  </span>
+                </span>
+              </span>
+              <span className="tier-status-legend-item">
+                <span className="tier-status-dot tier-status-dot-incomplete" aria-hidden="true" />
+                <span className="lab-inline-tooltip-wrap tier-status-legend-tooltip">
+                  <span>Incomplete</span>
+                  <span role="tooltip" className="lab-inline-tooltip">
+                    Incomplete if skills &lt; 5 or any skill name contains &ldquo;placeholder&rdquo;.
+                  </span>
+                </span>
+              </span>
+            </div>
           </div>
-          </details>
           {roles.length === 0 ? (
             <p className="muted tier-matrix-empty">
               No Digimon match this view. Try clearing filters
@@ -2279,7 +2144,6 @@ export function TierListPage() {
           )}
         </section>
       )}
-      </div>
     </div>
   )
 }

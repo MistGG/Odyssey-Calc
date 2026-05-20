@@ -216,6 +216,19 @@ code {
   border-color: var(--border-strong);
 }
 
+.nav a.nav-link--active,
+.nav .nav-link--active {
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.12), 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.nav a.nav-sign-in.nav-link--active {
+  color: #fff;
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
 /* External link to the live game site (distinct from in-app routes) */
 .nav a.nav-link-official {
   color: #fde68a;
@@ -909,6 +922,643 @@ code {
   margin-bottom: 0;
 }
 
+/* Tier list page shell — centered tabs + actions */
+.tier-shell {
+  margin-bottom: 0.85rem;
+}
+
+.tier-shell-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 0;
+}
+
+.tier-shell-tab-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  max-width: min(42rem, 100%);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.tier-shell-tab-strip--solo .tier-shell-tabs {
+  border-bottom: 2px solid rgba(51, 65, 85, 0.65);
+  border-radius: 0 0 10px 10px;
+  padding-bottom: 0.15rem;
+}
+
+.tier-shell-tab-strip--has-subtabs .tier-shell-tabs {
+  border-bottom: none;
+  border-radius: 0;
+}
+
+.tier-shell-tab-strip--has-subtabs .tier-shell-subtabs {
+  margin-top: -1px;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  border-top: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 0 0 12px 12px;
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.tier-shell-tab-strip--solo .tier-shell-tab[aria-selected='true']::after {
+  bottom: -2px;
+}
+
+.tier-shell-tabs {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 0.35rem;
+  border-bottom: 2px solid rgba(51, 65, 85, 0.65);
+}
+
+.tier-shell-tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 5.5rem;
+  max-width: 9rem;
+  margin: 0;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 0.55rem 1rem 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  color: var(--text-soft);
+  background: transparent;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.tier-shell-tab:hover {
+  color: var(--text);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.tier-shell-tab[aria-selected='true'] {
+  color: #e0f2fe;
+  background: rgba(14, 165, 233, 0.18);
+  box-shadow: inset 0 -2px 0 #38bdf8;
+}
+
+.tier-shell-tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -2px;
+  height: 2px;
+  background: #38bdf8;
+  border-radius: 2px 2px 0 0;
+}
+
+.tier-shell-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.5rem 0.35rem 0.4rem;
+}
+
+.tier-shell-subtab {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.32rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-soft);
+  background: transparent;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.tier-shell-subtab:hover {
+  color: var(--text);
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.tier-shell-subtab[aria-selected='true'] {
+  color: #e0f2fe;
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(14, 165, 233, 0.28);
+  box-shadow: 0 1px 8px rgba(14, 165, 233, 0.2);
+}
+
+.tier-shell-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.85rem;
+  padding: 0.65rem 0 0.25rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.35);
+}
+
+.tier-matrix-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.tier-clear-cache-warning {
+  flex: 1 1 100%;
+  margin: 0;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  color: #fecaca;
+  border-radius: 8px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.25);
+}
+
+.tier-shell-bar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.tier-shell-bar-main .tier-update-btn {
+  margin: 0;
+}
+
+.tier-shell-meta {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.tier-shell-bar-dps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin-left: auto;
+}
+
+.tier-progress--inline {
+  display: inline-block;
+  vertical-align: middle;
+  width: 4.5rem;
+  height: 5px;
+  margin-left: 0.35rem;
+}
+
+.tier-shell-status,
+.tier-shell-error {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.tier-matrix-section {
+  margin-top: 0;
+}
+
+.tier-matrix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+}
+
+.tier-filters-compact {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.75rem 0.85rem;
+  row-gap: 0.85rem;
+  margin-bottom: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(51, 65, 85, 0.45);
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Complete / incomplete key: sits in the card corner without affecting grid layout (no box growth). */
+.tier-filters-compact > .tier-status-legend.tier-status-legend--filters-corner {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.35rem;
+  margin: 0;
+  flex: none;
+  max-width: min(16.5rem, calc(100% - 0.9rem));
+  justify-content: flex-end;
+  gap: 0.3rem 0.5rem;
+  font-size: 0.64rem;
+  line-height: 1.2;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+/* Rows inside the compact card use their own spacing; suppress global sibling top border. */
+.tier-filters-compact .tier-filter-row + .tier-filter-row {
+  border-top: none;
+}
+
+.tier-filters-compact .tier-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  padding: 0.15rem 0;
+  border: none;
+  min-width: 0;
+}
+
+.tier-filters-compact .tier-filter-label {
+  flex: 0 0 auto;
+  width: 3.25rem;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+}
+
+.tier-filters-compact .tier-filter-chips {
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.tier-filters-compact .tier-filter-chips .stage-tab {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.68rem;
+}
+
+.tier-filters-compact .tier-filter-row--dps-enemy-attr {
+  grid-column: 1 / -1;
+  align-items: center;
+}
+
+.tier-filters-compact .tier-dps-target-selects-row {
+  align-items: center;
+}
+
+.tier-filters-compact .tier-dps-attribute-column > .enemy-attr-target-field {
+  width: auto;
+  max-width: 14rem;
+  justify-content: center;
+  min-height: 0;
+}
+
+.tier-filters-compact .tier-dps-enemy-attr-select,
+.tier-filters-compact .tier-dps-enemy-attr-stack .enemy-attr-select.tier-dps-enemy-attr-select {
+  width: auto;
+  min-width: 7.5rem;
+  max-width: 12rem;
+}
+
+.tier-filters-compact .tier-filter-row--dps-enemy-attr .tier-filter-label {
+  width: auto;
+  text-transform: none;
+  font-size: 0.72rem;
+}
+
+.tier-filters-compact .tier-dps-enemy-attr-stack {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: center;
+}
+
+.tier-filters-compact .tier-dps-attribute-column {
+  align-self: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.tier-filters-compact .tier-dps-attr-hint {
+  margin: 0;
+  font-size: 0.65rem;
+}
+
+.tier-filters-compact .tier-filter-row--options {
+  grid-column: 1 / -1;
+}
+
+.tier-filters-compact .tier-filter-row--modifiers {
+  grid-column: 1 / -1;
+  align-items: center;
+}
+
+.tier-filters-compact .tier-filter-row--modifiers .tier-filter-label {
+  width: auto;
+  padding-top: 0;
+  align-self: center;
+}
+
+.tier-modifiers-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tier-fight-duration-inline--filter {
+  flex: 1 1 18rem;
+  min-width: 16rem;
+  max-width: 26rem;
+}
+
+.tier-fight-duration-inline--filter input[type='range'] {
+  flex: 1 1 11rem;
+  min-width: 9rem;
+  height: 1.35rem;
+  cursor: pointer;
+}
+
+.tier-filters-compact .tier-fight-duration-inline--filter {
+  flex: 1 1 auto;
+  min-width: min(100%, 18rem);
+  max-width: 28rem;
+  padding: 0.22rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(51, 65, 85, 0.45);
+  background: rgba(15, 23, 42, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  gap: 0.45rem;
+}
+
+.tier-fight-duration-value-pill {
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(8, 47, 73, 0.55);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.tier-modifiers-popover-anchor {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.tier-modifiers-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: rgba(14, 165, 233, 0.12);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tier-modifiers-trigger::after {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-left: 0.05rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  opacity: 0.75;
+}
+
+.tier-modifiers-trigger:hover,
+.tier-modifiers-trigger--open {
+  color: #e0f2fe;
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(14, 165, 233, 0.22);
+}
+
+.tier-modifiers-trigger--has-active {
+  border-color: rgba(34, 211, 238, 0.65);
+}
+
+.tier-modifiers-trigger-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #0f172a;
+  border-radius: 999px;
+  background: #38bdf8;
+}
+
+.tier-modifiers-popover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 12.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(15, 23, 42, 0.98);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.tier-modifiers-popover .tier-dps-option {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+@media (min-width: 900px) {
+  .tier-filters-compact {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tier-filters-compact .tier-filter-row--dps-enemy-attr,
+  .tier-filters-compact .tier-filter-row--options,
+  .tier-filters-compact .tier-filter-row--modifiers {
+    grid-column: auto;
+  }
+}
+
+.tier-page-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.tier-toolbar-primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+
+.tier-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tier-toolbar-actions .tier-update-btn {
+  margin: 0;
+}
+
+.tier-toolbar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 12rem;
+  min-width: 10rem;
+  max-width: 22rem;
+}
+
+.tier-toolbar-meta-line {
+  font-size: 0.8rem;
+}
+
+.tier-toolbar-status,
+.tier-toolbar-error {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.tier-toolbar-dps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1.25rem;
+}
+
+.tier-fight-duration-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 10rem;
+  max-width: 16rem;
+  cursor: pointer;
+}
+
+.tier-fight-duration-inline--disabled {
+  opacity: 0.55;
+}
+
+.tier-fight-duration-inline-label {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tier-fight-duration-inline input[type='range'] {
+  flex: 1 1 8rem;
+  min-width: 5rem;
+  margin: 0;
+}
+
+.tier-fight-duration-inline-value {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cyan, #38bdf8);
+  min-width: 3.25rem;
+  text-align: right;
+}
+
+.tier-dps-options {
+  font-size: 0.78rem;
+}
+
+.tier-dps-options summary {
+  cursor: pointer;
+  color: var(--cyan);
+  font-weight: 600;
+  list-style: none;
+}
+
+.tier-dps-options summary::-webkit-details-marker {
+  display: none;
+}
+
+.tier-dps-options-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.4rem;
+}
+
+.tier-dps-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.tier-dps-option--disabled {
+  opacity: 0.55;
+}
+
+.tier-update-banner {
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(51, 65, 85, 0.55);
+  background: rgba(15, 23, 42, 0.55);
+  font-size: 0.85rem;
+}
+
+
+.tier-stale-note--compact {
+  margin: 0 0 0.55rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
+}
+
 .tier-page-head {
   display: flex;
   flex-wrap: wrap;
@@ -929,9 +1579,27 @@ code {
   gap: 0.5rem;
 }
 
+.tier-page-head-tab-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
 .tier-submode-tabs {
   font-size: 0.72rem;
   padding: 0.12rem;
+}
+
+.tier-submode-tabs--primary-width {
+  box-sizing: border-box;
+  justify-content: stretch;
+}
+
+.tier-submode-tabs--primary-width .tier-mode-tab {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .tier-submode-tabs .tier-mode-tab {
@@ -948,6 +1616,52 @@ code {
   flex-direction: column;
   gap: 0.45rem;
   margin-top: 0.45rem;
+}
+
+.tier-fight-duration-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.tier-fight-duration-field--disabled {
+  opacity: 0.55;
+}
+
+.tier-fight-duration-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+.tier-fight-duration-label-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.tier-fight-duration-value {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, #38bdf8);
+}
+
+.tier-fight-duration-field input[type='range'] {
+  width: 100%;
+  margin: 0;
+}
+
+.tier-fight-duration-hint {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
 }
 
 .tier-special-modifier-toggle {
@@ -1794,6 +2508,30 @@ code {
   border-color: rgba(148, 163, 184, 0.45);
   background: rgba(30, 41, 59, 0.38);
   color: var(--text-soft);
+}
+
+.tier-update-btn-danger {
+  border-color: rgba(248, 113, 113, 0.65);
+  background: rgba(185, 28, 28, 0.45);
+  color: #fff;
+}
+
+.tier-update-btn-danger:hover:not(:disabled) {
+  border-color: rgba(252, 165, 165, 0.85);
+  background: rgba(220, 38, 38, 0.65);
+  color: #fff;
+}
+
+.tier-update-btn-cancel {
+  border-color: rgba(52, 211, 153, 0.55);
+  background: rgba(5, 150, 105, 0.38);
+  color: #ecfdf5;
+}
+
+.tier-update-btn-cancel:hover:not(:disabled) {
+  border-color: rgba(110, 231, 183, 0.75);
+  background: rgba(16, 185, 129, 0.52);
+  color: #fff;
 }
 
 .tier-update-summary {
@@ -7710,4 +8448,46 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     width: 100%;
     justify-content: center;
   }
+}
+
+
+.tier-status-legend-tooltip {
+  cursor: help;
+}
+
+.tier-status-legend-tooltip .lab-inline-tooltip {
+  min-width: 10rem;
+  max-width: 22rem;
+}
+
+/* Legend sits on the right; keep "Complete" tooltip inside the viewport. */
+.tier-status-legend-tooltip--complete .lab-inline-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(4px);
+}
+
+.tier-status-legend-tooltip--complete.lab-inline-tooltip-wrap:hover .lab-inline-tooltip,
+.tier-status-legend-tooltip--complete.lab-inline-tooltip-wrap:focus-within .lab-inline-tooltip {
+  transform: translateX(0) translateY(0);
+}
+
+.tier-dps-option--with-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.35rem;
+}
+
+.tier-dps-option-label-text {
+  flex: 0 0 auto;
+}
+
+.tier-dps-option-note-wrap {
+  margin-left: 0.1rem;
+}
+
+.tier-dps-option-note-wrap .lab-inline-tooltip {
+  min-width: 14rem;
+  max-width: 22rem;
 }

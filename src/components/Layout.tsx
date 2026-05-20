@@ -1,12 +1,18 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+
+function navLinkClass(isActive: boolean, extra = '') {
+  return `nav-link${extra ? ` ${extra}` : ''}${isActive ? ' nav-link--active' : ''}`
+}
 
 export function Layout() {
   const { user, authReady, signOut, profileDisplayName, profileReady } = useAuth()
+  const { pathname } = useLocation()
 
   const navUserLabel = profileDisplayName?.trim() || 'Account'
   const navUserInitial = navUserLabel.charAt(0).toUpperCase() || '?'
   const showAccountNav = authReady && user && profileReady
+  const browseActive = pathname === '/' || pathname.startsWith('/digimon/')
 
   return (
     <div className="layout app-shell">
@@ -23,13 +29,25 @@ export function Layout() {
           />
           <span className="brand-text">Odyssey Calc</span>
         </Link>
-        <nav className="nav">
-          <Link to="/">Browse</Link>
-          <Link to="/lab">Lab</Link>
-          <Link to="/gear">Gear</Link>
-          <Link to="/tier-list">Tier list</Link>
-          <Link to="/changes">Changes</Link>
-          <Link to="/meter-parses">Meter</Link>
+        <nav className="nav" aria-label="Main">
+          <NavLink to="/" end className={browseActive ? navLinkClass(true) : navLinkClass(false)}>
+            Browse
+          </NavLink>
+          <NavLink to="/lab" className={({ isActive }) => navLinkClass(isActive)}>
+            Lab
+          </NavLink>
+          <NavLink to="/gear" className={({ isActive }) => navLinkClass(isActive)}>
+            Gear
+          </NavLink>
+          <NavLink to="/tier-list" className={({ isActive }) => navLinkClass(isActive)}>
+            Tier List
+          </NavLink>
+          <NavLink to="/changes" className={({ isActive }) => navLinkClass(isActive)}>
+            Changes
+          </NavLink>
+          <NavLink to="/meter-parses" className={({ isActive }) => navLinkClass(isActive)}>
+            Meter
+          </NavLink>
           <NavLink
             to="/companion"
             className={({ isActive }) =>
@@ -52,9 +70,9 @@ export function Layout() {
               </button>
             </div>
           ) : authReady ? (
-            <Link to="/auth" className="nav-sign-in">
+            <NavLink to="/auth" className={({ isActive }) => navLinkClass(isActive, 'nav-sign-in')}>
               Sign in
-            </Link>
+            </NavLink>
           ) : null}
           <a
             className="nav-link-official"

@@ -1,6 +1,10 @@
 import { fetchDigimonPage } from '../../api/digimonService'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
+import {
+  clampTierFightDurationSec,
+  TIER_FIGHT_DURATION_DEFAULT_SEC,
+} from '../../lib/tierFightDurationScale'
 import { clearTierListCacheFromStorage } from '../../lib/tierList'
 import type { DpsTierCategoryKey, SustainedDpsEntry, TierListMode } from '../../lib/tierList'
 import { wikiHttpCacheClear } from '../../lib/wikiHttpCache'
@@ -34,6 +38,7 @@ export const TIER_DPS_CATEGORY_KEY = 'odysseyCalc.tierList.dpsCategory.v1'
 export const TIER_DPS_FORCE_AUTO_CRIT_KEY = 'odysseyCalc.tierList.dpsForceAutoCrit.v1'
 export const TIER_DPS_PERFECT_AT_CLONE_KEY = 'odysseyCalc.tierList.dpsPerfectAtClone.v1'
 export const TIER_DPS_AUTO_ANIM_CANCEL_KEY = 'odysseyCalc.tierList.dpsAutoAnimCancel.v1'
+export const TIER_FIGHT_DURATION_SEC_KEY = 'odysseyCalc.tierList.fightDurationSec.v1'
 /** v2: default empty; v1 ignored so users are not stuck with a persisted target. */
 export const TIER_DPS_TARGET_ENEMY_ATTRIBUTE_KEY = 'odysseyCalc.tierList.dpsTargetEnemyAttribute.v2'
 export const TIER_IGNORE_INCOMPLETE_KEY = 'odysseyCalc.tierList.ignoreIncomplete.v1'
@@ -245,6 +250,26 @@ export function writeDpsAutoAnimCancel(on: boolean) {
   }
 }
 
+export function readTierFightDurationSec(): number {
+  try {
+    const raw = localStorage.getItem(TIER_FIGHT_DURATION_SEC_KEY)
+    if (raw == null || raw.trim() === '') return TIER_FIGHT_DURATION_DEFAULT_SEC
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return TIER_FIGHT_DURATION_DEFAULT_SEC
+    return clampTierFightDurationSec(n)
+  } catch {
+    return TIER_FIGHT_DURATION_DEFAULT_SEC
+  }
+}
+
+export function writeTierFightDurationSec(sec: number) {
+  try {
+    localStorage.setItem(TIER_FIGHT_DURATION_SEC_KEY, String(clampTierFightDurationSec(sec)))
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Wiki enemy attribute used for DPS sim attribute-advantage (triangle + neutral None). Empty = off. */
 export function readTierDpsTargetEnemyAttribute(): string {
   try {
@@ -264,9 +289,11 @@ export function writeTierDpsTargetEnemyAttribute(value: string) {
 
 export function readTierIgnoreIncomplete(): boolean {
   try {
-    return localStorage.getItem(TIER_IGNORE_INCOMPLETE_KEY) === '1'
+    const v = localStorage.getItem(TIER_IGNORE_INCOMPLETE_KEY)
+    if (v === null) return true
+    return v === '1'
   } catch {
-    return false
+    return true
   }
 }
 
