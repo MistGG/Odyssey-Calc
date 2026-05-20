@@ -7,8 +7,8 @@ import type { WikiSkill } from '../types/wikiApi'
  * Role skills have **no skill levels or stat scaling** in the current model — effects use full values from
  * their description text; the sim always parses them at {@link DIGIMON_ROLE_SKILL_SIM_LEVEL}.
  */
-/** Role buff skills are instant cast in current game (good for auto-animation cancels). */
-export const DIGIMON_ROLE_SKILL_CAST_SEC = 0
+/** Role buff cast time in current game (short cast, still good for auto-animation cancels). */
+export const DIGIMON_ROLE_SKILL_CAST_SEC = 0.2
 
 /** Fixed parser/sim level for all role skills (no level progression). */
 export const DIGIMON_ROLE_SKILL_SIM_LEVEL = 1

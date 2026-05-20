@@ -5,6 +5,7 @@ import { wikiSkillHitCoefficient, skillIsSupportOnly } from './skillDamage'
 import {
   DIGIMON_ROLE_SKILL_SIM_LEVEL,
   digimonRoleWikiSkills,
+  DIGIMON_ROLE_SKILL_CAST_SEC,
   isDigimonRoleSkillId,
   isHybridStanceSkillId,
   normalizeWikiRole,
@@ -147,7 +148,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 63
+export const TIER_DPS_SIM_REVISION = 65
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -203,17 +204,19 @@ function effectiveCastTime(castTimeSec: number) {
 }
 
 /**
- * Support/buff-only casts are instant (0s) in current game. Wiki/API may still list legacy cast times;
- * rotation sim ignores them so multiple buffs can chain at the same clock without cast dead time.
+ * Wiki kit supports are instant (0s). Digimon role skills use {@link DIGIMON_ROLE_SKILL_CAST_SEC}.
  */
-function effectiveSupportCastTime(): number {
+function supportCastTimeSec(skill: WikiSkill): number {
+  if (isDigimonRoleSkillId(skill.id)) {
+    return effectiveCastTime(skill.cast_time_sec ?? DIGIMON_ROLE_SKILL_CAST_SEC)
+  }
   return 0
 }
 
 const SUPPORT_CAST_INSTANT_EPS_SEC = 1e-9
 
-function supportsCastInstant(): boolean {
-  return effectiveSupportCastTime() <= SUPPORT_CAST_INSTANT_EPS_SEC
+function supportCastIsInstant(skill: WikiSkill): boolean {
+  return supportCastTimeSec(skill) <= SUPPORT_CAST_INSTANT_EPS_SEC
 }
 
 /** Cast every profile that is still rotation-ready in priority order (same sim time between instant casts). */
@@ -616,25 +619,25 @@ export function autoWeaveRateComparableToSkillDpct(effectiveAutoIntervalSec: num
 }
 
 /**
- * While stacked attack-speed buffs (additive %) reach this total, or swing time falls below
- * {@link AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC}, sustained autos beat weaving damage skills — skip nukes
- * until buffs drop (supports still cast earlier in the greedy step).
+ * Legacy threshold (no longer gates defer by buff % alone). Kept for tooling/docs comparing opener AS stacks.
  */
 export const AUTO_PHASE_DEFER_DAMAGE_SKILLS_MIN_ATK_SPEED_BUFF_PCT = 25
 
 /**
  * Effective auto interval at or below this (seconds) counts as a “high AS phase” for deferring damage skills.
  * Example: wiki 1.4s base with ~35% additive AS → ~0.91s; triple AS stacks can reach ~0.7s.
+ * Buff % alone (e.g. ~27% → ~1.1s swing) does **not** enter this phase — skills still weave.
  */
 export const AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC = 0.93
 
 function inHighAttackSpeedAutoPhase(ctx: SimCtx, m: SimMutable): boolean {
-  const atkSpdBuffPct = m.activeBuffs.reduce((sum, b) => sum + (b.atkSpeedPct ?? 0), 0)
   const swingSec = autoIntervalFor(ctx, m)
-  return (
-    atkSpdBuffPct >= AUTO_PHASE_DEFER_DAMAGE_SKILLS_MIN_ATK_SPEED_BUFF_PCT ||
-    swingSec <= AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC + 1e-9
-  )
+  return swingSec <= AUTO_PHASE_DEFER_DAMAGE_SKILLS_MAX_SWING_SEC + 1e-9
+}
+
+/** True when a new auto swing may begin (attack-speed interval elapsed since last swing start). */
+function canBeginAutoSwingNow(m: SimMutable): boolean {
+  return m.t >= m.nextAutoSwingNotBeforeSec - 1e-9
 }
 
 /**
@@ -1095,6 +1098,10 @@ function performAutoIntoSkillCancel(
   skill: WikiSkill,
   recordEvents: boolean,
 ) {
+  if (!canBeginAutoSwingNow(m)) {
+    castDamageSkill(ctx, m, skill, recordEvents, false)
+    return
+  }
   const tAuto = m.t
   const snap = computeAutoHit(ctx, m, 'damage')
   m.totalDamage += snap.dmg
@@ -1216,7 +1223,7 @@ function castSupportProfile(
   recordEvents: boolean,
   cancelledFromAuto: boolean = false,
 ) {
-  const castTime = effectiveSupportCastTime()
+  const castTime = supportCastTimeSec(chosen.skill)
   m.casts += 1
   if (recordEvents) {
     m.events.push({
@@ -1268,6 +1275,10 @@ function performAutoIntoSupportCancel(
   chosen: SupportBuffProfile,
   recordEvents: boolean,
 ) {
+  if (!canBeginAutoSwingNow(m)) {
+    castSupportProfile(ctx, m, chosen, recordEvents, false)
+    return
+  }
   const tAuto = m.t
   const snap = computeAutoHit(ctx, m, 'damage')
   /** Full swing period from auto hit — support buff must not shorten this gate when buff adds atk spd. */
@@ -1393,7 +1404,10 @@ function castGreedySupportStep(
       supportBuffPriorityScoreForPlanner(b, ctx.baseAttack, nukeSoonGs) -
       supportBuffPriorityScoreForPlanner(a, ctx.baseAttack, nukeSoonGs),
   )
-  if (supportsCastInstant() && availableSupport.length >= 2) {
+  if (
+    availableSupport.length >= 2 &&
+    availableSupport.every((p) => supportCastIsInstant(p.skill))
+  ) {
     if (compareChainVsSequentialSupportRollout(ctx, m, availableSupport) === 'chain') {
       chainInstantSupportsIfReady(ctx, m, availableSupport, recordEvents)
     } else {
@@ -2229,7 +2243,10 @@ function runRotationSim(
           supportBuffPriorityScoreForPlanner(b, baseAttack, nukeSoonMain) -
           supportBuffPriorityScoreForPlanner(a, baseAttack, nukeSoonMain),
       )
-      if (supportsCastInstant() && availableSupport.length >= 2) {
+      if (
+        availableSupport.length >= 2 &&
+        availableSupport.every((p) => supportCastIsInstant(p.skill))
+      ) {
         if (compareChainVsSequentialSupportRollout(ctx, m, availableSupport) === 'chain') {
           chainInstantSupportsIfReady(ctx, m, availableSupport, true)
           continue

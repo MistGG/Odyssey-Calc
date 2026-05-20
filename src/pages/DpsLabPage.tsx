@@ -1163,8 +1163,8 @@ export function DpsLabPage() {
         const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
         lines.push(
           useAutoAnimCancel
-            ? `Role skills (${tn}) are instant — include them in your sequence or gap list to weave after autos.`
-            : `Role skills (${tn}) are instant; enable animation cancel under Special modifiers to model weaving.`,
+            ? `Role skills (${tn}) have a 0.2s cast — include them in your sequence or gap list to weave after autos.`
+            : `Role skills (${tn}) have a 0.2s cast; enable animation cancel under Special modifiers to model weaving.`,
         )
       }
 
@@ -1285,8 +1285,8 @@ export function DpsLabPage() {
       const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
       lines.push(
         useAutoAnimCancel
-          ? `Digimon role skills (${tn}) are instant. Animation cancel them after an auto for more DPS (same idea as your other buffs).`
-          : `Digimon role skills (${tn}) are instant cast; turn on animation cancel under Special modifiers to model weaving them after autos.`,
+          ? `Digimon role skills (${tn}) have a 0.2s cast. Animation cancel them after an auto for more DPS (same idea as your other buffs).`
+          : `Digimon role skills (${tn}) have a 0.2s cast; turn on animation cancel under Special modifiers to model weaving them after autos.`,
         `Hover buff % on timeline rows for per-hit breakdowns.`,
       )
     }
@@ -2608,7 +2608,7 @@ export function DpsLabPage() {
               <h3>Digimon role skills ({data.role})</h3>
               <p className="muted">
                 Role skills only (no tamer skills). They have no skill levels or scaling in the sim — effects use
-                full description values. Instant casts (0s), like all buffs in the current sim. Hybrid: one
+                full description values. Role skills use a 0.2s cast; kit supports stay instant (0s). Hybrid: one
                 stance at a time. Hit / INT (and skills that only buff those) aren&apos;t in the rotation sim
                 yet. Those rows are informational.
               </p>
