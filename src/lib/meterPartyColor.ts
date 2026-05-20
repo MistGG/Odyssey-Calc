@@ -14,3 +14,18 @@ export function partyMemberChromeStyle(memberKey: string): {
     background: `hsla(${hue}, 42%, 24%, 0.42)`,
   }
 }
+
+/** Gradient for party list damage bar (matches live meter). */
+export function partyMemberBarBackground(memberKey: string): string {
+  const hue = partyMemberHue(memberKey)
+  return `linear-gradient(90deg, hsla(${hue}, 72%, 56%, 0.78) 0%, hsla(${hue}, 58%, 48%, 0.42) 42%, hsla(${hue}, 45%, 40%, 0.14) 100%)`
+}
+
+function partyMemberHue(memberKey: string): number {
+  let h = 2166136261
+  for (let i = 0; i < memberKey.length; i++) {
+    h ^= memberKey.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return Math.abs(h) % 360
+}

@@ -22,6 +22,22 @@ export type WikiDigimonListResponse = {
   total_pages: number
 }
 
+
+export type WikiDungeonListItem = {
+  id: string
+  name: string
+  map_name?: string
+  image?: string
+  difficulties?: string[]
+}
+
+export type WikiDungeonListResponse = {
+  data: WikiDungeonListItem[]
+  page: number
+  per_page: number
+  total: number
+  total_pages: number
+}
 export type WikiCombatStats = {
   hp: number
   ds: number

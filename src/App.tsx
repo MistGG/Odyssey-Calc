@@ -5,10 +5,13 @@ import { BrowsePage } from './pages/BrowsePage'
 import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
 import { GearPage } from './pages/GearPage'
+import { MeterMyParsesPage } from './pages/MeterMyParsesPage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
+import { MeterPublicPage } from './pages/MeterPublicPage'
 import { CompanionPage } from './pages/CompanionPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
+
 export default function App() {
   return (
     <HashRouter>
@@ -21,6 +24,8 @@ export default function App() {
           <Route path="gear" element={<GearPage />} />
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
+          <Route path="meter" element={<MeterPublicPage />} />
+          <Route path="meter/my-parses" element={<MeterMyParsesPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -46,7 +46,12 @@ export function Layout() {
           <NavLink to="/changes" className={({ isActive }) => navLinkClass(isActive)}>
             Changes
           </NavLink>
-          <NavLink to="/meter-parses" className={({ isActive }) => navLinkClass(isActive)}>
+          <NavLink
+            to="/meter"
+            className={({ isActive }) =>
+              navLinkClass(isActive || pathname.startsWith('/meter'))
+            }
+          >
             Meter
           </NavLink>
           <NavLink

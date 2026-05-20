@@ -62,8 +62,8 @@ export function CompanionPage() {
           >
             Download for Windows
           </a>
-          <Link className="companion-cta companion-cta--ghost" to="/meter-parses">
-            View meter uploads
+          <Link className="companion-cta companion-cta--ghost" to="/meter">
+            View meter leaderboards
           </Link>
         </div>
         <p className="companion-hero__note muted">
@@ -112,7 +112,7 @@ export function CompanionPage() {
             <div>
               <strong>Review</strong>
               <p className="muted">
-                Open <Link to="/meter-parses">Meter</Link> here with the same account.
+                Open <Link to="/meter/my-parses">My Parses</Link> here with the same account.
               </p>
             </div>
           </li>
