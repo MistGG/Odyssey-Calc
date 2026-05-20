@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
-import { MeterParseColorLegend } from '../components/MeterParseColorLegend'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
@@ -86,8 +85,6 @@ export function MeterPublicPage() {
         <h1 className="meter-parses-title">Meter</h1>
         <MeterSubNav />
       </header>
-
-      <MeterParseColorLegend />
 
       <div className="meter-public-filters">
         <label className="meter-public-filter">
