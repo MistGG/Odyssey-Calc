@@ -1,7 +1,6 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { AuthPage } from './pages/AuthPage'
-import { BossTimersPage } from './pages/BossTimersPage'
 import { BrowsePage } from './pages/BrowsePage'
 import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
@@ -20,7 +19,6 @@ export default function App() {
           <Route path="digimon/:id" element={<DigimonDetailPage />} />
           <Route path="lab" element={<DpsLabPage />} />
           <Route path="gear" element={<GearPage />} />
-          <Route path="timers" element={<BossTimersPage />} />
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />

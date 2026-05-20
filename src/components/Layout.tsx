@@ -27,7 +27,6 @@ export function Layout() {
           <Link to="/">Browse</Link>
           <Link to="/lab">Lab</Link>
           <Link to="/gear">Gear</Link>
-          <Link to="/timers">Timers</Link>
           <Link to="/tier-list">Tier list</Link>
           <Link to="/changes">Changes</Link>
           <Link to="/meter-parses">Meter</Link>
