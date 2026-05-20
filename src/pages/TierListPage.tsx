@@ -18,6 +18,15 @@ import {
 } from '../lib/tierFightDurationScale'
 import { resimTierEntrySustainedAtFightDuration } from '../lib/tierListFightDurationResim'
 import {
+  buildFightResimCacheRevision,
+  buildFightResimParamKey,
+  clearTierFightDurationResimCacheStorage,
+  communityRotationsMapFingerprint,
+  readTierFightDurationResimCacheRoot,
+  writeTierFightDurationResimCacheRoot,
+  type TierFightResimCacheRootV1,
+} from '../lib/tierListFightDurationResimCacheStorage'
+import {
   DEFAULT_ROTATION_SIM_DURATION_SEC,
   simulateRotation,
   TIER_DPS_SIM_REVISION,
@@ -277,6 +286,8 @@ export function TierListPage() {
   const [fightDurationAppliedSec, setFightDurationAppliedSec] = useState<number>(initialFightDurationSec)
   const tierFightDurationSliderRef = useRef(initialFightDurationSec)
   tierFightDurationSliderRef.current = clampTierFightDurationSec(tierFightDurationSec)
+  /** Sustained fight-length resims keyed by tier revision + sim params (cleared on tier list update). */
+  const fightResimCacheRef = useRef<TierFightResimCacheRootV1 | null>(null)
   const [dpsTargetEnemyAttribute, setDpsTargetEnemyAttribute] = useState<string>(() =>
     readTierDpsTargetEnemyAttribute(),
   )
@@ -457,6 +468,8 @@ export function TierListPage() {
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {
     if (!cache || building || initializing) return
+    clearTierFightDurationResimCacheStorage()
+    fightResimCacheRef.current = null
     /**
      * Only DPS “Enemy attribute” is cleared — stage/element/family filters and Ignore incomplete persist.
      * Baked scores stay neutral; the dropdown applies triangle scaling live after refresh.
@@ -990,6 +1003,22 @@ export function TierListPage() {
     ignoreIncomplete,
   ])
 
+  const communityRotationsFingerprint = useMemo(
+    () => communityRotationsMapFingerprint(communityRotationsMap),
+    [communityRotationsMap],
+  )
+
+  const fightResimRevision = useMemo(
+    () =>
+      buildFightResimCacheRevision({
+        lastCheckedAt: cache?.lastCheckedAt,
+        queueLen: cache?.queue?.length ?? 0,
+        cacheTotal: cache?.total ?? 0,
+        communityFp: communityRotationsFingerprint,
+      }),
+    [cache?.lastCheckedAt, cache?.queue?.length, cache?.total, communityRotationsFingerprint],
+  )
+
   const entriesForMatrix = useMemo(() => {
     if (tierMode === 'dps') {
       if (dpsTierCategory === 'aoe') return filteredEntries
@@ -1036,9 +1065,45 @@ export function TierListPage() {
           perfectAtClone: dpsPerfectAtClone,
           autoAttackAnimationCancel: dpsAutoAnimCancel,
         }
+        const paramKey = buildFightResimParamKey({
+          durationSec: dur,
+          forceAutoCrit: modifiers.forceAutoCrit,
+          perfectAtClone: modifiers.perfectAtClone,
+          autoAnimCancel: modifiers.autoAttackAnimationCancel,
+          targetEnemyAttributeTrim: targetTrim,
+        })
+
+        let root = fightResimCacheRef.current
+        if (!root || root.revision !== fightResimRevision) {
+          const stored = readTierFightDurationResimCacheRoot()
+          root =
+            stored && stored.revision === fightResimRevision
+              ? {
+                  v: 1,
+                  revision: stored.revision,
+                  byParamKey: structuredClone(stored.byParamKey) as TierFightResimCacheRootV1['byParamKey'],
+                }
+              : { v: 1, revision: fightResimRevision, byParamKey: {} }
+          fightResimCacheRef.current = root
+        }
+        const bucket = root.byParamKey[paramKey] ?? (root.byParamKey[paramKey] = {})
+
         for (const [id, e] of Object.entries(out)) {
           const base = e.dpsCategoryScores
           if (!base) continue
+
+          const entrySig = e.skillsSignature ?? ''
+          const cached = bucket[id]
+          if (cached && cached.sig === entrySig) {
+            resimDoneIds.add(id)
+            out[id] = {
+              ...e,
+              dps: cached.dps,
+              dpsCategoryScores: { ...cached.dpsCategoryScores },
+            }
+            continue
+          }
+
           const sim = resimTierEntrySustainedAtFightDuration(e, dur, {
             modifiers,
             targetEnemyAttribute: dpsTargetEnemyAttribute,
@@ -1059,6 +1124,7 @@ export function TierListPage() {
               ),
             }
           }
+          bucket[id] = { sig: entrySig, dps: sim.sustained, dpsCategoryScores: nextScores }
           out[id] = { ...e, dps: sim.sustained, dpsCategoryScores: nextScores }
         }
       }
@@ -1090,8 +1156,32 @@ export function TierListPage() {
     dpsTargetEnemyAttribute,
     fightDurationAppliedSec,
     communityRotationsMap,
+    fightResimRevision,
     cache,
     listMeta,
+  ])
+
+  useEffect(() => {
+    const root = fightResimCacheRef.current
+    if (!root || root.revision !== fightResimRevision) return
+    if (Object.keys(root.byParamKey).length === 0) return
+    const t = window.setTimeout(() => {
+      const latest = fightResimCacheRef.current
+      if (latest && latest.revision === fightResimRevision) {
+        writeTierFightDurationResimCacheRoot(latest)
+      }
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [
+    fightResimRevision,
+    fightDurationAppliedSec,
+    dpsForceAutoCrit,
+    dpsPerfectAtClone,
+    dpsAutoAnimCancel,
+    dpsTargetEnemyAttribute,
+    tierMode,
+    dpsTierCategory,
+    filteredEntries,
   ])
 
   function toggleMultiFilter(label: string, setter: Dispatch<SetStateAction<string[]>>) {

@@ -5,6 +5,7 @@ import {
   clampTierFightDurationSec,
   TIER_FIGHT_DURATION_DEFAULT_SEC,
 } from '../../lib/tierFightDurationScale'
+import { clearTierFightDurationResimCacheStorage } from '../../lib/tierListFightDurationResimCacheStorage'
 import { clearTierListCacheFromStorage } from '../../lib/tierList'
 import type { DpsTierCategoryKey, SustainedDpsEntry, TierListMode } from '../../lib/tierList'
 import { wikiHttpCacheClear } from '../../lib/wikiHttpCache'
@@ -20,12 +21,13 @@ export const TIER_UPDATE_SUMMARY_STORAGE_KEY = 'odysseyCalc.tierUpdateSummary.v1
 export const TIER_CHANGE_HISTORY_STORAGE_KEY = 'odysseyCalc.tierChangeHistory.v1'
 
 /**
- * Tier matrix, wiki GET fallback cache, update summary, and tier changelog.
+ * Tier matrix, wiki GET fallback cache, update summary, tier changelog, and sustained fight-length resim cache.
  * Does **not** remove filter toggles / DPS modifier prefs (`odysseyCalc.tierList.*` except summary keys above).
  */
 export function clearAllTierListStoredCaches(): void {
   clearTierListCacheFromStorage()
   wikiHttpCacheClear()
+  clearTierFightDurationResimCacheStorage()
   try {
     localStorage.removeItem(TIER_UPDATE_SUMMARY_STORAGE_KEY)
     localStorage.removeItem(TIER_CHANGE_HISTORY_STORAGE_KEY)
