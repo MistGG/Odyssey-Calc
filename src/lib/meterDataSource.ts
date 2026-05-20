@@ -18,17 +18,7 @@ export async function fetchPublicDungeonParses(
     .gte('difficulty_id', 2)
     .order('created_at', { ascending: false })
     .limit(2000)
-  if (error) {
-    const msg = error.message
-    if (/permission denied/i.test(msg)) {
-      return {
-        rows: [],
-        error:
-          'Meter leaderboard is not readable yet. In Supabase SQL Editor, run docs/meter_parses_public_leaderboard.sql from the Odyssey-Calc repo.',
-      }
-    }
-    return { rows: [], error: msg }
-  }
+  if (error) return { rows: [], error: error.message }
   return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
 }
 
