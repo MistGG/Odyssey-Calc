@@ -24,7 +24,7 @@ export async function fetchPublicDungeonParses(
       return {
         rows: [],
         error:
-          'Meter leaderboard is not readable yet. In Supabase SQL Editor, run supabase/meter_parses_public_leaderboard.sql from the Odyssey-Calc repo.',
+          'Meter leaderboard is not readable yet. In Supabase SQL Editor, run docs/meter_parses_public_leaderboard.sql from the Odyssey-Calc repo.',
       }
     }
     return { rows: [], error: msg }
