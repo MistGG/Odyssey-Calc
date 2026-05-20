@@ -8449,3 +8449,225 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   min-width: 14rem;
   max-width: 22rem;
 }
+
+/* —— Forum “News” teaser (Proboards announcement image) —— */
+@keyframes forum-teaser-in-tl {
+  from {
+    opacity: 0;
+    transform: translate(-14px, -10px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes forum-teaser-in-tr {
+  from {
+    opacity: 0;
+    transform: translate(14px, -10px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes forum-teaser-in-bl {
+  from {
+    opacity: 0;
+    transform: translate(-14px, 10px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes forum-teaser-in-br {
+  from {
+    opacity: 0;
+    transform: translate(14px, 10px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.forum-teaser-flyout {
+  position: fixed;
+  z-index: 40;
+  width: min(94vw, 33.75rem);
+  max-width: 33.75rem;
+  pointer-events: auto;
+}
+
+.forum-teaser-flyout--tl {
+  top: max(4.75rem, calc(env(safe-area-inset-top, 0px) + 3.5rem));
+  left: max(0.65rem, env(safe-area-inset-left, 0px));
+  animation: forum-teaser-in-tl 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.forum-teaser-flyout--tr {
+  top: max(4.75rem, calc(env(safe-area-inset-top, 0px) + 3.5rem));
+  right: max(0.65rem, env(safe-area-inset-right, 0px));
+  animation: forum-teaser-in-tr 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.forum-teaser-flyout--bl {
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  left: max(0.65rem, env(safe-area-inset-left, 0px));
+  animation: forum-teaser-in-bl 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.forum-teaser-flyout--br {
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  right: max(0.65rem, env(safe-area-inset-right, 0px));
+  animation: forum-teaser-in-br 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.forum-teaser-flyout--reduced-motion.forum-teaser-flyout--tl,
+.forum-teaser-flyout--reduced-motion.forum-teaser-flyout--tr,
+.forum-teaser-flyout--reduced-motion.forum-teaser-flyout--bl,
+.forum-teaser-flyout--reduced-motion.forum-teaser-flyout--br {
+  animation-duration: 0.12s;
+}
+
+.forum-teaser-inner {
+  border-radius: 1.125rem;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: linear-gradient(
+    165deg,
+    rgba(8, 47, 73, 0.55) 0%,
+    rgba(15, 23, 42, 0.96) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.65),
+    0 18px 40px rgba(0, 0, 0, 0.45);
+  padding: 0.825rem 0.9rem 0.975rem;
+}
+
+.forum-teaser-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.675rem;
+}
+
+.forum-teaser-title {
+  font-family: var(--font-display);
+  font-size: 1.17rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cyan);
+}
+
+.forum-teaser-dismiss {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--text-soft);
+  width: 2.475rem;
+  height: 2.475rem;
+  border-radius: 12px;
+  font-size: 1.725rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.forum-teaser-dismiss:hover {
+  color: var(--text);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.forum-teaser-media {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 15px;
+}
+
+.forum-teaser-media:focus-visible {
+  outline: 2px solid rgba(34, 211, 238, 0.65);
+  outline-offset: 3px;
+}
+
+.forum-teaser-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 15px;
+  border: 1px solid rgba(30, 41, 59, 0.85);
+  /* Must stay transparent so “bands only” canvas pixels (alpha 0) reveal the <img> beneath. */
+  background: transparent;
+}
+
+/*
+ * Do not put perspective + preserve-3d on this frame: overflow:hidden forces transform-style
+ * to flat on the same element, which removes visible 3D curvature. Perspective lives on the img
+ * transform together with rotateX (see forum-teaser-crt-uproll).
+ */
+
+.forum-teaser-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Visible under the canvas: heavy static is drawn opaque on the canvas; band phases use alpha 0 off-band. */
+  opacity: 1;
+  transition: opacity 0.42s ease 0.06s, transform 0.22s ease-out;
+}
+
+/*
+ * CRT image FX only during drift-band segments (see getForumTeaserCrtImageFxActive).
+ * Final static, canvas fade, and clear tail keep the image still.
+ */
+.forum-teaser-frame--crt-image-fx .forum-teaser-img {
+  transition: opacity 0.42s ease 0.06s;
+  transform-origin: center center;
+  will-change: transform, filter;
+  filter: url(#forum-teaser-crt-warp);
+  /*
+   * Upward roll vs canvas bands drifting down (~5.5s).
+   * perspective() + rotateX on the same element avoids parent overflow:hidden flattening 3D.
+   */
+  animation: forum-teaser-crt-uproll 5.5s linear infinite;
+}
+
+@keyframes forum-teaser-crt-uproll {
+  0% {
+    transform: perspective(320px) rotateX(10deg) scale(1.38, 1.16) translateY(13%);
+  }
+  100% {
+    transform: perspective(320px) rotateX(10deg) scale(1.38, 1.16) translateY(-13%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forum-teaser-frame--crt-image-fx .forum-teaser-img {
+    animation: none;
+    transform: none;
+    filter: none;
+  }
+}
+
+.forum-teaser-static-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  pointer-events: none;
+  /* Per-pixel alpha; off-band stays 0 so the <img> below shows through. */
+  opacity: 1;
+  transition: opacity 0.42s ease;
+}
+
+.forum-teaser-flyout--reveal .forum-teaser-static-canvas {
+  opacity: 0;
+}

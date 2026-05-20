@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { ForumTeaserTvPopup } from './ForumTeaserTvPopup'
 
 function navLinkClass(isActive: boolean, extra = '') {
   return `nav-link${extra ? ` ${extra}` : ''}${isActive ? ' nav-link--active' : ''}`
@@ -87,6 +88,7 @@ export function Layout() {
       <main className="main">
         <Outlet />
       </main>
+      <ForumTeaserTvPopup />
     </div>
   )
 }

@@ -9,7 +9,6 @@ import { MeterParsesPage } from './pages/MeterParsesPage'
 import { CompanionPage } from './pages/CompanionPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
-
 export default function App() {
   return (
     <HashRouter>
