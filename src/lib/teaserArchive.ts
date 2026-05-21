@@ -1,7 +1,5 @@
 import { FORUM_TEASER_IMAGE_URL, FORUM_TEASER_THREAD_URL } from './forumTeaserImage'
 import { bundledTeaserImageUrl, imgurIdFromUrl } from './teaserImageStorage'
-import { GRAY_FOG_TEASER_IMGUR_ID } from '../effects/grayFogConfig'
-
 export type TeaserArchiveEntry = {
   /** Stable slug (usually Imgur id). */
   id: string
@@ -21,9 +19,9 @@ export type TeaserArchiveEntry = {
  */
 export const TEASER_ARCHIVE_ENTRIES: TeaserArchiveEntry[] = [
   {
-    id: GRAY_FOG_TEASER_IMGUR_ID,
-    imgurId: GRAY_FOG_TEASER_IMGUR_ID,
-    imageUrl: bundledTeaserImageUrl(GRAY_FOG_TEASER_IMGUR_ID),
+    id: '6v7FJWV',
+    imgurId: '6v7FJWV',
+    imageUrl: bundledTeaserImageUrl('6v7FJWV'),
     title: 'Dungeon silhouettes',
     dateLabel: 'May 2026',
     fullEffects: true,

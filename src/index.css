@@ -10218,6 +10218,697 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   }
 }
 
+/* Marsmon plain teaser (6JQlbLZ) — center radiance + arm flames */
+.forum-teaser-frame--plain .forum-teaser-zoom {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+.teaser-marsmon-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.teaser-marsmon-fx__decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Rune inscription: one English letter per rune, left → right flip reveal */
+.teaser-marsmon-runes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+  perspective: 520px;
+}
+
+.teaser-marsmon-rune-char {
+  position: absolute;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  container-type: size;
+  opacity: 0;
+  animation: marsmon-rune-flip 0.92s cubic-bezier(0.22, 0.82, 0.28, 1) forwards;
+  animation-delay: calc(
+    var(--rune-flip-base, 2000ms) + var(--flip-i, 0) * var(--rune-flip-stagger, 115ms)
+  );
+}
+
+.forum-teaser-embedded--marsmon .teaser-marsmon-rune-char__face {
+  font-size: clamp(13px, 2.65vw, 22px);
+}
+
+@supports (font-size: 1cqmin) {
+  .forum-teaser-embedded--marsmon .teaser-marsmon-rune-char__face {
+    font-size: 92cqmin;
+  }
+}
+
+.teaser-marsmon-rune-char__face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  padding: 0;
+  min-width: 0;
+  overflow: hidden;
+  color: #0a0704;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 250, 232, 0.98) 0%,
+    rgba(255, 236, 188, 0.96) 50%,
+    rgba(255, 218, 150, 0.94) 100%
+  );
+  border: 1px solid rgba(255, 220, 140, 0.72);
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 1px rgba(255, 238, 190, 0.35),
+    inset 0 1px 2px rgba(255, 252, 240, 0.65);
+  text-shadow: none;
+  backface-visibility: hidden;
+}
+
+@keyframes marsmon-rune-flip {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateY(-88deg) scale(0.72);
+  }
+  40% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) rotateY(-42deg) scale(0.88);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotateY(8deg) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotateY(0deg) scale(1);
+  }
+}
+
+.teaser-marsmon-radiance {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+}
+
+.teaser-marsmon-radiance__rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 92%;
+  height: 72%;
+  transform: translate(-50%, -54%);
+  background: radial-gradient(
+    ellipse 72% 58% at 50% 44%,
+    rgba(var(--marsmon-r), var(--marsmon-g), var(--marsmon-b), 0.28) 0%,
+    rgba(255, 220, 140, 0.1) 42%,
+    transparent 72%
+  );
+  animation: marsmon-radiance-pulse 3.6s ease-in-out infinite;
+}
+
+.teaser-marsmon-radiance__halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(58%, 28rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--marsmon-r), var(--marsmon-g), var(--marsmon-b), 0.55) 0%,
+    rgba(255, 210, 120, 0.22) 34%,
+    rgba(255, 180, 60, 0.06) 52%,
+    transparent 70%
+  );
+  animation: marsmon-radiance-pulse 3.6s ease-in-out infinite;
+}
+
+.teaser-marsmon-radiance__core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(16%, 7.5rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 252, 238, 0.9) 0%,
+    rgba(var(--marsmon-r), var(--marsmon-g), var(--marsmon-b), 0.5) 40%,
+    transparent 74%
+  );
+  animation: marsmon-radiance-core 3.6s ease-in-out infinite;
+}
+
+@keyframes marsmon-radiance-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  50% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+@keyframes marsmon-radiance-core {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+
+/* Sun burst after rune reveal (8s hold → slow expand → fast golden flash → replay) */
+.teaser-marsmon-sunburst {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.2);
+  width: min(42%, 20rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+  background: radial-gradient(
+    circle,
+    rgba(255, 252, 238, 0.98) 0%,
+    rgba(255, 236, 170, 0.88) 18%,
+    rgba(255, 210, 95, 0.55) 38%,
+    rgba(255, 185, 55, 0.22) 58%,
+    transparent 72%
+  );
+  filter: blur(2px);
+  mix-blend-mode: screen;
+}
+
+.teaser-marsmon-fx--hold .teaser-marsmon-radiance__halo,
+.teaser-marsmon-fx--hold .teaser-marsmon-radiance__core,
+.teaser-marsmon-fx--hold .teaser-marsmon-radiance__rays {
+  animation-duration: 4.8s;
+}
+
+.teaser-marsmon-fx--sunburst .teaser-marsmon-radiance__halo,
+.teaser-marsmon-fx--sunburst .teaser-marsmon-radiance__core,
+.teaser-marsmon-fx--sunburst .teaser-marsmon-radiance__rays {
+  animation: marsmon-radiance-sun-swell 3.4s cubic-bezier(0.35, 0.02, 0.85, 1) forwards;
+}
+
+.teaser-marsmon-fx--sunburst .teaser-marsmon-radiance__rays {
+  animation-name: marsmon-radiance-sun-rays;
+}
+
+.teaser-marsmon-fx--sunburst .teaser-marsmon-sunburst {
+  animation: marsmon-sunburst-bloom 3.4s cubic-bezier(0.42, 0.02, 0.9, 1) forwards;
+}
+
+.teaser-marsmon-fx--sunburst .teaser-marsmon-runes {
+  animation: marsmon-runes-sun-swallow 3.4s cubic-bezier(0.45, 0.05, 0.85, 1) forwards;
+}
+
+/* Fadeout: slow envelope → faster mid cover → slow clear for replay */
+.teaser-marsmon-envelope {
+  position: absolute;
+  inset: -15%;
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  transform: scale(1.05);
+  background: radial-gradient(
+    circle at var(--marsmon-envelope-x, 49.5%) var(--marsmon-envelope-y, 35%),
+    rgba(255, 252, 238, 0.98) 0%,
+    rgba(255, 238, 185, 0.82) 22%,
+    rgba(255, 215, 120, 0.58) 40%,
+    rgba(255, 190, 70, 0.32) 58%,
+    rgba(255, 170, 45, 0.12) 72%,
+    transparent 88%
+  );
+  mix-blend-mode: screen;
+}
+
+.teaser-marsmon-fx--fadeout {
+  animation: marsmon-fx-fadeout-wash 3.6s linear forwards;
+}
+
+.teaser-marsmon-fx--fadeout .teaser-marsmon-runes {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.teaser-marsmon-fx--fadeout .teaser-marsmon-envelope {
+  animation: marsmon-envelope-phase 3.6s linear forwards;
+}
+
+.teaser-marsmon-fx--fadeout .teaser-marsmon-sunburst {
+  animation: marsmon-sunburst-fadeout 3.6s linear forwards;
+}
+
+.teaser-marsmon-fx--fadeout .teaser-marsmon-radiance__halo,
+.teaser-marsmon-fx--fadeout .teaser-marsmon-radiance__core {
+  animation: marsmon-radiance-fadeout 3.6s linear forwards;
+}
+
+.teaser-marsmon-fx--fadeout .teaser-marsmon-radiance__rays {
+  animation: marsmon-radiance-rays-fadeout 3.6s linear forwards;
+}
+
+.teaser-marsmon-fx--fadeout .teaser-marsmon-flame {
+  animation: marsmon-flame-fadeout 3.6s linear forwards;
+}
+
+.teaser-marsmon-fx--reset .teaser-marsmon-sunburst,
+.teaser-marsmon-fx--reset .teaser-marsmon-radiance__halo,
+.teaser-marsmon-fx--reset .teaser-marsmon-radiance__core,
+.teaser-marsmon-fx--reset .teaser-marsmon-radiance__rays {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+}
+
+.teaser-marsmon-fx--reset .teaser-marsmon-radiance__rays {
+  transform: translate(-50%, -54%) scale(0.2);
+}
+
+@keyframes marsmon-sunburst-bloom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.18);
+    filter: blur(3px);
+  }
+  58% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(1.65);
+    filter: blur(4px);
+  }
+  78% {
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(2.35);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(5.8);
+    filter: blur(14px);
+  }
+}
+
+@keyframes marsmon-radiance-sun-swell {
+  0% {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  55% {
+    opacity: 0.88;
+    transform: translate(-50%, -50%) scale(1.45);
+  }
+  78% {
+    opacity: 0.96;
+    transform: translate(-50%, -50%) scale(2.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(3.2);
+  }
+}
+
+@keyframes marsmon-radiance-sun-rays {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, -54%) scale(0.9);
+  }
+  55% {
+    opacity: 0.75;
+    transform: translate(-50%, -54%) scale(1.35);
+  }
+  78% {
+    opacity: 0.9;
+    transform: translate(-50%, -54%) scale(1.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -54%) scale(2.75);
+  }
+}
+
+@keyframes marsmon-runes-sun-swallow {
+  0% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  32% {
+    opacity: 0.92;
+    filter: brightness(1.08);
+  }
+  52% {
+    opacity: 0.55;
+    filter: brightness(1.2);
+  }
+  72% {
+    opacity: 0.2;
+    filter: brightness(1.35);
+  }
+  100% {
+    opacity: 0;
+    filter: brightness(1.45);
+  }
+}
+
+@keyframes marsmon-envelope-phase {
+  0% {
+    opacity: 0.4;
+    transform: scale(1.15);
+  }
+  42% {
+    opacity: 0.68;
+    transform: scale(2.05);
+  }
+  52% {
+    opacity: 0.92;
+    transform: scale(3.35);
+  }
+  62% {
+    opacity: 1;
+    transform: scale(4.5);
+  }
+  72% {
+    opacity: 0.88;
+    transform: scale(4.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(5.2);
+  }
+}
+
+@keyframes marsmon-fx-fadeout-wash {
+  0% {
+    filter: brightness(1.14) saturate(1.08);
+  }
+  42% {
+    filter: brightness(1.26) saturate(1.1);
+  }
+  52% {
+    filter: brightness(1.48) saturate(1.14);
+  }
+  62% {
+    filter: brightness(1.62) saturate(1.16);
+  }
+  72% {
+    filter: brightness(1.45) saturate(1.1);
+  }
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+}
+
+@keyframes marsmon-sunburst-fadeout {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(5.8);
+    filter: blur(14px);
+  }
+  42% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(6.4);
+    filter: blur(17px);
+  }
+  52% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(7.8);
+    filter: blur(22px);
+  }
+  62% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(8.6);
+    filter: blur(26px);
+  }
+  72% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) scale(7.2);
+    filter: blur(18px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: blur(3px);
+  }
+}
+
+@keyframes marsmon-radiance-fadeout {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(3.2);
+  }
+  42% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(3.65);
+  }
+  52% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(4.4);
+  }
+  62% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(4.9);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+}
+
+@keyframes marsmon-radiance-rays-fadeout {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -54%) scale(2.75);
+  }
+  42% {
+    opacity: 1;
+    transform: translate(-50%, -54%) scale(3.1);
+  }
+  52% {
+    opacity: 0.9;
+    transform: translate(-50%, -54%) scale(3.85);
+  }
+  62% {
+    opacity: 0.65;
+    transform: translate(-50%, -54%) scale(4.35);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -54%) scale(0.9);
+  }
+}
+
+@keyframes marsmon-flame-fadeout {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  58% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Shoulder flame column: body rises up-right and dissolves; sparks peel off the tip */
+.teaser-marsmon-flame {
+  --flame-cycle: 2.8s;
+  position: absolute;
+  width: 4%;
+  height: 14%;
+  min-width: 17px;
+  min-height: 42px;
+  transform: translate(-50%, -80%) rotate(var(--flame-rot, 0deg));
+  transform-origin: 42% 92%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.teaser-marsmon-flame__body {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 92%;
+  height: 58%;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  clip-path: polygon(
+    48% 100%,
+    64% 74%,
+    80% 46%,
+    72% 22%,
+    54% 4%,
+    36% 20%,
+    22% 48%,
+    30% 76%
+  );
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.98) 0%,
+    rgba(0, 0, 0, 0.94) 28%,
+    rgba(12, 10, 8, 0.82) 52%,
+    rgba(28, 22, 16, 0.45) 78%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 235, 190, 0.2),
+    0 1px 4px rgba(0, 0, 0, 0.5);
+  filter: drop-shadow(0 0 1px rgba(255, 240, 200, 0.28));
+  mask-image: linear-gradient(to top, #000 0%, #000 38%, rgba(0, 0, 0, 0.55) 68%, transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to top,
+    #000 0%,
+    #000 38%,
+    rgba(0, 0, 0, 0.55) 68%,
+    transparent 100%
+  );
+  animation: marsmon-flame-rise var(--flame-cycle, 2.8s) ease-in-out infinite;
+  animation-delay: var(--flame-delay, 0ms);
+}
+
+.teaser-marsmon-flame__spark {
+  position: absolute;
+  left: 58%;
+  bottom: 46%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.7) 55%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 232, 175, 0.35),
+    0 0 4px 1px rgba(255, 210, 120, 0.22);
+  opacity: 0;
+  animation: marsmon-flame-spark var(--flame-cycle, 2.8s) ease-out infinite;
+  animation-delay: var(--flame-delay, 0ms);
+}
+
+.teaser-marsmon-flame__spark--a {
+  left: 52%;
+  bottom: 50%;
+  width: 2px;
+  height: 2px;
+  animation-duration: calc(var(--flame-cycle, 2.8s) * 0.92);
+}
+
+.teaser-marsmon-flame__spark--b {
+  left: 64%;
+  bottom: 44%;
+  animation-delay: calc(var(--flame-delay, 0ms) + 180ms);
+}
+
+.teaser-marsmon-flame__spark--c {
+  left: 70%;
+  bottom: 52%;
+  width: 2px;
+  height: 2px;
+  animation-delay: calc(var(--flame-delay, 0ms) + 340ms);
+  animation-duration: calc(var(--flame-cycle, 2.8s) * 1.05);
+}
+
+.teaser-marsmon-flame__spark--d {
+  left: 62%;
+  bottom: 58%;
+  width: 2px;
+  height: 2px;
+  animation-delay: calc(var(--flame-delay, 0ms) + 480ms);
+  animation-duration: calc(var(--flame-cycle, 2.8s) * 0.98);
+}
+
+/* Slow flicker-out: drift up + a little right, tapering to nothing */
+@keyframes marsmon-flame-rise {
+  0% {
+    opacity: 0.35;
+    transform: translateX(-50%) translate(0, 8%) scale(0.78, 0.82);
+  }
+  12% {
+    opacity: 0.95;
+    transform: translateX(-50%) translate(2%, 0) scale(0.92, 1);
+  }
+  32% {
+    opacity: 1;
+    transform: translateX(-50%) translate(5%, -14%) scale(1, 1.12);
+  }
+  52% {
+    opacity: 0.88;
+    transform: translateX(-50%) translate(9%, -38%) scale(0.9, 1.08);
+  }
+  72% {
+    opacity: 0.48;
+    transform: translateX(-50%) translate(14%, -62%) scale(0.65, 0.82);
+  }
+  88% {
+    opacity: 0.14;
+    transform: translateX(-50%) translate(18%, -82%) scale(0.4, 0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translate(22%, -102%) scale(0.22, 0.34);
+  }
+}
+
+/* Sparks break off near the tip and float up-right like embers */
+@keyframes marsmon-flame-spark {
+  0%,
+  24% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+  34% {
+    opacity: 0.85;
+    transform: translate(6%, -18%) scale(1);
+  }
+  48% {
+    opacity: 0.75;
+    transform: translate(14%, -38%) scale(0.85);
+  }
+  62% {
+    opacity: 0.55;
+    transform: translate(24%, -62%) scale(0.65);
+  }
+  78% {
+    opacity: 0.28;
+    transform: translate(34%, -88%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(52%, -148%) scale(0.1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .forum-teaser-embedded--gray-fog .gray-fog,
   .forum-teaser-embedded--corner-fog .gray-fog {
@@ -10226,6 +10917,32 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 
   .teaser-red-eye-glow {
     display: none;
+  }
+
+  .teaser-marsmon-fx__decor,
+  .teaser-marsmon-runes,
+  .teaser-marsmon-sunburst,
+  .teaser-marsmon-envelope {
+    display: none;
+  }
+
+  .teaser-marsmon-fx--sunburst,
+  .teaser-marsmon-fx--fadeout,
+  .teaser-marsmon-fx--reset,
+  .teaser-marsmon-fx--hold {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teaser-marsmon-rune-char {
+    opacity: 1;
+    animation: none;
+    transform: translate(-50%, -50%);
+  }
+
+  .teaser-marsmon-rune-char__face {
+    animation: none;
   }
 }
 

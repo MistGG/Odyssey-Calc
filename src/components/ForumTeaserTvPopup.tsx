@@ -12,6 +12,8 @@ import {
   readForumTeaserPopupSeenIdentity,
   writeForumTeaserPopupSeenIdentity,
 } from '../lib/forumTeaserImage'
+import { liveTeaserHasSavedEffectStack } from '../lib/teaserEffectsPolicy'
+import { supportsMarsmonTeaserAmbience, TeaserMarsmonEffects } from '../effects'
 
 /** Wait after we know there is an unseen teaser before opening the flyout. */
 const SHOW_DELAY_MS = 3000
@@ -33,6 +35,9 @@ export type ForumTeaserTvFlyoutProps = {
   reducedMotion: boolean
   phase: 'static' | 'reveal'
   staticHoldMs?: number
+  /** CRT static intro; false = plain image only (new/unconfigured teasers). */
+  effectsEnabled?: boolean
+  marsmonAmbience?: boolean
 }
 
 export function ForumTeaserTvFlyout({
@@ -43,6 +48,8 @@ export function ForumTeaserTvFlyout({
   reducedMotion,
   phase,
   staticHoldMs = CRT_STATIC_HOLD_MS,
+  effectsEnabled = true,
+  marsmonAmbience = false,
 }: ForumTeaserTvFlyoutProps) {
   useEffect(() => {
     if (!open) return
@@ -77,14 +84,33 @@ export function ForumTeaserTvFlyout({
           rel="noreferrer noopener"
           aria-label="Open teasers thread on the Digital Odyssey forums"
         >
-          <CrtTeaserMedia
-            imgSrc={imgSrc}
-            onImgError={onImgError}
-            reducedMotion={reducedMotion}
-            phase={phase}
-            overlayActive={open}
-            staticHoldMs={staticHoldMs}
-          />
+          {effectsEnabled ? (
+            <CrtTeaserMedia
+              imgSrc={imgSrc}
+              onImgError={onImgError}
+              reducedMotion={reducedMotion}
+              phase={phase}
+              overlayActive={open}
+              staticHoldMs={staticHoldMs}
+            />
+          ) : (
+            <div className="forum-teaser-frame forum-teaser-frame--plain">
+              <div className="forum-teaser-zoom">
+                <img
+                  src={imgSrc}
+                  alt=""
+                  className="forum-teaser-img"
+                  decoding="async"
+                  width={943}
+                  height={539}
+                  onError={onImgError}
+                />
+                {marsmonAmbience ? (
+                  <TeaserMarsmonEffects enabled={!reducedMotion} />
+                ) : null}
+              </div>
+            </div>
+          )}
         </a>
       </div>
     </aside>
@@ -98,6 +124,8 @@ export function ForumTeaserTvPopup() {
   const [identityKey, setIdentityKey] = useState('')
   const reducedMotion = useTeaserReducedMotion()
   const { imgSrc, onImgError, refreshTeaserImage } = useTeaserImageSrc()
+  const effectsEnabled = liveTeaserHasSavedEffectStack(imgSrc)
+  const marsmonAmbience = !effectsEnabled && supportsMarsmonTeaserAmbience(null, imgSrc)
   const revealTimerRef = useRef<number>(0)
   const scheduleTimerRef = useRef<number>(0)
 
@@ -138,12 +166,12 @@ export function ForumTeaserTvPopup() {
     scheduleTimerRef.current = window.setTimeout(() => {
       if (readForumTeaserPopupSeenIdentity() === identityKey) return
       writeForumTeaserPopupSeenIdentity(identityKey)
-      setPhase('static')
       setOpen(true)
       window.clearTimeout(revealTimerRef.current)
-      if (reducedMotion) {
+      if (!effectsEnabled || reducedMotion) {
         setPhase('reveal')
       } else {
+        setPhase('static')
         revealTimerRef.current = window.setTimeout(() => setPhase('reveal'), CRT_STATIC_HOLD_MS)
       }
     }, SHOW_DELAY_MS)
@@ -152,7 +180,7 @@ export function ForumTeaserTvPopup() {
       window.clearTimeout(scheduleTimerRef.current)
       window.clearTimeout(revealTimerRef.current)
     }
-  }, [identityKey, pathname, reducedMotion])
+  }, [identityKey, pathname, reducedMotion, effectsEnabled])
 
   return (
     <ForumTeaserTvFlyout
@@ -163,6 +191,8 @@ export function ForumTeaserTvPopup() {
       reducedMotion={reducedMotion}
       phase={phase}
       staticHoldMs={CRT_STATIC_HOLD_MS}
+      effectsEnabled={effectsEnabled}
+      marsmonAmbience={marsmonAmbience}
     />
   )
 }

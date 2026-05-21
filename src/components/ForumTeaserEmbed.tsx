@@ -2,7 +2,9 @@ import { useEffect, useRef, type CSSProperties } from 'react'
 import {
   CrtTeaserMedia,
   GrayFog,
+  TeaserMarsmonEffects,
   TeaserRedEyeGlow,
+  supportsMarsmonTeaserAmbience,
   useCrtRevealLoop,
   useTeaserImageSrc,
   useTeaserReducedMotion,
@@ -10,8 +12,8 @@ import {
 } from '../effects'
 import { FORUM_TEASER_THREAD_URL } from '../lib/forumTeaserImage'
 import {
-  archiveTeaserHasFullEffectStack,
-  liveTeaserHasFullEffectStack,
+  archiveTeaserHasSavedEffectStack,
+  liveTeaserHasSavedEffectStack,
 } from '../lib/teaserEffectsPolicy'
 
 export type ForumTeaserEmbedProps = {
@@ -19,13 +21,44 @@ export type ForumTeaserEmbedProps = {
   imageUrl?: string
   /** Imgur id for effect gating; archive entries with fullEffects pass this explicitly. */
   imgurId?: string
-  /** Force GrayFog + red eye regardless of live forum URL. */
+  /** Saved CRT + fog + eye stack (archive rows). */
   fullEffects?: boolean
   linkHref?: string
 }
 
+function PlainTeaserImage({
+  imgSrc,
+  onImgError,
+  marsmonAmbience = false,
+  reducedMotion = false,
+}: {
+  imgSrc: string
+  onImgError: () => void
+  marsmonAmbience?: boolean
+  reducedMotion?: boolean
+}) {
+  return (
+    <div className="forum-teaser-frame forum-teaser-frame--plain">
+      <div className="forum-teaser-zoom">
+        <img
+          src={imgSrc}
+          alt=""
+          className="forum-teaser-img"
+          decoding="async"
+          width={1402}
+          height={677}
+          onError={onImgError}
+        />
+        {marsmonAmbience ? (
+          <TeaserMarsmonEffects enabled={!reducedMotion} />
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 /**
- * CRT teaser stage with optional GrayFog + red eye. Used on Event and Teasers pages.
+ * Forum teaser stage. Live unknown images are plain; archive / saved ids get the full stack.
  */
 export function ForumTeaserEmbed({
   imageUrl,
@@ -35,21 +68,23 @@ export function ForumTeaserEmbed({
 }: ForumTeaserEmbedProps) {
   const reducedMotion = useTeaserReducedMotion()
   const { imgSrc, onImgError } = useTeaserImageSrc(imageUrl)
-  const grayFogEnabled =
+  const effectsEnabled =
     imgurId != null
-      ? archiveTeaserHasFullEffectStack(imgurId, fullEffects)
-      : liveTeaserHasFullEffectStack(imgSrc)
-  const redEyeEnabled = grayFogEnabled
+      ? archiveTeaserHasSavedEffectStack(imgurId, fullEffects)
+      : liveTeaserHasSavedEffectStack(imgSrc)
+  const marsmonAmbience =
+    !effectsEnabled && supportsMarsmonTeaserAmbience(imgurId, imgSrc, imageUrl)
 
   const { phase, introActive, grayFogVisible, beatId, startLoop, stopLoop, revealMs } =
-    useCrtRevealLoop(grayFogEnabled)
-  const fogPhase = phase === 'reveal' || grayFogVisible
+    useCrtRevealLoop(effectsEnabled)
+  const fogPhase = effectsEnabled && (phase === 'reveal' || grayFogVisible)
+  const redEyeEnabled = effectsEnabled
   const redEyeIgnition = useTeaserRedEyeIgnition(fogPhase, beatId, redEyeEnabled)
   const mechanoApproach = redEyeIgnition === 'awakened' && phase === 'reveal'
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (reducedMotion) {
+    if (!effectsEnabled || reducedMotion) {
       stopLoop()
       return
     }
@@ -73,16 +108,18 @@ export function ForumTeaserEmbed({
       observer.disconnect()
       stopLoop()
     }
-  }, [reducedMotion, startLoop, stopLoop])
+  }, [effectsEnabled, reducedMotion, startLoop, stopLoop])
 
   return (
     <div
       ref={rootRef}
-      className={`forum-teaser-embedded${phase === 'reveal' ? ' forum-teaser-embedded--reveal' : ''}${
-        grayFogEnabled ? ' forum-teaser-embedded--gray-fog' : ''
-      }${reducedMotion ? ' forum-teaser-embedded--reduced-motion' : ''}`}
+      className={`forum-teaser-embedded${effectsEnabled && phase === 'reveal' ? ' forum-teaser-embedded--reveal' : ''}${
+        effectsEnabled ? ' forum-teaser-embedded--gray-fog' : ''
+      }${marsmonAmbience ? ' forum-teaser-embedded--marsmon' : ''}${
+        reducedMotion ? ' forum-teaser-embedded--reduced-motion' : ''
+      }`}
       style={
-        grayFogEnabled
+        effectsEnabled
           ? ({ '--event-teaser-reveal-ms': `${revealMs}ms` } as CSSProperties)
           : undefined
       }
@@ -94,21 +131,33 @@ export function ForumTeaserEmbed({
         rel="noreferrer noopener"
         aria-label="Open teasers thread on the Digital Odyssey forums"
       >
-        <CrtTeaserMedia
-          imgSrc={imgSrc}
-          onImgError={onImgError}
-          reducedMotion={reducedMotion}
-          phase={phase}
-          overlayActive={introActive}
-          mechanoApproach={mechanoApproach}
-          stageOverlay={
-            redEyeEnabled && !reducedMotion && fogPhase ? (
-              <TeaserRedEyeGlow fogPhase={fogPhase} beatId={beatId} enabled={redEyeEnabled} />
-            ) : null
-          }
-        />
-        {grayFogEnabled && !reducedMotion && fogPhase ? <GrayFog /> : null}
+        {effectsEnabled ? (
+          <>
+            <CrtTeaserMedia
+              imgSrc={imgSrc}
+              onImgError={onImgError}
+              reducedMotion={reducedMotion}
+              phase={phase}
+              overlayActive={introActive}
+              mechanoApproach={mechanoApproach}
+              stageOverlay={
+                redEyeEnabled && !reducedMotion && fogPhase ? (
+                  <TeaserRedEyeGlow fogPhase={fogPhase} beatId={beatId} enabled={redEyeEnabled} />
+                ) : null
+              }
+            />
+            {!reducedMotion && fogPhase ? <GrayFog /> : null}
+          </>
+        ) : (
+          <PlainTeaserImage
+            imgSrc={imgSrc}
+            onImgError={onImgError}
+            marsmonAmbience={marsmonAmbience}
+            reducedMotion={reducedMotion}
+          />
+        )}
       </a>
     </div>
   )
 }
+

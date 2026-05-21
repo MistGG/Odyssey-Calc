@@ -25,6 +25,11 @@ export {
   supportsGrayFogForImgurId,
 } from './grayFogConfig'
 export { TEASER_RED_EYE, supportsTeaserRedEyeGlow } from './teaserRedEyeConfig'
+export {
+  MARSMON_TEASER_IMGUR_ID,
+  supportsMarsmonTeaserAmbience,
+} from './marsmonTeaserConfig'
+export { TeaserMarsmonEffects } from './TeaserMarsmonEffects'
 export { TeaserRedEyeGlow } from './TeaserRedEyeGlow'
 export { TEASER_MECHANO_APPROACH } from './teaserMechanoApproachConfig'
 export { useCrtRevealLoop } from './useCrtRevealLoop'

@@ -4,9 +4,9 @@ import { isBundledTeaserImageUrl } from '../lib/teaserImageStorage'
 /**
  * Imgur id for the **saved** live effect stack (GrayFog, red eye, mechano approach).
  * When {@link FORUM_TEASER_IMAGE_URL} changes to a new image, clear to `''` so the live
- * embed keeps **CRT only** until the new art is tuned. See `teaserEffectsPolicy.ts`.
+ * embed is a **plain image** until the new art is tuned. See `teaserEffectsPolicy.ts`.
  */
-export const GRAY_FOG_TEASER_IMGUR_ID = '6v7FJWV'
+export const GRAY_FOG_TEASER_IMGUR_ID = ''
 
 /** True when this Imgur id has the saved GrayFog stack (live or archive). */
 export function supportsGrayFogForImgurId(imgurId: string): boolean {

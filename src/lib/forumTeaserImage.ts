@@ -3,11 +3,11 @@ import { imgurIdFromUrl, imgurTeaserRemoteUrl } from './teaserImageStorage'
 /**
  * Official forum “News” teaser image (Digital Odyssey Proboards announcement box).
  * If the team changes the hotlink URL, follow `teaserEffectsPolicy.ts` (archive the old
- * image, clear {@link GRAY_FOG_TEASER_IMGUR_ID} so live stays CRT-only, run `sync:teasers`).
+ * image, leave {@link GRAY_FOG_TEASER_IMGUR_ID} empty so live has no effects, run `sync:teasers`).
  *
  * @see https://digitalodyssey.proboards.com/
  */
-export const FORUM_TEASER_IMAGE_URL = 'https://i.imgur.com/6v7FJWV.png'
+export const FORUM_TEASER_IMAGE_URL = 'https://i.imgur.com/6JQlbLZ.png'
 
 /** Teasers collection thread (announcement “Read more” target). */
 export const FORUM_TEASER_THREAD_URL =
