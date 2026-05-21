@@ -94,6 +94,7 @@ export function MayClearEventPage() {
           <li>Event is community-run via Odyssey Calc.</li>
           <li>Uploads must be valid dungeon party parses.</li>
           <li>Broken meter sessions may be excluded from rankings.</li>
+          <li>Exploits that are deemed as such by devs and patched will invalidate parses.</li>
         </ul>
       </section>
     </div>
