@@ -6,6 +6,12 @@
  */
 export const FORUM_TEASER_IMAGE_URL = 'https://i.imgur.com/6v7FJWV.png'
 
+/**
+ * Imgur id for the teaser that shows animated corner fog on the event page reveal beat.
+ * When {@link FORUM_TEASER_IMAGE_URL} changes to a new image, update or clear this id.
+ */
+export const EVENT_CORNER_FOG_TEASER_IMGUR_ID = '6v7FJWV'
+
 /** Teasers collection thread (announcement “Read more” target). */
 export const FORUM_TEASER_THREAD_URL =
   'https://digitalodyssey.proboards.com/thread/27/teasers-collection'
@@ -164,4 +170,13 @@ export async function syncForumTeaserImage(): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/** Event-page corner fog only for the configured fog teaser (not future forum images). */
+export function supportsEventCornerFog(imgSrc: string): boolean {
+  const id = EVENT_CORNER_FOG_TEASER_IMGUR_ID.trim()
+  if (!id || !FORUM_TEASER_IMAGE_URL.includes(id)) return false
+  if (imgSrc.includes(id)) return true
+  // Blob URL is the cached copy of {@link FORUM_TEASER_IMAGE_URL} while that URL still matches.
+  return imgSrc.startsWith('blob:')
 }
