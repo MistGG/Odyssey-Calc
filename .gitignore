@@ -14,7 +14,8 @@ dist-ssr
 .env
 
 # One-off / scratch scripts (not part of the app build)
-scripts/
+scripts/*
+!scripts/sync-teaser-images.mjs
 
 # Local API dumps / ad-hoc fixtures (not for production)
 tmp-*.json

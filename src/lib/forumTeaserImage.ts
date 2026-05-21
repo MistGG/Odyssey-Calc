@@ -1,6 +1,9 @@
+import { imgurIdFromUrl, imgurTeaserRemoteUrl } from './teaserImageStorage'
+
 /**
  * Official forum “News” teaser image (Digital Odyssey Proboards announcement box).
- * If the team changes the hotlink URL, update {@link FORUM_TEASER_IMAGE_URL}.
+ * If the team changes the hotlink URL, update {@link FORUM_TEASER_IMAGE_URL}, add the
+ * previous id to {@link TEASER_ARCHIVE_ENTRIES}, then run `npm run sync:teasers`.
  *
  * @see https://digitalodyssey.proboards.com/
  */
@@ -93,7 +96,12 @@ async function putTeaserResponse(res: Response, body: ArrayBuffer): Promise<void
   const headers = new Headers()
   headers.set('Content-Type', ct)
   if (etag) headers.set('ETag', etag)
-  await cache.put(FORUM_TEASER_IMAGE_URL, new Response(body, { status: 200, headers }))
+  const cached = new Response(body, { status: 200, headers })
+  await cache.put(FORUM_TEASER_IMAGE_URL, cached)
+  const imgurId = imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
+  if (imgurId) {
+    await cache.put(imgurTeaserRemoteUrl(imgurId), cached.clone())
+  }
 }
 
 /**

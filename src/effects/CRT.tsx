@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FORUM_TEASER_IMAGE_URL, readCachedTeaserBlob, syncForumTeaserImage } from '../lib/forumTeaserImage'
+import {
+  bundledTeaserImageUrl,
+  imgurIdFromUrl,
+} from '../lib/teaserImageStorage'
 
 /**
  * CRT TV intro: heavy static → bands → heavy → bands → heavy → canvas fade → clear image.
@@ -306,9 +310,14 @@ export function useTeaserReducedMotion(): boolean {
   return reducedMotion
 }
 
-export function useTeaserImageSrc() {
-  const [imgSrc, setImgSrc] = useState(FORUM_TEASER_IMAGE_URL)
+export function useTeaserImageSrc(fixedImageUrl?: string) {
+  const initialSrc = fixedImageUrl ?? FORUM_TEASER_IMAGE_URL
+  const [imgSrc, setImgSrc] = useState(initialSrc)
   const blobUrlRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (fixedImageUrl) setImgSrc(fixedImageUrl)
+  }, [fixedImageUrl])
 
   const disposeBlobUrl = useCallback(() => {
     if (blobUrlRef.current) {
@@ -318,6 +327,10 @@ export function useTeaserImageSrc() {
   }, [])
 
   const applyBlobToSrc = useCallback(async () => {
+    if (fixedImageUrl) {
+      setImgSrc(fixedImageUrl)
+      return
+    }
     const blob = await readCachedTeaserBlob()
     if (!blob || blob.size === 0) {
       disposeBlobUrl()
@@ -328,22 +341,30 @@ export function useTeaserImageSrc() {
     const u = URL.createObjectURL(blob)
     blobUrlRef.current = u
     setImgSrc(u)
-  }, [disposeBlobUrl])
+  }, [disposeBlobUrl, fixedImageUrl])
 
   const refreshTeaserImage = useCallback(async () => {
+    if (fixedImageUrl) return
     await applyBlobToSrc()
     const changed = await syncForumTeaserImage()
     if (changed) await applyBlobToSrc()
-  }, [applyBlobToSrc])
+  }, [applyBlobToSrc, fixedImageUrl])
 
   const onImgError = useCallback(() => {
     disposeBlobUrl()
-    setImgSrc(FORUM_TEASER_IMAGE_URL)
-  }, [disposeBlobUrl])
+    const remoteUrl = fixedImageUrl ?? FORUM_TEASER_IMAGE_URL
+    const id = imgurIdFromUrl(remoteUrl)
+    if (id) {
+      setImgSrc(bundledTeaserImageUrl(id))
+      return
+    }
+    setImgSrc(remoteUrl)
+  }, [disposeBlobUrl, fixedImageUrl])
 
   useEffect(() => {
+    if (fixedImageUrl) return
     void refreshTeaserImage()
-  }, [refreshTeaserImage])
+  }, [refreshTeaserImage, fixedImageUrl])
 
   useEffect(() => () => disposeBlobUrl(), [disposeBlobUrl])
 

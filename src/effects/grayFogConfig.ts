@@ -1,4 +1,5 @@
 import { FORUM_TEASER_IMAGE_URL } from '../lib/forumTeaserImage'
+import { isBundledTeaserImageUrl } from '../lib/teaserImageStorage'
 
 /**
  * Imgur id that enables {@link GrayFog} on the event teaser embed.
@@ -7,6 +8,12 @@ import { FORUM_TEASER_IMAGE_URL } from '../lib/forumTeaserImage'
  */
 export const GRAY_FOG_TEASER_IMGUR_ID = '6v7FJWV'
 
+/** True when this Imgur id has the saved GrayFog stack (live or archive). */
+export function supportsGrayFogForImgurId(imgurId: string): boolean {
+  const id = GRAY_FOG_TEASER_IMGUR_ID.trim()
+  return Boolean(id) && imgurId.trim() === id
+}
+
 /** True only while the configured teaser URL still matches {@link GRAY_FOG_TEASER_IMGUR_ID}. */
 export function supportsGrayFog(
   imgSrc: string,
@@ -14,6 +21,7 @@ export function supportsGrayFog(
 ): boolean {
   const id = GRAY_FOG_TEASER_IMGUR_ID.trim()
   if (!id || !teaserImageUrl.includes(id)) return false
-  if (imgSrc.includes(id)) return true
-  return imgSrc.startsWith('blob:')
+  if (supportsGrayFogForImgurId(id) && imgSrc.includes(id)) return true
+  if (isBundledTeaserImageUrl(imgSrc, id)) return true
+  return imgSrc.startsWith('blob:') && teaserImageUrl.includes(id)
 }

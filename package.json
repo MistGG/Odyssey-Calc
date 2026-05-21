@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "sync:teasers": "node scripts/sync-teaser-images.mjs",
+    "build": "npm run sync:teasers && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

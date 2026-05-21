@@ -1,4 +1,4 @@
-import { supportsGrayFog } from './grayFogConfig'
+import { supportsGrayFog, supportsGrayFogForImgurId } from './grayFogConfig'
 
 /**
  * Red eye hotspot on forum teaser 6v7FJWV (sampled from image pixels).
@@ -15,5 +15,7 @@ export const TEASER_RED_EYE = {
   midCycleStruggleMs: 650,
 } as const
 
-/** Same gate as GrayFog — disabled when the forum teaser image URL no longer matches. */
+/** Same gate as GrayFog for the live embed; archive uses {@link supportsGrayFogForImgurId}. */
 export const supportsTeaserRedEyeGlow = supportsGrayFog
+
+export { supportsGrayFogForImgurId }
