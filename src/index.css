@@ -9712,7 +9712,7 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   border-radius: 15px;
   opacity: 0;
   transition: none;
-  animation: gray-fog-shell-in 0.7s ease-out forwards;
+  animation: gray-fog-shell-in 0.55s ease-out forwards;
 }
 
 .gray-fog__canvas {
@@ -9730,9 +9730,109 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   }
 }
 
+/* TeaserRedEyeGlow — fog phase only; see supportsTeaserRedEyeGlow. */
+.teaser-red-eye-glow {
+  position: absolute;
+  z-index: 3;
+  width: 2.6%;
+  aspect-ratio: 0.85;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.teaser-red-eye-glow__core {
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  background: rgb(var(--red-eye-r), var(--red-eye-g), var(--red-eye-b));
+  box-shadow:
+    0 0 3px 0 rgba(255, 50, 58, 0.95),
+    0 0 7px 1px rgba(255, 28, 38, 0.65);
+}
+
+.teaser-red-eye-glow__halo {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 50, 58, 0.45) 0%,
+    rgba(255, 35, 45, 0.18) 42%,
+    transparent 52%
+  );
+}
+
+.teaser-red-eye-glow--struggle .teaser-red-eye-glow__core {
+  animation: teaser-red-eye-struggle-core 0.48s ease-in-out infinite;
+}
+
+.teaser-red-eye-glow--struggle .teaser-red-eye-glow__halo {
+  animation: teaser-red-eye-struggle-halo 0.48s ease-in-out infinite;
+}
+
+.teaser-red-eye-glow--active .teaser-red-eye-glow__halo {
+  display: none;
+}
+
+.teaser-red-eye-glow--active .teaser-red-eye-glow__core {
+  opacity: 1;
+  animation: teaser-red-eye-active-core 2.8s ease-in-out infinite;
+}
+
+@keyframes teaser-red-eye-struggle-core {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.94);
+    filter: brightness(0.85) saturate(0.95);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.02);
+    filter: brightness(1.2) saturate(1.08);
+  }
+}
+
+@keyframes teaser-red-eye-struggle-halo {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.38;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes teaser-red-eye-active-core {
+  0%,
+  100% {
+    opacity: 0.94;
+    transform: scale(1);
+    filter: brightness(1.12) saturate(1.1);
+    box-shadow:
+      0 0 3px 0 rgba(255, 50, 58, 0.95),
+      0 0 7px 1px rgba(255, 28, 38, 0.65);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+    filter: brightness(1.22) saturate(1.15);
+    box-shadow:
+      0 0 4px 0 rgba(255, 55, 62, 1),
+      0 0 9px 1px rgba(255, 30, 40, 0.75);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .forum-teaser-embedded--gray-fog .gray-fog,
   .forum-teaser-embedded--corner-fog .gray-fog {
+    display: none;
+  }
+
+  .teaser-red-eye-glow {
     display: none;
   }
 }

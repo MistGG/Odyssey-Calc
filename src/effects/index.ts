@@ -20,4 +20,6 @@ export {
 export { GrayFog } from './GrayFog'
 export { GRAY_FOG_EARLY_MS } from './grayFogTiming'
 export { GRAY_FOG_TEASER_IMGUR_ID, supportsGrayFog } from './grayFogConfig'
+export { TEASER_RED_EYE, supportsTeaserRedEyeGlow } from './teaserRedEyeConfig'
+export { TeaserRedEyeGlow } from './TeaserRedEyeGlow'
 export { useCrtRevealLoop } from './useCrtRevealLoop'

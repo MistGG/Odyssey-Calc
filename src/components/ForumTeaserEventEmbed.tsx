@@ -3,6 +3,7 @@ import { FORUM_TEASER_THREAD_URL } from '../lib/forumTeaserImage'
 import {
   CrtTeaserMedia,
   GrayFog,
+  TeaserRedEyeGlow,
   supportsGrayFog,
   useCrtRevealLoop,
   useTeaserImageSrc,
@@ -14,7 +15,7 @@ export function ForumTeaserEventEmbed() {
   const reducedMotion = useTeaserReducedMotion()
   const { imgSrc, onImgError } = useTeaserImageSrc()
   const grayFogEnabled = supportsGrayFog(imgSrc)
-  const { phase, introActive, grayFogVisible, startLoop, stopLoop, revealMs } =
+  const { phase, introActive, grayFogVisible, beatId, startLoop, stopLoop, revealMs } =
     useCrtRevealLoop(grayFogEnabled)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -72,7 +73,10 @@ export function ForumTeaserEventEmbed() {
           overlayActive={introActive}
         />
         {grayFogEnabled && !reducedMotion && (phase === 'reveal' || grayFogVisible) ? (
-          <GrayFog />
+          <>
+            <GrayFog />
+            <TeaserRedEyeGlow fogPhase beatId={beatId} enabled={grayFogEnabled} />
+          </>
         ) : null}
       </a>
     </div>

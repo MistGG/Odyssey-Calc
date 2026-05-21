@@ -9,12 +9,14 @@ export function useCrtRevealLoop(grayFogEnabled: boolean) {
   const [phase, setPhase] = useState<CrtRevealPhase>('reveal')
   const [introActive, setIntroActive] = useState(false)
   const [grayFogVisible, setGrayFogVisible] = useState(false)
+  const [beatId, setBeatId] = useState(0)
   const revealTimerRef = useRef(0)
   const grayFogEarlyTimerRef = useRef(0)
   const loopTimerRef = useRef(0)
   const loopingRef = useRef(false)
 
   const playStaticBeat = useCallback(() => {
+    setBeatId((n) => n + 1)
     setGrayFogVisible(false)
     setIntroActive(true)
     setPhase('static')
@@ -52,6 +54,7 @@ export function useCrtRevealLoop(grayFogEnabled: boolean) {
     phase,
     introActive,
     grayFogVisible,
+    beatId,
     playStaticBeat,
     startLoop,
     stopLoop,
