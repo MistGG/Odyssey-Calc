@@ -19,11 +19,19 @@ export type TeaserArchiveEntry = {
  */
 export const TEASER_ARCHIVE_ENTRIES: TeaserArchiveEntry[] = [
   {
+    id: '6JQlbLZ',
+    imgurId: '6JQlbLZ',
+    imageUrl: bundledTeaserImageUrl('6JQlbLZ'),
+    title: 'Marsmon inscription',
+    dateLabel: 'May 2026',
+    fullEffects: false,
+  },
+  {
     id: '6v7FJWV',
     imgurId: '6v7FJWV',
     imageUrl: bundledTeaserImageUrl('6v7FJWV'),
     title: 'Dungeon silhouettes',
-    dateLabel: 'May 2026',
+    dateLabel: 'Apr 2026',
     fullEffects: true,
   },
 ]
