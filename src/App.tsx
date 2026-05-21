@@ -9,6 +9,7 @@ import { MeterMyParsesPage } from './pages/MeterMyParsesPage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
 import { CompanionPage } from './pages/CompanionPage'
+import { MayClearEventPage } from './pages/MayClearEventPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="meter/my-parses" element={<MeterMyParsesPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />
+          <Route path="event" element={<MayClearEventPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

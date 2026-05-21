@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
@@ -19,7 +20,11 @@ import {
   loadWikiDungeonsForMeter,
 } from '../lib/wikiDungeons'
 
+type MeterNavState = { dungeonId?: string; difficultyId?: number }
+
 export function MeterPublicPage() {
+  const { state: navState } = useLocation()
+  const meterNav = (navState as MeterNavState | null) ?? null
   const meterConfigured = isMeterSupabaseConfigured()
   const [rows, setRows] = useState<PublicMeterParseRow[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -57,8 +62,14 @@ export function MeterPublicPage() {
   )
 
   useEffect(() => {
-    if (!dungeonId && dungeonOptions.length) setDungeonId(dungeonOptions[0]!.dungeonId)
-  }, [dungeonOptions, dungeonId])
+    if (!dungeonOptions.length) return
+    const fromEvent = meterNav?.dungeonId?.trim()
+    if (fromEvent && dungeonOptions.some((d) => d.dungeonId === fromEvent)) {
+      setDungeonId(fromEvent)
+      return
+    }
+    if (!dungeonId) setDungeonId(dungeonOptions[0]!.dungeonId)
+  }, [dungeonOptions, dungeonId, meterNav?.dungeonId])
 
   useEffect(() => {
     if (!dungeonId) return
@@ -66,10 +77,18 @@ export function MeterPublicPage() {
       setDifficultyId(null)
       return
     }
+    const fromEvent = meterNav?.difficultyId
+    if (
+      fromEvent != null &&
+      difficultyOptions.some((d) => d.difficultyId === fromEvent)
+    ) {
+      setDifficultyId(fromEvent)
+      return
+    }
     if (difficultyId == null || !difficultyOptions.some((d) => d.difficultyId === difficultyId)) {
       setDifficultyId(difficultyOptions[0]!.difficultyId)
     }
-  }, [dungeonId, difficultyOptions, difficultyId])
+  }, [dungeonId, difficultyOptions, difficultyId, meterNav?.difficultyId])
 
   const stats = useMemo(() => {
     if (!dungeonId || difficultyId == null || !digimonRoleById.size) return null

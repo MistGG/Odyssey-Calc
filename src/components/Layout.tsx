@@ -55,6 +55,15 @@ export function Layout() {
             Meter
           </NavLink>
           <NavLink
+            to="/event"
+            className={({ isActive }) =>
+              `nav-link-event${isActive ? ' nav-link-event--active' : ''}`
+            }
+          >
+            <span className="nav-link-event__badge">DGN</span>
+            Event
+          </NavLink>
+          <NavLink
             to="/companion"
             className={({ isActive }) =>
               `nav-link-companion${isActive ? ' nav-link-companion--active' : ''}`

@@ -216,27 +216,25 @@ function TvStatic({
   return <canvas ref={ref} className="forum-teaser-static-canvas" aria-hidden width={88} height={50} />
 }
 
-export type ForumTeaserTvFlyoutProps = {
-  open: boolean
-  onDismiss: () => void
+export type ForumTeaserTvMediaProps = {
   imgSrc: string
   onImgError: () => void
   reducedMotion: boolean
   phase: 'static' | 'reveal'
-  /** Duration of the static overlay (ms); must match the reveal timer in the parent. */
+  /** When false, overlay / CRT timing is paused (e.g. flyout closed). */
+  overlayActive?: boolean
   staticHoldMs?: number
 }
 
-/** Presentational flyout (fixed bottom-right). Used by {@link ForumTeaserTvPopup}. */
-export function ForumTeaserTvFlyout({
-  open,
-  onDismiss,
+/** Teaser frame: image, TV static canvas, and CRT warp during band segments. */
+export function ForumTeaserTvMedia({
   imgSrc,
   onImgError,
   reducedMotion,
   phase,
+  overlayActive = true,
   staticHoldMs = FORUM_TEASER_STATIC_HOLD_MS,
-}: ForumTeaserTvFlyoutProps) {
+}: ForumTeaserTvMediaProps) {
   const [crtImageFxActive, setCrtImageFxActive] = useState(false)
   const phaseRef = useRef(phase)
   phaseRef.current = phase
@@ -245,7 +243,7 @@ export function ForumTeaserTvFlyout({
   const prevCrtFxRef = useRef<boolean | null>(null)
 
   useEffect(() => {
-    if (!open || reducedMotion) {
+    if (!overlayActive || reducedMotion) {
       prevCrtFxRef.current = null
       setCrtImageFxActive(false)
       return
@@ -282,8 +280,106 @@ export function ForumTeaserTvFlyout({
     return () => {
       cancelAnimationFrame(overlayRafRef.current)
     }
-  }, [open, phase, reducedMotion, staticHoldMs])
+  }, [overlayActive, phase, reducedMotion, staticHoldMs])
 
+  return (
+    <div
+      className={`forum-teaser-frame${phase === 'static' ? ' forum-teaser-frame--static' : ''}${
+        crtImageFxActive ? ' forum-teaser-frame--crt-image-fx' : ''
+      }`}
+    >
+      <img
+        src={imgSrc}
+        alt=""
+        className="forum-teaser-img"
+        decoding="async"
+        width={943}
+        height={539}
+        onError={onImgError}
+      />
+      {!reducedMotion ? (
+        <TvStatic noiseActive={phase === 'static' && overlayActive} reducedMotion={reducedMotion} holdMs={staticHoldMs} />
+      ) : null}
+    </div>
+  )
+}
+
+export function useForumTeaserReducedMotion(): boolean {
+  const [reducedMotion, setReducedMotion] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const set = () => setReducedMotion(mq.matches)
+    set()
+    mq.addEventListener('change', set)
+    return () => mq.removeEventListener('change', set)
+  }, [])
+  return reducedMotion
+}
+
+export function useForumTeaserImageSrc() {
+  const [imgSrc, setImgSrc] = useState(FORUM_TEASER_IMAGE_URL)
+  const blobUrlRef = useRef<string | null>(null)
+
+  const disposeBlobUrl = useCallback(() => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+    }
+  }, [])
+
+  const applyBlobToSrc = useCallback(async () => {
+    const blob = await readCachedTeaserBlob()
+    if (!blob || blob.size === 0) {
+      disposeBlobUrl()
+      setImgSrc(FORUM_TEASER_IMAGE_URL)
+      return
+    }
+    disposeBlobUrl()
+    const u = URL.createObjectURL(blob)
+    blobUrlRef.current = u
+    setImgSrc(u)
+  }, [disposeBlobUrl])
+
+  const refreshTeaserImage = useCallback(async () => {
+    await applyBlobToSrc()
+    const changed = await syncForumTeaserImage()
+    if (changed) await applyBlobToSrc()
+  }, [applyBlobToSrc])
+
+  const onImgError = useCallback(() => {
+    disposeBlobUrl()
+    setImgSrc(FORUM_TEASER_IMAGE_URL)
+  }, [disposeBlobUrl])
+
+  useEffect(() => {
+    void refreshTeaserImage()
+  }, [refreshTeaserImage])
+
+  useEffect(() => () => disposeBlobUrl(), [disposeBlobUrl])
+
+  return { imgSrc, onImgError, refreshTeaserImage }
+}
+
+export type ForumTeaserTvFlyoutProps = {
+  open: boolean
+  onDismiss: () => void
+  imgSrc: string
+  onImgError: () => void
+  reducedMotion: boolean
+  phase: 'static' | 'reveal'
+  staticHoldMs?: number
+}
+
+/** Presentational flyout (fixed bottom-right). Used by {@link ForumTeaserTvPopup}. */
+export function ForumTeaserTvFlyout({
+  open,
+  onDismiss,
+  imgSrc,
+  onImgError,
+  reducedMotion,
+  phase,
+  staticHoldMs = FORUM_TEASER_STATIC_HOLD_MS,
+}: ForumTeaserTvFlyoutProps) {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -317,28 +413,14 @@ export function ForumTeaserTvFlyout({
           rel="noreferrer noopener"
           aria-label="Open teasers thread on the Digital Odyssey forums"
         >
-          <div
-            className={`forum-teaser-frame${phase === 'static' ? ' forum-teaser-frame--static' : ''}${
-              crtImageFxActive ? ' forum-teaser-frame--crt-image-fx' : ''
-            }`}
-          >
-            <img
-              src={imgSrc}
-              alt=""
-              className="forum-teaser-img"
-              decoding="async"
-              width={943}
-              height={539}
-              onError={onImgError}
-            />
-            {!reducedMotion ? (
-              <TvStatic
-                noiseActive={phase === 'static'}
-                reducedMotion={reducedMotion}
-                holdMs={staticHoldMs}
-              />
-            ) : null}
-          </div>
+          <ForumTeaserTvMedia
+            imgSrc={imgSrc}
+            onImgError={onImgError}
+            reducedMotion={reducedMotion}
+            phase={phase}
+            overlayActive={open}
+            staticHoldMs={staticHoldMs}
+          />
         </a>
       </div>
     </aside>
@@ -349,47 +431,16 @@ export function ForumTeaserTvPopup() {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const [phase, setPhase] = useState<'static' | 'reveal'>('static')
-  const [imgSrc, setImgSrc] = useState(FORUM_TEASER_IMAGE_URL)
   const [identityKey, setIdentityKey] = useState('')
-  const blobUrlRef = useRef<string | null>(null)
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const reducedMotion = useForumTeaserReducedMotion()
+  const { imgSrc, onImgError, refreshTeaserImage } = useForumTeaserImageSrc()
   const revealTimerRef = useRef<number>(0)
   const scheduleTimerRef = useRef<number>(0)
 
-  const disposeBlobUrl = useCallback(() => {
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current)
-      blobUrlRef.current = null
-    }
-  }, [])
-
-  const applyBlobToSrc = useCallback(async () => {
-    const blob = await readCachedTeaserBlob()
-    if (!blob || blob.size === 0) {
-      disposeBlobUrl()
-      setImgSrc(FORUM_TEASER_IMAGE_URL)
-      return
-    }
-    disposeBlobUrl()
-    const u = URL.createObjectURL(blob)
-    blobUrlRef.current = u
-    setImgSrc(u)
-  }, [disposeBlobUrl])
-
   const bumpIdentity = useCallback(async () => {
-    await applyBlobToSrc()
-    const changed = await syncForumTeaserImage()
-    if (changed) await applyBlobToSrc()
+    await refreshTeaserImage()
     setIdentityKey(getForumTeaserIdentityKey())
-  }, [applyBlobToSrc])
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const set = () => setReducedMotion(mq.matches)
-    set()
-    mq.addEventListener('change', set)
-    return () => mq.removeEventListener('change', set)
-  }, [])
+  }, [refreshTeaserImage])
 
   useEffect(() => {
     void bumpIdentity()
@@ -411,14 +462,12 @@ export function ForumTeaserTvPopup() {
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [bumpIdentity])
 
-  useEffect(() => () => disposeBlobUrl(), [disposeBlobUrl])
-
   useEffect(() => {
     window.clearTimeout(scheduleTimerRef.current)
     window.clearTimeout(revealTimerRef.current)
     setOpen(false)
 
-    if (pathname === '/auth') return
+    if (pathname === '/auth' || pathname === '/event') return
     if (!identityKey) return
     // Once per teaser file (Last-Modified / ETag); new forum image → new identity → plays again.
     if (readForumTeaserPopupSeenIdentity() === identityKey) return
@@ -441,11 +490,6 @@ export function ForumTeaserTvPopup() {
       window.clearTimeout(revealTimerRef.current)
     }
   }, [identityKey, pathname, reducedMotion])
-
-  const onImgError = useCallback(() => {
-    disposeBlobUrl()
-    setImgSrc(FORUM_TEASER_IMAGE_URL)
-  }, [disposeBlobUrl])
 
   return (
     <ForumTeaserTvFlyout
