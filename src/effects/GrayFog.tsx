@@ -3,6 +3,13 @@ import { useEffect, useRef } from 'react'
 type FogSide = 'bl' | 'br'
 type FogMode = 'center' | 'bottom'
 
+type FogLobe = {
+  ox: number
+  oy: number
+  rMul: number
+  alphaMul: number
+}
+
 type FogPuff = {
   x: number
   y: number
@@ -14,31 +21,17 @@ type FogPuff = {
   tone: number
   mode: FogMode
   wobble: number
-  /** Horizontal elongation in local space. */
-  stretch: number
-  /** Vertical thickness relative to base radius. */
-  thickness: number
-  angle: number
-  hasLump: boolean
-  lumpAngle: number
-  lumpOffset: number
-  lumpStretch: number
-  lumpThickness: number
-  lumpTwist: number
-  lumpAlphaMul: number
+  lobes: FogLobe[]
   bornAt: number
 }
 
 const FOG_CENTER_X = 0.5
-/** Drift target sits below image center (lower-third), not dead center. */
 const FOG_CENTER_Y = 0.58
-/** Movement scale — lower is slower. */
 const FOG_SPEED = 0.15
-const MAX_PUFFS = 28
-const SPAWN_INTERVAL_MS = 1650
-const SPAWN_ATTEMPTS = 10
-/** Min center-to-center gap (normalized) so new puffs do not stack on spawn. */
-const SPAWN_GAP_PAD = 0.05
+const MAX_PUFFS = 34
+const SPAWN_INTERVAL_MS = 1320
+const SPAWN_ATTEMPTS = 14
+const SPAWN_GAP_PAD = 0.068
 const FOG_FADE_IN_MS = 1100
 const BOTTOM_Y_MIN = 0.72
 const BOTTOM_Y_MAX = 0.98
@@ -47,35 +40,27 @@ function toneForSide(side: FogSide): number {
   return side === 'bl' ? 68 + Math.random() * 18 : 62 + Math.random() * 16
 }
 
-function randomFogShape(): Pick<
-  FogPuff,
-  | 'stretch'
-  | 'thickness'
-  | 'angle'
-  | 'hasLump'
-  | 'lumpAngle'
-  | 'lumpOffset'
-  | 'lumpStretch'
-  | 'lumpThickness'
-  | 'lumpTwist'
-  | 'lumpAlphaMul'
-> {
-  return {
-    stretch: 1.55 + Math.random() * 2.1,
-    thickness: 0.38 + Math.random() * 0.42,
-    angle: Math.random() * Math.PI,
-    hasLump: Math.random() < 0.62,
-    lumpAngle: Math.random() * Math.PI * 2,
-    lumpOffset: 0.22 + Math.random() * 0.28,
-    lumpStretch: 1.2 + Math.random() * 1.35,
-    lumpThickness: 0.48 + Math.random() * 0.38,
-    lumpTwist: (Math.random() - 0.5) * 0.55,
-    lumpAlphaMul: 0.62 + Math.random() * 0.18,
+function randomCloudLobes(): FogLobe[] {
+  const count = 6 + Math.floor(Math.random() * 2)
+  const lobes: FogLobe[] = []
+  for (let i = 0; i < count; i += 1) {
+    lobes.push({
+      ox: (Math.random() - 0.5) * 1.35,
+      oy: (Math.random() - 0.5) * 1.05,
+      rMul: 0.38 + Math.random() * 0.48,
+      alphaMul: 0.55 + Math.random() * 0.38,
+    })
   }
+  return lobes
 }
 
 function puffReach(p: FogPuff): number {
-  return p.r * Math.max(p.stretch * 0.52, p.thickness) + SPAWN_GAP_PAD * 0.35
+  let reach = p.r * 0.55
+  for (const l of p.lobes) {
+    const off = Math.hypot(l.ox, l.oy) + l.rMul
+    reach = Math.max(reach, p.r * off)
+  }
+  return reach + SPAWN_GAP_PAD
 }
 
 function spawnBottomPuff(side: FogSide): FogPuff {
@@ -86,12 +71,12 @@ function spawnBottomPuff(side: FogSide): FogPuff {
     vx: towardCenter * (0.000015 + Math.random() * 0.000022) * FOG_SPEED,
     vy: (Math.random() - 0.5) * 0.000012 * FOG_SPEED,
     r: 0.14 + Math.random() * 0.16,
-    alpha: 0.28 + Math.random() * 0.22,
+    alpha: 0.32 + Math.random() * 0.24,
     side,
     tone: toneForSide(side),
     mode: 'bottom',
     wobble: Math.random() * Math.PI * 2,
-    ...randomFogShape(),
+    lobes: randomCloudLobes(),
     bornAt: 0,
   }
 }
@@ -104,12 +89,12 @@ function spawnCenterPuff(side: FogSide): FogPuff {
       vx: (0.000022 + Math.random() * 0.000028) * FOG_SPEED,
       vy: (-0.000012 - Math.random() * 0.000016) * FOG_SPEED,
       r: 0.15 + Math.random() * 0.17,
-      alpha: 0.3 + Math.random() * 0.24,
+      alpha: 0.34 + Math.random() * 0.26,
       side,
       tone: toneForSide(side),
       mode: 'center',
       wobble: 0,
-      ...randomFogShape(),
+      lobes: randomCloudLobes(),
       bornAt: 0,
     }
   }
@@ -119,12 +104,12 @@ function spawnCenterPuff(side: FogSide): FogPuff {
     vx: (-0.000022 - Math.random() * 0.000028) * FOG_SPEED,
     vy: (-0.000012 - Math.random() * 0.000016) * FOG_SPEED,
     r: 0.15 + Math.random() * 0.17,
-    alpha: 0.3 + Math.random() * 0.24,
+    alpha: 0.34 + Math.random() * 0.26,
     side,
     tone: toneForSide(side),
     mode: 'center',
     wobble: 0,
-    ...randomFogShape(),
+    lobes: randomCloudLobes(),
     bornAt: 0,
   }
 }
@@ -159,31 +144,29 @@ function trySpawnPuff(puffs: FogPuff[], side: FogSide, now: number): boolean {
   return false
 }
 
-function fillFogBlob(
+/** Soft circular lobe — no hard ellipse edges. */
+function fillCloudLobe(
   ctx: CanvasRenderingContext2D,
-  baseR: number,
-  stretch: number,
-  thickness: number,
-  angle: number,
+  x: number,
+  y: number,
+  radius: number,
   alpha: number,
   tone: number,
 ) {
   const t = tone | 0
-  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, baseR)
-  const core = `rgba(${t}, ${t + 1}, ${t + 2}, ${alpha * 0.98})`
-  const mid = `rgba(${t - 8}, ${t - 7}, ${t - 6}, ${alpha * 0.62})`
+  const g = ctx.createRadialGradient(x, y, 0, x, y, radius)
+  const core = `rgba(${t}, ${t + 1}, ${t + 2}, ${alpha * 0.78})`
+  const mid = `rgba(${t - 6}, ${t - 5}, ${t - 4}, ${alpha * 0.54})`
+  const soft = `rgba(${t - 12}, ${t - 11}, ${t - 10}, ${alpha * 0.26})`
   const edge = `rgba(${t - 18}, ${t - 17}, ${t - 16}, 0)`
   g.addColorStop(0, core)
-  g.addColorStop(0.4, mid)
+  g.addColorStop(0.22, mid)
+  g.addColorStop(0.55, soft)
   g.addColorStop(1, edge)
   ctx.fillStyle = g
-  ctx.save()
-  ctx.rotate(angle)
-  ctx.scale(stretch, thickness)
   ctx.beginPath()
-  ctx.arc(0, 0, baseR, 0, Math.PI * 2)
+  ctx.arc(x, y, radius, 0, Math.PI * 2)
   ctx.fill()
-  ctx.restore()
 }
 
 function drawPuff(ctx: CanvasRenderingContext2D, w: number, h: number, p: FogPuff, now: number) {
@@ -197,26 +180,16 @@ function drawPuff(ctx: CanvasRenderingContext2D, w: number, h: number, p: FogPuf
 
   ctx.save()
   ctx.translate(px, py)
-  fillFogBlob(ctx, baseR, p.stretch, p.thickness, p.angle, a, p.tone)
-
-  if (p.hasLump) {
-    const lumpR = baseR * 0.58
-    const off = baseR * p.lumpOffset
-    ctx.save()
-    ctx.rotate(p.lumpAngle)
-    ctx.translate(off, baseR * p.lumpTwist)
-    fillFogBlob(
+  for (const lobe of p.lobes) {
+    fillCloudLobe(
       ctx,
-      lumpR,
-      p.lumpStretch,
-      p.lumpThickness,
-      p.angle * 0.35,
-      a * p.lumpAlphaMul,
+      lobe.ox * baseR,
+      lobe.oy * baseR,
+      baseR * lobe.rMul,
+      a * lobe.alphaMul,
       p.tone,
     )
-    ctx.restore()
   }
-
   ctx.restore()
 }
 
@@ -257,8 +230,8 @@ function stepCenterPuff(p: FogPuff) {
   return true
 }
 
-/** Canvas fog: slow corner spawn; some wisps creep inward, others linger along the bottom. */
-export function ForumTeaserEventFog() {
+/** Reusable gray cloud fog overlay (canvas). Pair with {@link supportsGrayFog} gating. */
+export function GrayFog() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -295,9 +268,9 @@ export function ForumTeaserEventFog() {
     resize()
 
     const boot = performance.now()
-    for (let i = 0; i < 8; i += 1) {
+    for (let i = 0; i < 10; i += 1) {
       if (trySpawnPuff(puffs, i % 2 === 0 ? 'bl' : 'br', boot)) {
-        puffs[puffs.length - 1]!.bornAt = boot - (8 - i) * 120
+        puffs[puffs.length - 1]!.bornAt = boot - (10 - i) * 120
       }
     }
 
@@ -311,7 +284,7 @@ export function ForumTeaserEventFog() {
       }
 
       ctx.clearRect(0, 0, w, h)
-      ctx.globalCompositeOperation = 'multiply'
+      ctx.globalCompositeOperation = 'soft-light'
 
       for (let i = puffs.length - 1; i >= 0; i -= 1) {
         const p = puffs[i]!
@@ -344,8 +317,8 @@ export function ForumTeaserEventFog() {
   }, [])
 
   return (
-    <div ref={wrapRef} className="forum-teaser-event-fog" aria-hidden>
-      <canvas ref={canvasRef} className="forum-teaser-event-fog__canvas" />
+    <div ref={wrapRef} className="gray-fog" aria-hidden>
+      <canvas ref={canvasRef} className="gray-fog__canvas" />
     </div>
   )
 }
