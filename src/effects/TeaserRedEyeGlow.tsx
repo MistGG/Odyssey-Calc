@@ -11,7 +11,7 @@ export type TeaserRedEyeGlowProps = {
   enabled?: boolean
 }
 
-type Ignition = 'off' | 'struggle' | 'active'
+type Ignition = 'off' | 'struggle' | 'active' | 'awakened'
 
 const MID_CYCLE_AT_MS = CRT_LOOP_MS / 2
 
@@ -53,7 +53,7 @@ export function TeaserRedEyeGlow({ fogPhase, beatId, enabled = true }: TeaserRed
       if (!fogPhaseRef.current) return
       setIgnition('struggle')
       midEndTimer = window.setTimeout(() => {
-        if (fogPhaseRef.current) setIgnition('active')
+        if (fogPhaseRef.current) setIgnition('awakened')
       }, TEASER_RED_EYE.midCycleStruggleMs)
     }, MID_CYCLE_AT_MS)
 

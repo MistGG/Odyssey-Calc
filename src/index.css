@@ -9739,6 +9739,9 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   transform: translate(-50%, -50%);
   pointer-events: none;
   mix-blend-mode: screen;
+  transition:
+    width 0.55s ease,
+    filter 0.55s ease;
 }
 
 .teaser-red-eye-glow__core {
@@ -9749,6 +9752,11 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   box-shadow:
     0 0 3px 0 rgba(255, 50, 58, 0.95),
     0 0 7px 1px rgba(255, 28, 38, 0.65);
+  transition:
+    inset 0.55s ease,
+    box-shadow 0.55s ease,
+    filter 0.55s ease,
+    opacity 0.55s ease;
 }
 
 .teaser-red-eye-glow__halo {
@@ -9778,6 +9786,36 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 .teaser-red-eye-glow--active .teaser-red-eye-glow__core {
   opacity: 1;
   animation: teaser-red-eye-active-core 2.8s ease-in-out infinite;
+}
+
+/* Post mid-cycle: softer bloom — eye looks awake / online. */
+.teaser-red-eye-glow--awakened {
+  width: 3.5%;
+  filter: blur(0.15px);
+}
+
+.teaser-red-eye-glow--awakened .teaser-red-eye-glow__halo {
+  display: block;
+  inset: -42%;
+  opacity: 0.55;
+  background: radial-gradient(
+    circle,
+    rgba(255, 55, 65, 0.5) 0%,
+    rgba(255, 38, 48, 0.22) 48%,
+    transparent 62%
+  );
+  animation: teaser-red-eye-awakened-halo 3.2s ease-in-out infinite;
+}
+
+.teaser-red-eye-glow--awakened .teaser-red-eye-glow__core {
+  inset: 24%;
+  opacity: 0.88;
+  filter: brightness(1.08) saturate(1.05) blur(0.35px);
+  box-shadow:
+    0 0 5px 1px rgba(255, 48, 56, 0.75),
+    0 0 12px 3px rgba(255, 32, 42, 0.45),
+    0 0 20px 6px rgba(255, 24, 36, 0.2);
+  animation: teaser-red-eye-awakened-core 3.2s ease-in-out infinite;
 }
 
 @keyframes teaser-red-eye-struggle-core {
@@ -9823,6 +9861,32 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     box-shadow:
       0 0 4px 0 rgba(255, 55, 62, 1),
       0 0 9px 1px rgba(255, 30, 40, 0.75);
+  }
+}
+
+@keyframes teaser-red-eye-awakened-core {
+  0%,
+  100% {
+    opacity: 0.84;
+    transform: scale(1);
+    filter: brightness(1.05) saturate(1.02) blur(0.35px);
+  }
+  50% {
+    opacity: 0.94;
+    transform: scale(1.04);
+    filter: brightness(1.14) saturate(1.08) blur(0.45px);
+  }
+}
+
+@keyframes teaser-red-eye-awakened-halo {
+  0%,
+  100% {
+    opacity: 0.48;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.62;
+    transform: scale(1.06);
   }
 }
 
