@@ -24,7 +24,7 @@ export function MayClearEventPage() {
         </div>
         <div className="event-hero__actions">
           <Link className="event-cta event-cta--primary" to="/meter">
-            View full meter page
+            Visit Meter page
           </Link>
           <a
             className="event-cta event-cta--ghost"
