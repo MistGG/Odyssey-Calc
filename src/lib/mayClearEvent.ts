@@ -11,7 +11,7 @@ export const MAY_CLEAR_EVENT = {
   prizeCrownsPerRole: 200,
 } as const
 
-export const EVENT_ANNOUNCEMENT_NOTE = 'The event dungeon will be announced on May 29.'
+export const EVENT_ANNOUNCEMENT_NOTE = 'A dungeon will be selected on May 29th!'
 
 export const MAY_CLEAR_EVENT_ROLES = METER_ROLE_BUCKETS.map((id) => ({
   id,
