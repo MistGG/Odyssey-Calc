@@ -2,8 +2,8 @@ import { imgurIdFromUrl, imgurTeaserRemoteUrl } from './teaserImageStorage'
 
 /**
  * Official forum “News” teaser image (Digital Odyssey Proboards announcement box).
- * If the team changes the hotlink URL, update {@link FORUM_TEASER_IMAGE_URL}, add the
- * previous id to {@link TEASER_ARCHIVE_ENTRIES}, then run `npm run sync:teasers`.
+ * If the team changes the hotlink URL, follow `teaserEffectsPolicy.ts` (archive the old
+ * image, clear {@link GRAY_FOG_TEASER_IMGUR_ID} so live stays CRT-only, run `sync:teasers`).
  *
  * @see https://digitalodyssey.proboards.com/
  */

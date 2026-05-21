@@ -16,8 +16,8 @@ export type TeaserArchiveEntry = {
 
 /**
  * Past forum teasers kept on-site so CRT / GrayFog / eye effects remain playable
- * after {@link FORUM_TEASER_IMAGE_URL} changes. Add new rows when a teaser rotates out,
- * then run `npm run sync:teasers` to copy PNGs into `public/teasers/`.
+ * after {@link FORUM_TEASER_IMAGE_URL} changes (see `teaserEffectsPolicy.ts`). Add archive
+ * rows with `fullEffects: true` only for ids that had the saved stack; run `sync:teasers`.
  */
 export const TEASER_ARCHIVE_ENTRIES: TeaserArchiveEntry[] = [
   {

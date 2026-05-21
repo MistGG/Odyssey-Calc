@@ -26,4 +26,6 @@ export {
 } from './grayFogConfig'
 export { TEASER_RED_EYE, supportsTeaserRedEyeGlow } from './teaserRedEyeConfig'
 export { TeaserRedEyeGlow } from './TeaserRedEyeGlow'
+export { TEASER_MECHANO_APPROACH } from './teaserMechanoApproachConfig'
 export { useCrtRevealLoop } from './useCrtRevealLoop'
+export { useTeaserRedEyeIgnition, type TeaserRedEyeIgnition } from './useTeaserRedEyeIgnition'

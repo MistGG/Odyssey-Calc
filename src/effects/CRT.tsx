@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import { FORUM_TEASER_IMAGE_URL, readCachedTeaserBlob, syncForumTeaserImage } from '../lib/forumTeaserImage'
 import {
   bundledTeaserImageUrl,
   imgurIdFromUrl,
 } from '../lib/teaserImageStorage'
+import { TEASER_MECHANO_APPROACH } from './teaserMechanoApproachConfig'
 
 /**
  * CRT TV intro: heavy static → bands → heavy → bands → heavy → canvas fade → clear image.
@@ -218,6 +226,10 @@ export type CrtTeaserMediaProps = {
   /** When false, overlay / CRT timing is paused (e.g. flyout closed). */
   overlayActive?: boolean
   staticHoldMs?: number
+  /** Quick zoom-in after red eyes awaken (reveal phase only). */
+  mechanoApproach?: boolean
+  /** Overlays pinned to the image plane (e.g. red eye) — zoom with {@link mechanoApproach}. */
+  stageOverlay?: ReactNode
 }
 
 /** Image + TV static canvas + CRT warp during band segments. */
@@ -228,6 +240,8 @@ export function CrtTeaserMedia({
   phase,
   overlayActive = true,
   staticHoldMs = CRT_STATIC_HOLD_MS,
+  mechanoApproach = false,
+  stageOverlay = null,
 }: CrtTeaserMediaProps) {
   const [crtImageFxActive, setCrtImageFxActive] = useState(false)
   const phaseRef = useRef(phase)
@@ -276,21 +290,37 @@ export function CrtTeaserMedia({
     }
   }, [overlayActive, phase, reducedMotion, staticHoldMs])
 
+  const approachActive =
+    mechanoApproach && phase === 'reveal' && !reducedMotion
+
   return (
     <div
       className={`forum-teaser-frame${phase === 'static' ? ' forum-teaser-frame--static' : ''}${
         crtImageFxActive ? ' forum-teaser-frame--crt-image-fx' : ''
-      }`}
+      }${approachActive ? ' forum-teaser-frame--mechano-approach' : ''}`}
     >
-      <img
-        src={imgSrc}
-        alt=""
-        className="forum-teaser-img"
-        decoding="async"
-        width={943}
-        height={539}
-        onError={onImgError}
-      />
+      <div
+        className={`forum-teaser-zoom${approachActive ? ' forum-teaser-zoom--approach' : ''}`}
+        style={
+          approachActive
+            ? ({
+                '--mechano-approach-ms': `${TEASER_MECHANO_APPROACH.durationMs}ms`,
+                '--mechano-approach-origin': TEASER_MECHANO_APPROACH.transformOrigin,
+              } as CSSProperties)
+            : undefined
+        }
+      >
+        <img
+          src={imgSrc}
+          alt=""
+          className="forum-teaser-img"
+          decoding="async"
+          width={943}
+          height={539}
+          onError={onImgError}
+        />
+        {stageOverlay}
+      </div>
       {!reducedMotion ? (
         <TvStatic noiseActive={phase === 'static' && overlayActive} reducedMotion={reducedMotion} holdMs={staticHoldMs} />
       ) : null}

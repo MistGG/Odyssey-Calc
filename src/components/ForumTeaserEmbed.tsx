@@ -2,14 +2,17 @@ import { useEffect, useRef, type CSSProperties } from 'react'
 import {
   CrtTeaserMedia,
   GrayFog,
-  supportsGrayFog,
-  supportsGrayFogForImgurId,
   TeaserRedEyeGlow,
   useCrtRevealLoop,
   useTeaserImageSrc,
   useTeaserReducedMotion,
+  useTeaserRedEyeIgnition,
 } from '../effects'
 import { FORUM_TEASER_THREAD_URL } from '../lib/forumTeaserImage'
+import {
+  archiveTeaserHasFullEffectStack,
+  liveTeaserHasFullEffectStack,
+} from '../lib/teaserEffectsPolicy'
 
 export type ForumTeaserEmbedProps = {
   /** Direct image URL (archive) or omit for live forum teaser sync. */
@@ -33,11 +36,16 @@ export function ForumTeaserEmbed({
   const reducedMotion = useTeaserReducedMotion()
   const { imgSrc, onImgError } = useTeaserImageSrc(imageUrl)
   const grayFogEnabled =
-    fullEffects || (imgurId ? supportsGrayFogForImgurId(imgurId) : supportsGrayFog(imgSrc))
+    imgurId != null
+      ? archiveTeaserHasFullEffectStack(imgurId, fullEffects)
+      : liveTeaserHasFullEffectStack(imgSrc)
   const redEyeEnabled = grayFogEnabled
 
   const { phase, introActive, grayFogVisible, beatId, startLoop, stopLoop, revealMs } =
     useCrtRevealLoop(grayFogEnabled)
+  const fogPhase = phase === 'reveal' || grayFogVisible
+  const redEyeIgnition = useTeaserRedEyeIgnition(fogPhase, beatId, redEyeEnabled)
+  const mechanoApproach = redEyeIgnition === 'awakened' && phase === 'reveal'
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -92,15 +100,14 @@ export function ForumTeaserEmbed({
           reducedMotion={reducedMotion}
           phase={phase}
           overlayActive={introActive}
+          mechanoApproach={mechanoApproach}
+          stageOverlay={
+            redEyeEnabled && !reducedMotion && fogPhase ? (
+              <TeaserRedEyeGlow fogPhase={fogPhase} beatId={beatId} enabled={redEyeEnabled} />
+            ) : null
+          }
         />
-        {grayFogEnabled && !reducedMotion && (phase === 'reveal' || grayFogVisible) ? (
-          <>
-            <GrayFog />
-            {redEyeEnabled ? (
-              <TeaserRedEyeGlow fogPhase beatId={beatId} enabled={redEyeEnabled} />
-            ) : null}
-          </>
-        ) : null}
+        {grayFogEnabled && !reducedMotion && fogPhase ? <GrayFog /> : null}
       </a>
     </div>
   )
