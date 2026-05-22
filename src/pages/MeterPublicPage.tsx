@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
@@ -10,6 +10,7 @@ import {
 } from '../lib/meterDataSource'
 import {
   aggregatePublicMeterStats,
+  mostRecentMeterParseSelection,
   type DigimonDpsSortMode,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
@@ -34,6 +35,7 @@ export function MeterPublicPage() {
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
   const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
   const [digimonDpsSort, setDigimonDpsSort] = useState<DigimonDpsSortMode>('best')
+  const initialFiltersApplied = useRef(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -68,8 +70,18 @@ export function MeterPublicPage() {
       setDungeonId(fromEvent)
       return
     }
-    if (!dungeonId) setDungeonId(dungeonOptions[0]!.dungeonId)
-  }, [dungeonOptions, dungeonId, meterNav?.dungeonId])
+    if (initialFiltersApplied.current) return
+    if (loading) return
+    initialFiltersApplied.current = true
+    const allowedIds = dungeonOptions.map((d) => d.dungeonId)
+    const recent = mostRecentMeterParseSelection(rows, allowedIds)
+    if (recent) {
+      setDungeonId(recent.dungeonId)
+      setDifficultyId(recent.difficultyId)
+      return
+    }
+    setDungeonId(dungeonOptions[0]!.dungeonId)
+  }, [dungeonOptions, loading, rows, meterNav?.dungeonId])
 
   useEffect(() => {
     if (!dungeonId) return

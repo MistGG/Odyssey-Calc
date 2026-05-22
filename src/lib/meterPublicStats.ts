@@ -1,4 +1,5 @@
 import {
+  dungeonFromPayload,
   isBrokenMeterPartyParse,
   isDungeonPartyParsePayload,
   isFailedDungeonParseRow,
@@ -215,6 +216,41 @@ export function aggregatePublicMeterStats(
 export type DungeonOption = {
   dungeonId: string
   dungeonName: string
+}
+
+export type MeterParseSelection = {
+  dungeonId: string
+  difficultyId: number
+}
+
+function parseRowDungeonId(row: PublicMeterParseRow): string | null {
+  const fromColumn = row.dungeon_id?.trim()
+  if (fromColumn) return fromColumn
+  return dungeonFromPayload(row.payload)?.dungeonId?.trim() ?? null
+}
+
+function parseRowDifficultyId(row: PublicMeterParseRow): number | null {
+  const fromColumn = row.difficulty_id
+  if (fromColumn != null && fromColumn >= 2) return fromColumn
+  const fromPayload = dungeonFromPayload(row.payload)?.difficultyId
+  if (fromPayload != null && fromPayload >= 2) return fromPayload
+  return null
+}
+
+/** First eligible row in newest-first order (no extra Supabase query). */
+export function mostRecentMeterParseSelection(
+  rows: PublicMeterParseRow[],
+  allowedDungeonIds: Iterable<string>,
+): MeterParseSelection | null {
+  const allowed = new Set(allowedDungeonIds)
+  for (const row of rows) {
+    const dungeonId = parseRowDungeonId(row)
+    const difficultyId = parseRowDifficultyId(row)
+    if (!dungeonId || !allowed.has(dungeonId)) continue
+    if (difficultyId == null) continue
+    return { dungeonId, difficultyId }
+  }
+  return null
 }
 
 export function dungeonOptionsFromRows(rows: PublicMeterParseRow[]): DungeonOption[] {
