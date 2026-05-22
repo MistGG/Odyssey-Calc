@@ -9524,12 +9524,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   border-radius: 6px;
 }
 
-.meter-public-subtitle {
-  margin: 0 0 20px;
-  color: var(--muted, #8b9cb3);
-  font-size: 0.95rem;
-}
-
 .meter-public-grid {
   display: flex;
   flex-direction: column;

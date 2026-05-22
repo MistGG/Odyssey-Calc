@@ -70,7 +70,8 @@ export function MayClearEventPage() {
         </h2>
         <ol className="event-steps">
           <li>
-            Run the dungeon announced on <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>.
+            Run the dungeon announced on <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>, you will have 7
+            days to run this.
           </li>
           <li>
             Use <strong>Odyssey Companion</strong> to record the party run and upload a{' '}

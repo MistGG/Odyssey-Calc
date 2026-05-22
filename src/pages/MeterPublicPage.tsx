@@ -112,11 +112,6 @@ export function MeterPublicPage() {
     return digimonDpsSort === 'best' ? stats.digimonByBucketBest : stats.digimonByBucketAverage
   }, [stats, digimonDpsSort])
 
-  const selectedDungeonName =
-    dungeonOptions.find((d) => d.dungeonId === dungeonId)?.dungeonName ?? dungeonId
-  const selectedDifficultyLabel =
-    difficultyOptions.find((d) => d.difficultyId === difficultyId)?.label ?? ''
-
   return (
     <div className="meter-parses-page meter-public-page">
       <header className="meter-parses-logged-head meter-parses-logged-head--bar meter-public-head">
@@ -167,10 +162,6 @@ export function MeterPublicPage() {
         <p className="meter-parses-muted meter-parses-muted--center">Select a dungeon and difficulty.</p>
       ) : stats ? (
         <>
-          <p className="meter-public-subtitle">
-            {selectedDungeonName}
-            {selectedDifficultyLabel ? ` · ${selectedDifficultyLabel}` : ''}
-          </p>
           <div className="meter-public-grid">
             <div className="meter-public-section">
               <div className="meter-public-section-head">
