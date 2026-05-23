@@ -7,7 +7,7 @@ import { imgurIdFromUrl, imgurTeaserRemoteUrl } from './teaserImageStorage'
  *
  * @see https://digitalodyssey.proboards.com/
  */
-export const FORUM_TEASER_IMAGE_URL = 'https://i.imgur.com/6JQlbLZ.png'
+export const FORUM_TEASER_IMAGE_URL = 'https://i.imgur.com/bvXYVDQ.png'
 
 /** Teasers collection thread (announcement “Read more” target). */
 export const FORUM_TEASER_THREAD_URL =

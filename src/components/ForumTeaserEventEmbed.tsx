@@ -1,6 +1,6 @@
 import { ForumTeaserEmbed } from './ForumTeaserEmbed'
 
-/** Event page: live forum teaser with auto effect gating. */
+/** Event page: live forum teaser, plain image only (no CRT / fog / Marsmon). */
 export function ForumTeaserEventEmbed() {
-  return <ForumTeaserEmbed />
+  return <ForumTeaserEmbed plainOnly />
 }

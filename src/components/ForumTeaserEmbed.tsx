@@ -23,6 +23,8 @@ export type ForumTeaserEmbedProps = {
   imgurId?: string
   /** Saved CRT + fog + eye stack (archive rows). */
   fullEffects?: boolean
+  /** Event page: image only (no CRT, fog, red eye, or Marsmon ambience). */
+  plainOnly?: boolean
   linkHref?: string
 }
 
@@ -64,16 +66,20 @@ export function ForumTeaserEmbed({
   imageUrl,
   imgurId,
   fullEffects = false,
+  plainOnly = false,
   linkHref = FORUM_TEASER_THREAD_URL,
 }: ForumTeaserEmbedProps) {
   const reducedMotion = useTeaserReducedMotion()
   const { imgSrc, onImgError } = useTeaserImageSrc(imageUrl)
-  const effectsEnabled =
-    imgurId != null
+  const effectsEnabled = plainOnly
+    ? false
+    : imgurId != null
       ? archiveTeaserHasSavedEffectStack(imgurId, fullEffects)
       : liveTeaserHasSavedEffectStack(imgSrc)
   const marsmonAmbience =
-    !effectsEnabled && supportsMarsmonTeaserAmbience(imgurId, imgSrc, imageUrl)
+    !plainOnly &&
+    !effectsEnabled &&
+    supportsMarsmonTeaserAmbience(imgurId, imgSrc, imageUrl)
 
   const { phase, introActive, grayFogVisible, beatId, startLoop, stopLoop, revealMs } =
     useCrtRevealLoop(effectsEnabled)
