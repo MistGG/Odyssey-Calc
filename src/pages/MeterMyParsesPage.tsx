@@ -5,6 +5,7 @@ import { MeterDungeonPartyReplay } from '../components/MeterDungeonPartyReplay'
 import { MeterSubNav } from '../components/MeterSubNav'
 import {
   dungeonFromPayload,
+  isExcludedFromLeaderboardParseRow,
   isInvalidMeterPartyParseRow,
   partyMembersFromPayload,
   raidTotalFromPayload,
@@ -103,6 +104,7 @@ export function MeterMyParsesPage() {
     const outcome =
       dungeon?.runOutcome === 'clear' ? 'Clear' : dungeon?.runOutcome === 'fail' ? 'Fail' : ''
     const invalid = isInvalidMeterPartyParseRow(row)
+    const unranked = !invalid && isExcludedFromLeaderboardParseRow(row)
     const raidTotal = raidTotalFromPayload(row.payload, members)
     const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
     const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
@@ -143,6 +145,10 @@ export function MeterMyParsesPage() {
               {invalid ? (
                 <span className="meter-run-badge meter-run-badge--invalid" title="Excluded from leaderboard">
                   Invalid
+                </span>
+              ) : unranked ? (
+                <span className="meter-run-badge meter-run-badge--invalid" title="Not a full boss clear — excluded from leaderboard">
+                  Unranked
                 </span>
               ) : null}
             </span>

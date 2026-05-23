@@ -26,10 +26,12 @@ export function MeterRunMeta({
   dungeon,
   fallbackDungeonName,
   invalid = false,
+  unranked = false,
 }: {
   dungeon: MeterParseDungeonStored | null
   fallbackDungeonName?: string | null
   invalid?: boolean
+  unranked?: boolean
 }) {
   if (!dungeon && !fallbackDungeonName) return null
   const dungeonName = dungeon?.dungeonName?.trim() || fallbackDungeonName?.trim() || dungeon?.dungeonId || ''
@@ -59,6 +61,10 @@ export function MeterRunMeta({
           {invalid ? (
             <span className="meter-run-badge meter-run-badge--invalid" title="Excluded from leaderboard">
               Invalid
+            </span>
+          ) : unranked ? (
+            <span className="meter-run-badge meter-run-badge--invalid" title="Not a full boss clear — excluded from leaderboard">
+              Unranked
             </span>
           ) : null}
         </div>

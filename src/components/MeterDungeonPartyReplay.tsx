@@ -6,6 +6,7 @@ import {
 } from './MeterParseReplay'
 import {
   dungeonFromPayload,
+  isExcludedFromLeaderboardParseRow,
   isInvalidMeterPartyParseRow,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
@@ -98,6 +99,9 @@ export function MeterDungeonPartyReplay({
             dungeon={dungeon as MeterParseDungeonStored | null}
             fallbackDungeonName={row.dungeon_name}
             invalid={isInvalidMeterPartyParseRow(row)}
+            unranked={
+              !isInvalidMeterPartyParseRow(row) && isExcludedFromLeaderboardParseRow(row)
+            }
           />
           {!selected ? (
             <section className="meter-breakdown meter-breakdown--compact meter-party" aria-label="Party DPS">

@@ -47,6 +47,7 @@ export type MeterParseDungeonStored = {
   partyId: string | null
   bossTargets: string[]
   runOutcome: 'clear' | 'fail' | null
+  leaderboardEligible?: boolean
 }
 
 export type MeterParsePayloadPartyStored = {
@@ -167,6 +168,14 @@ export function parseRunOutcomeFromPayload(payload: unknown): MeterParseDungeonS
   return dungeonFromPayload(payload)?.runOutcome ?? null
 }
 
+/** True only for full boss clears (client API). Mid-run manual uploads are stored but unranked. */
+export function isLeaderboardEligibleDungeonParsePayload(payload: unknown): boolean {
+  const dungeon = dungeonFromPayload(payload)
+  if (!dungeon) return false
+  if (typeof dungeon.leaderboardEligible === 'boolean') return dungeon.leaderboardEligible
+  return dungeon.runOutcome === 'clear'
+}
+
 /** Failed dungeon runs are shown in My Parses only — never leaderboard or percentile coloring. */
 export function isFailedDungeonParseRow(row: { payload: unknown }): boolean {
   return parseRunOutcomeFromPayload(row.payload) === 'fail'
@@ -246,6 +255,16 @@ export function isBrokenMeterPartyParse(
 export function isInvalidMeterPartyParseRow(row: { payload: unknown }): boolean {
   const members = partyMembersFromPayload(row.payload)
   return isBrokenMeterPartyParse(row.payload, members)
+}
+
+/** Unranked or broken — excluded from public leaderboards and percentile coloring. */
+export function isExcludedFromLeaderboardParseRow(row: { payload: unknown }): boolean {
+  if (!isDungeonPartyParsePayload(row.payload)) return false
+  if (isFailedDungeonParseRow(row)) return true
+  if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return true
+  const members = partyMembersFromPayload(row.payload)
+  if (isBrokenMeterPartyParse(row.payload, members)) return true
+  return false
 }
 
 /** Per-player damage: prefer digimon breakdown sum, then skills, then stored total. */

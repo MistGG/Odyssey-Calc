@@ -3,6 +3,7 @@ import {
   isBrokenMeterPartyParse,
   isDungeonPartyParsePayload,
   isFailedDungeonParseRow,
+  isLeaderboardEligibleDungeonParsePayload,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
   sessionDurationFromPayload,
@@ -44,10 +45,11 @@ export type MeterParseListRow = PublicMeterParseRow & {
   hit_count: number
 }
 
-/** Clears with valid party attribution — excludes failed and broken meter runs. */
+/** Clears with valid party attribution — excludes failed, incomplete, and broken meter runs. */
 export function leaderboardEligibleParses(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
   return rows.filter((r) => {
     if (isFailedDungeonParseRow(r)) return false
+    if (!isLeaderboardEligibleDungeonParsePayload(r.payload)) return false
     const members = partyMembersFromPayload(r.payload)
     if (isBrokenMeterPartyParse(r.payload, members)) return false
     return true
