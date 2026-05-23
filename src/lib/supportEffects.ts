@@ -881,6 +881,23 @@ function preferSupportEffect(a: ParsedSupportEffect, b: ParsedSupportEffect): Pa
   return hotSec !== undefined ? { ...pick, hotIntervalSec: hotSec } : pick
 }
 
+/** True when the parsed row is cooldown reduction (e.g. "Reduces Cooldowns by 15%"). */
+export function isCooldownReductionEffect(e: ParsedSupportEffect): boolean {
+  if (e.unit !== '%') return false
+  const l = e.label.toLowerCase()
+  return /\bcooldown/.test(l) && (/\breduc/.test(l) || /\bdecreas/.test(l))
+}
+
+/** Largest CDR % from parsed support rows (0–1 fraction). */
+export function cooldownReductionFractionFromEffects(effects: ParsedSupportEffect[]): number {
+  let maxPct = 0
+  for (const e of effects) {
+    if (!isCooldownReductionEffect(e)) continue
+    maxPct = Math.max(maxPct, e.valueAtLevel)
+  }
+  return Math.min(1, Math.max(0, maxPct / 100))
+}
+
 /** Collapse duplicate rows from flavor + buff text + numeric buff keys describing the same stat. */
 export function dedupeSupportEffectsByStat(effects: ParsedSupportEffect[]): ParsedSupportEffect[] {
   const map = new Map<string, ParsedSupportEffect>()

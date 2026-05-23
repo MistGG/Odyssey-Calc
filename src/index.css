@@ -6457,6 +6457,43 @@ code {
   font-size: 0.82rem;
 }
 
+.lab-timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.lab-timeline-header h3 {
+  margin: 0;
+}
+
+.lab-timeline-view-toggle {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--cyan);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.lab-timeline-view-toggle:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(56, 189, 248, 0.55);
+}
+
+.lab-timeline-section:not(.lab-timeline-section--icons-visible) .timeline-buff-hint {
+  margin-bottom: 0.55rem;
+}
+
 .timeline-sequence {
   display: flex;
   flex-wrap: wrap;
@@ -6774,58 +6811,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   font-size: 0.75rem;
   color: #e2e8f0;
   line-height: 1.35;
-}
-
-/* Rotation notes: shared type scale, spacing, and visible hierarchy (outer + nested) */
-.lab-result .lab-advice-list {
-  margin: 0.45rem 0 0;
-  padding-left: 1.25rem;
-  list-style-type: disc;
-  list-style-position: outside;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  max-width: min(56rem, 100%);
-  font-size: 0.94rem;
-  line-height: 1.5;
-  color: var(--text-soft);
-}
-
-.lab-advice-list > .lab-advice-item {
-  padding-inline-start: 0.2rem;
-}
-
-.lab-advice-list > .lab-advice-item::marker {
-  color: var(--muted);
-}
-
-.lab-advice-item--with-sublist .lab-advice-sublist-head {
-  font-weight: 600;
-  color: var(--text);
-}
-
-.lab-advice-anim-cancel-caption {
-  margin: 0 0 0.4rem;
-  font-size: 0.86rem;
-  line-height: 1.45;
-  color: var(--muted);
-}
-
-.lab-advice-sublist {
-  margin: 0.4rem 0 0;
-  padding: 0.2rem 0 0.1rem 1rem;
-  list-style-type: disc;
-  list-style-position: outside;
-}
-
-.lab-advice-sublist li {
-  margin: 0.28rem 0;
-  line-height: 1.45;
-}
-
-.lab-advice-sublist li::marker {
-  color: var(--muted);
-  font-size: 0.9em;
 }
 
 .lab-result strong {

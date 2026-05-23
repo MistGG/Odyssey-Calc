@@ -60,23 +60,11 @@ import {
   trueViceDamageFractionsForSkillHit,
 } from '../lib/gearStats'
 import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
-import { SKILL_LEVEL_CAP, wikiSkillHitCoefficient, skillIsSupportOnly } from '../lib/skillDamage'
-import { buildSupportSkillEffects } from '../lib/supportEffects'
+import { SKILL_LEVEL_CAP, skillIsSupportOnly } from '../lib/skillDamage'
 import type { RotationDamageBreakdown, RotationEvent } from '../lib/dpsSim'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
 import { DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail } from '../types/wikiApi'
-
-/** One line of text, or a titled block with sub-bullets (e.g. animation-cancel priority). */
-type LabRotationAdviceItem =
-  | string
-  | {
-      kind: 'anim-cancel-priority'
-      title: string
-      /** Short note under the title (e.g. how cancel-window numbers are defined). */
-      caption?: string
-      bullets: string[]
-    }
 
 type LabRotationMode = 'auto' | 'custom'
 
@@ -580,6 +568,8 @@ export function DpsLabPage() {
   const [simBusy, setSimBusy] = useState(false)
   const [simSlowHint, setSimSlowHint] = useState(false)
   const [expandedTimelineIdx, setExpandedTimelineIdx] = useState<number | null>(null)
+  /** Icon strip above the table; off by default. */
+  const [timelineIconsExpanded, setTimelineIconsExpanded] = useState(false)
   const [shareStatus, setShareStatus] = useState<string | null>(null)
   const [submitBusy, setSubmitBusy] = useState(false)
   type RotationSubmitToast =
@@ -610,6 +600,7 @@ export function DpsLabPage() {
   }, [])
   useEffect(() => {
     setExpandedTimelineIdx(null)
+    setTimelineIconsExpanded(false)
   }, [sim])
   const gearAttack = useMemo(() => getGearAttackContribution(), [gearStorageRevision])
   const sealBonuses = useMemo(() => getGearStatBonuses(), [gearStorageRevision])
@@ -1075,245 +1066,6 @@ export function DpsLabPage() {
       ),
     [data?.attribute, targetEnemyAttribute, labTrueViceFrac.attribute],
   )
-
-  const rotationAdvice = useMemo((): LabRotationAdviceItem[] => {
-    if (!data || !sim || breakdown.length === 0) return []
-    const lines: LabRotationAdviceItem[] = []
-
-    const levelOf = (skillId: string) => skillLevels[skillId] ?? 1
-    const top = breakdown[0]
-
-    const nameForSkillId = (skillId: string) =>
-      skillByIdForLab.get(skillId)?.name ??
-      (data.skills ?? []).find((s) => s.id === skillId)?.name ??
-      skillId
-
-    const transitions = new Map<string, { from: string; to: string; count: number }>()
-    for (let i = 0; i < sim.events.length - 1; i += 1) {
-      const a = sim.events[i]
-      const b = sim.events[i + 1]
-      if (a.skillId === b.skillId) continue
-      const key = `${a.skillId}->${b.skillId}`
-      const prev = transitions.get(key)
-      if (prev) prev.count += 1
-      else transitions.set(key, { from: a.skillName, to: b.skillName, count: 1 })
-    }
-    const bestTransition = [...transitions.values()].sort((a, b) => b.count - a.count)[0]
-
-    if (rotationMode === 'custom') {
-      if (customRotationValidRows.length > 0) {
-        const seq = customRotationValidRows.map((r) => nameForSkillId(r.skillId)).join(' → ')
-        lines.push(`Your main sequence (fixed order): ${seq}.`)
-      }
-      if (customRotationFillerSkillIds.length > 0 && customRotationFillerValidRows.length > 0) {
-        const fillerLine = customRotationFillerValidRows.map((r) => nameForSkillId(r.skillId)).join(' → ')
-        lines.push(`Downtime gap priority: ${fillerLine}.`)
-      } else {
-        lines.push(
-          'No gap priority set: the sim fills downtime with greedy high-DPS actions (autos vs damage skills using the same effectiveness checks as auto rotation; animation cancel applies when enabled). Supports not listed in your sequence or gap list are not auto-cast.',
-        )
-      }
-
-      lines.push(
-        `Largest damage share in this window: ${top.name} (${top.pct.toFixed(1)}%).`,
-      )
-
-      if (bestTransition && bestTransition.count >= 2) {
-        lines.push(
-          `Common adjacent pair in this timeline: ${bestTransition.from} → ${bestTransition.to} (${bestTransition.count}×).`,
-        )
-      }
-
-      if (useAutoAnimCancel) {
-        const autoOneHit =
-          (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
-        const overlap = clampAnimCancelReactionMs(animCancelReactionMs) / 1000
-        const cancelCandidates = (data.skills ?? [])
-          .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
-          .map((s) => {
-            const level = levelOf(s.id)
-            const rawBase = wikiSkillHitCoefficient(s.base_dmg, s.scaling, level, s.max_level)
-            const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
-            const skillOneHit = rawBase * (perfectAtClone ? 1.43 : 1) * targetHits
-            const cast = Math.max(0.1, s.cast_time_sec || 0)
-            const cd = Math.max(0, s.cooldown_sec || 0)
-            const period = cast + cd
-            const cancelWeaveRate = (autoOneHit + skillOneHit) / (overlap + cast)
-            return { name: s.name, cast, period, cancelWeaveRate }
-          })
-          .sort((a, b) => {
-            if (Math.abs(b.cancelWeaveRate - a.cancelWeaveRate) > 1e-6)
-              return b.cancelWeaveRate - a.cancelWeaveRate
-            if (Math.abs(a.cast - b.cast) > 1e-6) return a.cast - b.cast
-            return a.period - b.period
-          })
-        if (cancelCandidates.length > 0) {
-          lines.push({
-            kind: 'anim-cancel-priority',
-            title: 'Animation cancel DPS',
-            bullets: cancelCandidates.slice(0, 4).map(
-              (c) =>
-                `${c.name}: ${c.cast.toFixed(1)}s cast · ${c.period.toFixed(1)}s cast+CD · ~${c.cancelWeaveRate.toFixed(0)} / s`,
-            ),
-          })
-        }
-      }
-
-      if (digimonRoleWikiSkillsForRole.length > 0) {
-        const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
-        lines.push(
-          useAutoAnimCancel
-            ? `Role skills (${tn}) have a 0.2s cast — include them in your sequence or gap list to weave after autos.`
-            : `Role skills (${tn}) have a 0.2s cast; enable animation cancel under Special modifiers to model weaving.`,
-        )
-      }
-
-      return lines
-    }
-
-    if (useCommunityRotationInAuto && labCommunityRotation) {
-      return []
-    }
-
-    if (top.skillId === 'auto-attack') {
-      lines.push(
-        `Auto attacks account for ${top.pct.toFixed(1)}% of damage in this window.`,
-        `Keep attack-speed and ATK buffs active so autos stay competitive with filler skills.`,
-      )
-    } else {
-      lines.push(
-        `Prioritize ${top.name}; it contributes ${top.pct.toFixed(1)}% of total damage.`,
-      )
-    }
-
-    if (bestTransition && bestTransition.count >= 2) {
-      lines.push(
-        `Common follow-up: ${bestTransition.from} → ${bestTransition.to} (${bestTransition.count} times in this timeline).`,
-      )
-    }
-
-    const supportSkills = (data.skills ?? []).filter((s) =>
-      skillIsSupportOnly(s.base_dmg, s.scaling),
-    )
-
-    const supportHasAttackSpeed = (s: (typeof supportSkills)[number]) =>
-      buildSupportSkillEffects(s, levelOf(s.id)).some(
-        (e) => e.unit === '%' && /\battack\s*speed\b/i.test(e.label),
-      )
-
-    const supportHasDamageScalingBuff = (s: (typeof supportSkills)[number]) =>
-      buildSupportSkillEffects(s, levelOf(s.id)).some((e) => {
-        if (e.unit !== '%') return false
-        if (/\battack\s*speed\b/i.test(e.label)) return false
-        if (/(\bskill damage\b|\bskill dmg\b)/i.test(e.label)) return true
-        if (/\battack\b/i.test(e.label) && /(increase|raise|boost)/i.test(e.label)) return true
-        return false
-      })
-
-    const atkSpdSupports = supportSkills.filter(supportHasAttackSpeed)
-    const dmgScalingSupports = supportSkills.filter(supportHasDamageScalingBuff)
-
-    const heavyHitters = breakdown
-      .filter((b) => b.skillId !== 'auto-attack')
-      .slice(0, 3)
-      .map((b) => b.name)
-
-    if (atkSpdSupports.length > 0) {
-      const names = atkSpdSupports.map((s) => s.name).join(', ')
-      lines.push(
-        `When attack speed from ${names} is up, prioritize weaving auto attacks.`,
-        `The sim compares auto damage rate to each ready skill and can skip weak filler casts during those windows.`,
-      )
-    }
-
-    if (dmgScalingSupports.length > 0) {
-      const buffNames = dmgScalingSupports.map((s) => s.name).join(', ')
-      const targets =
-        heavyHitters.length > 0 ? heavyHitters.join(', ') : 'your hardest-hitting damage skills'
-      lines.push(
-        `When ${buffNames} buffs attack or skill damage, prioritize ${targets}.`,
-        `Line them up inside the buff window when possible.`,
-      )
-    }
-
-    if (atkSpdSupports.length === 0 && dmgScalingSupports.length === 0 && supportSkills.length > 0) {
-      const names = supportSkills.map((s) => s.name).join(', ')
-      lines.push(
-        useAutoAnimCancel
-          ? `Animation cancel ${names} right after an auto. These buffs are instant and that weaving adds DPS.`
-          : `Use support skills (${names}) for utility windows; they are excluded from DPS casts.`,
-      )
-    }
-
-    if (useAutoAnimCancel) {
-      /** One auto: lab ATK with a simple wiki crit rough (same idea as sim fallback); not timeline mean. */
-      const autoOneHit =
-        (simBaseAttack || 0) * (1 + (combatStats?.crit_rate ?? 0) / 100000 * 0.5)
-      const overlap = clampAnimCancelReactionMs(animCancelReactionMs) / 1000
-      const cancelCandidates = (data.skills ?? [])
-        .filter((s) => !skillIsSupportOnly(s.base_dmg, s.scaling))
-        .map((s) => {
-          const level = levelOf(s.id)
-          const rawBase = wikiSkillHitCoefficient(s.base_dmg, s.scaling, level, s.max_level)
-          const targetHits = s.radius && s.radius > 0 ? Math.max(1, targets) : 1
-          const skillOneHit = rawBase * (perfectAtClone ? 1.43 : 1) * targetHits
-          const cast = Math.max(0.1, s.cast_time_sec || 0)
-          const cd = Math.max(0, s.cooldown_sec || 0)
-          const period = cast + cd
-          const cancelWeaveRate = (autoOneHit + skillOneHit) / (overlap + cast)
-          return { name: s.name, cast, period, cancelWeaveRate }
-        })
-        .sort((a, b) => {
-          if (Math.abs(b.cancelWeaveRate - a.cancelWeaveRate) > 1e-6)
-            return b.cancelWeaveRate - a.cancelWeaveRate
-          if (Math.abs(a.cast - b.cast) > 1e-6) return a.cast - b.cast
-          return a.period - b.period
-        })
-      if (cancelCandidates.length > 0) {
-        lines.push({
-          kind: 'anim-cancel-priority',
-          title: 'Animation cancel DPS',
-          bullets: cancelCandidates.slice(0, 4).map(
-            (c) =>
-              `${c.name}: ${c.cast.toFixed(1)}s cast · ${c.period.toFixed(1)}s cast+CD · ~${c.cancelWeaveRate.toFixed(0)} / s`,
-          ),
-        })
-      }
-    }
-
-    if (digimonRoleWikiSkillsForRole.length > 0) {
-      const tn = digimonRoleWikiSkillsForRole.map((s) => s.name).join(', ')
-      lines.push(
-        useAutoAnimCancel
-          ? `Digimon role skills (${tn}) have a 0.2s cast. Animation cancel them after an auto for more DPS (same idea as your other buffs).`
-          : `Digimon role skills (${tn}) have a 0.2s cast; turn on animation cancel under Special modifiers to model weaving them after autos.`,
-        `Hover buff % on timeline rows for per-hit breakdowns.`,
-      )
-    }
-
-    return lines
-  }, [
-    breakdown,
-    data,
-    sim,
-    skillLevels,
-    skillByIdForLab,
-    rotationMode,
-    customRotationValidRows,
-    customRotationFillerSkillIds,
-    customRotationFillerValidRows,
-    digimonRoleWikiSkillsForRole,
-    useAutoAnimCancel,
-    animCancelReactionMs,
-    simBaseAttack,
-    combatStats?.crit_rate,
-    perfectAtClone,
-    targets,
-    useCommunityRotationInAuto,
-    labCommunityRotation,
-    communityRotationRows,
-    communityFillerRows,
-  ])
 
   const combatStatRows = useMemo(
     () =>
@@ -2914,105 +2666,86 @@ export function DpsLabPage() {
             </div>
           )}
 
-          {rotationAdvice.length > 0 && (
-            <section className="lab-result">
-              <h3>Rotation Notes</h3>
-              <ul className="lab-advice-list">
-                {rotationAdvice.map((entry, i) =>
-                  typeof entry === 'string' ? (
-                    <li key={i} className="lab-advice-item">
-                      {entry}
-                    </li>
-                  ) : (
-                    <li key={i} className="lab-advice-item lab-advice-item--with-sublist">
-                      <div className="lab-advice-sublist-head" id={`rotation-advice-nested-${i}`}>
-                        {entry.title}
-                      </div>
-                      {entry.caption ? (
-                        <p className="lab-advice-anim-cancel-caption">{entry.caption}</p>
-                      ) : null}
-                      <ul
-                        className="lab-advice-sublist"
-                        aria-labelledby={`rotation-advice-nested-${i}`}
-                      >
-                        {entry.bullets.map((b, j) => (
-                          <li key={j}>{b}</li>
-                        ))}
-                      </ul>
-                    </li>
-                  ),
-                )}
-              </ul>
-            </section>
-          )}
-
           {sim && sim.events.length > 0 && (
-            <section className="lab-result">
-              <h3>Rotation timeline</h3>
+            <section
+              className={`lab-result lab-timeline-section${timelineIconsExpanded ? ' lab-timeline-section--icons-visible' : ''}`}
+            >
+              <div className="lab-timeline-header">
+                <h3>Rotation timeline</h3>
+                <button
+                  type="button"
+                  className="lab-timeline-view-toggle"
+                  onClick={() => setTimelineIconsExpanded((open) => !open)}
+                  aria-expanded={timelineIconsExpanded}
+                >
+                  {timelineIconsExpanded ? 'Hide skill rotation' : 'Show skill rotation'}
+                </button>
+              </div>
               <p className="muted timeline-buff-hint">
-                Icons only here. Click a damage or auto row (or its icon) for the damage formula; hover
-                the buff % in the table for buff sources.
+                Click a damage or auto row for the damage formula; hover the buff % for buff sources.
+                {timelineIconsExpanded ? ' Skill rotation shows cast order at a glance.' : ''}
               </p>
-              <div className="timeline-sequence" aria-label="Sequential skill icon order">
-                {sim.events.map((e, idx) => {
-                  const icon = skillIconUrl(e.iconId)
-                  const expandable = e.damageBreakdown != null
-                  const seqExpanded = expandedTimelineIdx === idx
-                  return (
-                    <span key={`seq-${e.skillId}-${idx}`} className="timeline-seq-node">
-                      <span
-                        className={
-                          e.eventType === 'support'
-                            ? 'timeline-seq-item timeline-seq-support'
-                            : expandable && seqExpanded
-                              ? 'timeline-seq-item timeline-seq-item--expanded'
-                              : e.buffedBy.length > 0
-                                ? 'timeline-seq-item timeline-seq-buffed'
-                                : expandable
-                                  ? 'timeline-seq-item timeline-seq-expandable'
-                                  : 'timeline-seq-item'
-                        }
-                        title={`${e.atSec.toFixed(1)}s · ${e.skillName}${expandable ? ' · click for damage breakdown' : ''}`}
-                        role={expandable ? 'button' : undefined}
-                        tabIndex={expandable ? 0 : undefined}
-                        aria-expanded={expandable ? seqExpanded : undefined}
-                        onClick={
-                          expandable
-                            ? () =>
-                                setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
-                            : undefined
-                        }
-                        onKeyDown={
-                          expandable
-                            ? (ev) => {
-                                if (ev.key === 'Enter' || ev.key === ' ') {
-                                  ev.preventDefault()
-                                  setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+              {timelineIconsExpanded ? (
+                <div className="timeline-sequence" aria-label="Sequential skill icon order">
+                  {sim.events.map((e, idx) => {
+                    const icon = skillIconUrl(e.iconId)
+                    const expandable = e.damageBreakdown != null
+                    const seqExpanded = expandedTimelineIdx === idx
+                    return (
+                      <span key={`seq-${e.skillId}-${idx}`} className="timeline-seq-node">
+                        <span
+                          className={
+                            e.eventType === 'support'
+                              ? 'timeline-seq-item timeline-seq-support'
+                              : expandable && seqExpanded
+                                ? 'timeline-seq-item timeline-seq-item--expanded'
+                                : e.buffedBy.length > 0
+                                  ? 'timeline-seq-item timeline-seq-buffed'
+                                  : expandable
+                                    ? 'timeline-seq-item timeline-seq-expandable'
+                                    : 'timeline-seq-item'
+                          }
+                          title={`${e.atSec.toFixed(1)}s · ${e.skillName}${expandable ? ' · click for damage breakdown' : ''}`}
+                          role={expandable ? 'button' : undefined}
+                          tabIndex={expandable ? 0 : undefined}
+                          aria-expanded={expandable ? seqExpanded : undefined}
+                          onClick={
+                            expandable
+                              ? () => setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+                              : undefined
+                          }
+                          onKeyDown={
+                            expandable
+                              ? (ev) => {
+                                  if (ev.key === 'Enter' || ev.key === ' ') {
+                                    ev.preventDefault()
+                                    setExpandedTimelineIdx((cur) => (cur === idx ? null : idx))
+                                  }
                                 }
-                              }
-                            : undefined
-                        }
-                      >
-                        {icon ? (
-                          <img className="timeline-skill-icon" src={icon} alt="" />
-                        ) : (
-                          <span className="timeline-fallback">
-                            {e.eventType === 'auto' ? 'AA' : e.skillName.slice(0, 2)}
+                              : undefined
+                          }
+                        >
+                          {icon ? (
+                            <img className="timeline-skill-icon" src={icon} alt="" />
+                          ) : (
+                            <span className="timeline-fallback">
+                              {e.eventType === 'auto' ? 'AA' : e.skillName.slice(0, 2)}
+                            </span>
+                          )}
+                        </span>
+                        {idx < sim.events.length - 1 && (
+                          <span className="timeline-link" aria-hidden="true">
+                            <span className="timeline-link-time">
+                              {sim.events[idx + 1].castTimeSec.toFixed(1)}s
+                            </span>
+                            <span className="timeline-link-arrow">→</span>
                           </span>
                         )}
                       </span>
-                      {idx < sim.events.length - 1 && (
-                        <span className="timeline-link" aria-hidden="true">
-                          <span className="timeline-link-time">
-                            {sim.events[idx + 1].castTimeSec.toFixed(1)}s
-                          </span>
-                          <span className="timeline-link-arrow">→</span>
-                        </span>
-                      )}
-                    </span>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              ) : null}
               <div className="lab-table-wrap">
                 <table className="lab-table">
                   <thead>

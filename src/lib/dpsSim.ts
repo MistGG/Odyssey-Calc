@@ -13,6 +13,7 @@ import {
 } from './digimonRoleSkills'
 import {
   buildSupportSkillEffects,
+  cooldownReductionFractionFromEffects,
   effectLabelIsAttackSpeed,
   parseSupportEffectsFromSkill,
 } from './supportEffects'
@@ -148,7 +149,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 65
+export const TIER_DPS_SIM_REVISION = 67
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -248,6 +249,8 @@ type SupportBuffProfile = {
   critRatePct: number
   critDamagePct: number
   atkSpeedPct: number
+  /** Snapshot CDR for skills off cooldown when this buff starts (0–1). */
+  cooldownReductionPct: number
   /**
    * True when this buff has modeled ATK/skill dmg/flat ATK/crit/attack-speed effects.
    * Pure utility (move speed, DR, cleanse, etc.) and anim-cancel-only stubs stay in the profile list
@@ -359,6 +362,7 @@ function supportProfiles(
     let critRatePct = 0
     let critDamagePct = 0
     let atkSpeedPct = 0
+    const cooldownReductionPct = cooldownReductionFractionFromEffects(effects)
     for (const e of effects) {
       const label = e.label.toLowerCase()
       if (e.unit === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) {
@@ -404,6 +408,7 @@ function supportProfiles(
       critRatePct,
       critDamagePct,
       atkSpeedPct,
+      cooldownReductionPct,
       rotationEligible: hasOffense || s.id === MAGIA_OMEGA_SKILL_ID,
     })
   }
@@ -514,6 +519,8 @@ type SimMutable = {
   totalDamage: number
   casts: number
   readyAt: Map<string, number>
+  /** Next cast: multiply cooldown by (1 − value); consumed once per skill. */
+  nextCastCooldownReductionPct: Map<string, number>
   activeBuffs: ActiveBuff[]
   events: RotationEvent[]
   attackPctAtDamageCasts: number
@@ -530,6 +537,36 @@ type SimMutable = {
 
 function omegaBuffActiveAt(m: SimMutable, atSec: number): boolean {
   return m.activeBuffs.some((b) => b.skillId === MAGIA_OMEGA_SKILL_ID && b.untilSec > atSec + 1e-9)
+}
+
+function skillOffCooldownAt(m: SimMutable, skillId: string, atSec: number): boolean {
+  return (m.readyAt.get(skillId) ?? 0) <= atSec + 1e-9
+}
+
+/**
+ * Snapshot CDR: damaging, wiki support, and Digimon role skills off cooldown when the buff becomes
+ * active get reduced CD on their next cast only. Excludes the CDR buff itself unless its cooldown
+ * is shorter than buff duration.
+ */
+function applySnapshotCooldownReductionOnBuffStart(
+  m: SimMutable,
+  ctx: SimCtx,
+  buffSkillId: string,
+  cdrFraction: number,
+  buffDurationSec: number,
+  buffBaseCooldownSec: number,
+  buffActiveAtSec: number,
+) {
+  if (cdrFraction <= 1e-9) return
+  const includeSelf = buffBaseCooldownSec < buffDurationSec
+  const markSkill = (skillId: string) => {
+    if (skillId === buffSkillId && !includeSelf) return
+    if (!skillOffCooldownAt(m, skillId, buffActiveAtSec)) return
+    const prev = m.nextCastCooldownReductionPct.get(skillId) ?? 0
+    if (cdrFraction > prev) m.nextCastCooldownReductionPct.set(skillId, cdrFraction)
+  }
+  for (const s of ctx.damaging) markSkill(s.id)
+  for (const p of ctx.supportBuffs) markSkill(p.skill.id)
 }
 
 /**
@@ -560,10 +597,16 @@ function effectiveCooldownSecAfterCast(
     if (!SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION) return base
     return base * (1 - Math.max(0, wikiInt) / 10000)
   }
+  let cd = base
   if (omegaBuffActiveAt(m, castStartT)) {
-    return base * (1 - MAGIA_OMEGA_CDR)
+    cd = base * (1 - MAGIA_OMEGA_CDR)
   }
-  return base
+  const snapshotCdr = m.nextCastCooldownReductionPct.get(skillId)
+  if (snapshotCdr != null && snapshotCdr > 1e-9) {
+    cd *= 1 - snapshotCdr
+    m.nextCastCooldownReductionPct.delete(skillId)
+  }
+  return cd
 }
 
 /** Default reaction / overlap for auto → skill cancels (300ms). */
@@ -850,6 +893,7 @@ function cloneSim(m: SimMutable): SimMutable {
     totalDamage: m.totalDamage,
     casts: m.casts,
     readyAt: new Map(m.readyAt),
+    nextCastCooldownReductionPct: new Map(m.nextCastCooldownReductionPct),
     activeBuffs: m.activeBuffs.map((b) => ({ ...b })),
     events: [],
     attackPctAtDamageCasts: m.attackPctAtDamageCasts,
@@ -1266,6 +1310,17 @@ function castSupportProfile(
     critDamagePct: chosen.critDamagePct,
     atkSpeedPct: chosen.atkSpeedPct,
   })
+  if (chosen.cooldownReductionPct > 1e-9) {
+    applySnapshotCooldownReductionOnBuffStart(
+      m,
+      ctx,
+      chosen.skill.id,
+      chosen.cooldownReductionPct,
+      chosen.durationSec,
+      chosen.skill.cooldown_sec || 0,
+      startAt,
+    )
+  }
   m.t += castTime
 }
 
@@ -2185,6 +2240,7 @@ function runRotationSim(
     totalDamage: 0,
     casts: 0,
     readyAt: new Map(),
+    nextCastCooldownReductionPct: new Map(),
     activeBuffs: [],
     events: [],
     attackPctAtDamageCasts: 0,
