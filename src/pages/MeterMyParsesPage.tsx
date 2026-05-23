@@ -5,6 +5,7 @@ import { MeterDungeonPartyReplay } from '../components/MeterDungeonPartyReplay'
 import { MeterSubNav } from '../components/MeterSubNav'
 import {
   dungeonFromPayload,
+  isInvalidMeterPartyParseRow,
   partyMembersFromPayload,
   raidTotalFromPayload,
   sessionDurationFromPayload,
@@ -101,6 +102,7 @@ export function MeterMyParsesPage() {
     const bossLine = bosses.length ? bosses.join(', ') : ''
     const outcome =
       dungeon?.runOutcome === 'clear' ? 'Clear' : dungeon?.runOutcome === 'fail' ? 'Fail' : ''
+    const invalid = isInvalidMeterPartyParseRow(row)
     const raidTotal = raidTotalFromPayload(row.payload, members)
     const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
     const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
@@ -136,7 +138,14 @@ export function MeterMyParsesPage() {
             {new Date(row.created_at).toLocaleString()}
           </time>
           <span className="meter-parses-session-stats">
-            <span className="meter-parses-session-dps">{title}</span>
+            <span className="meter-parses-session-dps">
+              {title}
+              {invalid ? (
+                <span className="meter-run-badge meter-run-badge--invalid" title="Excluded from leaderboard">
+                  Invalid
+                </span>
+              ) : null}
+            </span>
             <span className="meter-parses-session-rest">
               {[diff, bossLine, outcome, `${formatFixed(raidDps, 0)} comb. DPS`].filter(Boolean).join(' · ')}
             </span>

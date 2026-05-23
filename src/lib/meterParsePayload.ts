@@ -208,9 +208,15 @@ export function skillsFromPayload(payload: unknown): MeterSkillRow[] {
   return raw.filter(isSkillRow)
 }
 
+/** Meter logged at least one digimon row (or legacy per-member skills) for this player. */
+export function partyMemberHasLoggedDigimon(member: MeterPartyMemberStored): boolean {
+  return memberDigimonBreakdowns(member).length > 0
+}
+
 /**
- * Broken meter attribution: one member is credited with ~all raid damage, everyone else ~0.
- * Those parses are excluded from public leaderboard / percentile aggregates.
+ * Invalid dungeon party parses — excluded from public leaderboard / percentile aggregates.
+ * - Any member with no digimon or skill breakdown (meter failed to attribute a party slot).
+ * - One member credited with ~all raid damage while everyone else is ~zero.
  */
 export function isBrokenMeterPartyParse(
   payload: unknown,
@@ -218,6 +224,8 @@ export function isBrokenMeterPartyParse(
 ): boolean {
   if (!isDungeonPartyParsePayload(payload)) return false
   if (members.length < 2) return false
+
+  if (members.some((m) => !partyMemberHasLoggedDigimon(m))) return true
 
   const damages = members.map((m) => memberDamageTotal(m))
   const sumMember = damages.reduce((s, d) => s + d, 0)
@@ -232,6 +240,12 @@ export function isBrokenMeterPartyParse(
   if (maxDmg >= raidTotal * 0.9 && nearZeroCount >= members.length - 1) return true
 
   return false
+}
+
+/** Broken party attribution — shown in My Parses with an Invalid tag; excluded from leaderboard. */
+export function isInvalidMeterPartyParseRow(row: { payload: unknown }): boolean {
+  const members = partyMembersFromPayload(row.payload)
+  return isBrokenMeterPartyParse(row.payload, members)
 }
 
 /** Per-player damage: prefer digimon breakdown sum, then skills, then stored total. */

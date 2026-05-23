@@ -25,9 +25,11 @@ function difficultyTagClass(difficulty: string): string {
 export function MeterRunMeta({
   dungeon,
   fallbackDungeonName,
+  invalid = false,
 }: {
   dungeon: MeterParseDungeonStored | null
   fallbackDungeonName?: string | null
+  invalid?: boolean
 }) {
   if (!dungeon && !fallbackDungeonName) return null
   const dungeonName = dungeon?.dungeonName?.trim() || fallbackDungeonName?.trim() || dungeon?.dungeonId || ''
@@ -54,6 +56,11 @@ export function MeterRunMeta({
           </span>
           {outcome === 'clear' ? <span className="meter-run-badge meter-run-badge--clear">Clear</span> : null}
           {outcome === 'fail' ? <span className="meter-run-badge meter-run-badge--fail">Fail</span> : null}
+          {invalid ? (
+            <span className="meter-run-badge meter-run-badge--invalid" title="Excluded from leaderboard">
+              Invalid
+            </span>
+          ) : null}
         </div>
       ) : null}
       {bosses.length > 0 ? (

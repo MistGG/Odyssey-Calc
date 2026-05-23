@@ -44,9 +44,14 @@ export type MeterParseListRow = PublicMeterParseRow & {
   hit_count: number
 }
 
-/** Clears only — excludes failed runs (My Parses may still list those for display). */
+/** Clears with valid party attribution — excludes failed and broken meter runs. */
 export function leaderboardEligibleParses(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
-  return rows.filter((r) => !isFailedDungeonParseRow(r))
+  return rows.filter((r) => {
+    if (isFailedDungeonParseRow(r)) return false
+    const members = partyMembersFromPayload(r.payload)
+    if (isBrokenMeterPartyParse(r.payload, members)) return false
+    return true
+  })
 }
 
 export type DigimonBarEntry = {

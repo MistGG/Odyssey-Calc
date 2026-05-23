@@ -9185,6 +9185,33 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   border: 1px solid rgba(240, 90, 90, 0.55);
 }
 
+.meter-run-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.meter-run-badge--invalid {
+  color: #ffd8a8;
+  background: rgba(160, 100, 30, 0.35);
+  border: 1px solid rgba(220, 160, 60, 0.55);
+}
+
+.meter-parses-meter-chrome .meter-run-badge--invalid {
+  color: #ffd8a8;
+  background: rgba(160, 100, 30, 0.35);
+  border: 1px solid rgba(220, 160, 60, 0.55);
+}
+
+.meter-parses-session-dps .meter-run-badge {
+  margin-left: 8px;
+}
+
 .meter-parse-diff-tag {
   display: inline-block;
   padding: 1px 6px;
