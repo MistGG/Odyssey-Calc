@@ -13,12 +13,15 @@ dist-ssr
 *.local
 .env
 
-# One-off / scratch scripts (not part of the app build)
+# One-off / dev scripts (build only needs sync-teaser-images.mjs)
 scripts/*
 !scripts/sync-teaser-images.mjs
 
-# Local API dumps / ad-hoc fixtures (not for production)
+# Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
+*-bench.ts
+*-bench.mjs
+compare-*.mjs
 
 # Backend schema/setup (not published with the site)
 supabase/
