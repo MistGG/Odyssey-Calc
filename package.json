@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "sync:teasers": "node scripts/sync-teaser-images.mjs",
+    "tier-list:rebuild": "tsx scripts/rebuild-tier-list.mts",
     "build": "npm run sync:teasers && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -28,6 +29,7 @@
     "globals": "^17.5.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
+    "tsx": "^4.19.4",
     "vite": "^5.4.21"
   }
 }

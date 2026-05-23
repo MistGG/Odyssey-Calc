@@ -24,7 +24,7 @@ import type { WikiDigimonDetail } from '../types/wikiApi'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { fetchApprovedRotations } from './communityRotations'
 
-function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
+export function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
   return {
     id: detail.id,
     name: detail.name,

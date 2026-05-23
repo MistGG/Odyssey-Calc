@@ -12,3 +12,7 @@ npm run dev
 ```
 
 Copy `.env.example` to `.env.local` and set any `VITE_*` variables you need for local builds.
+
+## Tier list staging (CI)
+
+To rebuild the tier list and changelog in GitHub Actions without affecting live Pages, see [docs/TIER_LIST_STAGING.md](docs/TIER_LIST_STAGING.md).

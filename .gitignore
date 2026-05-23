@@ -16,9 +16,11 @@ dist-ssr
 # One-off / dev scripts (build only needs sync-teaser-images.mjs)
 scripts/*
 !scripts/sync-teaser-images.mjs
+!scripts/rebuild-tier-list.mts
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
+.tier-rebuild-skip
 *-bench.ts
 *-bench.mjs
 compare-*.mjs

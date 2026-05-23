@@ -1,0 +1,94 @@
+# Rebuild tier list + changelog on tier-list-staging only (does not touch main / live Pages).
+name: Tier list staging rebuild
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - tier-list-staging
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tier-list-staging-rebuild
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: tier-list-staging
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild tier list and changelog
+        run: npm run tier-list:rebuild
+        env:
+          VITE_WIKI_API_BASE: https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Commit published data
+        run: |
+          if [ -f .tier-rebuild-skip ]; then
+            echo "No visible changes; skipping commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/tier-list.json public/data/tier-changes.json
+          if git diff --staged --quiet; then
+            echo "No file changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(tier): update published tier list and changelog"
+          git push
+
+  preview-artifact:
+    needs: rebuild
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+        with:
+          ref: tier-list-staging
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build staging site bundle
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /Odyssey-Calc/
+          VITE_TIER_STATIC_DATA: "true"
+          VITE_WIKI_API_BASE: https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier-list-staging-preview
+          path: dist
+          retention-days: 14

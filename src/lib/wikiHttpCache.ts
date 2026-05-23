@@ -8,7 +8,12 @@ type CacheEntry = {
   storedAt: number
 }
 
+function hasLocalStorage(): boolean {
+  return typeof localStorage !== 'undefined'
+}
+
 function readMap(): Record<string, CacheEntry> {
+  if (!hasLocalStorage()) return {}
   try {
     const raw = localStorage.getItem(WIKI_HTTP_CACHE_KEY)
     if (!raw) return {}
@@ -29,6 +34,7 @@ function evictOldestFraction(map: Record<string, CacheEntry>, fraction: number) 
 }
 
 function writeMap(map: Record<string, CacheEntry>) {
+  if (!hasLocalStorage()) return
   try {
     localStorage.setItem(WIKI_HTTP_CACHE_KEY, JSON.stringify(map))
   } catch {
@@ -54,6 +60,7 @@ export function wikiHttpCacheGet<T>(url: string): T | null {
 
 /** Clears fallback wiki GET responses (used after rate limits / transient errors). */
 export function wikiHttpCacheClear(): void {
+  if (!hasLocalStorage()) return
   try {
     localStorage.removeItem(WIKI_HTTP_CACHE_KEY)
   } catch {

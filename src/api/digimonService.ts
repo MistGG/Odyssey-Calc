@@ -22,7 +22,10 @@ export type DigimonFilters = {
 function wikiDigimonEndpoint(): URL {
   const href = `${base}/digimon`
   if (/^https?:\/\//i.test(href)) return new URL(href)
-  return new URL(href, window.location.origin)
+  if (typeof window !== 'undefined') return new URL(href, window.location.origin)
+  throw new Error(
+    'WIKI_API_BASE must be an absolute https URL in Node (set VITE_WIKI_API_BASE for tier rebuild).',
+  )
 }
 
 /** API uses 1-based `page` (e.g. `?page=1&per_page=500`). */
