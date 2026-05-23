@@ -3,10 +3,6 @@ import { Link, useLocation } from 'react-router-dom'
 import { contentStatusLabel, type DigimonContentStatus } from '../lib/contentStatus'
 import { loadTierListCache } from '../lib/tierList'
 import {
-  fetchTierChangesPublished,
-  useStaticTierPublishedData,
-} from '../lib/tierListPublished'
-import {
   loadTierChangeHistory,
   type TierChangeCause,
   type TierListChangeHistoryRow,
@@ -626,13 +622,9 @@ function normalizeDigimonSearch(raw: string): string {
   return raw.trim().toLowerCase()
 }
 
-const staticTierData = useStaticTierPublishedData()
-
 export function TierChangesPage() {
   const location = useLocation()
   const [hideNoChanges, setHideNoChanges] = useState(readHideNoChangesPref)
-  const [staticHistory, setStaticHistory] = useState<TierListChangeHistoryRow[] | null>(null)
-  const [staticHistoryError, setStaticHistoryError] = useState<string | null>(null)
   const [showPreviousValues, setShowPreviousValues] = useState(readShowPreviousPref)
   const [showApiChanges, setShowApiChanges] = useState(true)
   const [showTierChanges, setShowTierChanges] = useState(true)
@@ -647,31 +639,7 @@ export function TierChangesPage() {
     return map
   }, [])
 
-  useEffect(() => {
-    if (!staticTierData) return
-    let cancelled = false
-    void fetchTierChangesPublished()
-      .then((pub) => {
-        if (!cancelled) {
-          setStaticHistory(pub.runs)
-          setStaticHistoryError(null)
-        }
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) {
-          setStaticHistory([])
-          setStaticHistoryError(e instanceof Error ? e.message : 'Failed to load changelog.')
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [location.key])
-
-  const historyRows = useMemo(() => {
-    if (staticTierData) return staticHistory ?? []
-    return loadTierChangeHistory()
-  }, [location.key, staticHistory])
+  const historyRows = useMemo(() => loadTierChangeHistory(), [location.key])
 
   const rows = useMemo(
     () =>
@@ -712,15 +680,9 @@ export function TierChangesPage() {
       </div>
       <section className="lab-result">
         <p className="tier-wip-note tier-wip-note-wide">
-          {staticTierData
-            ? 'Changelog runs are published with the staging tier list (GitHub Actions on tier-list-staging). Runs with no visible changes are omitted.'
-            : 'This page is a work in progress. Entries are stored locally and reflect comparisons against your cached wiki snapshot at the time of each run.'}
+          This page is a work in progress. Entries are stored locally and reflect comparisons against your cached
+          wiki snapshot at the time of each run.
         </p>
-        {staticHistoryError ? (
-          <p className="tier-wip-note tier-wip-note-wide" role="alert">
-            {staticHistoryError}
-          </p>
-        ) : null}
         <div className="tier-filter-panel tier-changes-filter-panel">
           <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">
             <span className="tier-filter-label">Options</span>

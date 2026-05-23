@@ -12,12 +12,6 @@ import {
 } from '../lib/attributeAdvantage'
 import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
-import { diffTierApiSnapshot } from '../lib/tierApiSnapshotDiff'
-import { buildTierApiSnapshot } from '../lib/tierListDigimonEntry'
-import {
-  fetchTierListPublishedBundle,
-  useStaticTierPublishedData,
-} from '../lib/tierListPublished'
 import {
   clampTierFightDurationSec,
   TIER_FIGHT_DURATION_DEFAULT_SEC,
@@ -62,6 +56,7 @@ import {
   type BuildTierGroupsOptions,
   type DpsRotationCategoryScores,
   type DpsTierCategoryKey,
+  type TierApiSnapshot,
   type SustainedDpsEntry,
   type TierListCache,
   type TierListMode,
@@ -74,7 +69,7 @@ import {
   WIKI_ELEMENT_OPTIONS,
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
-import type { WikiDigimonListItem } from '../types/wikiApi'
+import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
@@ -130,7 +125,98 @@ function collapseTierRefreshCause(cause?: TierRefreshCauseFlags): TierChangeCaus
   return 'tier'
 }
 
-const staticTierData = useStaticTierPublishedData()
+function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
+  return {
+    id: detail.id,
+    name: detail.name,
+    role: detail.role,
+    attribute: detail.attribute,
+    element: detail.element,
+    rank: detail.rank,
+    hp: detail.hp,
+    attack: detail.attack,
+    stats: {
+      hp: detail.stats?.hp ?? 0,
+      ds: detail.stats?.ds ?? 0,
+      attack: detail.stats?.attack ?? 0,
+      defense: detail.stats?.defense ?? 0,
+      crit_rate: detail.stats?.crit_rate ?? 0,
+      atk_speed: detail.stats?.atk_speed ?? 0,
+      evasion: detail.stats?.evasion ?? 0,
+      hit_rate: detail.stats?.hit_rate ?? 0,
+      block_rate: detail.stats?.block_rate ?? 0,
+      dex: detail.stats?.dex ?? 0,
+      int: detail.stats?.int ?? 0,
+    },
+    skills: (detail.skills ?? []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      base_dmg: s.base_dmg,
+      scaling: s.scaling,
+      cast_time_sec: s.cast_time_sec,
+      cooldown_sec: s.cooldown_sec,
+      ds_cost: s.ds_cost,
+      radius: s.radius,
+      description: s.description,
+      buff_name: s.buff?.name,
+      buff_description: s.buff?.description,
+      buff_duration: s.buff?.duration,
+    })),
+  }
+}
+
+function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSnapshot): string[] {
+  if (!prev) return []
+  const lines: string[] = []
+  const push = (line: string) => {
+    if (lines.length < 20) lines.push(line)
+  }
+  /** Normalize whitespace only — tier change history must keep full strings so the Changes page can expand clamps. */
+  const normText = (v?: string) => (v ?? '').replace(/\s+/g, ' ').trim()
+  const cmpNum = (label: string, a: number, b: number) => {
+    if (a !== b) push(`${label}: ${a} -> ${b}`)
+  }
+  const cmpText = (label: string, a?: string, b?: string) => {
+    if (normText(a) !== normText(b)) push(`${label}: "${normText(a)}" -> "${normText(b)}"`)
+  }
+
+  cmpText('Role', prev.role, next.role)
+  cmpText('Attribute', prev.attribute, next.attribute)
+  cmpText('Element', prev.element, next.element)
+  cmpNum('Rank', prev.rank, next.rank)
+  cmpNum('HP', prev.hp, next.hp)
+  cmpNum('Attack', prev.attack, next.attack)
+  for (const key of Object.keys(prev.stats) as Array<keyof TierApiSnapshot['stats']>) {
+    // Avoid duplicating HP / Attack: same fields are already compared above.
+    if (key === 'hp' || key === 'attack') continue
+    cmpNum(`Stats.${key}`, prev.stats[key], next.stats[key])
+  }
+
+  const prevSkills = new Map(prev.skills.map((s) => [s.id, s] as const))
+  const nextSkills = new Map(next.skills.map((s) => [s.id, s] as const))
+  for (const [id, ns] of nextSkills.entries()) {
+    const ps = prevSkills.get(id)
+    if (!ps) {
+      push(`Skill added: ${ns.name}`)
+      continue
+    }
+    cmpText(`Skill ${ns.name} name`, ps.name, ns.name)
+    cmpNum(`Skill ${ns.name} base_dmg`, ps.base_dmg, ns.base_dmg)
+    cmpNum(`Skill ${ns.name} scaling`, ps.scaling, ns.scaling)
+    cmpNum(`Skill ${ns.name} cast_time`, ps.cast_time_sec, ns.cast_time_sec)
+    cmpNum(`Skill ${ns.name} cooldown`, ps.cooldown_sec, ns.cooldown_sec)
+    cmpNum(`Skill ${ns.name} ds_cost`, ps.ds_cost, ns.ds_cost)
+    cmpNum(`Skill ${ns.name} radius`, ps.radius ?? 0, ns.radius ?? 0)
+    cmpText(`Skill ${ns.name} description`, ps.description, ns.description)
+    cmpText(`Skill ${ns.name} buff name`, ps.buff_name, ns.buff_name)
+    cmpText(`Skill ${ns.name} buff description`, ps.buff_description, ns.buff_description)
+    cmpNum(`Skill ${ns.name} buff duration`, ps.buff_duration ?? 0, ns.buff_duration ?? 0)
+  }
+  for (const [id, ps] of prevSkills.entries()) {
+    if (!nextSkills.has(id)) push(`Skill removed: ${ps.name}`)
+  }
+  return lines
+}
 
 const WIKI_ATTR_STRINGS = WIKI_ATTRIBUTE_OPTIONS as readonly string[]
 const WIKI_EL_STRINGS = WIKI_ELEMENT_OPTIONS as readonly string[]
@@ -265,31 +351,6 @@ export function TierListPage() {
     async function init() {
       setInitializing(true)
       setError(null)
-
-      if (staticTierData) {
-        try {
-          const bundle = await fetchTierListPublishedBundle()
-          if (cancelled) return
-          if (!bundle) {
-            setError('Published tier list not found. Run the tier-list-staging workflow first.')
-            setInitializing(false)
-            return
-          }
-          setCache(bundle.cache)
-          setStatus(
-            `Published tier list (sim rev ${bundle.dpsSimRevision}, ${bundle.generatedAt.slice(0, 10)}).`,
-          )
-          setInitializing(false)
-          return
-        } catch (e: unknown) {
-          if (!cancelled) {
-            setError(e instanceof Error ? e.message : 'Failed to load published tier list.')
-            setInitializing(false)
-          }
-          return
-        }
-      }
-
       const existing = loadTierListCache()
       if (existing) {
         if (!cancelled) {
@@ -1243,7 +1304,6 @@ export function TierListPage() {
   }, [updateSummarySections])
 
   useEffect(() => {
-    if (staticTierData) return
     if (autoStarted || initializing || building || !cache) return
     if (Object.keys(cache.entries).length === 0 && cache.queue.length > 0) {
       setAutoStarted(true)
@@ -1285,37 +1345,29 @@ export function TierListPage() {
             </p>
           ) : null}
           <div className="tier-shell-bar-main">
-            {staticTierData ? (
-              <span className="tier-shell-meta muted" role="status">
-                Staging tier data — rebuild via GitHub Actions (<code>tier-list-staging</code>).
-              </span>
-            ) : (
-              <>
-                <button type="button" className="tier-update-btn" disabled={initializing || building || clearingTierCache || !cache} onClick={() => void updateTierList()}>
-                  {building ? 'Checking…' : 'Update tier list'}
-                </button>
-                <button
-                  type="button"
-                  className={clearCacheConfirmPending ? 'tier-update-btn tier-update-btn-danger' : 'tier-update-btn tier-update-btn-secondary'}
-                  disabled={building || clearingTierCache || initializing}
-                  aria-busy={clearingTierCache}
-                  title={clearCacheConfirmPending ? 'Confirm clearing tier results, wiki cache, and changelog' : 'Remove saved tier results, wiki fallback cache, and tier changelog from this browser, then reload the Digimon index. Filter toggles are kept.'}
-                  onClick={() => { if (clearCacheConfirmPending) void clearTierCachesAndReinit(); else setClearCacheConfirmPending(true) }}
-                >
-                  {clearingTierCache ? 'Clearing…' : clearCacheConfirmPending ? 'Confirm' : 'Clear cache'}
-                </button>
-                {clearCacheConfirmPending ? (
-                  <button
-                    type="button"
-                    className="tier-update-btn tier-update-btn-cancel"
-                    disabled={building || clearingTierCache || initializing}
-                    onClick={() => setClearCacheConfirmPending(false)}
-                  >
-                    Cancel
-                  </button>
-                ) : null}
-              </>
-            )}
+            <button type="button" className="tier-update-btn" disabled={initializing || building || clearingTierCache || !cache} onClick={() => void updateTierList()}>
+              {building ? 'Checking…' : 'Update tier list'}
+            </button>
+            <button
+              type="button"
+              className={clearCacheConfirmPending ? 'tier-update-btn tier-update-btn-danger' : 'tier-update-btn tier-update-btn-secondary'}
+              disabled={building || clearingTierCache || initializing}
+              aria-busy={clearingTierCache}
+              title={clearCacheConfirmPending ? 'Confirm clearing tier results, wiki cache, and changelog' : 'Remove saved tier results, wiki fallback cache, and tier changelog from this browser, then reload the Digimon index. Filter toggles are kept.'}
+              onClick={() => { if (clearCacheConfirmPending) void clearTierCachesAndReinit(); else setClearCacheConfirmPending(true) }}
+            >
+              {clearingTierCache ? 'Clearing…' : clearCacheConfirmPending ? 'Confirm' : 'Clear cache'}
+            </button>
+            {clearCacheConfirmPending ? (
+              <button
+                type="button"
+                className="tier-update-btn tier-update-btn-cancel"
+                disabled={building || clearingTierCache || initializing}
+                onClick={() => setClearCacheConfirmPending(false)}
+              >
+                Cancel
+              </button>
+            ) : null}
             {building ? (
               <span className="tier-shell-meta muted" aria-live="polite">
                 <strong>{progressNumerator}/{progressDenominator || '…'}</strong> ({progress.toFixed(0)}%)
