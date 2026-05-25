@@ -44,17 +44,19 @@ export function meterProfileShareStorageFolder(playerKey: string): string {
   return playerKey.trim().toLowerCase()
 }
 
+/** GitHub Pages serves flat files reliably (no directory index required). */
 export function meterProfileSharePagePath(playerKey: string): string {
   const base = import.meta.env.BASE_URL || '/'
   const root = base.endsWith('/') ? base : `${base}/`
-  return `${root}share/meter-player/${encodeURIComponent(meterProfileShareStorageFolder(playerKey))}/`
+  const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+  return `${root}share/meter-player/${key}.html`
 }
 
 export function meterProfileShareOgImagePath(playerKey: string): string {
   const base = import.meta.env.BASE_URL || '/'
   const root = base.endsWith('/') ? base : `${base}/`
-  const folder = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-  return `${root}share/meter-player/${folder}/og.png`
+  const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+  return `${root}share/meter-player/${key}-og.png`
 }
 
 /** New key on each generate/refresh — appended to share URLs for Discord cache busting. */
@@ -95,8 +97,8 @@ function meterProfileSharePageUrlBase(siteOrigin: string, playerKey: string): st
   const { hostname, protocol, port } = window.location
   if (isLocalHostname(hostname)) {
     const devPort = port === '4173' ? '5173' : port || '5173'
-    const localPath = `/share/meter-player/${encodeURIComponent(meterProfileShareStorageFolder(playerKey))}/`
-    return `${protocol}//${hostname}:${devPort}${localPath}`
+    const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+    return `${protocol}//${hostname}:${devPort}/share/meter-player/${key}.html`
   }
 
   return new URL(path, window.location.origin).href
@@ -111,8 +113,8 @@ function meterProfileShareOgImageUrlBase(siteOrigin: string, playerKey: string):
   const { hostname, protocol, port } = window.location
   if (isLocalHostname(hostname)) {
     const devPort = port === '4173' ? '5173' : port || '5173'
-    const folder = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-    return `${protocol}//${hostname}:${devPort}/share/meter-player/${folder}/og.png`
+    const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+    return `${protocol}//${hostname}:${devPort}/share/meter-player/${key}-og.png`
   }
 
   return new URL(path, window.location.origin).href

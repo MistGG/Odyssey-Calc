@@ -119,7 +119,9 @@ export function MeterPlayerSharePanel({
       </div>
 
       <p className="meter-profile-share__hint">
-        Generate a share link for Discord. Previews can be refreshed once per hour per tamer.
+        Generate a share link for Discord. Previews can be refreshed once per hour per tamer. After
+        generating, run the &quot;Sync meter profile shares&quot; GitHub Action (or wait for the next
+        deploy) so Discord can load the preview image.
       </p>
 
       {loadError ? <p className="meter-parses-error">{loadError}</p> : null}

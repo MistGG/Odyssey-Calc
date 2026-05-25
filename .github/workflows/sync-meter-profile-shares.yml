@@ -2,6 +2,8 @@ name: Sync meter profile shares
 
 # Copies Discord share HTML/OG from Supabase into public/ and commits so GitHub Pages can serve them.
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: '*/20 * * * *'
   workflow_dispatch:
@@ -35,6 +37,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_BASE_PATH: /Odyssey-Calc/
+          VITE_SITE_ORIGIN: https://mistgg.github.io/Odyssey-Calc
 
       - name: Commit and push share pages
         run: |

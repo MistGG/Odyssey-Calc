@@ -6,10 +6,15 @@
   <script>
     (function () {
       var path = location.pathname || '';
-      var m = path.match(/\/share\/meter-player\/([^/]+)\/?$/i);
+      var m = path.match(/\/share\/meter-player\/([^/]+?)(?:\.html)?\/?$/i);
       if (!m) return;
       var key = decodeURIComponent(m[1]);
       var base = path.indexOf('/Odyssey-Calc/') === 0 ? '/Odyssey-Calc' : '';
+      var htmlPath = base + '/share/meter-player/' + encodeURIComponent(key) + '.html';
+      if (!path.endsWith('.html')) {
+        location.replace(location.origin + htmlPath + location.search);
+        return;
+      }
       location.replace(location.origin + base + '/#/meter/player/' + encodeURIComponent(key) + location.search);
     })();
   </script>
