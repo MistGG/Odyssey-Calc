@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Odyssey Calc</title>
+  <script>
+    (function () {
+      var path = location.pathname || '';
+      var m = path.match(/\/share\/meter-player\/([^/]+)\/?$/i);
+      if (!m) return;
+      var key = decodeURIComponent(m[1]);
+      var base = path.indexOf('/Odyssey-Calc/') === 0 ? '/Odyssey-Calc' : '';
+      location.replace(location.origin + base + '/#/meter/player/' + encodeURIComponent(key) + location.search);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting…</p>
+</body>
+</html>
