@@ -361,13 +361,19 @@ function drawProfileStatBox(
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
+  const compact = h < 68
+  const labelSize = compact ? 11 : 13
+  const valueSize = compact ? 22 : 28
+  const labelY = compact ? 10 : 12
+  const valueY = compact ? 28 : 34
+
   ctx.fillStyle = '#94a3b8'
-  ctx.font = '700 13px Segoe UI, system-ui, sans-serif'
-  ctx.fillText(label.toUpperCase(), x + 14, y + 12)
+  ctx.font = `700 ${labelSize}px Segoe UI, system-ui, sans-serif`
+  ctx.fillText(label.toUpperCase(), x + 14, y + labelY)
 
   ctx.fillStyle = valueColor
-  ctx.font = '800 28px Segoe UI, system-ui, sans-serif'
-  ctx.fillText(value, x + 14, y + 34)
+  ctx.font = `800 ${valueSize}px Segoe UI, system-ui, sans-serif`
+  ctx.fillText(value, x + 14, y + valueY)
 }
 
 function drawProfileCardChrome(
@@ -431,12 +437,24 @@ export async function renderMeterProfileShareOgPng(
   const cardH = OG_HEIGHT - cardY - 44
   drawProfileCardChrome(ctx, cardX, cardY, cardW, cardH)
 
-  const bodyPadX = 36
-  const bodyTop = cardY + 36
-  const ringR = 62
-  const portraitSize = 108
-  const heroCx = cardX + bodyPadX + ringR
-  const heroCy = bodyTop + ringR + 24
+  const pad = 28
+  const innerX = cardX + pad
+  const innerW = cardW - pad * 2
+  const innerTop = cardY + pad
+  const topBandH = 196
+  const dividerY = innerTop + topBandH
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(innerX, dividerY)
+  ctx.lineTo(innerX + innerW, dividerY)
+  ctx.stroke()
+
+  const ringR = 56
+  const portraitSize = 98
+  const heroCx = innerX + ringR + 4
+  const heroCy = innerTop + topBandH / 2
 
   const fallbackInitial = snapshot.favoriteDigimon
     ? digimonInitial(snapshot.favoriteDigimon.digimonName)
@@ -451,28 +469,31 @@ export async function renderMeterProfileShareOgPng(
     fallbackInitial,
   )
 
-  const mainX = heroCx + ringR + 40
-  const mainY = bodyTop + 8
+  const mainX = heroCx + ringR + 28
+  const nameBlockH = 70
+  const nameY = heroCy - nameBlockH / 2
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
   ctx.fillStyle = '#64748b'
   ctx.font = '700 14px Segoe UI, system-ui, sans-serif'
-  ctx.fillText('TAMER', mainX, mainY)
+  ctx.fillText('TAMER', mainX, nameY)
 
   ctx.fillStyle = '#f8fafc'
-  ctx.font = '800 44px "Exo 2", Segoe UI, system-ui, sans-serif'
-  ctx.fillText(snapshot.displayName, mainX, mainY + 22)
+  ctx.font = '800 42px "Exo 2", Segoe UI, system-ui, sans-serif'
+  ctx.fillText(snapshot.displayName, mainX, nameY + 20)
 
-  const statY = mainY + 88
-  const statGap = 14
-  const statW = 168
-  const statH = 78
+  const statColW = 272
+  const statGap = 10
+  const statH = (topBandH - statGap * 2) / 3
+  const statX = innerX + innerW - statColW
+  const statY0 = innerTop
   const peakColor = options?.peakDpsColor ?? (snapshot.peakDps > 0 ? '#e2e8f0' : '#64748b')
+
   drawProfileStatBox(
     ctx,
-    mainX,
-    statY,
-    statW,
+    statX,
+    statY0,
+    statColW,
     statH,
     'Peak DPS',
     snapshot.peakDps > 0 ? formatInt(snapshot.peakDps) : '—',
@@ -480,9 +501,9 @@ export async function renderMeterProfileShareOgPng(
   )
   drawProfileStatBox(
     ctx,
-    mainX + statW + statGap,
-    statY,
-    statW,
+    statX,
+    statY0 + statH + statGap,
+    statColW,
     statH,
     'Best entries',
     String(snapshot.bestEntryCount),
@@ -490,19 +511,19 @@ export async function renderMeterProfileShareOgPng(
   )
   drawProfileStatBox(
     ctx,
-    mainX + (statW + statGap) * 2,
-    statY,
-    statW,
+    statX,
+    statY0 + (statH + statGap) * 2,
+    statColW,
     statH,
     'Dungeons',
     String(snapshot.dungeonCount),
     '#e2e8f0',
   )
 
-  const favW = 340
-  const favH = 200
-  const favX = cardX + cardW - bodyPadX - favW
-  const favY = bodyTop + 16
+  const favX = innerX
+  const favY = dividerY + 16
+  const favW = innerW
+  const favH = cardY + cardH - pad - favY
   roundRect(ctx, favX, favY, favW, favH, 12)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
   ctx.fill()
@@ -512,37 +533,43 @@ export async function renderMeterProfileShareOgPng(
 
   ctx.fillStyle = '#94a3b8'
   ctx.font = '700 14px Segoe UI, system-ui, sans-serif'
-  ctx.fillText('FAVORITE DIGIMON', favX + 18, favY + 16)
+  ctx.textAlign = 'left'
+  ctx.fillText('FAVORITE DIGIMON', favX + 22, favY + 18)
 
   if (snapshot.favoriteDigimon) {
-    const iconSize = 56
-    const iconCx = favX + 18 + iconSize / 2
-    const iconCy = favY + 78
+    const bigIcon = Math.min(132, favH - 48)
+    const iconCx = favX + 22 + bigIcon / 2
+    const iconCy = favY + 28 + (favH - 36) / 2
     await drawPortraitInRing(
       ctx,
       iconCx,
       iconCy,
-      iconSize / 2 + 4,
-      iconSize,
+      bigIcon / 2 + 6,
+      bigIcon,
       portraitUrl,
       digimonInitial(snapshot.favoriteDigimon.digimonName),
     )
 
-    const textX = favX + 18 + iconSize + 16
+    const textX = favX + 22 + bigIcon + 28
+    const textBlockCy = iconCy
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
     ctx.fillStyle = '#f1f5f9'
-    ctx.font = '700 24px Segoe UI, system-ui, sans-serif'
-    ctx.fillText(snapshot.favoriteDigimon.digimonName, textX, favY + 62)
+    ctx.font = '800 36px "Exo 2", Segoe UI, system-ui, sans-serif'
+    ctx.fillText(snapshot.favoriteDigimon.digimonName, textX, textBlockCy - 22)
 
     const parseLabel = `Top DPS in ${snapshot.favoriteDigimon.parseCount} parse${
       snapshot.favoriteDigimon.parseCount === 1 ? '' : 's'
     }`
     ctx.fillStyle = '#94a3b8'
-    ctx.font = '500 18px Segoe UI, system-ui, sans-serif'
-    ctx.fillText(parseLabel, textX, favY + 96)
+    ctx.font = '500 22px Segoe UI, system-ui, sans-serif'
+    ctx.fillText(parseLabel, textX, textBlockCy + 18)
   } else {
     ctx.fillStyle = '#64748b'
-    ctx.font = '500 20px Segoe UI, system-ui, sans-serif'
-    ctx.fillText('No parse data yet', favX + 18, favY + 72)
+    ctx.font = '500 22px Segoe UI, system-ui, sans-serif'
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('No parse data yet', favX + 22, favY + favH / 2)
   }
 
   return new Promise((resolve, reject) => {
