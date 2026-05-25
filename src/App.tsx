@@ -6,8 +6,10 @@ import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
 import { GearPage } from './pages/GearPage'
 import { MeterMyParsesPage } from './pages/MeterMyParsesPage'
+import { MeterPlayerProfilePage } from './pages/MeterPlayerProfilePage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
+import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
 import { CompanionPage } from './pages/CompanionPage'
 import { MayClearEventPage } from './pages/MayClearEventPage'
 import { TeasersPage } from './pages/TeasersPage'
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
           <Route path="meter" element={<MeterPublicPage />} />
+          <Route path="meter/search" element={<MeterTamerSearchPage />} />
+          <Route path="meter/player/:playerKey" element={<MeterPlayerProfilePage />} />
           <Route path="meter/my-parses" element={<MeterMyParsesPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />

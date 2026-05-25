@@ -7,7 +7,16 @@ import {
   type PublicMeterParseRow,
 } from './meterPublicStats'
 
+import {
+  getCachedGlobalRecentParses,
+  getCachedScopeParses,
+  meterScopeKey,
+  setCachedGlobalRecentParses,
+  setCachedScopeParses,
+} from './meterParseCache'
 import { fetchDigimonRoleMap } from './meterRoleBuckets'
+import { mapPool } from './meterPlayerProfile'
+import type { MeterUploadScope } from './meterScopeList'
 
 
 
@@ -84,6 +93,7 @@ function rowsOwnedByUser(rows: MeterParseRowDb[], userId: string): PublicMeterPa
 
 
 const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 500
+const GLOBAL_RECENT_PARSE_LIMIT = 400
 
 /** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
 
@@ -181,7 +191,76 @@ export async function fetchPublicDungeonParses(
 
 }
 
+/** Recent public party parses across all dungeons (profile fast tier). */
+export async function fetchGlobalRecentPublicParses(
+  limit = GLOBAL_RECENT_PARSE_LIMIT,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) {
+    return { rows: [], error: 'Supabase is not configured.' }
+  }
 
+  const { data, error } = await supabase
+    .from('meter_parses')
+    .select(PARSE_SELECT)
+    .eq('parse_kind', 'dungeon_party')
+    .gte('difficulty_id', 2)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) return { rows: [], error: error.message }
+  return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
+}
+
+export async function getPublicDungeonParsesCached(
+  params: FetchPublicDungeonParsesParams,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  const dungeonId = params.dungeonId.trim()
+  const difficultyId = params.difficultyId
+  const key = meterScopeKey(dungeonId, difficultyId)
+  const cached = getCachedScopeParses(key)
+  if (cached) return { rows: cached, error: null }
+
+  const res = await fetchPublicDungeonParses(params)
+  if (!res.error) setCachedScopeParses(key, res.rows)
+  return res
+}
+
+export async function getGlobalRecentPublicParsesCached(
+  limit = GLOBAL_RECENT_PARSE_LIMIT,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  const cached = getCachedGlobalRecentParses()
+  if (cached) return { rows: cached, error: null }
+
+  const res = await fetchGlobalRecentPublicParses(limit)
+  if (!res.error) setCachedGlobalRecentParses(res.rows)
+  return res
+}
+
+export async function fetchAllScopeParsesCached(
+  scopes: MeterUploadScope[],
+  concurrency = 4,
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  const byId = new Map<string, PublicMeterParseRow>()
+  let firstError: string | null = null
+  let done = 0
+
+  await mapPool(scopes, concurrency, async (scope) => {
+    const res = await getPublicDungeonParsesCached({
+      dungeonId: scope.dungeonId,
+      difficultyId: scope.difficultyId,
+    })
+    done += 1
+    onProgress?.(done, scopes.length)
+    if (res.error && !firstError) firstError = res.error
+    for (const row of res.rows) {
+      if (!byId.has(row.id)) byId.set(row.id, row)
+    }
+  })
+
+  return { rows: [...byId.values()], error: firstError }
+}
 
 /** Signed-in user's uploads only (session uid + server filter + client verification). */
 

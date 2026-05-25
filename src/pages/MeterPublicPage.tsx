@@ -4,8 +4,8 @@ import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
 import {
-  fetchPublicDungeonParses,
   fetchRecentMeterParseSelection,
+  getPublicDungeonParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
 import {
@@ -107,7 +107,7 @@ export function MeterPublicPage() {
     let cancelled = false
     setLoading(true)
     setLoadError(null)
-    void fetchPublicDungeonParses({ dungeonId, difficultyId }).then((parseRes) => {
+    void getPublicDungeonParsesCached({ dungeonId, difficultyId }).then((parseRes) => {
       if (cancelled) return
       if (parseRes.error) setLoadError(parseRes.error)
       setRows(parseRes.rows)
@@ -220,6 +220,7 @@ export function MeterPublicPage() {
                     title={METER_ROLE_BUCKET_LABELS[b]}
                     entries={stats.playersByBucket[b]}
                     poolDps={stats.sortedDpsByBucket[b]}
+                    meterContext={{ dungeonId, difficultyId }}
                   />
                 ))}
               </div>

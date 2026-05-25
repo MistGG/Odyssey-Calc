@@ -13,7 +13,7 @@ import {
 } from '../lib/meterParsePayload'
 import {
   fetchMyMeterParses,
-  fetchPublicDungeonParses,
+  getPublicDungeonParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
 import {
@@ -75,7 +75,7 @@ export function MeterMyParsesPage() {
         return prev
       })
       if (alreadyLoaded) return
-      const pub = await fetchPublicDungeonParses({ dungeonId, difficultyId })
+      const pub = await getPublicDungeonParsesCached({ dungeonId, difficultyId })
       if (pub.error) return
       setPublicRowsByScope((prev) => (prev[key] ? prev : { ...prev, [key]: pub.rows }))
     },

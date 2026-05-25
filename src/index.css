@@ -9831,6 +9831,520 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   align-items: center;
 }
 
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link {
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.25;
+  font-family: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link .meter-public-rank-name-text,
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link .meter-public-rank-digimon,
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link .meter-public-rank-dps,
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link .meter-public-rank-num {
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link:hover {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.meter-public-rank.meter-parses-meter-chrome .meter-public-rank-row--link:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.55);
+  outline-offset: 1px;
+}
+
+.meter-player-profile-page {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Player profile hero card */
+.meter-profile-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background:
+    linear-gradient(145deg, rgba(12, 28, 48, 0.92) 0%, rgba(8, 14, 26, 0.96) 55%, rgba(6, 10, 18, 0.98) 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.meter-profile-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 12% 0%, rgba(56, 189, 248, 0.14), transparent 55%);
+  pointer-events: none;
+}
+
+.meter-profile-card__toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meter-profile-card__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  text-decoration: none;
+}
+
+.meter-profile-card__back:hover {
+  color: #bae6fd;
+}
+
+.meter-profile-card__back-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  font-size: 0.75rem;
+}
+
+.meter-profile-card__badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.meter-profile-card__body {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'hero main'
+    'favorite favorite';
+  gap: 1rem 1.25rem;
+  padding: 1.1rem 1rem 1rem;
+  align-items: start;
+}
+
+.meter-profile-card__body--loading {
+  opacity: 0.92;
+}
+
+.meter-profile-card__hero {
+  grid-area: hero;
+}
+
+.meter-profile-card__portrait-ring {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  border: 2px solid rgba(56, 189, 248, 0.55);
+  background: radial-gradient(circle at 30% 20%, rgba(56, 189, 248, 0.2), rgba(2, 6, 23, 0.9) 70%);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.2);
+}
+
+.meter-profile-card__portrait {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+}
+
+.meter-profile-card__portrait-fallback {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.meter-profile-card__main {
+  grid-area: main;
+  min-width: 0;
+  padding-top: 0.15rem;
+}
+
+.meter-profile-card__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.meter-profile-card__name {
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
+.meter-profile-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.meter-profile-card__stat {
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.meter-profile-card__stat dt {
+  margin: 0 0 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.meter-profile-card__stat dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #e2e8f0;
+  line-height: 1.2;
+}
+
+.meter-profile-card__favorite-panel {
+  grid-area: favorite;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.meter-profile-card__favorite-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.meter-profile-card__favorite-body {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.meter-profile-card__favorite-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: rgba(2, 6, 23, 0.8);
+}
+
+.meter-profile-card__favorite-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.meter-profile-card__favorite-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.meter-profile-card__favorite-meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.meter-profile-card__favorite-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.meter-profile-card__progress {
+  position: relative;
+  padding: 0.55rem 1rem 0.7rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.meter-profile-card__progress-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.meter-profile-card__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.7), rgba(94, 234, 212, 0.85));
+  transition: width 0.2s ease;
+}
+
+.meter-profile-card__progress-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+@media (min-width: 720px) {
+  .meter-profile-card__body {
+    grid-template-columns: auto 1fr minmax(12rem, 1.1fr);
+    grid-template-areas: 'hero main favorite';
+    align-items: center;
+  }
+
+  .meter-profile-card__favorite-panel {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+/* Best parses panel */
+.meter-profile-bests-panel {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 12, 20, 0.55);
+  padding: 1rem 1rem 0.85rem;
+}
+
+.meter-profile-bests-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.meter-profile-bests-panel__head .meter-parses-section-title {
+  margin: 0;
+}
+
+.meter-profile-bests-panel__count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.meter-profile-bests-panel__empty {
+  margin: 0 0 0.5rem;
+}
+
+.meter-profile-bests-panel__table-wrap {
+  max-height: min(48vh, 420px);
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meter-profile-bests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.meter-profile-bests-table th,
+.meter-profile-bests-table td {
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meter-profile-bests-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(10, 16, 28, 0.98);
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.meter-profile-bests-table tbody tr:hover {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.meter-profile-bests-table__dungeon {
+  font-weight: 600;
+  color: #e2e8f0;
+  max-width: 14rem;
+}
+
+.meter-profile-bests-table__role {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+.meter-profile-bests-table__dps {
+  text-align: right;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Discord share panel */
+.meter-profile-share {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 12, 20, 0.55);
+  padding: 1rem 1rem 0.9rem;
+}
+
+.meter-profile-share__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.meter-profile-share__head .meter-parses-section-title {
+  margin: 0;
+}
+
+.meter-profile-share__updated {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.meter-profile-share__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.meter-profile-share__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.65rem;
+}
+
+.meter-profile-share__cooldown {
+  font-size: 0.78rem;
+  color: #fbbf24;
+}
+
+.meter-profile-share__url {
+  margin: 0.75rem 0 0;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+.meter-profile-share__url a {
+  color: #7dd3fc;
+}
+
+.meter-tamer-search-page {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.meter-tamer-search {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 12, 20, 0.55);
+  padding: 1.1rem 1rem 1rem;
+}
+
+.meter-tamer-search__hint {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.meter-tamer-search__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.meter-tamer-search__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.meter-tamer-search__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.meter-tamer-search__input {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(2, 6, 23, 0.75);
+  color: #f1f5f9;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.meter-tamer-search__input:focus {
+  outline: 2px solid rgba(56, 189, 248, 0.55);
+  outline-offset: 1px;
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.meter-tamer-search__form .guidebook-btn {
+  align-self: flex-start;
+}
+
 .meter-public-rank.meter-parses-meter-chrome .meter-public-rank-num {
   color: rgba(255, 255, 255, 0.55);
   text-align: right;

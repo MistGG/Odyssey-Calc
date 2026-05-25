@@ -13,6 +13,9 @@ export function MeterSubNav() {
       <NavLink to="/meter" end className={subNavClass}>
         Leaderboard
       </NavLink>
+      <NavLink to="/meter/search" className={subNavClass}>
+        Tamer search
+      </NavLink>
       {user ? (
         <NavLink to="/meter/my-parses" className={subNavClass}>
           My parses
