@@ -1,4 +1,5 @@
 import { wikiHttpCacheGet, wikiHttpCacheSet } from '../lib/wikiHttpCache'
+import { runWikiRequest } from '../lib/wikiRequestQueue'
 
 export type FetchJsonError = Error & {
   status?: number
@@ -13,6 +14,16 @@ function shouldUseStaleWikiCache(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e)
   if (/429|503|502|too many requests|rate limit|temporarily unavailable/i.test(msg)) return true
   return false
+}
+
+function isWikiGet(url: string, method: string): boolean {
+  if (method !== 'GET') return false
+  try {
+    const path = new URL(url, window.location.origin).pathname
+    return path.includes('/api/wiki') || path.includes('/proxy/api/wiki')
+  } catch {
+    return /\/api\/wiki|\/proxy\/api\/wiki/.test(url)
+  }
 }
 
 async function fetchJsonOnce<T>(url: string, init?: RequestInit): Promise<T> {
@@ -45,8 +56,12 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
     return fetchJsonOnce<T>(url, init)
   }
 
+  const run = () => fetchJsonOnce<T>(url, init)
+
   try {
-    const data = await fetchJsonOnce<T>(url, init)
+    const data = isWikiGet(url, method)
+      ? await runWikiRequest(run)
+      : await run()
     wikiHttpCacheSet(url, data)
     return data
   } catch (e) {

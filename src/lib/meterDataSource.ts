@@ -1,6 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-import { leaderboardEligibleParses, type PublicMeterParseRow } from './meterPublicStats'
+import {
+  leaderboardEligibleParses,
+  mostRecentMeterParseSelection,
+  type MeterParseSelection,
+  type PublicMeterParseRow,
+} from './meterPublicStats'
 
 import { fetchDigimonRoleMap } from './meterRoleBuckets'
 
@@ -78,9 +83,57 @@ function rowsOwnedByUser(rows: MeterParseRowDb[], userId: string): PublicMeterPa
 
 
 
-/** Public leaderboard — always uses the anon role (not the signed-in JWT). */
+const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 500
 
-export async function fetchPublicDungeonParses(): Promise<{
+/** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
+
+export async function fetchRecentMeterParseSelection(
+
+  allowedDungeonIds: Iterable<string>,
+
+): Promise<MeterParseSelection | null> {
+
+  const supabase = getMeterAnonSupabase()
+
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+
+    .from('meter_parses')
+
+    .select('dungeon_id, difficulty_id, difficulty, payload, created_at')
+
+    .eq('parse_kind', 'dungeon_party')
+
+    .gte('difficulty_id', 2)
+
+    .order('created_at', { ascending: false })
+
+    .limit(80)
+
+  if (error || !data?.length) return null
+
+  return mostRecentMeterParseSelection(data as PublicMeterParseRow[], allowedDungeonIds)
+
+}
+
+export type FetchPublicDungeonParsesParams = {
+
+  dungeonId: string
+
+  difficultyId: number
+
+  limit?: number
+
+}
+
+/** Public leaderboard for one dungeon + difficulty (anon role, not signed-in JWT). */
+
+export async function fetchPublicDungeonParses(
+
+  params: FetchPublicDungeonParsesParams,
+
+): Promise<{
 
   rows: PublicMeterParseRow[]
 
@@ -96,6 +149,16 @@ export async function fetchPublicDungeonParses(): Promise<{
 
   }
 
+  const dungeonId = params.dungeonId.trim()
+
+  const difficultyId = params.difficultyId
+
+  if (!dungeonId || difficultyId < 2) {
+
+    return { rows: [], error: 'Select a dungeon and difficulty.' }
+
+  }
+
   const { data, error } = await supabase
 
     .from('meter_parses')
@@ -104,11 +167,13 @@ export async function fetchPublicDungeonParses(): Promise<{
 
     .eq('parse_kind', 'dungeon_party')
 
-    .gte('difficulty_id', 2)
+    .eq('dungeon_id', dungeonId)
+
+    .eq('difficulty_id', difficultyId)
 
     .order('created_at', { ascending: false })
 
-    .limit(2000)
+    .limit(params.limit ?? PUBLIC_PARSE_LIMIT_PER_DUNGEON)
 
   if (error) return { rows: [], error: error.message }
 

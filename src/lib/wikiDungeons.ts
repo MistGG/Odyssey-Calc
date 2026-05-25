@@ -19,7 +19,9 @@ export function isUploadableWikiDifficulty(name: string): boolean {
 
 export function nonStoryDifficulties(dungeon: WikiDungeonListItem): string[] {
   const list = dungeon.difficulties ?? []
-  return list.filter((d: string) => d.trim().toLowerCase() !== STORY)
+  return list
+    .filter((d): d is string => typeof d === 'string')
+    .filter((d) => d.trim().toLowerCase() !== STORY)
 }
 
 export function dungeonSelectOptions(dungeons: WikiDungeonListItem[]) {

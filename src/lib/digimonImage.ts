@@ -20,6 +20,18 @@ export function skillIconUrl(iconId: string) {
   return `${WIKI_SITE_ORIGIN}/game_icons/skills/${iconId}.png`
 }
 
+/** Wiki item icon (`/game_icons/items/{icon_id}.png`). */
+export function wikiItemIconUrl(iconId: string) {
+  if (!iconId?.trim()) return undefined
+  return `${WIKI_SITE_ORIGIN}/game_icons/items/${iconId}.png`
+}
+
+/** Wild monster portrait (`/models/{model_id}l.png`, same convention as Digimon). */
+export function monsterPortraitUrl(modelId: string) {
+  if (!modelId?.trim()) return undefined
+  return `${WIKI_SITE_ORIGIN}/models/${modelId}l.png`
+}
+
 /** Rank sprite from /web_assets/digimon_rank.png (32x28 cells on a 160x56 sheet). */
 export function rankSpriteStyle(rank: number, scale = 1): CSSProperties {
   const safe = Math.max(1, Math.floor(rank || 1))

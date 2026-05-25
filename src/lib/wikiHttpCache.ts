@@ -52,6 +52,12 @@ export function wikiHttpCacheGet<T>(url: string): T | null {
   return e ? (e.body as T) : null
 }
 
+export function wikiHttpCacheStoredAt(url: string): number | null {
+  const map = readMap()
+  const e = map[url]
+  return e?.storedAt ?? null
+}
+
 /** Clears fallback wiki GET responses (used after rate limits / transient errors). */
 export function wikiHttpCacheClear(): void {
   try {

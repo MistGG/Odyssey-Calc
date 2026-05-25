@@ -23,11 +23,7 @@ import {
   filterMyDungeonParses,
 } from '../lib/meterMyParsesFilters'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
-import {
-  leaderboardEligibleParses,
-  type MeterParseListRow,
-  type PublicMeterParseRow,
-} from '../lib/meterPublicStats'
+import type { MeterParseListRow, PublicMeterParseRow } from '../lib/meterPublicStats'
 
 function formatFixed(n: number, digits: number) {
   return n.toLocaleString(undefined, {
@@ -46,7 +42,7 @@ export function MeterMyParsesPage() {
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
   const [partyMemberByParseId, setPartyMemberByParseId] = useState<Record<string, string>>({})
-  const [publicRows, setPublicRows] = useState<PublicMeterParseRow[]>([])
+  const [publicRowsByScope, setPublicRowsByScope] = useState<Record<string, PublicMeterParseRow[]>>({})
   const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
   const [filterDungeonId, setFilterDungeonId] = useState('')
   const [filterDifficultyId, setFilterDifficultyId] = useState<number | null>(null)
@@ -63,22 +59,40 @@ export function MeterMyParsesPage() {
     [allDungeonRows, filterDungeonId, filterDifficultyId],
   )
 
-  /** Percentile name colors — failed runs are display-only and must not affect aggregates. */
-  const leaderboardRows = useMemo(() => leaderboardEligibleParses(publicRows), [publicRows])
+  const publicScopeKey = (dungeonId: string, difficultyId: number) =>
+    `${dungeonId}:${difficultyId}`
+
+  const ensurePublicRowsForParse = useCallback(
+    async (row: PublicMeterParseRow) => {
+      const dungeon = dungeonFromPayload(row.payload)
+      const dungeonId = row.dungeon_id?.trim() || dungeon?.dungeonId?.trim() || ''
+      const difficultyId = row.difficulty_id ?? dungeon?.difficultyId
+      if (!dungeonId || difficultyId == null || difficultyId < 2) return
+      const key = publicScopeKey(dungeonId, difficultyId)
+      let alreadyLoaded = false
+      setPublicRowsByScope((prev) => {
+        alreadyLoaded = Boolean(prev[key])
+        return prev
+      })
+      if (alreadyLoaded) return
+      const pub = await fetchPublicDungeonParses({ dungeonId, difficultyId })
+      if (pub.error) return
+      setPublicRowsByScope((prev) => (prev[key] ? prev : { ...prev, [key]: pub.rows }))
+    },
+    [],
+  )
 
   const loadParses = useCallback(async () => {
     if (!supabase || !user) return
     setLoading(true)
     setLoadError(null)
-    const [mine, pub, roles, dungeons] = await Promise.all([
+    const [mine, roles, dungeons] = await Promise.all([
       fetchMyMeterParses(supabase),
-      fetchPublicDungeonParses(),
       loadDigimonRoleMapForMeter(),
       loadWikiDungeonsForMeter().catch(() => []),
     ])
     setWikiDungeons(dungeons)
     setDigimonRoleById(roles)
-    setPublicRows(pub.rows)
     if (mine.error) setLoadError(mine.error)
     setRows(mine.rows as MeterParseListRow[])
     setLoading(false)
@@ -130,7 +144,10 @@ export function MeterMyParsesPage() {
             setExpandedIds((prev) => {
               const next = new Set(prev)
               if (next.has(row.id)) next.delete(row.id)
-              else next.add(row.id)
+              else {
+                next.add(row.id)
+                void ensurePublicRowsForParse(row)
+              }
               return next
             })
           }}
@@ -168,7 +185,13 @@ export function MeterMyParsesPage() {
           >
             <MeterDungeonPartyReplay
               row={row}
-              publicRows={leaderboardRows}
+              publicRows={(() => {
+                const dungeon = dungeonFromPayload(row.payload)
+                const dungeonId = row.dungeon_id?.trim() || dungeon?.dungeonId?.trim() || ''
+                const difficultyId = row.difficulty_id ?? dungeon?.difficultyId
+                if (!dungeonId || difficultyId == null) return []
+                return publicRowsByScope[publicScopeKey(dungeonId, difficultyId)] ?? []
+              })()}
               digimonRoleById={digimonRoleById}
               selectedMemberKey={memberKey ?? null}
               onSelectMember={(key) => setPartyMemberByParseId((p) => ({ ...p, [row.id]: key }))}

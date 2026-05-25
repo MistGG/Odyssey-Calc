@@ -39,6 +39,13 @@ export function Layout() {
               Browse
             </NavLink>
 
+            <NavLink
+              to="/guidebook"
+              className={({ isActive }) => navLinkClass(isActive, 'nav-link-guidebook')}
+            >
+              Guidebook
+            </NavLink>
+
             <NavMenuGroup
               triggerLabel="Lab"
               menuLabel="Lab menu"

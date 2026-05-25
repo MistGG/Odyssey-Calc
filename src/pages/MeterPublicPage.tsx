@@ -5,12 +5,11 @@ import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
 import {
   fetchPublicDungeonParses,
-  isMeterSupabaseConfigured,
+  fetchRecentMeterParseSelection,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
 import {
   aggregatePublicMeterStats,
-  mostRecentMeterParseSelection,
   type DigimonDpsSortMode,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
@@ -26,7 +25,6 @@ type MeterNavState = { dungeonId?: string; difficultyId?: number }
 export function MeterPublicPage() {
   const { state: navState } = useLocation()
   const meterNav = (navState as MeterNavState | null) ?? null
-  const meterConfigured = isMeterSupabaseConfigured()
   const [rows, setRows] = useState<PublicMeterParseRow[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,24 +35,21 @@ export function MeterPublicPage() {
   const [digimonDpsSort, setDigimonDpsSort] = useState<DigimonDpsSortMode>('best')
   const initialFiltersApplied = useRef(false)
 
-  const load = useCallback(async () => {
+  const loadBoot = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
-    const [parseRes, roles, dungeons] = await Promise.all([
-      fetchPublicDungeonParses(),
+    const [roles, dungeons] = await Promise.all([
       loadDigimonRoleMapForMeter(),
       loadWikiDungeonsForMeter().catch(() => []),
     ])
     setWikiDungeons(dungeons)
     setDigimonRoleById(roles)
-    if (parseRes.error) setLoadError(parseRes.error)
-    setRows(parseRes.rows)
     setLoading(false)
-  }, [meterConfigured])
+  }, [])
 
   useEffect(() => {
-    void load()
-  }, [load])
+    void loadBoot()
+  }, [loadBoot])
 
   const dungeonOptions = useMemo(() => dungeonSelectOptions(wikiDungeons), [wikiDungeons])
 
@@ -74,14 +69,16 @@ export function MeterPublicPage() {
     if (loading) return
     initialFiltersApplied.current = true
     const allowedIds = dungeonOptions.map((d) => d.dungeonId)
-    const recent = mostRecentMeterParseSelection(rows, allowedIds)
-    if (recent) {
-      setDungeonId(recent.dungeonId)
-      setDifficultyId(recent.difficultyId)
-      return
-    }
-    setDungeonId(dungeonOptions[0]!.dungeonId)
-  }, [dungeonOptions, loading, rows, meterNav?.dungeonId])
+    void (async () => {
+      const recent = await fetchRecentMeterParseSelection(allowedIds)
+      if (recent) {
+        setDungeonId(recent.dungeonId)
+        setDifficultyId(recent.difficultyId)
+        return
+      }
+      setDungeonId(dungeonOptions[0]!.dungeonId)
+    })()
+  }, [dungeonOptions, loading, meterNav?.dungeonId])
 
   useEffect(() => {
     if (!dungeonId) return
@@ -101,6 +98,25 @@ export function MeterPublicPage() {
       setDifficultyId(difficultyOptions[0]!.difficultyId)
     }
   }, [dungeonId, difficultyOptions, difficultyId, meterNav?.difficultyId])
+
+  useEffect(() => {
+    if (!dungeonId || difficultyId == null) {
+      setRows([])
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    setLoadError(null)
+    void fetchPublicDungeonParses({ dungeonId, difficultyId }).then((parseRes) => {
+      if (cancelled) return
+      if (parseRes.error) setLoadError(parseRes.error)
+      setRows(parseRes.rows)
+      setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [dungeonId, difficultyId])
 
   const stats = useMemo(() => {
     if (!dungeonId || difficultyId == null || !digimonRoleById.size) return null

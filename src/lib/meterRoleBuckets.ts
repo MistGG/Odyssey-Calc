@@ -115,42 +115,30 @@ export function memberDps(member: MeterPartyMemberStored): number {
 
 
 
-/** Role bucket from highest-DPS digimon used; fallback `currentDigimonId`. */
-
-export function memberRoleBucket(
-
-  member: MeterPartyMemberStored,
-
-  digimonRoleById: Map<string, string>,
-
-): MeterRoleBucket | null {
-
+/** Digimon that dealt the most DPS for this member in the parse; fallback `currentDigimonId`. */
+export function memberPrimaryDigimonId(member: MeterPartyMemberStored): string | null {
   const digimons = memberDigimonBreakdowns(member)
-
   const dur = Math.max(member.durationSec, 1e-6)
-
   let bestId: string | null = member.currentDigimonId?.trim() || null
-
   let bestDps = -1
-
   for (const dg of digimons) {
-
     const dps = dg.totalDamage / dur
-
     if (dps > bestDps) {
-
       bestDps = dps
-
       bestId = dg.digimonId
-
     }
-
   }
+  return bestId
+}
 
+/** Role bucket from highest-DPS digimon used; fallback `currentDigimonId`. */
+export function memberRoleBucket(
+  member: MeterPartyMemberStored,
+  digimonRoleById: Map<string, string>,
+): MeterRoleBucket | null {
+  const bestId = memberPrimaryDigimonId(member)
   if (!bestId) return null
-
   return digimonIdToBucket(bestId, digimonRoleById)
-
 }
 
 

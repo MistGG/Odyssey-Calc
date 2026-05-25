@@ -1,5 +1,5 @@
-import { WIKI_API_BASE } from '../config/env'
-import type { WikiDungeonListResponse } from '../types/wikiApi'
+import { WIKI_API_BASE, WIKI_SITE_ORIGIN } from '../config/env'
+import type { WikiDungeonDetail, WikiDungeonListResponse } from '../types/wikiApi'
 import { fetchJson } from './http'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
@@ -29,4 +29,18 @@ export async function fetchAllWikiDungeons(perPage = 500) {
     all.push(...next.data)
   }
   return all
+}
+
+export function wikiDungeonDetailUrl(id: string) {
+  const u = wikiDungeonsEndpoint()
+  u.searchParams.set('id', id)
+  return u.toString()
+}
+
+export async function fetchWikiDungeonDetail(id: string) {
+  return fetchJson<WikiDungeonDetail>(wikiDungeonDetailUrl(id))
+}
+
+export function wikiDungeonPageUrl(id: string) {
+  return `${WIKI_SITE_ORIGIN}/wiki#dungeon/${encodeURIComponent(id)}`
 }

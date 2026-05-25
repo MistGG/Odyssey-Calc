@@ -14,6 +14,7 @@ import {
   digimonIdToBucket,
   memberDps,
   memberDpsInParse,
+  memberPrimaryDigimonId,
   memberRoleBucket,
   memberTopDigimonUsed,
   METER_ROLE_BUCKETS,
@@ -159,6 +160,7 @@ export function aggregatePublicMeterStats(
     for (const member of members) {
       const bucket = memberRoleBucket(member, digimonRoleById)
       if (!bucket) continue
+      const primaryDigimonId = memberPrimaryDigimonId(member)
       const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
       const pKey = normalizePlayerKey(member)
       const prev = playerBest[bucket].get(pKey)
@@ -175,8 +177,10 @@ export function aggregatePublicMeterStats(
         })
       }
 
+      if (!primaryDigimonId) continue
       const memberDur = Math.max(member.durationSec, sessionDur, 1e-6)
       for (const dg of memberDigimonBreakdowns(member)) {
+        if (dg.digimonId !== primaryDigimonId) continue
         const dBucket = digimonIdToBucket(dg.digimonId, digimonRoleById)
         if (!dBucket) continue
         const dDps = dg.totalDamage / memberDur
