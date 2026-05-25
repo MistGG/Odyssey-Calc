@@ -1,6 +1,11 @@
 import { useCallback, useLayoutEffect, useRef } from 'react'
-import { GUIDEBOOK_NAV, guidebookChapterForSection } from '../../lib/guidebookContent'
-import { observeGuidebookScrollSpy, scrollElementIntoContainer } from '../../lib/guidebookNav'
+import { GUIDEBOOK_NAV, guidebookChapterForSection, guidebookScrollIds } from '../../lib/guidebookContent'
+import {
+  GUIDEBOOK_TOC_PIN_TOP_PROGRESS,
+  guidebookScrollProgress,
+  observeGuidebookScrollSpy,
+  scrollElementIntoContainer,
+} from '../../lib/guidebookNav'
 import { useGuidebook } from './GuidebookContext'
 
 function LinkIcon() {
@@ -86,12 +91,20 @@ export function GuidebookToc() {
   activeSectionRef.current = activeSectionId
 
   const scrollActiveRowIntoToc = useCallback((sectionId: string) => {
+    const scroller = scrollRef.current
+    if (!scroller) return
+
+    const sectionIndex = guidebookScrollIds().indexOf(sectionId)
+    if (sectionIndex >= 0 && sectionIndex <= 2 && guidebookScrollProgress() < GUIDEBOOK_TOC_PIN_TOP_PROGRESS) {
+      scroller.scrollTop = 0
+      return
+    }
+
     const chapterId = guidebookChapterForSection(sectionId)
     const el =
       rowRefs.current.get(sectionId) ??
       (chapterId ? rowRefs.current.get(`heading-${chapterId}`) : null)
-    const scroller = scrollRef.current
-    if (!el || !scroller) return
+    if (!el) return
     scrollElementIntoContainer(scroller, el)
   }, [])
 

@@ -5,11 +5,17 @@ const VALID_SECTION_IDS = new Set(guidebookLinkableSectionIds())
 /** Fallback sticky header offset for scroll-spy. */
 export const GUIDEBOOK_SCROLL_SPY_OFFSET = 88
 
-/** Reading anchor at page top: fraction of viewport below the header (≈ upper-middle). */
+/** Reading anchor at page top: hug the header so the first sections win. */
+const GUIDEBOOK_SPY_ANCHOR_TOP_RATIO = 0.06
+
+/** Reading anchor once scrolled: fraction of viewport below the header (≈ upper-middle). */
 const GUIDEBOOK_SPY_ANCHOR_START_RATIO = 0.44
 
 /** Reading anchor at page bottom: fraction of viewport below the header (≈ lower-middle / end). */
 const GUIDEBOOK_SPY_ANCHOR_END_RATIO = 0.86
+
+/** Below this scroll progress, TOC list stays scrolled to the top. */
+export const GUIDEBOOK_TOC_PIN_TOP_PROGRESS = 0.12
 
 export function getGuidebookScrollSpyOffset(): number {
   if (typeof document === 'undefined') return GUIDEBOOK_SCROLL_SPY_OFFSET
@@ -83,7 +89,7 @@ export function scrollToGuidebookSection(sectionId: string, behavior: ScrollBeha
   window.scrollTo({ top, behavior })
 }
 
-function guidebookScrollProgress(): number {
+export function guidebookScrollProgress(): number {
   if (typeof window === 'undefined') return 0
   const viewportHeight = window.innerHeight
   const scrollY = window.scrollY || document.documentElement.scrollTop
@@ -105,11 +111,21 @@ export function getGuidebookScrollAnchorY(
   offset = getGuidebookScrollSpyOffset(),
   viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800,
 ): number {
-  const progress = smoothstep(guidebookScrollProgress())
-  const ratio =
-    GUIDEBOOK_SPY_ANCHOR_START_RATIO +
-    (GUIDEBOOK_SPY_ANCHOR_END_RATIO - GUIDEBOOK_SPY_ANCHOR_START_RATIO) * progress
+  const raw = guidebookScrollProgress()
   const readableHeight = Math.max(160, viewportHeight - offset)
+
+  let ratio: number
+  if (raw < GUIDEBOOK_TOC_PIN_TOP_PROGRESS) {
+    const t = smoothstep(raw / GUIDEBOOK_TOC_PIN_TOP_PROGRESS)
+    ratio =
+      GUIDEBOOK_SPY_ANCHOR_TOP_RATIO +
+      (GUIDEBOOK_SPY_ANCHOR_START_RATIO - GUIDEBOOK_SPY_ANCHOR_TOP_RATIO) * t
+  } else {
+    const progress = smoothstep(raw)
+    ratio =
+      GUIDEBOOK_SPY_ANCHOR_START_RATIO +
+      (GUIDEBOOK_SPY_ANCHOR_END_RATIO - GUIDEBOOK_SPY_ANCHOR_START_RATIO) * progress
+  }
   return offset + readableHeight * ratio
 }
 
@@ -127,6 +143,10 @@ export function resolveGuidebookActiveSection(
   const locked = getGuidebookScrollSpyLock()
   if (locked && sectionIds.includes(locked)) return locked
 
+  const scrollY =
+    typeof window !== 'undefined' ? window.scrollY || document.documentElement.scrollTop : 0
+  if (scrollY < 56) return fallback
+
   const anchor = getGuidebookScrollAnchorY(offset)
 
   // Section that contains the anchor (handles tall cards like Gear / By level).
@@ -137,7 +157,7 @@ export function resolveGuidebookActiveSection(
     if (top <= anchor && bottom > anchor) return id
   }
 
-  // Last section whose top passed the anchor (page bottom, short tail sections).
+  // Last section whose heading passed the anchor.
   let lastPassed = fallback
   for (const id of sectionIds) {
     const el = document.getElementById(id)
