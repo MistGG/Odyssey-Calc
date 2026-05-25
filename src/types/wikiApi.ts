@@ -239,12 +239,22 @@ export type WikiEvolutionNode = {
   model_id: string
   stage: string
   open_level: number
+  open_item_id?: string
+  open_item_name?: string
+  open_item_icon_id?: string
+  open_item_qty?: number
+  tamer_ds?: number
+}
+
+export type WikiEvolutionEdge = {
+  from: string
+  to: string
 }
 
 export type WikiEvolutionTree = {
   line_id: string
   nodes: WikiEvolutionNode[] | null
-  edges: unknown
+  edges: WikiEvolutionEdge[] | null
 }
 
 export type WikiDigimonDetail = {

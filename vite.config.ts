@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+// @ts-expect-error local Vite plugin (plain .mjs, no types)
+import { guidebookSharePagesPlugin } from './vite-guidebook-share.mjs'
 
 // Avoid browser CORS: JSON API does not send Access-Control-Allow-Origin.
 const wikiProxy = {
@@ -14,7 +16,7 @@ const wikiProxy = {
 export default defineConfig({
   // For GitHub Pages project sites, set VITE_BASE_PATH="/<repo-name>/"
   base: process.env.VITE_BASE_PATH || '/',
-  plugins: [react()],
+  plugins: [guidebookSharePagesPlugin(), react()],
   server: {
     proxy: wikiProxy,
   },

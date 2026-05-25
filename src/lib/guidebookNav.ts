@@ -1,4 +1,7 @@
 import { GUIDEBOOK_NAV, guidebookLinkableSectionIds, guidebookScrollIds } from './guidebookContent'
+import { guidebookSectionUrl } from './guidebookShare'
+
+export { guidebookSectionUrl } from './guidebookShare'
 
 const VALID_SECTION_IDS = new Set(guidebookLinkableSectionIds())
 
@@ -37,13 +40,6 @@ export function guidebookSectionTitle(sectionId: string): string | null {
 
 export function guidebookSectionPath(sectionId: string): string {
   return `/guidebook?section=${encodeURIComponent(sectionId)}`
-}
-
-export function guidebookSectionUrl(sectionId: string): string {
-  const path = guidebookSectionPath(sectionId)
-  if (typeof window === 'undefined') return path
-  const base = window.location.href.split('#')[0]
-  return `${base}#${path}`
 }
 
 export function readGuidebookBookmark(): string | null {

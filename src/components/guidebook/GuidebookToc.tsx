@@ -64,7 +64,7 @@ function TocSectionRow({
         type="button"
         className={`guidebook-toc__link${copied ? ' is-copied' : ''}`}
         aria-label={copied ? 'Link copied' : `Copy link to ${label}`}
-        title={copied ? 'Copied' : 'Copy link to section'}
+        title={copied ? 'Copied' : 'Copy share link (Discord-friendly)'}
         onClick={(e) => {
           e.stopPropagation()
           void copySectionLink(sectionId)

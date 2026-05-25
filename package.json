@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "sync:teasers": "node scripts/sync-teaser-images.mjs",
-    "build": "npm run sync:teasers && tsc -b && vite build",
+    "generate:guidebook-share": "node scripts/generate-guidebook-share.mjs",
+    "build": "npm run sync:teasers && npm run generate:guidebook-share && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

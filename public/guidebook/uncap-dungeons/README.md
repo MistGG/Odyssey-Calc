@@ -17,3 +17,11 @@ Files live in this folder and are served via Vite `public/` (with the app `base`
 Recommended: PNG or WebP, roughly 16:9 or 4:3, at least ~640px wide so the card crop stays sharp.
 
 Boss portraits and item icons are loaded from the wiki API — only **location** images belong in this folder.
+
+After adding or updating screenshots, regenerate Discord/share previews:
+
+```bash
+npm run generate:guidebook-share
+```
+
+(Use `VITE_BASE_PATH=/` and `GUIDEBOOK_SHARE_SITE_ORIGIN=http://localhost:5173` for local dev URLs.)

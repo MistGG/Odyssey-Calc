@@ -13,6 +13,7 @@ import { buildSupportSkillEffects } from '../lib/supportEffects'
 import { contentStatusLabel, getDigimonContentStatus } from '../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../lib/dpsSim'
 import { wikiCombatStatRows } from '../lib/wikiCombatStatRows'
+import { EvolutionTree } from '../components/EvolutionTree'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 function allSkillsLabHref(digimonId: string) {
@@ -58,8 +59,6 @@ export function DigimonDetailPage() {
       cancelled = true
     }
   }, [id])
-
-  const nodes = data?.evolution_tree?.nodes ?? []
 
   const statRows = useMemo(() => wikiCombatStatRows(data?.stats), [data?.stats])
 
@@ -346,26 +345,8 @@ export function DigimonDetailPage() {
         </ul>
       </section>
 
-      <section className="section">
-        <h2>Evolution line</h2>
-        {(nodes?.length ?? 0) === 0 ? (
-          <p className="muted">No evolution nodes returned.</p>
-        ) : (
-          <ul className="evo-list">
-            {(nodes ?? []).map((n) => (
-              <li key={`${n.slot}-${n.digimon_id}`}>
-                <Link
-                  to={`/digimon/${encodeURIComponent(n.digimon_id)}`}
-                  className="evo-line-link"
-                >
-                  <span className="evo-stage">{n.stage}</span>
-                  <span className="evo-name">{n.digimon_name}</span>
-                  <span className="muted">Lv {n.open_level}+</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+      <section className="section section--evo-tree">
+        <EvolutionTree tree={data.evolution_tree} currentDigimonId={data.id} />
       </section>
 
       <p className="lab-cta muted">
