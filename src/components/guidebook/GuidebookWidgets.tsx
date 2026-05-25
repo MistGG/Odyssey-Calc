@@ -35,6 +35,7 @@ import {
 import { digimonPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
 import {
   GUIDEBOOK_DUNGEON_MEDIA,
+  guidebookPublicUrl,
   collectGuidebookDungeonLoot,
   formatGuidebookBossHp,
   guidebookBossFromObjective,
@@ -1130,7 +1131,8 @@ const UNCAP_DUNGEON_CARDS = [
 ] as const
 
 function GuidebookDungeonLocationSlot({ media }: { media: GuidebookDungeonMedia }) {
-  const [src, setSrc] = useState(media.locationImageSrc)
+  const pngSrc = guidebookPublicUrl(`guidebook/uncap-dungeons/${media.locationFilename}`)
+  const [src, setSrc] = useState(pngSrc)
   const [missing, setMissing] = useState(false)
 
   if (missing) {
@@ -1154,7 +1156,11 @@ function GuidebookDungeonLocationSlot({ media }: { media: GuidebookDungeonMedia 
         decoding="async"
         onError={() => {
           if (src.endsWith('.png')) {
-            setSrc(src.replace(/\.png$/i, '.webp'))
+            setSrc(
+              guidebookPublicUrl(
+                `guidebook/uncap-dungeons/${media.locationFilename.replace(/\.png$/i, '.webp')}`,
+              ),
+            )
             return
           }
           setMissing(true)

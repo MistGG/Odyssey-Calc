@@ -2,7 +2,7 @@
 
 Drop **location / map screenshots** here for the Early Game **50–70** uncap dungeon cards.
 
-Files are served from the site root, e.g. `/guidebook/uncap-dungeons/agumons-madness-location.png`.
+Files live in this folder and are served via Vite `public/` (with the app `base` prefix on GitHub Pages), e.g. `/Odyssey-Calc/guidebook/uncap-dungeons/agumons-madness-location.png`.
 
 ## Expected filenames
 

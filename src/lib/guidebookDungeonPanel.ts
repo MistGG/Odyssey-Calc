@@ -18,22 +18,38 @@ export type GuidebookDungeonMedia = {
   locationFilename: string
 }
 
+/** File under `public/` — prefixed with Vite `base` (e.g. `/Odyssey-Calc/` on GitHub Pages). */
+export function guidebookPublicUrl(relativeFromPublic: string): string {
+  const base = import.meta.env.BASE_URL || '/'
+  const path = relativeFromPublic.replace(/^\//, '')
+  return `${base.endsWith('/') ? base : `${base}/`}${path}`
+}
+
+function dungeonLocationMedia(
+  filename: string,
+  alt: string,
+): GuidebookDungeonMedia {
+  const rel = `guidebook/uncap-dungeons/${filename}`
+  return {
+    locationImageSrc: guidebookPublicUrl(rel),
+    locationImageAlt: alt,
+    locationFilename: filename,
+  }
+}
+
 export const GUIDEBOOK_DUNGEON_MEDIA: Record<string, GuidebookDungeonMedia> = {
-  [GUIDEBOOK_UNCAP_50_DUNGEON_ID]: {
-    locationImageSrc: '/guidebook/uncap-dungeons/agumons-madness-location.png',
-    locationImageAlt: "Agumon's Madness — entrance / map location",
-    locationFilename: 'agumons-madness-location.png',
-  },
-  [GUIDEBOOK_UNCAP_70_DUNGEON_ID]: {
-    locationImageSrc: '/guidebook/uncap-dungeons/fallen-angel-location.png',
-    locationImageAlt: 'The Rise of the Fallen Angel — entrance / map location',
-    locationFilename: 'fallen-angel-location.png',
-  },
-  [GUIDEBOOK_DARK_ROAR_DUNGEON_ID]: {
-    locationImageSrc: '/guidebook/uncap-dungeons/dark-roar-location.png',
-    locationImageAlt: 'The Dark Roar — entrance / map location (Big Sight)',
-    locationFilename: 'dark-roar-location.png',
-  },
+  [GUIDEBOOK_UNCAP_50_DUNGEON_ID]: dungeonLocationMedia(
+    'agumons-madness-location.png',
+    "Agumon's Madness — entrance / map location",
+  ),
+  [GUIDEBOOK_UNCAP_70_DUNGEON_ID]: dungeonLocationMedia(
+    'fallen-angel-location.png',
+    'The Rise of the Fallen Angel — entrance / map location',
+  ),
+  [GUIDEBOOK_DARK_ROAR_DUNGEON_ID]: dungeonLocationMedia(
+    'dark-roar-location.png',
+    'The Dark Roar — entrance / map location (Big Sight)',
+  ),
 }
 
 export type GuidebookDungeonLootRow = {
