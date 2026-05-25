@@ -10,7 +10,6 @@ import {
   meterProfileShareStorageFolder,
   renderMeterProfileShareOgPng,
   resolveMeterProfileShareCacheKey,
-  resolveMeterShareSiteOrigin,
   type MeterProfileShareSnapshot,
 } from '../lib/meterPlayerShare'
 
@@ -71,7 +70,6 @@ export async function fetchMeterProfileShare(
   const snapshot = parseSnapshot(data.snapshot)
   if (!snapshot) return { record: null, error: null }
 
-  const siteOrigin = resolveMeterShareSiteOrigin()
   const cacheKey = resolveMeterProfileShareCacheKey(snapshot, data.generated_at)
 
   return {
@@ -80,8 +78,8 @@ export async function fetchMeterProfileShare(
       displayName: data.display_name,
       snapshot,
       generatedAt: data.generated_at,
-      sharePageUrl: meterProfileSharePageUrl(siteOrigin, key, cacheKey),
-      ogImageUrl: meterProfileShareOgImageUrl(siteOrigin, key, cacheKey),
+      sharePageUrl: meterProfileSharePageUrl(key, cacheKey),
+      ogImageUrl: meterProfileShareOgImageUrl(key, cacheKey),
     },
     error: null,
   }
@@ -95,7 +93,8 @@ export async function generateMeterProfileShare(options: {
   playerKey: string
   snapshot: MeterProfileShareSnapshot
   portraitUrl?: string
-  siteOrigin: string
+  /** GitHub Pages app origin for redirect after Discord / browser opens share link. */
+  appSiteOrigin: string
 }): Promise<GenerateMeterProfileShareResult> {
   const supabase = getMeterAnonSupabase()
   const url = supabaseUrl()
@@ -107,15 +106,15 @@ export async function generateMeterProfileShare(options: {
   const folder = key
   const htmlPath = `${folder}/index.html`
   const ogPath = `${folder}/og.png`
-  const siteOrigin = options.siteOrigin.replace(/\/$/, '')
+  const appSiteOrigin = options.appSiteOrigin.replace(/\/$/, '')
   const shareCacheKey = createMeterProfileShareCacheKey()
   const snapshotForStore: MeterProfileShareSnapshot = {
     ...options.snapshot,
     shareCacheKey,
   }
-  const sharePageUrl = meterProfileSharePageUrl(siteOrigin, key, shareCacheKey)
-  const ogImageUrl = meterProfileShareOgImageUrl(siteOrigin, key, shareCacheKey)
-  const appUrl = meterProfileAppUrl(siteOrigin, key)
+  const sharePageUrl = meterProfileSharePageUrl(key, shareCacheKey)
+  const ogImageUrl = meterProfileShareOgImageUrl(key, shareCacheKey)
+  const appUrl = meterProfileAppUrl(appSiteOrigin, key)
 
   const prior = await fetchMeterProfileShare(key)
   if (prior.record && !canRefreshMeterProfileShare(prior.record.generatedAt)) {

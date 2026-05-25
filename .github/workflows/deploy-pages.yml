@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -33,29 +33,12 @@ jobs:
 
       # Vite bakes VITE_* in at build time. GitHub Pages never reads .env.local — add the same
       # two vars as repository Actions secrets (Settings → Secrets and variables → Actions).
-      - name: Sync meter Discord share pages
-        run: npm run sync:meter-shares
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_BASE_PATH: /Odyssey-Calc/
-          VITE_SITE_ORIGIN: https://mistgg.github.io/Odyssey-Calc
-
-      - name: Commit synced share pages
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/share/meter-player/
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: sync meter Discord share pages [skip ci]"
-            git push
-          fi
-
       - name: Build app
         run: npm run build
         env:
           VITE_BASE_PATH: /Odyssey-Calc/
           VITE_WIKI_API_BASE: https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki
+          VITE_METER_SHARE_PUBLIC_ORIGIN: https://share.odyssey-calc.com
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 

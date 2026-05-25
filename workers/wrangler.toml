@@ -1,0 +1,13 @@
+name = "odyssey-meter-share"
+main = "meter-share-proxy.js"
+compatibility_date = "2024-08-01"
+
+# Custom domain: add share.odyssey-calc.com in the Cloudflare dashboard (Workers → your worker → Domains).
+# Or uncomment and set zone_id after the zone is active:
+# routes = [{ pattern = "share.odyssey-calc.com/*", zone_name = "odyssey-calc.com" }]
+
+[vars]
+SHARE_PUBLIC_ORIGIN = "https://share.odyssey-calc.com"
+
+# Required secret (do not commit):
+#   npx wrangler secret put SUPABASE_URL

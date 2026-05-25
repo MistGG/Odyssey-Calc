@@ -44,19 +44,44 @@ export function meterProfileShareStorageFolder(playerKey: string): string {
   return playerKey.trim().toLowerCase()
 }
 
-/** GitHub Pages serves flat files reliably (no directory index required). */
-export function meterProfileSharePagePath(playerKey: string): string {
-  const base = import.meta.env.BASE_URL || '/'
-  const root = base.endsWith('/') ? base : `${base}/`
+const DEFAULT_METER_SHARE_PUBLIC_ORIGIN = 'https://share.odyssey-calc.com'
+
+/** Paths on share.odyssey-calc.com (Worker), not GitHub Pages. */
+export function meterProfileSharePublicPagePath(playerKey: string): string {
   const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-  return `${root}share/meter-player/${key}.html`
+  return `/meter-player/${key}.html`
 }
 
-export function meterProfileShareOgImagePath(playerKey: string): string {
-  const base = import.meta.env.BASE_URL || '/'
-  const root = base.endsWith('/') ? base : `${base}/`
+export function meterProfileSharePublicOgImagePath(playerKey: string): string {
   const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-  return `${root}share/meter-player/${key}-og.png`
+  return `/meter-player/${key}-og.png`
+}
+
+/** Dev-only: Vite serves /share/meter-player/ from Supabase when env unset. */
+export function meterProfileShareDevPagePath(playerKey: string): string {
+  const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+  return `/share/meter-player/${key}.html`
+}
+
+export function meterProfileShareDevOgImagePath(playerKey: string): string {
+  const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+  return `/share/meter-player/${key}-og.png`
+}
+
+function useDevSharePaths(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    isLocalHostname(window.location.hostname) &&
+    !(import.meta.env.VITE_METER_SHARE_PUBLIC_ORIGIN as string | undefined)?.trim()
+  )
+}
+
+/** Origin for Discord share links (Cloudflare Worker custom domain). */
+export function resolveMeterSharePublicOrigin(): string {
+  const fromEnv = (import.meta.env.VITE_METER_SHARE_PUBLIC_ORIGIN as string | undefined)?.trim()
+  if (fromEnv) return fromEnv.replace(/\/$/, '')
+  if (useDevSharePaths()) return window.location.origin
+  return DEFAULT_METER_SHARE_PUBLIC_ORIGIN
 }
 
 /** New key on each generate/refresh — appended to share URLs for Discord cache busting. */
@@ -88,53 +113,43 @@ export function withMeterProfileShareCacheQuery(url: string, cacheKey: string | 
   }
 }
 
-function meterProfileSharePageUrlBase(siteOrigin: string, playerKey: string): string {
-  const path = meterProfileSharePagePath(playerKey)
-  if (typeof window === 'undefined') {
-    return `${siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
-  }
+function meterProfileSharePageUrlBase(playerKey: string): string {
+  const origin = resolveMeterSharePublicOrigin().replace(/\/$/, '')
+  const path = useDevSharePaths()
+    ? meterProfileShareDevPagePath(playerKey)
+    : meterProfileSharePublicPagePath(playerKey)
 
-  const { hostname, protocol, port } = window.location
-  if (isLocalHostname(hostname)) {
+  if (typeof window !== 'undefined' && useDevSharePaths()) {
+    const { hostname, protocol, port } = window.location
     const devPort = port === '4173' ? '5173' : port || '5173'
-    const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-    return `${protocol}//${hostname}:${devPort}/share/meter-player/${key}.html`
+    return `${protocol}//${hostname}:${devPort}${path}`
   }
 
-  return new URL(path, window.location.origin).href
+  return `${origin}${path}`
 }
 
-function meterProfileShareOgImageUrlBase(siteOrigin: string, playerKey: string): string {
-  const path = meterProfileShareOgImagePath(playerKey)
-  if (typeof window === 'undefined') {
-    return `${siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
-  }
+function meterProfileShareOgImageUrlBase(playerKey: string): string {
+  const origin = resolveMeterSharePublicOrigin().replace(/\/$/, '')
+  const path = useDevSharePaths()
+    ? meterProfileShareDevOgImagePath(playerKey)
+    : meterProfileSharePublicOgImagePath(playerKey)
 
-  const { hostname, protocol, port } = window.location
-  if (isLocalHostname(hostname)) {
+  if (typeof window !== 'undefined' && useDevSharePaths()) {
+    const { hostname, protocol, port } = window.location
     const devPort = port === '4173' ? '5173' : port || '5173'
-    const key = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-    return `${protocol}//${hostname}:${devPort}/share/meter-player/${key}-og.png`
+    return `${protocol}//${hostname}:${devPort}${path}`
   }
 
-  return new URL(path, window.location.origin).href
+  return `${origin}${path}`
 }
 
-/** Public Discord / Open Graph page URL (Odyssey Calc site, not Supabase). */
-export function meterProfileSharePageUrl(
-  siteOrigin: string,
-  playerKey: string,
-  cacheKey?: string,
-): string {
-  return withMeterProfileShareCacheQuery(meterProfileSharePageUrlBase(siteOrigin, playerKey), cacheKey)
+/** Public Discord / Open Graph page URL (share.odyssey-calc.com, not Supabase). */
+export function meterProfileSharePageUrl(playerKey: string, cacheKey?: string): string {
+  return withMeterProfileShareCacheQuery(meterProfileSharePageUrlBase(playerKey), cacheKey)
 }
 
-export function meterProfileShareOgImageUrl(
-  siteOrigin: string,
-  playerKey: string,
-  cacheKey?: string,
-): string {
-  return withMeterProfileShareCacheQuery(meterProfileShareOgImageUrlBase(siteOrigin, playerKey), cacheKey)
+export function meterProfileShareOgImageUrl(playerKey: string, cacheKey?: string): string {
+  return withMeterProfileShareCacheQuery(meterProfileShareOgImageUrlBase(playerKey), cacheKey)
 }
 
 export function resolveMeterShareSiteOrigin(): string {

@@ -16,7 +16,6 @@ dist-ssr
 # One-off / dev scripts (build only needs sync-teaser-images.mjs)
 scripts/*
 !scripts/sync-teaser-images.mjs
-!scripts/sync-meter-profile-shares.mjs
 !scripts/generate-guidebook-share.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
