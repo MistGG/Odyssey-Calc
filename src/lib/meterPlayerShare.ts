@@ -270,6 +270,7 @@ function drawDigimonInitialPortrait(
   cy: number,
   radius: number,
   initial: string,
+  fontScale = 0.9,
 ) {
   ctx.save()
   ctx.beginPath()
@@ -284,16 +285,131 @@ function drawDigimonInitialPortrait(
   ctx.lineWidth = 3
   ctx.stroke()
   ctx.fillStyle = 'rgba(34, 211, 238, 0.85)'
-  ctx.font = `700 ${Math.round(radius * 0.9)}px "Exo 2", Segoe UI, system-ui, sans-serif`
+  ctx.font = `700 ${Math.round(radius * fontScale)}px "Exo 2", Segoe UI, system-ui, sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(initial, cx, cy)
   ctx.restore()
 }
 
+async function drawPortraitInRing(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  ringRadius: number,
+  imageSize: number,
+  portraitUrl: string | undefined,
+  fallbackInitial: string,
+): Promise<void> {
+  ctx.save()
+  const ringGrad = ctx.createRadialGradient(
+    cx - ringRadius * 0.3,
+    cy - ringRadius * 0.35,
+    0,
+    cx,
+    cy,
+    ringRadius,
+  )
+  ringGrad.addColorStop(0, 'rgba(56, 189, 248, 0.2)')
+  ringGrad.addColorStop(1, 'rgba(2, 6, 23, 0.9)')
+  ctx.beginPath()
+  ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2)
+  ctx.fillStyle = ringGrad
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)'
+  ctx.lineWidth = 4
+  ctx.stroke()
+
+  const half = imageSize / 2
+  let drew = false
+  if (portraitUrl?.trim()) {
+    try {
+      const img = await loadImageForCanvas(portraitUrl.trim())
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(cx, cy, half, 0, Math.PI * 2)
+      ctx.clip()
+      ctx.drawImage(img, cx - half, cy - half, imageSize, imageSize)
+      ctx.restore()
+      drew = true
+    } catch {
+      drew = false
+    }
+  }
+  if (!drew) {
+    drawDigimonInitialPortrait(ctx, cx, cy, half - 2, fallbackInitial, 0.75)
+  }
+  ctx.restore()
+}
+
+function drawProfileStatBox(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label: string,
+  value: string,
+  valueColor: string,
+) {
+  roundRect(ctx, x, y, w, h, 10)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.22)'
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#94a3b8'
+  ctx.font = '700 13px Segoe UI, system-ui, sans-serif'
+  ctx.fillText(label.toUpperCase(), x + 14, y + 12)
+
+  ctx.fillStyle = valueColor
+  ctx.font = '800 28px Segoe UI, system-ui, sans-serif'
+  ctx.fillText(value, x + 14, y + 34)
+}
+
+function drawProfileCardChrome(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  roundRect(ctx, x, y, w, h, 14)
+  const cardGrad = ctx.createLinearGradient(x, y, x + w * 0.6, y + h)
+  cardGrad.addColorStop(0, 'rgba(12, 28, 48, 0.96)')
+  cardGrad.addColorStop(0.55, 'rgba(8, 14, 26, 0.98)')
+  cardGrad.addColorStop(1, 'rgba(6, 10, 18, 0.99)')
+  ctx.fillStyle = cardGrad
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)'
+  ctx.lineWidth = 2
+  ctx.stroke()
+
+  ctx.save()
+  roundRect(ctx, x, y, w, h, 14)
+  ctx.clip()
+  const sheen = ctx.createRadialGradient(
+    x + w * 0.12,
+    y,
+    0,
+    x + w * 0.12,
+    y,
+    w * 0.55,
+  )
+  sheen.addColorStop(0, 'rgba(56, 189, 248, 0.14)')
+  sheen.addColorStop(1, 'transparent')
+  ctx.fillStyle = sheen
+  ctx.fillRect(x, y, w, h)
+  ctx.restore()
+}
+
 export async function renderMeterProfileShareOgPng(
   snapshot: MeterProfileShareSnapshot,
   portraitUrl?: string,
+  options?: { peakDpsColor?: string },
 ): Promise<Blob> {
   const canvas = document.createElement('canvas')
   canvas.width = OG_WIDTH
@@ -304,68 +420,129 @@ export async function renderMeterProfileShareOgPng(
   drawSiteGridBackground(ctx)
 
   ctx.fillStyle = '#67e8f9'
-  ctx.font = '700 26px "Exo 2", Segoe UI, system-ui, sans-serif'
+  ctx.font = '700 24px "Exo 2", Segoe UI, system-ui, sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('ODYSSEY CALC · METER', OG_WIDTH / 2, 72)
+  ctx.textBaseline = 'middle'
+  ctx.fillText('ODYSSEY CALC · METER', OG_WIDTH / 2, 52)
+
+  const cardX = 44
+  const cardY = 88
+  const cardW = OG_WIDTH - 88
+  const cardH = OG_HEIGHT - cardY - 44
+  drawProfileCardChrome(ctx, cardX, cardY, cardW, cardH)
+
+  const bodyPadX = 36
+  const bodyTop = cardY + 36
+  const ringR = 62
+  const portraitSize = 108
+  const heroCx = cardX + bodyPadX + ringR
+  const heroCy = bodyTop + ringR + 24
+
+  const fallbackInitial = snapshot.favoriteDigimon
+    ? digimonInitial(snapshot.favoriteDigimon.digimonName)
+    : digimonInitial(snapshot.displayName)
+  await drawPortraitInRing(
+    ctx,
+    heroCx,
+    heroCy,
+    ringR,
+    portraitSize,
+    portraitUrl,
+    fallbackInitial,
+  )
+
+  const mainX = heroCx + ringR + 40
+  const mainY = bodyTop + 8
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#64748b'
+  ctx.font = '700 14px Segoe UI, system-ui, sans-serif'
+  ctx.fillText('TAMER', mainX, mainY)
 
   ctx.fillStyle = '#f8fafc'
-  ctx.font = '800 56px "Exo 2", Segoe UI, system-ui, sans-serif'
-  ctx.fillText(snapshot.displayName, OG_WIDTH / 2, 150)
+  ctx.font = '800 44px "Exo 2", Segoe UI, system-ui, sans-serif'
+  ctx.fillText(snapshot.displayName, mainX, mainY + 22)
 
-  const favoriteLine = snapshot.favoriteDigimon
-    ? `Favorite: ${snapshot.favoriteDigimon.digimonName}`
-    : 'Favorite digimon'
-  ctx.fillStyle = '#94a3b8'
-  ctx.font = '600 28px Segoe UI, system-ui, sans-serif'
-  ctx.fillText(favoriteLine, OG_WIDTH / 2, 200)
+  const statY = mainY + 88
+  const statGap = 14
+  const statW = 168
+  const statH = 78
+  const peakColor = options?.peakDpsColor ?? (snapshot.peakDps > 0 ? '#e2e8f0' : '#64748b')
+  drawProfileStatBox(
+    ctx,
+    mainX,
+    statY,
+    statW,
+    statH,
+    'Peak DPS',
+    snapshot.peakDps > 0 ? formatInt(snapshot.peakDps) : '—',
+    peakColor,
+  )
+  drawProfileStatBox(
+    ctx,
+    mainX + statW + statGap,
+    statY,
+    statW,
+    statH,
+    'Best entries',
+    String(snapshot.bestEntryCount),
+    '#e2e8f0',
+  )
+  drawProfileStatBox(
+    ctx,
+    mainX + (statW + statGap) * 2,
+    statY,
+    statW,
+    statH,
+    'Dungeons',
+    String(snapshot.dungeonCount),
+    '#e2e8f0',
+  )
 
-  const stats = `Peak ${formatInt(snapshot.peakDps)} DPS · ${snapshot.bestEntryCount} bests · ${snapshot.dungeonCount} dungeons`
-  ctx.font = '500 24px Segoe UI, system-ui, sans-serif'
-  ctx.fillText(stats, OG_WIDTH / 2, 244)
-
-  const cardX = 120
-  const cardY = 290
-  const cardW = OG_WIDTH - 240
-  const cardH = 280
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'
-  ctx.strokeStyle = 'rgba(96, 165, 250, 0.45)'
-  ctx.lineWidth = 2
-  roundRect(ctx, cardX, cardY, cardW, cardH, 18)
+  const favW = 340
+  const favH = 200
+  const favX = cardX + cardW - bodyPadX - favW
+  const favY = bodyTop + 16
+  roundRect(ctx, favX, favY, favW, favH, 12)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
   ctx.fill()
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+  ctx.lineWidth = 1
   ctx.stroke()
 
-  const size = 200
-  const ix = OG_WIDTH / 2
-  const iy = cardY + 36 + size / 2
-  const radius = size / 2
-  let drewPortrait = false
+  ctx.fillStyle = '#94a3b8'
+  ctx.font = '700 14px Segoe UI, system-ui, sans-serif'
+  ctx.fillText('FAVORITE DIGIMON', favX + 18, favY + 16)
 
-  if (portraitUrl?.trim()) {
-    try {
-      const img = await loadImageForCanvas(portraitUrl.trim())
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(ix, iy, radius, 0, Math.PI * 2)
-      ctx.closePath()
-      ctx.clip()
-      ctx.drawImage(img, ix - radius, iy - radius, size, size)
-      ctx.restore()
-      ctx.strokeStyle = 'rgba(96, 165, 250, 0.65)'
-      ctx.lineWidth = 3
-      ctx.beginPath()
-      ctx.arc(ix, iy, radius, 0, Math.PI * 2)
-      ctx.stroke()
-      drewPortrait = true
-    } catch {
-      drewPortrait = false
-    }
-  }
+  if (snapshot.favoriteDigimon) {
+    const iconSize = 56
+    const iconCx = favX + 18 + iconSize / 2
+    const iconCy = favY + 78
+    await drawPortraitInRing(
+      ctx,
+      iconCx,
+      iconCy,
+      iconSize / 2 + 4,
+      iconSize,
+      portraitUrl,
+      digimonInitial(snapshot.favoriteDigimon.digimonName),
+    )
 
-  if (!drewPortrait) {
-    const initial = snapshot.favoriteDigimon
-      ? digimonInitial(snapshot.favoriteDigimon.digimonName)
-      : digimonInitial(snapshot.displayName)
-    drawDigimonInitialPortrait(ctx, ix, iy, radius, initial)
+    const textX = favX + 18 + iconSize + 16
+    ctx.fillStyle = '#f1f5f9'
+    ctx.font = '700 24px Segoe UI, system-ui, sans-serif'
+    ctx.fillText(snapshot.favoriteDigimon.digimonName, textX, favY + 62)
+
+    const parseLabel = `Top DPS in ${snapshot.favoriteDigimon.parseCount} parse${
+      snapshot.favoriteDigimon.parseCount === 1 ? '' : 's'
+    }`
+    ctx.fillStyle = '#94a3b8'
+    ctx.font = '500 18px Segoe UI, system-ui, sans-serif'
+    ctx.fillText(parseLabel, textX, favY + 96)
+  } else {
+    ctx.fillStyle = '#64748b'
+    ctx.font = '500 20px Segoe UI, system-ui, sans-serif'
+    ctx.fillText('No parse data yet', favX + 18, favY + 72)
   }
 
   return new Promise((resolve, reject) => {

@@ -95,6 +95,8 @@ export async function generateMeterProfileShare(options: {
   portraitUrl?: string
   /** GitHub Pages app origin for redirect after Discord / browser opens share link. */
   appSiteOrigin: string
+  /** Peak DPS tier color (matches profile card). */
+  peakDpsColor?: string
 }): Promise<GenerateMeterProfileShareResult> {
   const supabase = getMeterAnonSupabase()
   const url = supabaseUrl()
@@ -129,7 +131,9 @@ export async function generateMeterProfileShare(options: {
 
   let ogBlob: Blob
   try {
-    ogBlob = await renderMeterProfileShareOgPng(snapshotForStore, options.portraitUrl)
+    ogBlob = await renderMeterProfileShareOgPng(snapshotForStore, options.portraitUrl, {
+      peakDpsColor: options.peakDpsColor,
+    })
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Failed to render preview image' }
   }

@@ -17,11 +17,13 @@ export function MeterPlayerSharePanel({
   playerKey,
   snapshot,
   portraitUrl,
+  peakDpsColor,
   profileLoading,
 }: {
   playerKey: string
   snapshot: MeterProfileShareSnapshot | null
   portraitUrl?: string
+  peakDpsColor?: string
   profileLoading: boolean
 }) {
   const [record, setRecord] = useState<MeterProfileShareRecord | null>(null)
@@ -71,6 +73,7 @@ export function MeterPlayerSharePanel({
       playerKey,
       snapshot,
       portraitUrl,
+      peakDpsColor,
       appSiteOrigin: resolveMeterShareSiteOrigin(),
     })
 

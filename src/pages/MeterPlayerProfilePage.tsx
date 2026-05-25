@@ -112,6 +112,12 @@ export function MeterPlayerProfilePage() {
     [peakEntry, scopeLeaderboardPools],
   )
 
+  const peakDpsColor = useMemo(() => {
+    if (peakDps <= 0) return undefined
+    const pct = dpsToPercentile(peakDps, peakDpsPool)
+    return parseScoreColor(pct)
+  }, [peakDps, peakDpsPool])
+
   const dungeonCount = useMemo(() => {
     const seen = new Set<string>()
     for (const entry of bestParses) seen.add(entry.dungeonId)
@@ -184,6 +190,7 @@ export function MeterPlayerProfilePage() {
         playerKey={playerKey}
         snapshot={shareSnapshot}
         portraitUrl={favoritePortrait}
+        peakDpsColor={peakDpsColor}
         profileLoading={loading}
       />
 
