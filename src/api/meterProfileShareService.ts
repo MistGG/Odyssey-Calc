@@ -3,10 +3,12 @@ import {
   buildMeterProfileShareHtml,
   canRefreshMeterProfileShare,
   METER_PROFILE_SHARE_BUCKET,
+  meterProfileAppUrl,
   meterProfileShareOgImageUrl,
   meterProfileSharePageUrl,
   meterProfileShareStorageFolder,
   renderMeterProfileShareOgPng,
+  resolveMeterShareSiteOrigin,
   type MeterProfileShareSnapshot,
 } from '../lib/meterPlayerShare'
 
@@ -65,14 +67,16 @@ export async function fetchMeterProfileShare(
   const snapshot = parseSnapshot(data.snapshot)
   if (!snapshot) return { record: null, error: null }
 
+  const siteOrigin = resolveMeterShareSiteOrigin()
+
   return {
     record: {
       playerKey: data.player_key,
       displayName: data.display_name,
       snapshot,
       generatedAt: data.generated_at,
-      sharePageUrl: meterProfileSharePageUrl(url, key),
-      ogImageUrl: meterProfileShareOgImageUrl(url, key),
+      sharePageUrl: meterProfileSharePageUrl(siteOrigin, key),
+      ogImageUrl: meterProfileShareOgImageUrl(siteOrigin, key),
     },
     error: null,
   }
@@ -98,9 +102,10 @@ export async function generateMeterProfileShare(options: {
   const folder = key
   const htmlPath = `${folder}/index.html`
   const ogPath = `${folder}/og.png`
-  const sharePageUrl = meterProfileSharePageUrl(url, key)
-  const ogImageUrl = meterProfileShareOgImageUrl(url, key)
-  const appUrl = options.siteOrigin.replace(/\/$/, '') + `/#/meter/player/${encodeURIComponent(key)}`
+  const siteOrigin = options.siteOrigin.replace(/\/$/, '')
+  const sharePageUrl = meterProfileSharePageUrl(siteOrigin, key)
+  const ogImageUrl = meterProfileShareOgImageUrl(siteOrigin, key)
+  const appUrl = meterProfileAppUrl(siteOrigin, key)
 
   const prior = await fetchMeterProfileShare(key)
   if (prior.record && !canRefreshMeterProfileShare(prior.record.generatedAt)) {

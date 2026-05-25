@@ -1,4 +1,5 @@
 import type { PlayerFavoriteDigimon } from './meterPlayerProfile'
+import { proxiedWikiAssetUrl } from './wikiAssetProxy'
 
 export const METER_PROFILE_SHARE_BUCKET = 'meter-profile-shares'
 
@@ -20,21 +21,83 @@ export type MeterProfileShareRow = {
 const OG_WIDTH = 1200
 const OG_HEIGHT = 630
 const HOUR_MS = 60 * 60 * 1000
+const GRID_SIZE = 48
+
+function isLocalHostname(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1'
+}
+
+/** Supabase storage URL (internal; used by dev middleware + CI sync). */
+export function meterProfileShareStoragePublicUrl(
+  supabaseUrl: string,
+  playerKey: string,
+  file: 'index.html' | 'og.png',
+): string {
+  const base = supabaseUrl.replace(/\/$/, '')
+  const folder = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+  return `${base}/storage/v1/object/public/${METER_PROFILE_SHARE_BUCKET}/${folder}/${file}`
+}
 
 export function meterProfileShareStorageFolder(playerKey: string): string {
   return playerKey.trim().toLowerCase()
 }
 
-export function meterProfileSharePageUrl(supabaseUrl: string, playerKey: string): string {
-  const base = supabaseUrl.replace(/\/$/, '')
-  const folder = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-  return `${base}/storage/v1/object/public/${METER_PROFILE_SHARE_BUCKET}/${folder}/index.html`
+export function meterProfileSharePagePath(playerKey: string): string {
+  const base = import.meta.env.BASE_URL || '/'
+  const root = base.endsWith('/') ? base : `${base}/`
+  return `${root}share/meter-player/${encodeURIComponent(meterProfileShareStorageFolder(playerKey))}/`
 }
 
-export function meterProfileShareOgImageUrl(supabaseUrl: string, playerKey: string): string {
-  const base = supabaseUrl.replace(/\/$/, '')
+export function meterProfileShareOgImagePath(playerKey: string): string {
+  const base = import.meta.env.BASE_URL || '/'
+  const root = base.endsWith('/') ? base : `${base}/`
   const folder = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
-  return `${base}/storage/v1/object/public/${METER_PROFILE_SHARE_BUCKET}/${folder}/og.png`
+  return `${root}share/meter-player/${folder}/og.png`
+}
+
+/** Public Discord / Open Graph page URL (Odyssey Calc site, not Supabase). */
+export function meterProfileSharePageUrl(siteOrigin: string, playerKey: string): string {
+  const path = meterProfileSharePagePath(playerKey)
+  if (typeof window === 'undefined') {
+    return `${siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
+  }
+
+  const { hostname, protocol, port } = window.location
+  if (isLocalHostname(hostname)) {
+    const devPort = port === '4173' ? '5173' : port || '5173'
+    const localPath = `/share/meter-player/${encodeURIComponent(meterProfileShareStorageFolder(playerKey))}/`
+    return `${protocol}//${hostname}:${devPort}${localPath}`
+  }
+
+  return new URL(path, window.location.origin).href
+}
+
+export function meterProfileShareOgImageUrl(siteOrigin: string, playerKey: string): string {
+  const path = meterProfileShareOgImagePath(playerKey)
+  if (typeof window === 'undefined') {
+    return `${siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
+  }
+
+  const { hostname, protocol, port } = window.location
+  if (isLocalHostname(hostname)) {
+    const devPort = port === '4173' ? '5173' : port || '5173'
+    const folder = encodeURIComponent(meterProfileShareStorageFolder(playerKey))
+    return `${protocol}//${hostname}:${devPort}/share/meter-player/${folder}/og.png`
+  }
+
+  return new URL(path, window.location.origin).href
+}
+
+export function resolveMeterShareSiteOrigin(): string {
+  if (typeof window === 'undefined') {
+    return (
+      (import.meta.env.VITE_SITE_ORIGIN as string | undefined)?.trim() ||
+      'https://mistgg.github.io/Odyssey-Calc'
+    )
+  }
+  const base = import.meta.env.BASE_URL || '/'
+  const root = base.endsWith('/') && base.length > 1 ? base.slice(0, -1) : base === '/' ? '' : base
+  return `${window.location.origin}${root}`
 }
 
 export function meterProfileAppUrl(siteOrigin: string, playerKey: string): string {
@@ -55,14 +118,113 @@ function formatInt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('image_load_failed'))
-    img.src = src
-  })
+function digimonInitial(name: string): string {
+  const ch = name.trim().charAt(0)
+  return ch ? ch.toUpperCase() : '?'
+}
+
+async function loadImageForCanvas(src: string): Promise<HTMLImageElement> {
+  const fetchUrl = proxiedWikiAssetUrl(src)
+  const res = await fetch(fetchUrl)
+  if (!res.ok) throw new Error('image_fetch_failed')
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  try {
+    return await new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('image_decode_failed'))
+      img.src = objectUrl
+    })
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+function drawSiteGridBackground(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = '#030712'
+  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT)
+
+  const glow1 = ctx.createRadialGradient(
+    OG_WIDTH * 0.5,
+    -OG_HEIGHT * 0.15,
+    0,
+    OG_WIDTH * 0.5,
+    -OG_HEIGHT * 0.15,
+    OG_WIDTH * 0.7,
+  )
+  glow1.addColorStop(0, 'rgba(14, 165, 233, 0.18)')
+  glow1.addColorStop(0.5, 'transparent')
+  ctx.fillStyle = glow1
+  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT)
+
+  const glow2 = ctx.createRadialGradient(
+    OG_WIDTH,
+    OG_HEIGHT * 0.5,
+    0,
+    OG_WIDTH,
+    OG_HEIGHT * 0.5,
+    OG_WIDTH * 0.45,
+  )
+  glow2.addColorStop(0, 'rgba(99, 102, 241, 0.08)')
+  glow2.addColorStop(0.45, 'transparent')
+  ctx.fillStyle = glow2
+  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT)
+
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.03)'
+  ctx.lineWidth = 1
+  for (let x = 0; x <= OG_WIDTH; x += GRID_SIZE) {
+    ctx.beginPath()
+    ctx.moveTo(x + 0.5, 0)
+    ctx.lineTo(x + 0.5, OG_HEIGHT)
+    ctx.stroke()
+  }
+  for (let y = 0; y <= OG_HEIGHT; y += GRID_SIZE) {
+    ctx.beginPath()
+    ctx.moveTo(0, y + 0.5)
+    ctx.lineTo(OG_WIDTH, y + 0.5)
+    ctx.stroke()
+  }
+
+  const mask = ctx.createRadialGradient(
+    OG_WIDTH * 0.5,
+    0,
+    0,
+    OG_WIDTH * 0.5,
+    0,
+    OG_WIDTH * 0.55,
+  )
+  mask.addColorStop(0.2, 'rgba(3, 7, 18, 0)')
+  mask.addColorStop(0.7, 'rgba(3, 7, 18, 0.85)')
+  ctx.fillStyle = mask
+  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT)
+}
+
+function drawDigimonInitialPortrait(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  initial: string,
+) {
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+  ctx.closePath()
+  const grad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius)
+  grad.addColorStop(0, '#1e293b')
+  grad.addColorStop(1, '#0f172a')
+  ctx.fillStyle = grad
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(96, 165, 250, 0.65)'
+  ctx.lineWidth = 3
+  ctx.stroke()
+  ctx.fillStyle = 'rgba(34, 211, 238, 0.85)'
+  ctx.font = `700 ${Math.round(radius * 0.9)}px "Exo 2", Segoe UI, system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(initial, cx, cy)
+  ctx.restore()
 }
 
 export async function renderMeterProfileShareOgPng(
@@ -75,24 +237,15 @@ export async function renderMeterProfileShareOgPng(
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('canvas_unavailable')
 
-  const bg = ctx.createLinearGradient(0, 0, OG_WIDTH, OG_HEIGHT)
-  bg.addColorStop(0, '#0f172a')
-  bg.addColorStop(1, '#020617')
-  ctx.fillStyle = bg
-  ctx.fillRect(0, 0, OG_WIDTH, OG_HEIGHT)
-
-  ctx.fillStyle = 'rgba(56, 189, 248, 0.12)'
-  ctx.beginPath()
-  ctx.ellipse(200, 80, 280, 180, 0, 0, Math.PI * 2)
-  ctx.fill()
+  drawSiteGridBackground(ctx)
 
   ctx.fillStyle = '#67e8f9'
-  ctx.font = '700 26px Segoe UI, system-ui, sans-serif'
+  ctx.font = '700 26px "Exo 2", Segoe UI, system-ui, sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('ODYSSEY CALC · METER', OG_WIDTH / 2, 72)
 
   ctx.fillStyle = '#f8fafc'
-  ctx.font = '800 56px Segoe UI, system-ui, sans-serif'
+  ctx.font = '800 56px "Exo 2", Segoe UI, system-ui, sans-serif'
   ctx.fillText(snapshot.displayName, OG_WIDTH / 2, 150)
 
   const favoriteLine = snapshot.favoriteDigimon
@@ -117,29 +270,38 @@ export async function renderMeterProfileShareOgPng(
   ctx.fill()
   ctx.stroke()
 
-  if (portraitUrl) {
+  const size = 200
+  const ix = OG_WIDTH / 2
+  const iy = cardY + 36 + size / 2
+  const radius = size / 2
+  let drewPortrait = false
+
+  if (portraitUrl?.trim()) {
     try {
-      const img = await loadImage(portraitUrl)
-      const size = 200
-      const ix = OG_WIDTH / 2 - size / 2
-      const iy = cardY + 36
+      const img = await loadImageForCanvas(portraitUrl.trim())
       ctx.save()
       ctx.beginPath()
-      ctx.arc(ix + size / 2, iy + size / 2, size / 2, 0, Math.PI * 2)
+      ctx.arc(ix, iy, radius, 0, Math.PI * 2)
       ctx.closePath()
       ctx.clip()
-      ctx.drawImage(img, ix, iy, size, size)
+      ctx.drawImage(img, ix - radius, iy - radius, size, size)
       ctx.restore()
       ctx.strokeStyle = 'rgba(96, 165, 250, 0.65)'
       ctx.lineWidth = 3
       ctx.beginPath()
-      ctx.arc(ix + size / 2, iy + size / 2, size / 2, 0, Math.PI * 2)
+      ctx.arc(ix, iy, radius, 0, Math.PI * 2)
       ctx.stroke()
+      drewPortrait = true
     } catch {
-      ctx.fillStyle = '#64748b'
-      ctx.font = '500 20px Segoe UI, system-ui, sans-serif'
-      ctx.fillText('Portrait preview', OG_WIDTH / 2, cardY + cardH / 2)
+      drewPortrait = false
     }
+  }
+
+  if (!drewPortrait) {
+    const initial = snapshot.favoriteDigimon
+      ? digimonInitial(snapshot.favoriteDigimon.digimonName)
+      : digimonInitial(snapshot.displayName)
+    drawDigimonInitialPortrait(ctx, ix, iy, radius, initial)
   }
 
   return new Promise((resolve, reject) => {
@@ -174,7 +336,7 @@ export function buildMeterProfileShareHtml(options: {
   ogImageUrl: string
   appUrl: string
 }): string {
-  const { snapshot, ogImageUrl, appUrl } = options
+  const { snapshot, sharePageUrl, ogImageUrl, appUrl } = options
   const title = `${snapshot.displayName} — Meter profile`
   const description = snapshot.favoriteDigimon
     ? `Peak ${formatInt(snapshot.peakDps)} DPS · Favorite ${snapshot.favoriteDigimon.digimonName} — Odyssey Calc`
@@ -188,6 +350,8 @@ export function buildMeterProfileShareHtml(options: {
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Odyssey Calc" />
+  <meta property="og:url" content="${escapeHtml(sharePageUrl)}" />
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:image" content="${escapeHtml(ogImageUrl)}" />
@@ -201,7 +365,12 @@ export function buildMeterProfileShareHtml(options: {
   <link rel="canonical" href="${escapeHtml(appUrl)}" />
   <style>
     body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-      background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; }
+      font-family: system-ui, sans-serif; color: #e2e8f0;
+      background: #030712;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+      background-size: 48px 48px; }
     a { color: #7dd3fc; }
   </style>
 </head>

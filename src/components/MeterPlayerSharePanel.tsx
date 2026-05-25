@@ -8,16 +8,10 @@ import {
 import {
   canRefreshMeterProfileShare,
   formatShareCooldown,
+  resolveMeterShareSiteOrigin,
   shareCooldownRemainingMs,
   type MeterProfileShareSnapshot,
 } from '../lib/meterPlayerShare'
-
-function meterShareSiteOrigin(): string {
-  if (typeof window === 'undefined') return 'https://mistgg.github.io/Odyssey-Calc'
-  const base = import.meta.env.BASE_URL || '/'
-  const root = base.endsWith('/') && base.length > 1 ? base.slice(0, -1) : base === '/' ? '' : base
-  return `${window.location.origin}${root}`
-}
 
 export function MeterPlayerSharePanel({
   playerKey,
@@ -77,7 +71,7 @@ export function MeterPlayerSharePanel({
       playerKey,
       snapshot,
       portraitUrl,
-      siteOrigin: meterShareSiteOrigin(),
+      siteOrigin: resolveMeterShareSiteOrigin(),
     })
 
     setGenerating(false)
