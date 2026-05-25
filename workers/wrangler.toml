@@ -8,6 +8,7 @@ compatibility_date = "2024-08-01"
 
 [vars]
 SHARE_PUBLIC_ORIGIN = "https://share.odyssey-calc.com"
+APP_SITE_ORIGIN = "https://odyssey-calc.com"
 
 # Required secret (do not commit):
 #   npx wrangler secret put SUPABASE_URL

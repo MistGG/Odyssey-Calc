@@ -36,7 +36,8 @@ jobs:
       - name: Build app
         run: npm run build
         env:
-          VITE_BASE_PATH: /Odyssey-Calc/
+          VITE_BASE_PATH: /
+          VITE_SITE_ORIGIN: https://odyssey-calc.com
           VITE_WIKI_API_BASE: https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki
           VITE_METER_SHARE_PUBLIC_ORIGIN: https://share.odyssey-calc.com
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}

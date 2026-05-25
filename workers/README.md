@@ -30,7 +30,7 @@ Instant Discord previews: serves `index.html` and `og.png` from Supabase storage
 - Page: `https://share.odyssey-calc.com/meter-player/{playerKey}.html?d={cacheKey}`
 - OG image: `https://share.odyssey-calc.com/meter-player/{playerKey}-og.png?d={cacheKey}`
 
-The app on GitHub Pages (`mistgg.github.io/Odyssey-Calc`) is unchanged; share HTML redirects there after Discord reads the preview.
+Share HTML redirects to the app at `https://odyssey-calc.com/#/meter/player/...` after Discord reads the preview.
 
 ## Optional: merge into `odyssey-proxy`
 

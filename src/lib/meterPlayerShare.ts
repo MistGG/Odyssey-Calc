@@ -1,3 +1,7 @@
+import {
+  DEFAULT_METER_SHARE_PUBLIC_ORIGIN,
+  resolveAppSiteOrigin,
+} from '../config/site'
 import type { PlayerFavoriteDigimon } from './meterPlayerProfile'
 import { proxiedWikiAssetUrl } from './wikiAssetProxy'
 
@@ -43,8 +47,6 @@ export function meterProfileShareStoragePublicUrl(
 export function meterProfileShareStorageFolder(playerKey: string): string {
   return playerKey.trim().toLowerCase()
 }
-
-const DEFAULT_METER_SHARE_PUBLIC_ORIGIN = 'https://share.odyssey-calc.com'
 
 /** Paths on share.odyssey-calc.com (Worker), not GitHub Pages. */
 export function meterProfileSharePublicPagePath(playerKey: string): string {
@@ -152,16 +154,9 @@ export function meterProfileShareOgImageUrl(playerKey: string, cacheKey?: string
   return withMeterProfileShareCacheQuery(meterProfileShareOgImageUrlBase(playerKey), cacheKey)
 }
 
+/** App origin for profile deep links (e.g. share page redirect target). */
 export function resolveMeterShareSiteOrigin(): string {
-  if (typeof window === 'undefined') {
-    return (
-      (import.meta.env.VITE_SITE_ORIGIN as string | undefined)?.trim() ||
-      'https://mistgg.github.io/Odyssey-Calc'
-    )
-  }
-  const base = import.meta.env.BASE_URL || '/'
-  const root = base.endsWith('/') && base.length > 1 ? base.slice(0, -1) : base === '/' ? '' : base
-  return `${window.location.origin}${root}`
+  return resolveAppSiteOrigin()
 }
 
 export function meterProfileAppUrl(siteOrigin: string, playerKey: string): string {

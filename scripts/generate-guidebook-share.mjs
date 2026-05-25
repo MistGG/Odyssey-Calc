@@ -11,13 +11,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
 const UNCAP_DIR = path.join(root, 'public', 'guidebook', 'uncap-dungeons')
 
-const BASE_PATH = (
-  process.env.VITE_BASE_PATH !== undefined ? process.env.VITE_BASE_PATH : '/Odyssey-Calc/'
-).replace(/\/?$/, '/')
-const SITE_ORIGIN = (process.env.GUIDEBOOK_SHARE_SITE_ORIGIN || 'https://mistgg.github.io').replace(
-  /\/$/,
-  '',
+const BASE_PATH = (process.env.VITE_BASE_PATH !== undefined ? process.env.VITE_BASE_PATH : '/').replace(
+  /\/?$/,
+  '/',
 )
+const SITE_ORIGIN = (
+  process.env.VITE_SITE_ORIGIN ||
+  process.env.GUIDEBOOK_SHARE_SITE_ORIGIN ||
+  'https://odyssey-calc.com'
+).replace(/\/$/, '')
 const SITE_BASE = `${SITE_ORIGIN}${BASE_PATH.startsWith('/') ? BASE_PATH : `/${BASE_PATH}`}`
 
 const SECTIONS = [

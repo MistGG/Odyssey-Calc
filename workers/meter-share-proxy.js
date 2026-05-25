@@ -7,7 +7,7 @@
  * Serves HTML + og.png from public Supabase storage; never exposes Supabase in the share link.
  */
 const BUCKET = 'meter-profile-shares'
-const DEFAULT_APP_ORIGIN = 'https://mistgg.github.io/Odyssey-Calc'
+const DEFAULT_APP_ORIGIN = 'https://odyssey-calc.com'
 
 const ROUTES = [
   { re: /^\/meter-player\/([^/]+)\.html$/i, file: 'index.html', rewrite: true },
@@ -22,21 +22,23 @@ function playerKeyFromMatch(match) {
   return decodeURIComponent(match[1]).trim().toLowerCase()
 }
 
-function rewriteShareHtml(html, publicOrigin, playerKey) {
+function rewriteShareHtml(html, publicOrigin, appOrigin, playerKey) {
   const enc = encodeURIComponent(playerKey)
   const pagePath = `/meter-player/${enc}.html`
   const ogPath = `/meter-player/${enc}-og.png`
   const pageUrl = `${publicOrigin}${pagePath}`
   const ogUrl = `${publicOrigin}${ogPath}`
+  const appUrl = `${appOrigin}/#/meter/player/${enc}`
 
   let out = html
   const replacements = [
-    [/https?:\/\/[^"'\s]+\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+\/og\.png/g, ogUrl],
-    [/https?:\/\/[^"'\s]+\/share\/meter-player\/[^"'\s]+\/og\.png/g, ogUrl],
-    [/\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+\/og\.png/g, ogPath],
-    [/https?:\/\/[^"'\s]+\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+\/?/g, pageUrl],
-    [/https?:\/\/[^"'\s]+\/share\/meter-player\/[^"'\s]+\.html/g, pageUrl],
-    [/\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+\/?/g, pagePath],
+    [/https?:\/\/[^"'\s]+\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+\/og\.png/gi, ogUrl],
+    [/https?:\/\/[^"'\s]+\/share\/meter-player\/[^"'\s]+-og\.png[^"'\s]*/gi, ogUrl],
+    [/https?:\/\/[^"'\s]+\/Odyssey-Calc\/#\/meter\/player\/[^"'\s]+/gi, appUrl],
+    [/https?:\/\/[^"'\s]+\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+\/?/gi, pageUrl],
+    [/https?:\/\/[^"'\s]+\/share\/meter-player\/[^"'\s]+\.html[^"'\s]*/gi, pageUrl],
+    [/https?:\/\/mistgg\.github\.io\/Odyssey-Calc\/#\/meter\/player\/[^"'\s]+/gi, appUrl],
+    [/https?:\/\/mistgg\.github\.io\/Odyssey-Calc\/share\/meter-player\/[^"'\s]+/gi, pageUrl],
   ]
   for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
@@ -48,6 +50,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url)
     const publicOrigin = (env.SHARE_PUBLIC_ORIGIN || 'https://share.odyssey-calc.com').replace(/\/$/, '')
+    const appOrigin = (env.APP_SITE_ORIGIN || DEFAULT_APP_ORIGIN).replace(/\/$/, '')
 
     let route = null
     let match = null
@@ -86,7 +89,7 @@ export default {
       headers.set('Content-Type', 'text/html; charset=utf-8')
       let html = await res.text()
       if (route.rewrite) {
-        html = rewriteShareHtml(html, publicOrigin, playerKey)
+        html = rewriteShareHtml(html, publicOrigin, appOrigin, playerKey)
       }
       return new Response(html, { status: 200, headers })
     }

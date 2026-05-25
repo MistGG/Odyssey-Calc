@@ -22,6 +22,7 @@ import {
   tierSubmissionAlreadyCovered,
   type CommunityRotation,
 } from '../lib/communityRotations'
+import { resolveAppSiteOrigin } from '../config/site'
 import { refreshTierListDigimonInCache } from '../lib/tierListDigimonEntry'
 import { useAuth } from '../auth/useAuth'
 import {
@@ -1196,9 +1197,7 @@ export function DpsLabPage() {
     if (forceAutoCrit) next.set('forceAutoCrit', '1')
     if (perfectAtClone) next.set('perfectAtClone', '1')
     if (targetEnemyAttribute.trim()) next.set('enemyAttr', targetEnemyAttribute.trim())
-    /** Canonical GitHub Pages URL so shared links work outside localhost. */
-    const shareBase = 'https://mistgg.github.io/Odyssey-Calc'
-    return `${shareBase}#/lab?${next.toString()}`
+    return `${resolveAppSiteOrigin()}#/lab?${next.toString()}`
   }, [
     digimonId,
     globalLevel,

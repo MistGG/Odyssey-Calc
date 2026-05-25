@@ -2,7 +2,7 @@
 
 Fan tools for Digimon Odyssey: DPS lab, gear planner, tier list, and meter parse sharing.
 
-Live site: [https://mistgg.github.io/Odyssey-Calc/](https://mistgg.github.io/Odyssey-Calc/)
+Live site: [https://odyssey-calc.com/](https://odyssey-calc.com/)
 
 ## Development
 
