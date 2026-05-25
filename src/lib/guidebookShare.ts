@@ -15,7 +15,7 @@ const SHARE_SECTIONS: Record<string, GuidebookShareMeta> = {
     sectionId: 'early-50-70',
     title: 'Level 50 & 70 uncap dungeons',
     description:
-      "Where to run Agumon's Madness and The Rise of the Fallen Angel for your first level uncaps - Odyssey Calc guidebook.",
+      "Where to run Agumon's Madness and The Rise of the Fallen Angel for your first level uncaps.",
     panels: [
       {
         badge: 'Level 50 uncap',

@@ -16,7 +16,6 @@ import {
   writeGuidebookBookmark,
 } from '../../lib/guidebookNav'
 import { guidebookScrollIds } from '../../lib/guidebookContent'
-import { useGuidebookShareMeta } from '../../hooks/useGuidebookShareMeta'
 import { GuidebookPopup } from './GuidebookPopup'
 import { GuidebookWikiOverlayProvider } from './GuidebookWikiOverlay'
 
@@ -47,8 +46,6 @@ export function GuidebookProvider({ children }: { children: ReactNode }) {
   })
   const [popup, setPopup] = useState<GuidebookDetail | null>(null)
   const [linkCopiedId, setLinkCopiedId] = useState<string | null>(null)
-
-  useGuidebookShareMeta(activeSectionId)
 
   const scrollToSection = useCallback(
     (id: string) => {
