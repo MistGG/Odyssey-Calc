@@ -32,7 +32,11 @@ import {
   loadGuidebookNpcDetail,
   loadGuidebookQuestDetail,
 } from '../../lib/guidebookWikiCache'
-import { digimonPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
+import { fetchRaidTimer } from '../../api/raidTimerService'
+import { digimonPortraitUrl, monsterPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
+import { formatRaidQuantity, formatRaidRatePermil } from '../../lib/guidebookItemPanel'
+import type { RaidTimerBoss } from '../../types/raidTimerApi'
+import type { WikiMonsterDetail } from '../../types/wikiApi'
 import {
   GUIDEBOOK_DUNGEON_MEDIA,
   guidebookPublicUrl,
@@ -1473,6 +1477,212 @@ export function GuidebookGlossary() {
           {t.term}
         </button>
       ))}
+    </div>
+  )
+}
+
+type RaidLootChipData = {
+  key: string
+  itemId: string
+  name: string
+  iconId?: string
+  meta?: string
+}
+
+function collectRaidLootChips(monster: WikiMonsterDetail): RaidLootChipData[] {
+  const chips: RaidLootChipData[] = []
+
+  for (const drop of monster.drops ?? []) {
+    chips.push({
+      key: `drop-${drop.item_id}-${drop.drop_type}`,
+      itemId: drop.item_id,
+      name: drop.item_name,
+      iconId: drop.item_icon_id,
+      meta: drop.quantity > 1 ? `×${drop.quantity}` : undefined,
+    })
+  }
+
+  for (const tier of monster.raid_rankings ?? []) {
+    for (const reward of tier.rewards ?? []) {
+      const min = reward.min ?? 1
+      const max = reward.max ?? min
+      const metaParts = [formatRaidQuantity(min, max)]
+      if (reward.rate_permil != null) metaParts.push(formatRaidRatePermil(reward.rate_permil))
+      chips.push({
+        key: `rank-${tier.start}-${tier.end}-${reward.item_id}`,
+        itemId: reward.item_id,
+        name: reward.item_name,
+        iconId: reward.item_icon_id,
+        meta: metaParts.join(' · '),
+      })
+    }
+  }
+
+  return chips
+}
+
+function RaidLootCell({ chip }: { chip: RaidLootChipData }) {
+  const { openItemRoot } = useGuidebookWikiOverlay()
+  const icon = wikiItemIconUrl(chip.iconId ?? '')
+  const title = chip.meta ? `${chip.name} (${chip.meta})` : chip.name
+
+  const openPanel = (e: MouseEvent | KeyboardEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    openItemRoot(chip.itemId)
+  }
+
+  return (
+    <button
+      type="button"
+      className="guidebook-raid-loot-cell"
+      title={title}
+      aria-label={title}
+      aria-haspopup="dialog"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={openPanel}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') openPanel(e)
+      }}
+    >
+      {icon ? <img className="guidebook-raid-loot-cell__icon" src={icon} alt="" /> : null}
+      <span className="guidebook-raid-loot-cell__text">
+        <span className="guidebook-raid-loot-cell__name">{chip.name}</span>
+        {chip.meta ? <span className="guidebook-raid-loot-cell__meta">{chip.meta}</span> : null}
+      </span>
+    </button>
+  )
+}
+
+function RaidBossRow({ boss }: { boss: RaidTimerBoss }) {
+  const [broken, setBroken] = useState(false)
+  const [monster, setMonster] = useState<WikiMonsterDetail | null | undefined>(undefined)
+  const src = monsterPortraitUrl(boss.model_id)
+
+  useEffect(() => {
+    let cancelled = false
+    const cached = getGuidebookMonsterDetailCached(boss.monster_id)
+    if (cached) setMonster(cached)
+
+    void loadGuidebookMonsterDetail(boss.monster_id)
+      .then((detail) => {
+        if (!cancelled) setMonster(detail)
+      })
+      .catch(() => {
+        if (!cancelled) setMonster(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [boss.monster_id])
+
+  const lootChips = useMemo(
+    () => (monster ? collectRaidLootChips(monster) : []),
+    [monster],
+  )
+
+  const header = (
+    <div className="guidebook-raid-card__head">
+      <div className="guidebook-raid-card__portrait" aria-hidden>
+        {src && !broken ? (
+          <img src={src} alt="" loading="lazy" onError={() => setBroken(true)} />
+        ) : (
+          <span className="guidebook-raid-card__initial">{boss.monster_name.slice(0, 1)}</span>
+        )}
+      </div>
+      <div className="guidebook-raid-card__meta">
+        <span className="guidebook-raid-card__name">{boss.monster_name}</span>
+        <span className="guidebook-raid-card__map">{boss.map_name}</span>
+      </div>
+    </div>
+  )
+
+  if (monster === undefined) {
+    return (
+      <li className="guidebook-raid-card--static">
+        {header}
+        <span className="guidebook-raid-card__badge muted">Loading rewards…</span>
+      </li>
+    )
+  }
+
+  if (lootChips.length === 0) {
+    return <li className="guidebook-raid-card--static">{header}</li>
+  }
+
+  return (
+    <li className="guidebook-raid-card-wrap">
+      <details className="guidebook-raid-card">
+        <summary className="guidebook-raid-card__summary">
+          {header}
+          <span className="guidebook-raid-card__badge">
+            {lootChips.length} reward{lootChips.length === 1 ? '' : 's'}
+          </span>
+        </summary>
+        <div className="guidebook-raid-card__loot-panel">
+          <div className="guidebook-raid-card__loot-grid" role="list" aria-label="Rewards">
+            {lootChips.map((chip) => (
+              <RaidLootCell key={chip.key} chip={chip} />
+            ))}
+          </div>
+        </div>
+      </details>
+    </li>
+  )
+}
+
+export function GuidebookRaids() {
+  const { ref, visible } = useWhenVisible<HTMLDivElement>()
+  const [bosses, setBosses] = useState<RaidTimerBoss[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!visible) return
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+
+    void fetchRaidTimer()
+      .then((data) => {
+        if (cancelled) return
+        const list = [...(data.bosses ?? [])].sort(
+          (a, b) =>
+            a.map_name.localeCompare(b.map_name) || a.monster_name.localeCompare(b.monster_name),
+        )
+        setBosses(list)
+      })
+      .catch((e) => {
+        if (cancelled) return
+        setBosses([])
+        setError(e instanceof Error ? e.message : 'Failed to load raid bosses')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [visible])
+
+  return (
+    <div ref={ref} className="guidebook-raids">
+      {loading && bosses.length === 0 ? (
+        <p className="guidebook-status">Loading raid bosses…</p>
+      ) : null}
+      {error ? <p className="guidebook-error">{error}</p> : null}
+      {!loading && !error && bosses.length === 0 ? (
+        <p className="guidebook-status muted">No raid bosses are listed right now.</p>
+      ) : null}
+      {bosses.length > 0 ? (
+        <ul className="guidebook-raid-list">
+          {bosses.map((boss) => (
+            <RaidBossRow key={`${boss.monster_id}-${boss.map_id}`} boss={boss} />
+          ))}
+        </ul>
+      ) : null}
     </div>
   )
 }

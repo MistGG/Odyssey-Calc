@@ -122,6 +122,12 @@ export type WikiMonsterLocation = {
   count: number
 }
 
+export type WikiMonsterRaidRanking = {
+  start: number
+  end: number
+  rewards: WikiDungeonLootItem[]
+}
+
 export type WikiMonsterDetail = {
   id: string
   name: string
@@ -135,6 +141,7 @@ export type WikiMonsterDetail = {
   bits?: number
   drops?: WikiMonsterDrop[]
   locations?: WikiMonsterLocation[]
+  raid_rankings?: WikiMonsterRaidRanking[]
 }
 
 export type WikiQuestObjective = {

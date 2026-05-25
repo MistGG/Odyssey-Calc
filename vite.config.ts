@@ -4,12 +4,15 @@ import react from '@vitejs/plugin-react'
 import { guidebookSharePagesPlugin } from './vite-guidebook-share.mjs'
 
 // Avoid browser CORS: JSON API does not send Access-Control-Allow-Origin.
+const odysseyApiProxy = {
+  target: 'https://thedigitalodyssey.com',
+  changeOrigin: true,
+  secure: true,
+} as const
+
 const wikiProxy = {
-  '/api/wiki': {
-    target: 'https://thedigitalodyssey.com',
-    changeOrigin: true,
-    secure: true,
-  },
+  '/api/wiki': odysseyApiProxy,
+  '/api/raid-timer': odysseyApiProxy,
 } as const
 
 // https://vite.dev/config/

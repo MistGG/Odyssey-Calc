@@ -87,6 +87,7 @@ export const GUIDEBOOK_NAV: GuidebookNavChapter[] = [
       { id: 'mid-farming-digimon', title: 'Farming a digimon' },
       { id: 'mid-cloning', title: 'Cloning' },
       { id: 'mid-seals', title: 'Seals' },
+      { id: 'mid-raids', title: 'Raids' },
       { id: 'mid-digivice', title: 'Digivice' },
       { id: 'mid-clothes', title: 'Clothes' },
       { id: 'mid-ring', title: 'Ring' },

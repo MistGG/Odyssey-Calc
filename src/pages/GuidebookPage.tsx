@@ -13,6 +13,7 @@ import {
   GuideGearNecklace,
   GuideGearRing,
   GuideMidGameFarmingDigimon,
+  GuidebookRaids,
 } from '../components/guidebook/GuidebookWidgets'
 import { OFFICIAL_BEGINNERS_GUIDE_URL } from '../lib/guidebookContent'
 
@@ -82,6 +83,9 @@ function GuidebookContent() {
             </GuideCard>
             <GuideCard id="mid-seals" label="Seals">
               <GuidebookComingSoon />
+            </GuideCard>
+            <GuideCard id="mid-raids" label="Raids">
+              <GuidebookRaids />
             </GuideCard>
             <GuideCard id="mid-digivice" label="Digivice">
               <GuideGearDigivice />
