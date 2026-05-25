@@ -2,12 +2,14 @@ import { getMeterAnonSupabase } from '../lib/meterDataSource'
 import {
   buildMeterProfileShareHtml,
   canRefreshMeterProfileShare,
+  createMeterProfileShareCacheKey,
   METER_PROFILE_SHARE_BUCKET,
   meterProfileAppUrl,
   meterProfileShareOgImageUrl,
   meterProfileSharePageUrl,
   meterProfileShareStorageFolder,
   renderMeterProfileShareOgPng,
+  resolveMeterProfileShareCacheKey,
   resolveMeterShareSiteOrigin,
   type MeterProfileShareSnapshot,
 } from '../lib/meterPlayerShare'
@@ -38,6 +40,8 @@ function parseSnapshot(raw: unknown): MeterProfileShareSnapshot | null {
       favorite && typeof favorite === 'object' && typeof (favorite as { digimonName?: string }).digimonName === 'string'
         ? (favorite as MeterProfileShareSnapshot['favoriteDigimon'])
         : null,
+    shareCacheKey:
+      typeof o.shareCacheKey === 'string' && o.shareCacheKey.trim() ? o.shareCacheKey.trim() : undefined,
   }
 }
 
@@ -68,6 +72,7 @@ export async function fetchMeterProfileShare(
   if (!snapshot) return { record: null, error: null }
 
   const siteOrigin = resolveMeterShareSiteOrigin()
+  const cacheKey = resolveMeterProfileShareCacheKey(snapshot, data.generated_at)
 
   return {
     record: {
@@ -75,8 +80,8 @@ export async function fetchMeterProfileShare(
       displayName: data.display_name,
       snapshot,
       generatedAt: data.generated_at,
-      sharePageUrl: meterProfileSharePageUrl(siteOrigin, key),
-      ogImageUrl: meterProfileShareOgImageUrl(siteOrigin, key),
+      sharePageUrl: meterProfileSharePageUrl(siteOrigin, key, cacheKey),
+      ogImageUrl: meterProfileShareOgImageUrl(siteOrigin, key, cacheKey),
     },
     error: null,
   }
@@ -103,8 +108,13 @@ export async function generateMeterProfileShare(options: {
   const htmlPath = `${folder}/index.html`
   const ogPath = `${folder}/og.png`
   const siteOrigin = options.siteOrigin.replace(/\/$/, '')
-  const sharePageUrl = meterProfileSharePageUrl(siteOrigin, key)
-  const ogImageUrl = meterProfileShareOgImageUrl(siteOrigin, key)
+  const shareCacheKey = createMeterProfileShareCacheKey()
+  const snapshotForStore: MeterProfileShareSnapshot = {
+    ...options.snapshot,
+    shareCacheKey,
+  }
+  const sharePageUrl = meterProfileSharePageUrl(siteOrigin, key, shareCacheKey)
+  const ogImageUrl = meterProfileShareOgImageUrl(siteOrigin, key, shareCacheKey)
   const appUrl = meterProfileAppUrl(siteOrigin, key)
 
   const prior = await fetchMeterProfileShare(key)
@@ -120,13 +130,13 @@ export async function generateMeterProfileShare(options: {
 
   let ogBlob: Blob
   try {
-    ogBlob = await renderMeterProfileShareOgPng(options.snapshot, options.portraitUrl)
+    ogBlob = await renderMeterProfileShareOgPng(snapshotForStore, options.portraitUrl)
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Failed to render preview image' }
   }
 
   const html = buildMeterProfileShareHtml({
-    snapshot: options.snapshot,
+    snapshot: snapshotForStore,
     sharePageUrl,
     ogImageUrl,
     appUrl,
@@ -154,8 +164,8 @@ export async function generateMeterProfileShare(options: {
 
   const { data: commitData, error: commitError } = await supabase.rpc('commit_meter_profile_share', {
     p_player_key: key,
-    p_display_name: options.snapshot.displayName,
-    p_snapshot: options.snapshot,
+    p_display_name: snapshotForStore.displayName,
+    p_snapshot: snapshotForStore,
   })
 
   if (commitError) {
@@ -187,8 +197,8 @@ export async function generateMeterProfileShare(options: {
     ok: true,
     record: {
       playerKey: key,
-      displayName: options.snapshot.displayName,
-      snapshot: options.snapshot,
+      displayName: snapshotForStore.displayName,
+      snapshot: snapshotForStore,
       generatedAt,
       sharePageUrl,
       ogImageUrl,

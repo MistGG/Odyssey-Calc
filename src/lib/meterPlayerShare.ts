@@ -9,6 +9,8 @@ export type MeterProfileShareSnapshot = {
   bestEntryCount: number
   dungeonCount: number
   favoriteDigimon: PlayerFavoriteDigimon | null
+  /** Changes each generation so Discord treats the share URL as new (cache bust). */
+  shareCacheKey?: string
 }
 
 export type MeterProfileShareRow = {
@@ -55,8 +57,36 @@ export function meterProfileShareOgImagePath(playerKey: string): string {
   return `${root}share/meter-player/${folder}/og.png`
 }
 
-/** Public Discord / Open Graph page URL (Odyssey Calc site, not Supabase). */
-export function meterProfileSharePageUrl(siteOrigin: string, playerKey: string): string {
+/** New key on each generate/refresh — appended to share URLs for Discord cache busting. */
+export function createMeterProfileShareCacheKey(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+}
+
+export function resolveMeterProfileShareCacheKey(
+  snapshot: Pick<MeterProfileShareSnapshot, 'shareCacheKey'> | null | undefined,
+  generatedAt?: string,
+): string | undefined {
+  const fromSnapshot = snapshot?.shareCacheKey?.trim()
+  if (fromSnapshot) return fromSnapshot
+  if (!generatedAt) return undefined
+  const t = Date.parse(generatedAt)
+  if (Number.isNaN(t)) return undefined
+  return t.toString(36)
+}
+
+export function withMeterProfileShareCacheQuery(url: string, cacheKey: string | undefined): string {
+  if (!cacheKey) return url
+  try {
+    const u = new URL(url)
+    u.searchParams.set('d', cacheKey)
+    return u.href
+  } catch {
+    const sep = url.includes('?') ? '&' : '?'
+    return `${url}${sep}d=${encodeURIComponent(cacheKey)}`
+  }
+}
+
+function meterProfileSharePageUrlBase(siteOrigin: string, playerKey: string): string {
   const path = meterProfileSharePagePath(playerKey)
   if (typeof window === 'undefined') {
     return `${siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
@@ -72,7 +102,7 @@ export function meterProfileSharePageUrl(siteOrigin: string, playerKey: string):
   return new URL(path, window.location.origin).href
 }
 
-export function meterProfileShareOgImageUrl(siteOrigin: string, playerKey: string): string {
+function meterProfileShareOgImageUrlBase(siteOrigin: string, playerKey: string): string {
   const path = meterProfileShareOgImagePath(playerKey)
   if (typeof window === 'undefined') {
     return `${siteOrigin.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`
@@ -86,6 +116,23 @@ export function meterProfileShareOgImageUrl(siteOrigin: string, playerKey: strin
   }
 
   return new URL(path, window.location.origin).href
+}
+
+/** Public Discord / Open Graph page URL (Odyssey Calc site, not Supabase). */
+export function meterProfileSharePageUrl(
+  siteOrigin: string,
+  playerKey: string,
+  cacheKey?: string,
+): string {
+  return withMeterProfileShareCacheQuery(meterProfileSharePageUrlBase(siteOrigin, playerKey), cacheKey)
+}
+
+export function meterProfileShareOgImageUrl(
+  siteOrigin: string,
+  playerKey: string,
+  cacheKey?: string,
+): string {
+  return withMeterProfileShareCacheQuery(meterProfileShareOgImageUrlBase(siteOrigin, playerKey), cacheKey)
 }
 
 export function resolveMeterShareSiteOrigin(): string {
