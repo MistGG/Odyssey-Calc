@@ -25,7 +25,7 @@ const SECTIONS = [
     id: 'early-50-70',
     title: 'Level 50 & 70 uncap dungeons',
     description:
-      "Where to run Agumon's Madness and The Rise of the Fallen Angel for your first level uncaps - Odyssey Calc guidebook.",
+      "Agumon <Under Control of Black Gear> and Devimon <Devil's Incarnate> locations for the level 50 and 70 uncap - Odyssey Calc Guidebook",
     ogSlug: 'guidebook-early-50-70',
     panels: [
       {
