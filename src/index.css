@@ -12810,6 +12810,7 @@ a.guidebook-step__label:hover {
 .guidebook-uncap-dungeon-card__boss-text {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.12rem;
   min-width: 0;
 }
@@ -13238,6 +13239,10 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .guidebook-uncap-dungeon-card__boss-text .guidebook-item-panel__raid-boss-btn {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
   font-size: 0.82rem;
   font-weight: 700;
   color: #f8fafc;
