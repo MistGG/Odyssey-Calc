@@ -19,6 +19,7 @@ import path from 'node:path'
 
 
 const GUIDEBOOK_PATH_RE = /^\/(?:Odyssey-Calc\/)?share\/guidebook\/([^/]+)\/?$/
+const EVENT_SHARE_PATH_RE = /^\/(?:Odyssey-Calc\/)?share\/event\/([^/]+)\/?$/
 
 const METER_PLAYER_HTML_RE =
   /^\/(?:Odyssey-Calc\/)?(?:share\/meter-player|meter-player)\/([^/]+)\.html$/
@@ -73,6 +74,19 @@ async function fetchSupabaseShare(playerKey, filename) {
 }
 
 
+
+function serveEventShare(req, res, next, root) {
+  const url = (req.url ?? '').split('?')[0]
+  const match = url.match(EVENT_SHARE_PATH_RE)
+  if (!match) return next()
+
+  const file = path.join(root, 'public', 'share', 'event', match[1], 'index.html')
+  if (!fs.existsSync(file)) return next()
+
+  res.statusCode = 200
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  fs.createReadStream(file).pipe(res)
+}
 
 function serveGuidebookShare(req, res, next, root) {
 
@@ -202,6 +216,12 @@ export function guidebookSharePagesPlugin() {
 
       server.middlewares.use((req, res, next) => {
 
+        serveEventShare(req, res, next, server.config.root)
+
+      })
+
+      server.middlewares.use((req, res, next) => {
+
         serveGuidebookShare(req, res, next, server.config.root)
 
       })
@@ -215,6 +235,12 @@ export function guidebookSharePagesPlugin() {
     },
 
     configurePreviewServer(server) {
+
+      server.middlewares.use((req, res, next) => {
+
+        serveEventShare(req, res, next, server.config.root)
+
+      })
 
       server.middlewares.use((req, res, next) => {
 

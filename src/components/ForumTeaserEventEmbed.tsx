@@ -1,6 +1,9 @@
+import { EVENT_TEASER_IMAGE_URL } from '../lib/mayClearEvent'
+import { imgurIdFromUrl } from '../lib/teaserImageStorage'
 import { ForumTeaserEmbed } from './ForumTeaserEmbed'
 
-/** Event page: live forum teaser, plain image only (no CRT / fog / Marsmon). */
+/** Event page announcement image, plain only (no CRT / fog / Marsmon). */
 export function ForumTeaserEventEmbed() {
-  return <ForumTeaserEmbed plainOnly />
+  const imgurId = imgurIdFromUrl(EVENT_TEASER_IMAGE_URL) ?? undefined
+  return <ForumTeaserEmbed plainOnly imageUrl={EVENT_TEASER_IMAGE_URL} imgurId={imgurId} />
 }

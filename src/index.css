@@ -10557,6 +10557,11 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   border-color: var(--border-strong);
 }
 
+.event-hero__actions .event-cta {
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .event-panel {
   margin-bottom: 1.75rem;
   padding: 1.25rem 1.35rem 1.35rem;

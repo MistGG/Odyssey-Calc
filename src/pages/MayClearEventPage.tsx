@@ -1,5 +1,7 @@
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ForumTeaserEventEmbed } from '../components/ForumTeaserEventEmbed'
+import { mayClearEventSharePageUrl } from '../lib/eventShare'
 import {
   EVENT_ANNOUNCEMENT_NOTE,
   MAY_CLEAR_EVENT,
@@ -8,6 +10,19 @@ import {
 } from '../lib/mayClearEvent'
 
 export function MayClearEventPage() {
+  const [shareCopied, setShareCopied] = useState(false)
+  const shareUrl = mayClearEventSharePageUrl()
+
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setShareCopied(true)
+      window.setTimeout(() => setShareCopied(false), 2000)
+    } catch {
+      setShareCopied(false)
+    }
+  }, [shareUrl])
+
   return (
     <div className="event-page event-page--with-teaser">
       <header className="event-hero">
@@ -15,8 +30,8 @@ export function MayClearEventPage() {
         <p className="event-hero__eyebrow">Community event</p>
         <h1 className="event-hero__title">{MAY_CLEAR_EVENT.eventTitle}</h1>
         <p className="event-hero__lead">
-          Visit this page on May 29th to see what dungeon is selected for the hard mode challenge. 7
-          days and 6 prizes!
+          Visit this page starting May 29 to see which dungeon is selected for the Hard challenge.
+          The event runs through June 5.
         </p>
         <div className="event-hero__meta">
           <span className="event-pill event-pill--date">{MAY_CLEAR_EVENT.eventDateLabel}</span>
@@ -34,6 +49,9 @@ export function MayClearEventPage() {
           >
             Get Odyssey Companion
           </a>
+          <button type="button" className="event-cta event-cta--ghost" onClick={copyShareLink}>
+            {shareCopied ? 'Link copied!' : 'Share'}
+          </button>
         </div>
       </header>
 
@@ -70,8 +88,7 @@ export function MayClearEventPage() {
         </h2>
         <ol className="event-steps">
           <li>
-            Run the dungeon announced on <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>, you will have 7
-            days to run this.
+            Run the announced dungeon during <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>.
           </li>
           <li>
             Use <strong>Odyssey Companion</strong> to record the party run and upload a{' '}

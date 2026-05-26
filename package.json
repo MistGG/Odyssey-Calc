@@ -7,7 +7,8 @@
     "dev": "vite",
     "sync:teasers": "node scripts/sync-teaser-images.mjs",
     "generate:guidebook-share": "node scripts/generate-guidebook-share.mjs",
-    "build": "npm run sync:teasers && npm run generate:guidebook-share && tsc -b && vite build",
+    "generate:event-share": "node scripts/generate-event-share.mjs",
+    "build": "npm run sync:teasers && npm run generate:guidebook-share && npm run generate:event-share && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

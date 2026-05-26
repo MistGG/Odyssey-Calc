@@ -17,17 +17,25 @@ async function readText(rel) {
   return fs.readFile(path.join(root, rel), 'utf8')
 }
 
-/** Collect Imgur ids from FORUM_TEASER_IMAGE_URL and TEASER_ARCHIVE_ENTRIES. */
-function collectImgurIds(forumTs, archiveTs) {
+function addImgurIdFromUrl(ids, url) {
+  if (!url) return
+  const m = url.match(/imgur\.com\/([A-Za-z0-9]+)/i)
+  if (m) ids.add(m[1])
+}
+
+/** Collect Imgur ids from forum live URL, event teaser URL, and archive entries. */
+function collectImgurIds(forumTs, archiveTs, eventTs) {
   const ids = new Set()
 
   const liveUrl = forumTs.match(
     /export const FORUM_TEASER_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/,
   )?.[1]
-  if (liveUrl) {
-    const m = liveUrl.match(/imgur\.com\/([A-Za-z0-9]+)/i)
-    if (m) ids.add(m[1])
-  }
+  addImgurIdFromUrl(ids, liveUrl)
+
+  const eventUrl = eventTs.match(
+    /export const EVENT_TEASER_IMAGE_URL\s*=\s*['"]([^'"]+)['"]/,
+  )?.[1]
+  addImgurIdFromUrl(ids, eventUrl)
 
   for (const m of archiveTs.matchAll(/imgurId:\s*['"]([A-Za-z0-9]+)['"]/g)) {
     ids.add(m[1])
@@ -52,7 +60,8 @@ async function downloadPng(imgurId) {
 async function main() {
   const forumTs = await readText('src/lib/forumTeaserImage.ts')
   const archiveTs = await readText('src/lib/teaserArchive.ts')
-  const ids = collectImgurIds(forumTs, archiveTs)
+  const eventTs = await readText('src/lib/mayClearEvent.ts')
+  const ids = collectImgurIds(forumTs, archiveTs, eventTs)
 
   if (ids.length === 0) {
     console.warn('sync-teaser-images: no Imgur ids found in source')

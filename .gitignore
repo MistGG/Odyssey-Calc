@@ -17,6 +17,7 @@ dist-ssr
 scripts/*
 !scripts/sync-teaser-images.mjs
 !scripts/generate-guidebook-share.mjs
+!scripts/generate-event-share.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
