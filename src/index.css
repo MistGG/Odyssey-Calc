@@ -14383,24 +14383,24 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   line-height: 1.1;
 }
 
+.event-prize-card__bonus {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #3ee0ff;
+  line-height: 1.2;
+}
+
 .event-prize-card__hint {
   font-size: 0.72rem;
 }
 
-.event-prize-card--shop {
-  border-color: rgba(62, 224, 255, 0.28);
-  background: linear-gradient(165deg, rgba(6, 48, 68, 0.32) 0%, rgba(30, 41, 59, 0.88) 100%);
+.event-section-foot {
+  margin: 0.85rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
-.event-prize-card--shop .event-prize-card__role {
-  color: #a5f3fc;
-}
-
-.event-prize-card--shop .event-prize-card__amount {
-  color: #3ee0ff;
-}
-
-.event-prize-card--shop .event-prize-card__hint a {
+.event-section-foot a {
   color: #67e8f9;
 }
 

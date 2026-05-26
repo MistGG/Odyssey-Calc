@@ -7,6 +7,7 @@ import {
   MAY_CLEAR_EVENT,
   MAY_CLEAR_EVENT_ROLES,
   MAY_CLEAR_TOTAL_CROWNS,
+  MAY_CLEAR_TOTAL_SHOP_POINTS,
 } from '../lib/mayClearEvent'
 
 export function MayClearEventPage() {
@@ -60,28 +61,28 @@ export function MayClearEventPage() {
           Prizes
         </h2>
         <p className="event-section-lead muted">
-          <strong>{MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns</strong> for the top player in each role.{' '}
-          <strong>{MAY_CLEAR_TOTAL_CROWNS.toLocaleString()} crowns</strong> total across{' '}
-          {MAY_CLEAR_EVENT_ROLES.length} roles. Plus{' '}
-          <strong>{MAY_CLEAR_EVENT.prizeShopPoints} meter shop points</strong> for a valid event parse.
+          <strong>{MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns</strong> and{' '}
+          <strong>{MAY_CLEAR_EVENT.prizeShopPointsPerRole} meter shop points</strong> for the top player in
+          each role.{' '}
+          <strong>{MAY_CLEAR_TOTAL_CROWNS.toLocaleString()} crowns</strong> and{' '}
+          <strong>{MAY_CLEAR_TOTAL_SHOP_POINTS.toLocaleString()} shop points</strong> total across{' '}
+          {MAY_CLEAR_EVENT_ROLES.length} roles.
         </p>
         <ul className="event-prize-grid">
           {MAY_CLEAR_EVENT_ROLES.map((role) => (
             <li key={role.id} className="event-prize-card">
               <span className="event-prize-card__role">{role.label}</span>
-              <span className="event-prize-card__amount">{role.prize} crowns</span>
+              <span className="event-prize-card__amount">{role.prizeCrowns} crowns</span>
+              <span className="event-prize-card__bonus">
+                + {role.prizeShopPoints} shop points
+              </span>
               <span className="event-prize-card__hint muted">Top parse · Best DPS</span>
             </li>
           ))}
-          <li className="event-prize-card event-prize-card--shop">
-            <span className="event-prize-card__role">Meter shop</span>
-            <span className="event-prize-card__amount">{MAY_CLEAR_EVENT.prizeShopPoints} points</span>
-            <span className="event-prize-card__hint muted">
-              Valid event parse ·{' '}
-              <Link to="/meter/rewards">theme shop</Link>
-            </span>
-          </li>
         </ul>
+        <p className="event-section-foot muted">
+          Shop points are for the <Link to="/meter/rewards">meter theme shop</Link>.
+        </p>
       </section>
 
       <section className="event-panel event-panel--teaser" aria-label="Event announcement">
@@ -108,11 +109,9 @@ export function MayClearEventPage() {
             Hybrid, Tank, Healer) for that dungeon and difficulty.
           </li>
           <li>
-            The <strong>#1 player in each role</strong> by Best DPS on this page wins the role prize.
-          </li>
-          <li>
-            Upload a valid event parse to earn <strong>{MAY_CLEAR_EVENT.prizeShopPoints} meter shop points</strong>{' '}
-            (once per account) for the <Link to="/meter/rewards">theme shop</Link>.
+            The <strong>#1 player in each role</strong> by Best DPS wins{' '}
+            <strong>{MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns</strong> and{' '}
+            <strong>{MAY_CLEAR_EVENT.prizeShopPointsPerRole} meter shop points</strong>.
           </li>
         </ol>
       </section>

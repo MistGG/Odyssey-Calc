@@ -10,8 +10,8 @@ export const MAY_CLEAR_EVENT = {
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
   prizeCrownsPerRole: 200,
-  /** One-time meter theme shop points for a valid event parse upload. */
-  prizeShopPoints: 100,
+  /** Meter theme shop points for each role winner (#1 Best DPS). */
+  prizeShopPointsPerRole: 100,
 } as const
 
 export const EVENT_ANNOUNCEMENT_NOTE = 'A dungeon will be selected on May 29!'
@@ -22,8 +22,12 @@ export const EVENT_TEASER_IMAGE_URL = 'https://i.imgur.com/5ZCqkPy.png'
 export const MAY_CLEAR_EVENT_ROLES = METER_ROLE_BUCKETS.map((id) => ({
   id,
   label: METER_ROLE_BUCKET_LABELS[id],
-  prize: MAY_CLEAR_EVENT.prizeCrownsPerRole,
+  prizeCrowns: MAY_CLEAR_EVENT.prizeCrownsPerRole,
+  prizeShopPoints: MAY_CLEAR_EVENT.prizeShopPointsPerRole,
 }))
 
 export const MAY_CLEAR_TOTAL_CROWNS =
   MAY_CLEAR_EVENT.prizeCrownsPerRole * MAY_CLEAR_EVENT_ROLES.length
+
+export const MAY_CLEAR_TOTAL_SHOP_POINTS =
+  MAY_CLEAR_EVENT.prizeShopPointsPerRole * MAY_CLEAR_EVENT_ROLES.length

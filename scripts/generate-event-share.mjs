@@ -40,7 +40,7 @@ const EVENTS = [
     eventDateLabel: 'Thursday, May 29 – June 5, 2026',
     difficultyLabel: 'Hard',
     prizeCrownsPerRole: 200,
-    prizeShopPoints: 100,
+    prizeShopPointsPerRole: 100,
     roles: [
       { label: 'Melee', prize: 200 },
       { label: 'Ranged', prize: 200 },
@@ -50,7 +50,7 @@ const EVENTS = [
       { label: 'Healer', prize: 200 },
     ],
     description:
-      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns per role (1,200 total) plus 100 meter shop points for a valid event parse. Odyssey Calc Meter event.',
+      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns and 100 meter shop points per role winner (1,200 crowns + 600 shop points total). Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]
@@ -85,7 +85,7 @@ function shareHtml(event) {
   const prizeList = event.roles
     .map(
       (r) =>
-        `<li><strong>${escapeHtml(r.label)}</strong> — ${r.prize.toLocaleString()} crowns <span class="muted">(top parse)</span></li>`,
+        `<li><strong>${escapeHtml(r.label)}</strong> — ${r.prize.toLocaleString()} crowns + ${event.prizeShopPointsPerRole ?? 0} shop points <span class="muted">(#1 Best DPS)</span></li>`,
     )
     .join('\n')
 
@@ -133,7 +133,7 @@ function shareHtml(event) {
       <span class="pill pill--date">${escapeHtml(event.eventDateLabel)}</span>
       <span class="pill pill--diff">${escapeHtml(event.difficultyLabel)}</span>
     </div>
-    <p class="lead"><strong>${total.toLocaleString()} crowns</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> each for #1 Best DPS per role. Plus <strong>${event.prizeShopPoints ?? 0} meter shop points</strong> for a valid event parse.</p>
+    <p class="lead"><strong>${total.toLocaleString()} crowns</strong> and <strong>${((event.prizeShopPointsPerRole ?? 0) * event.roles.length).toLocaleString()} meter shop points</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> and <strong>${event.prizeShopPointsPerRole ?? 0} shop points</strong> per #1 Best DPS.</p>
     <ul>${prizeList}</ul>
     <p class="muted">Opening event page&hellip; <a href="${appLink}">Continue here</a>. Add <code>?stay=1</code> to preview without redirect.</p>
   </div>
