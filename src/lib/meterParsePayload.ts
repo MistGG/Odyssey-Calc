@@ -35,6 +35,8 @@ export type MeterPartyMemberStored = {
   portraitIconId?: string | null
   portraitUrl?: string
   isSelf?: boolean
+  /** Mist custom bar theme id (Olympos XII earnables). */
+  meterBarThemeId?: string
   digimons?: DigimonSkillBreakdownStored[]
 }
 

@@ -8,6 +8,13 @@ import {
   type MeterPartyMemberStored,
   type MeterSkillRow,
 } from '../lib/meterParsePayload'
+import {
+  resolveMeterPartyBarTheme,
+  meterPartyBarThemeStyle,
+  meterPartyBarThemeBarClassName,
+  METER_DEV_TAMER_BADGE,
+  shouldShowMeterDevTamerBadge,
+} from '../lib/meterPartyBarThemes'
 import { partyMemberBarBackground, partyMemberChromeStyle } from '../lib/meterPartyColor'
 
 function formatInt(n: number) {
@@ -224,24 +231,44 @@ export function MeterPartyRoster({
           const digimon = m.currentDigimonName?.trim() || ''
           const active = selectedMemberKey === m.memberKey
           const nameColor = getMemberNameColor?.(m, dps)
+          const barTheme = resolveMeterPartyBarTheme(tamer, m.meterBarThemeId, {
+            isSelf: Boolean(m.isSelf),
+          })
+          const themeStyle = barTheme ? meterPartyBarThemeStyle(barTheme) : undefined
           return (
             <button
               key={m.memberKey}
               type="button"
-              className={`meter-party-member${active ? ' meter-party-member--active' : ''}`}
+              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}`}
               style={{
-                boxShadow: `inset 3px 0 0 ${chrome.borderLeftColor}`,
+                ...(barTheme ? themeStyle : {}),
+                boxShadow: barTheme ? undefined : `inset 3px 0 0 ${chrome.borderLeftColor}`,
               }}
               onClick={() => onSelectMember(m.memberKey)}
             >
               <div
-                className="meter-party-member-bar"
+                className={
+                  barTheme ? meterPartyBarThemeBarClassName(barTheme) : 'meter-party-member-bar'
+                }
                 style={{
                   width: `${Math.min(100, sharePct)}%`,
-                  background: partyMemberBarBackground(m.memberKey),
+                  ...(barTheme?.id === 'iliad-core'
+                    ? themeStyle
+                    : barTheme
+                      ? undefined
+                      : { background: partyMemberBarBackground(m.memberKey) }),
                 }}
                 aria-hidden
-              />
+              >
+                {barTheme?.id === 'iliad-core' ? (
+                  <>
+                    <span className="meter-party-iliad-fx meter-party-iliad-fx--wash" aria-hidden>
+                      <span className="meter-party-iliad-wash-track" aria-hidden />
+                    </span>
+                    <span className="meter-party-iliad-fx meter-party-iliad-fx--grid" aria-hidden />
+                  </>
+                ) : null}
+              </div>
               <div className="meter-party-member-grid meter-party-member-grid--with-icon">
                 <span className="meter-party-name" title={digimon ? `${tamer} — ${digimon}` : tamer}>
                   {portrait ? (
@@ -255,6 +282,24 @@ export function MeterPartyRoster({
                       style={nameColor ? { color: nameColor } : undefined}
                     >
                       {tamer}
+                      {shouldShowMeterDevTamerBadge(tamer) ? (
+                        <span
+                          className="meter-party-dev-badge"
+                          title="Companion developer"
+                          aria-label="Developer"
+                        >
+                          {METER_DEV_TAMER_BADGE}
+                        </span>
+                      ) : null}
+                      {barTheme ? (
+                        <span
+                          className="meter-party-theme-badge"
+                          title={barTheme.domain}
+                          aria-label={barTheme.label}
+                        >
+                          {barTheme.badge}
+                        </span>
+                      ) : null}
                     </span>
                     {digimon ? <span className="meter-party-digimon">{digimon}</span> : null}
                   </span>
