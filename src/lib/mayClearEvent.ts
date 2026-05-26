@@ -10,6 +10,8 @@ export const MAY_CLEAR_EVENT = {
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
   prizeCrownsPerRole: 200,
+  /** One-time meter theme shop points for a valid event parse upload. */
+  prizeShopPoints: 100,
 } as const
 
 export const EVENT_ANNOUNCEMENT_NOTE = 'A dungeon will be selected on May 29!'

@@ -40,6 +40,7 @@ const EVENTS = [
     eventDateLabel: 'Thursday, May 29 – June 5, 2026',
     difficultyLabel: 'Hard',
     prizeCrownsPerRole: 200,
+    prizeShopPoints: 100,
     roles: [
       { label: 'Melee', prize: 200 },
       { label: 'Ranged', prize: 200 },
@@ -49,7 +50,7 @@ const EVENTS = [
       { label: 'Healer', prize: 200 },
     ],
     description:
-      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns per role (1,200 total). Odyssey Calc Meter event.',
+      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns per role (1,200 total) plus 100 meter shop points for a valid event parse. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]
@@ -132,7 +133,7 @@ function shareHtml(event) {
       <span class="pill pill--date">${escapeHtml(event.eventDateLabel)}</span>
       <span class="pill pill--diff">${escapeHtml(event.difficultyLabel)}</span>
     </div>
-    <p class="lead"><strong>${total.toLocaleString()} crowns</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> each for #1 Best DPS per role.</p>
+    <p class="lead"><strong>${total.toLocaleString()} crowns</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> each for #1 Best DPS per role. Plus <strong>${event.prizeShopPoints ?? 0} meter shop points</strong> for a valid event parse.</p>
     <ul>${prizeList}</ul>
     <p class="muted">Opening event page&hellip; <a href="${appLink}">Continue here</a>. Add <code>?stay=1</code> to preview without redirect.</p>
   </div>
