@@ -225,7 +225,7 @@ export function partyMemberHasLoggedDigimon(member: MeterPartyMemberStored): boo
 }
 
 /** Minimum share of raid damage each party member must have for leaderboard eligibility. */
-export const MIN_LEADERBOARD_PARTY_DAMAGE_SHARE = 0.05
+export const MIN_LEADERBOARD_PARTY_DAMAGE_SHARE = 0.02
 
 /**
  * Invalid dungeon party parses — excluded from public leaderboard / percentile aggregates.
