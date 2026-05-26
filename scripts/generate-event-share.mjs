@@ -147,14 +147,16 @@ function shareHtml(event) {
 `
 }
 
-function prizeCardSvg(x, y, w, h, role, prize) {
+function prizeCardSvg(x, y, w, h, role, crownPrize, shopPoints) {
   const label = escapeXml(role)
-  const amount = `${prize} crowns`
+  const crowns = `${crownPrize} crowns`
+  const points = `+ ${shopPoints} shop pts`
   return `<g>
   <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="rgba(15,23,42,.92)" stroke="rgba(251,191,36,.28)" stroke-width="1.5"/>
-  <text x="${x + 16}" y="${y + 28}" fill="#fde68a" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="700">${label.toUpperCase()}</text>
-  <text x="${x + 16}" y="${y + 54}" fill="#fbbf24" font-family="Segoe UI, system-ui, sans-serif" font-size="22" font-weight="800">${escapeXml(amount)}</text>
-  <text x="${x + 16}" y="${y + 76}" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Top parse · Best DPS</text>
+  <text x="${x + 16}" y="${y + 26}" fill="#fde68a" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="700">${label.toUpperCase()}</text>
+  <text x="${x + 16}" y="${y + 50}" fill="#fbbf24" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="800">${escapeXml(crowns)}</text>
+  <text x="${x + 16}" y="${y + 70}" fill="#3ee0ff" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="700">${escapeXml(points)}</text>
+  <text x="${x + 16}" y="${y + 90}" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Top parse · Best DPS</text>
 </g>`
 }
 
@@ -162,7 +164,7 @@ function buildOgSvg(event) {
   const cols = 3
   const gridPad = 44
   const cardW = 352
-  const cardH = 88
+  const cardH = 102
   const gapX = 14
   const gapY = 12
   const gridW = cols * cardW + (cols - 1) * gapX
@@ -190,7 +192,7 @@ function buildOgSvg(event) {
       const row = Math.floor(i / cols)
       const x = gridX + col * (cardW + gapX)
       const y = gridY + row * (cardH + gapY)
-      return prizeCardSvg(x, y, cardW, cardH, role.label, role.prize)
+      return prizeCardSvg(x, y, cardW, cardH, role.label, role.prize, event.prizeShopPointsPerRole ?? 0)
     })
     .join('\n')
 
@@ -235,6 +237,7 @@ function buildOgSvg(event) {
   <rect x="${diffPillX}" y="${pillY}" width="${diffPillW}" height="32" rx="16" fill="rgba(59,130,246,.22)" stroke="rgba(96,165,250,.45)"/>
   <text x="${diffPillX + diffPillW / 2}" y="${pillTextY}" text-anchor="middle" fill="#93c5fd" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">${diff}</text>
   <text x="600" y="${prizesLabelY}" text-anchor="middle" fill="#fde68a" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="0.12em">PRIZES</text>
+  <text x="600" y="${prizesLabelY + 18}" text-anchor="middle" fill="#cbd5e1" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="600">${event.prizeCrownsPerRole} crowns + ${event.prizeShopPointsPerRole ?? 0} shop points per role winner</text>
   ${cards}
 </svg>`
 }
