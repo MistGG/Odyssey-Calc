@@ -7,7 +7,7 @@ import {
   type MeterPartyBarThemeId,
 } from './meterPartyBarThemes'
 
-export const METER_THEME_SHOP_PRICE = 75
+export const METER_THEME_SHOP_PRICE = 50
 
 export const METER_THEME_SHOP_TIER_LABEL = 'Common'
 
