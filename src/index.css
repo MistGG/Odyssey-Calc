@@ -249,6 +249,58 @@ code {
   max-width: 11rem;
 }
 
+.nav-user-cluster--compact.nav-user-cluster--multi-profile {
+  max-width: 13.5rem;
+}
+
+.nav-user-profiles-menu.nav-menu {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+}
+
+.nav-user-profiles-menu .nav-menu__trigger.nav-user-pill-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  width: 100%;
+  padding: 0.28rem 0.45rem 0.28rem 0.38rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #e0f2fe;
+  border: none;
+  border-right: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  list-style: none;
+  cursor: pointer;
+}
+
+.nav-user-profiles-menu .nav-menu__trigger.nav-user-pill-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.nav-user-profiles-menu .nav-menu__trigger.nav-user-pill-trigger:hover {
+  color: #fff;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.nav-user-profiles-menu .nav-menu__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.nav-user-profiles-menu .nav-menu__chev {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
 .nav-user-cluster--compact .nav-user-pill {
   padding: 0.28rem 0.45rem 0.28rem 0.38rem;
   font-size: 0.74rem;
@@ -660,6 +712,23 @@ code {
   letter-spacing: 0.02em;
   color: #e0f2fe;
   border-right: 1px solid rgba(56, 189, 248, 0.22);
+}
+
+a.nav-user-pill--link {
+  text-decoration: none;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+a.nav-user-pill--link:hover {
+  color: #fff;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+a.nav-user-pill--link:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
 }
 
 .nav-user-avatar {
@@ -9415,6 +9484,205 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   outline-offset: -1px;
 }
 
+.meter-parses-meter-chrome .meter-party-member--bar-theme {
+  background: rgba(8, 20, 28, 0.55);
+  box-shadow:
+    inset 3px 0 0 var(--mb-accent, #3ee0ff),
+    inset 0 0 0 1px color-mix(in srgb, var(--mb-accent, #3ee0ff) 18%, transparent);
+}
+
+.meter-parses-meter-chrome .meter-party-member-bar--bar-theme {
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mb-accent, #3ee0ff) 42%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 0 8px color-mix(in srgb, var(--mb-accent, #3ee0ff) 22%, transparent);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--iliad-core {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 5px,
+      rgba(62, 224, 255, 0.08) 5px,
+      rgba(62, 224, 255, 0.08) 6px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 7px,
+      rgba(92, 240, 196, 0.06) 7px,
+      rgba(92, 240, 196, 0.06) 8px
+    ),
+    linear-gradient(90deg, var(--mb-c1) 0%, var(--mb-c2) 58%, color-mix(in srgb, var(--mb-accent) 42%, transparent) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--iliad-core::after {
+  content: '';
+  position: absolute;
+  inset: 1px 0 auto;
+  height: 38%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, transparent 100%);
+  border-radius: 4px 4px 0 0;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--apollomon {
+  background:
+    radial-gradient(ellipse 80% 120% at 18% 50%, rgba(255, 220, 120, 0.55) 0%, transparent 55%),
+    linear-gradient(90deg, rgba(90, 36, 8, 0.7) 0%, rgba(255, 150, 50, 0.55) 45%, rgba(255, 200, 80, 0.35) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--bacchusmon {
+  background:
+    repeating-linear-gradient(
+      168deg,
+      transparent 0,
+      transparent 10px,
+      rgba(90, 40, 120, 0.2) 10px,
+      rgba(90, 40, 120, 0.2) 12px
+    ),
+    linear-gradient(180deg, rgba(40, 12, 55, 0.75) 0%, rgba(120, 50, 150, 0.5) 55%, rgba(80, 28, 100, 0.65) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--ceresmon {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 6px,
+      rgba(100, 160, 50, 0.12) 6px,
+      rgba(100, 160, 50, 0.12) 7px
+    ),
+    linear-gradient(90deg, rgba(22, 55, 18, 0.7) 0%, rgba(90, 140, 45, 0.55) 50%, rgba(180, 150, 50, 0.4) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--dianamon {
+  background:
+    repeating-linear-gradient(
+      -28deg,
+      transparent 0,
+      transparent 8px,
+      rgba(200, 230, 255, 0.08) 8px,
+      rgba(200, 230, 255, 0.08) 9px
+    ),
+    linear-gradient(90deg, rgba(18, 32, 68, 0.75) 0%, rgba(120, 170, 240, 0.45) 55%, rgba(200, 220, 255, 0.28) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--junomon {
+  background:
+    linear-gradient(
+      115deg,
+      rgba(45, 18, 72, 0.8) 0%,
+      rgba(120, 60, 160, 0.55) 28%,
+      rgba(60, 180, 170, 0.4) 52%,
+      rgba(180, 100, 200, 0.5) 78%,
+      rgba(50, 22, 80, 0.75) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--jupitermon {
+  background:
+    repeating-linear-gradient(
+      -55deg,
+      transparent 0,
+      transparent 14px,
+      rgba(255, 230, 100, 0.14) 14px,
+      rgba(255, 230, 100, 0.14) 16px
+    ),
+    linear-gradient(90deg, rgba(32, 36, 52, 0.85) 0%, rgba(90, 80, 40, 0.55) 45%, rgba(240, 210, 80, 0.4) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--marsmon {
+  background:
+    radial-gradient(ellipse 70% 140% at 25% 80%, rgba(255, 90, 30, 0.5) 0%, transparent 58%),
+    radial-gradient(ellipse 50% 100% at 70% 20%, rgba(255, 160, 60, 0.35) 0%, transparent 50%),
+    linear-gradient(90deg, rgba(55, 10, 6, 0.85) 0%, rgba(190, 55, 28, 0.65) 50%, rgba(255, 120, 50, 0.45) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--mercurymon {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.14) 3px,
+      rgba(255, 255, 255, 0.14) 4px
+    ),
+    linear-gradient(90deg, rgba(40, 48, 62, 0.8) 0%, rgba(160, 185, 210, 0.5) 55%, rgba(230, 240, 255, 0.35) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--minervamon {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(200, 180, 90, 0.1) 0,
+      rgba(200, 180, 90, 0.1) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    linear-gradient(90deg, rgba(36, 40, 48, 0.82) 0%, rgba(110, 118, 130, 0.55) 50%, rgba(200, 175, 80, 0.42) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--neptunemon {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 5px,
+      rgba(60, 200, 210, 0.1) 5px,
+      rgba(60, 200, 210, 0.1) 8px,
+      transparent 8px,
+      transparent 13px
+    ),
+    linear-gradient(180deg, rgba(8, 38, 62, 0.85) 0%, rgba(25, 120, 165, 0.6) 45%, rgba(50, 200, 195, 0.45) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--venusmon {
+  background:
+    radial-gradient(ellipse 90% 100% at 30% 50%, rgba(255, 180, 210, 0.45) 0%, transparent 60%),
+    linear-gradient(90deg, rgba(62, 22, 42, 0.75) 0%, rgba(200, 100, 140, 0.5) 55%, rgba(255, 210, 220, 0.32) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--vulcanusmon {
+  background:
+    radial-gradient(circle at 20% 70%, rgba(255, 140, 40, 0.45) 0%, transparent 35%),
+    radial-gradient(circle at 55% 30%, rgba(255, 200, 80, 0.25) 0%, transparent 30%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 11px,
+      rgba(255, 120, 40, 0.12) 11px,
+      rgba(255, 120, 40, 0.12) 12px
+    ),
+    linear-gradient(90deg, rgba(40, 18, 8, 0.88) 0%, rgba(160, 70, 22, 0.65) 50%, rgba(255, 150, 60, 0.4) 100%);
+}
+
+.meter-parses-meter-chrome .meter-party-theme-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 5px;
+  min-width: 1.1em;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  vertical-align: middle;
+  color: #0a1218;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mb-accent, #3ee0ff) 92%, white) 0%,
+    var(--mb-c2, rgba(92, 240, 196, 0.9)) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--mb-accent, #3ee0ff) 55%, white);
+  text-shadow: none;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--mb-accent, #3ee0ff) 35%, transparent);
+}
+
 .meter-parses-meter-chrome .meter-party-member-bar {
   position: absolute;
   left: 0;
@@ -10165,6 +10433,22 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.25);
+}
+
+.meter-profile-identity-notice {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(120, 53, 15, 0.25);
+  color: #fde68a;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.meter-profile-identity-notice a {
+  color: #67e8f9;
+  font-weight: 600;
 }
 
 .meter-profile-bests-panel__empty {

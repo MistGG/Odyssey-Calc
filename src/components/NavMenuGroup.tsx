@@ -32,6 +32,8 @@ export type NavMenuItem = {
 
   isActive?: (pathname: string) => boolean
 
+  state?: unknown
+
 }
 
 
@@ -273,6 +275,8 @@ export function NavMenuGroup({
             key={item.to}
 
             to={item.to}
+
+            state={item.state}
 
             end={item.end}
 

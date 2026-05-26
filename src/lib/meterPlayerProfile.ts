@@ -4,6 +4,7 @@ import {
   isDungeonPartyParsePayload,
   isFailedDungeonParseRow,
   partyMembersFromPayload,
+  type MeterPartyMemberStored,
 } from './meterParsePayload'
 import {
   memberDpsInParse,
@@ -26,6 +27,63 @@ export function normalizeRoutePlayerKey(raw: string): string {
   } catch {
     return raw.trim().toLowerCase()
   }
+}
+
+export const METER_PROFILE_IDENTITY_NOTICE =
+  'Please upload a parse through the meter to confirm your Tamer identity'
+
+export type SignedInMeterIdentity = {
+  playerKey: string
+  displayName: string
+  /** True when at least one upload marked the member as self. */
+  confirmedFromUpload: boolean
+}
+
+export function selfTamerFromMember(member: MeterPartyMemberStored): SignedInMeterIdentity | null {
+  if (!member.isSelf) return null
+  const displayName = playerDisplayName(member)
+  if (!displayName) return null
+  return {
+    playerKey: normalizePlayerKey(member),
+    displayName,
+    confirmedFromUpload: true,
+  }
+}
+
+/** All distinct self tamers from the user's meter uploads, sorted by display name. */
+export function resolveSignedInMeterIdentities(
+  profileDisplayName: string | null | undefined,
+  myParseRows: PublicMeterParseRow[],
+): SignedInMeterIdentity[] {
+  const byKey = new Map<string, SignedInMeterIdentity>()
+
+  for (const row of myParseRows) {
+    const members = partyMembersFromPayload(row.payload)
+    for (const member of members) {
+      const self = selfTamerFromMember(member)
+      if (self && !byKey.has(self.playerKey)) {
+        byKey.set(self.playerKey, self)
+      }
+    }
+  }
+
+  const fromUploads = [...byKey.values()].sort((a, b) =>
+    a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }),
+  )
+  if (fromUploads.length > 0) return fromUploads
+
+  const fallbackName = profileDisplayName?.trim()
+  if (!fallbackName) return []
+  const key = fallbackName.toLowerCase()
+  return [{ playerKey: key, displayName: fallbackName, confirmedFromUpload: false }]
+}
+
+/** First resolved identity (convenience). */
+export function resolveSignedInMeterIdentity(
+  profileDisplayName: string | null | undefined,
+  myParseRows: PublicMeterParseRow[],
+): SignedInMeterIdentity | null {
+  return resolveSignedInMeterIdentities(profileDisplayName, myParseRows)[0] ?? null
 }
 
 export function parseRowIncludesPlayer(row: PublicMeterParseRow, playerKey: string): boolean {

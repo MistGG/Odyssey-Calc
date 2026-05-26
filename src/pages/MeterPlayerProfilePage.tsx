@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
+import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { MeterPlayerProfileCard } from '../components/MeterPlayerProfileCard'
 import { MeterPlayerSharePanel } from '../components/MeterPlayerSharePanel'
 import { MeterSubNav } from '../components/MeterSubNav'
@@ -15,6 +17,7 @@ import {
   buildScopeLeaderboardDpsPools,
   displayNameForPlayerKey,
   leaderboardDpsPoolForBestEntry,
+  METER_PROFILE_IDENTITY_NOTICE,
   normalizeRoutePlayerKey,
 } from '../lib/meterPlayerProfile'
 import { allMeterUploadScopes } from '../lib/meterScopeList'
@@ -23,6 +26,7 @@ import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 
 type ProfileLocationState = {
   displayName?: string
+  ownProfile?: boolean
   fromMeter?: { dungeonId?: string; difficultyId?: number }
 }
 
@@ -31,6 +35,8 @@ function formatInt(n: number) {
 }
 
 export function MeterPlayerProfilePage() {
+  const { user } = useAuth()
+  const { identities: signedInIdentities, loading: signedInLoading } = useSignedInMeterProfile()
   const { playerKey: playerKeyParam } = useParams()
   const location = useLocation()
   const nav = (location.state as ProfileLocationState | null) ?? null
@@ -154,6 +160,15 @@ export function MeterPlayerProfilePage() {
       }
     : { pathname: '/meter' }
 
+  const isOwnProfile = useMemo(() => {
+    if (!user) return false
+    if (nav?.ownProfile) return true
+    if (signedInLoading) return false
+    return signedInIdentities.some((id) => id.playerKey === playerKey)
+  }, [user, nav?.ownProfile, signedInLoading, signedInIdentities, playerKey])
+
+  const showIdentityNotice = isOwnProfile && !loading && bestParses.length === 0
+
   if (!playerKey) {
     return (
       <div className="meter-parses-page meter-player-profile-page">
@@ -171,6 +186,14 @@ export function MeterPlayerProfilePage() {
         <h1 className="meter-parses-title">Meter</h1>
         <MeterSubNav />
       </header>
+
+      {showIdentityNotice ? (
+        <p className="meter-profile-identity-notice" role="status">
+          {METER_PROFILE_IDENTITY_NOTICE}.{' '}
+          <Link to="/meter/my-parses">View your uploads</Link> or{' '}
+          <Link to="/meter">open Meter</Link> to upload from the companion.
+        </p>
+      ) : null}
 
       <MeterPlayerProfileCard
         displayName={displayName}
@@ -204,7 +227,9 @@ export function MeterPlayerProfilePage() {
           </div>
           {bestParses.length === 0 ? (
             <p className="meter-parses-muted meter-profile-bests-panel__empty">
-              No ranked parses found for this tamer yet.
+              {showIdentityNotice
+                ? METER_PROFILE_IDENTITY_NOTICE
+                : 'No ranked parses found for this tamer yet.'}
             </p>
           ) : (
             <div className="meter-profile-bests-panel__table-wrap meter-scroll--themed">

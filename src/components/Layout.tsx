@@ -1,5 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
+import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
 import { ForumTeaserTvPopup } from './ForumTeaserTvPopup'
 import { NavMenuGroup } from './NavMenuGroup'
 
@@ -9,11 +11,20 @@ function navLinkClass(isActive: boolean, extra = '') {
 
 export function Layout() {
   const { user, authReady, signOut, profileDisplayName, profileReady } = useAuth()
+  const { identities: meterIdentities } = useSignedInMeterProfile()
   const { pathname } = useLocation()
 
   const navUserLabel = profileDisplayName?.trim() || 'Account'
   const navUserInitial = navUserLabel.charAt(0).toUpperCase() || '?'
   const showAccountNav = authReady && user && profileReady
+  const meterProfileItems = meterIdentities.map((id) => ({
+    to: meterPlayerProfilePath(id.playerKey),
+    label: id.displayName,
+    state: { ownProfile: true, displayName: id.displayName },
+    isActive: (p: string) => p === meterPlayerProfilePath(id.playerKey),
+  }))
+  const singleMeterProfile = meterProfileItems.length === 1 ? meterProfileItems[0] : null
+  const multipleMeterProfiles = meterProfileItems.length > 1
   const browseActive = pathname === '/' || pathname.startsWith('/digimon/')
 
   return (
@@ -113,16 +124,47 @@ export function Layout() {
           <div className="header__end">
             {showAccountNav ? (
               <div
-                className="nav-user-cluster nav-user-cluster--compact"
+                className={`nav-user-cluster nav-user-cluster--compact${
+                  multipleMeterProfiles ? ' nav-user-cluster--multi-profile' : ''
+                }`}
                 role="group"
                 aria-label="Signed in account"
               >
-                <span className="nav-user-pill">
-                  <span className="nav-user-avatar" aria-hidden>
-                    {navUserInitial}
+                {multipleMeterProfiles ? (
+                  <NavMenuGroup
+                    triggerLabel={
+                      <>
+                        <span className="nav-user-avatar" aria-hidden>
+                          {navUserInitial}
+                        </span>
+                        <span className="nav-user-name">{navUserLabel}</span>
+                      </>
+                    }
+                    menuLabel="Your tamer profiles"
+                    groupClassName="nav-user-profiles-menu"
+                    triggerClassName="nav-user-pill-trigger"
+                    items={meterProfileItems}
+                  />
+                ) : singleMeterProfile ? (
+                  <Link
+                    to={singleMeterProfile.to}
+                    state={singleMeterProfile.state}
+                    className="nav-user-pill nav-user-pill--link"
+                    title="Your meter profile"
+                  >
+                    <span className="nav-user-avatar" aria-hidden>
+                      {navUserInitial}
+                    </span>
+                    <span className="nav-user-name">{navUserLabel}</span>
+                  </Link>
+                ) : (
+                  <span className="nav-user-pill">
+                    <span className="nav-user-avatar" aria-hidden>
+                      {navUserInitial}
+                    </span>
+                    <span className="nav-user-name">{navUserLabel}</span>
                   </span>
-                  <span className="nav-user-name">{navUserLabel}</span>
-                </span>
+                )}
                 <button type="button" className="nav-sign-out" onClick={() => void signOut()}>
                   Sign out
                 </button>
