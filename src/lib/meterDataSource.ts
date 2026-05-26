@@ -94,6 +94,8 @@ function rowsOwnedByUser(rows: MeterParseRowDb[], userId: string): PublicMeterPa
 
 const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 500
 const GLOBAL_RECENT_PARSE_LIMIT = 400
+/** Max signed-in uploads considered for meter point grants (shop / rewards sync). */
+const MY_METER_PARSES_LIMIT = 150
 
 /** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
 
@@ -298,7 +300,7 @@ export async function fetchMyMeterParses(
 
     .order('created_at', { ascending: false })
 
-    .limit(80)
+    .limit(MY_METER_PARSES_LIMIT)
 
 
 
