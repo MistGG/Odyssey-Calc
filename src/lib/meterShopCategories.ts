@@ -1,6 +1,6 @@
 export type MeterShopCategoryId = 'bar-themes'
 
-export type MeterShopSubcategoryId = 'common' | 'rare'
+export type MeterShopSubcategoryId = 'common' | 'rare' | 'legendary'
 
 export type MeterShopSubcategory = {
   id: MeterShopSubcategoryId
@@ -32,6 +32,12 @@ export const METER_SHOP_CATEGORIES: MeterShopCategory[] = [
         id: 'rare',
         parentId: 'bar-themes',
         label: 'Rare',
+        available: true,
+      },
+      {
+        id: 'legendary',
+        parentId: 'bar-themes',
+        label: 'Legendary',
         available: true,
       },
     ],

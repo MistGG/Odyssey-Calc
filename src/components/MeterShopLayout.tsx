@@ -69,21 +69,21 @@ export function MeterShopLayout() {
                     {category.label}
                   </span>
                 )}
-                <ul className="meter-shop-side-nav-sublist">
+                <ul className="meter-shop-subnav-list">
                   {category.subcategories.map((sub) => (
                     <li key={sub.id}>
                       {sub.available && category.available ? (
                         <NavLink
                           to={`/meter/shop/${category.id}/${sub.id}`}
                           className={({ isActive }) =>
-                            `meter-shop-side-nav-link meter-shop-side-nav-link--sub${isActive ? ' meter-shop-side-nav-link--active' : ''}`
+                            `meter-shop-subnav-link${isActive ? ' meter-shop-subnav-link--active' : ''}`
                           }
                           end
                         >
                           {sub.label}
                         </NavLink>
                       ) : (
-                        <span className="meter-shop-side-nav-link meter-shop-side-nav-link--sub meter-shop-side-nav-link--disabled">
+                        <span className="meter-shop-subnav-link meter-shop-subnav-link--disabled">
                           {sub.label}
                         </span>
                       )}

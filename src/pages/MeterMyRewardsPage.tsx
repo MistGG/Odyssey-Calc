@@ -167,14 +167,15 @@ export function MeterMyRewardsPage() {
             const confirming = confirmEquipId === theme.id
             const isUniqueTheme = theme.id === MIST_DEV_REWARD_THEME_ID
             const isRareTheme = theme.variant === 'rare'
+            const isLegendaryTheme = theme.variant === 'legendary'
             return (
               <li
                 key={theme.id}
-                className={`meter-shop-card${isUniqueTheme ? ' meter-shop-card--unique' : ''}${isRareTheme ? ' meter-shop-card--rare' : ''}`}
+                className={`meter-shop-card${isUniqueTheme ? ' meter-shop-card--unique' : ''}${isRareTheme ? ' meter-shop-card--rare' : ''}${isLegendaryTheme ? ' meter-shop-card--legendary' : ''}`}
               >
                 <div className="meter-shop-card-head">
                   <span
-                    className={`meter-shop-tier${isUniqueTheme ? ' meter-shop-tier--unique' : ''}${isRareTheme ? ' meter-shop-tier--rare' : ''}`}
+                    className={`meter-shop-tier${isUniqueTheme ? ' meter-shop-tier--unique' : ''}${isRareTheme ? ' meter-shop-tier--rare' : ''}${isLegendaryTheme ? ' meter-shop-tier--legendary' : ''}`}
                   >
                     {isUniqueTheme
                       ? METER_THEME_UNIQUE_TIER_LABEL

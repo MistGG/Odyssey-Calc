@@ -1,6 +1,10 @@
 import { meterPartyBarThemeStyle, meterThemePreviewDigimonLine, type MeterPartyBarTheme } from '../lib/meterPartyBarThemes'
 
-import { METER_THEME_PREVIEW_BAR_FILL } from '../lib/meterThemeShop'
+import { METER_THEME_PREVIEW_BAR_FILL, meterThemePreviewStats } from '../lib/meterThemeShop'
+
+function formatInt(n: number) {
+  return Math.round(n).toLocaleString('en-US')
+}
 
 import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberRareClass } from './MeterPartyThemedBar'
 
@@ -38,7 +42,7 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
     <div
 
-      className={`meter-theme-preview meter-parses-meter-chrome${theme.variant === 'rare' ? ' meter-theme-preview--rare' : ''}${className ? ` ${className}` : ''}`}
+      className={`meter-theme-preview meter-parses-meter-chrome${theme.variant === 'rare' ? ' meter-theme-preview--rare' : ''}${theme.variant === 'legendary' ? ' meter-theme-preview--legendary' : ''}${className ? ` ${className}` : ''}`}
 
       aria-label={`${theme.label} party bar preview`}
 
@@ -53,6 +57,8 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
         const themeStyle = themed ? meterPartyBarThemeStyle(theme) : undefined
 
         const sharePct = row.fillPct
+
+        const { dps, totalDamage, durationSec } = meterThemePreviewStats(sharePct, index)
 
         return (
 
@@ -94,7 +100,7 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
                     ) : null}
 
-                    {themed ? (
+                    {themed && theme.variant !== 'legendary' ? (
 
                       <span className="meter-party-theme-badge" title={theme.label} aria-hidden>
 
@@ -112,11 +118,11 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
               </span>
 
-              <span className="meter-party-num">-</span>
+              <span className="meter-party-num">{formatInt(dps)}</span>
 
-              <span className="meter-party-num">-</span>
+              <span className="meter-party-num">{formatInt(totalDamage)}</span>
 
-              <span className="meter-party-num">-</span>
+              <span className="meter-party-num">{durationSec.toFixed(0)}</span>
 
             </div>
 

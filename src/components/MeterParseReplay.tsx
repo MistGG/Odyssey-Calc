@@ -288,7 +288,7 @@ export function MeterPartyRoster({
                           {METER_DEV_TAMER_BADGE}
                         </span>
                       ) : null}
-                      {barTheme ? (
+                      {barTheme && barTheme.variant !== 'legendary' ? (
                         <span
                           className="meter-party-theme-badge"
                           title={barTheme.domain}

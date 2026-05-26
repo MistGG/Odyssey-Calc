@@ -82,11 +82,11 @@ export function MeterThemeShopBarThemesPage() {
             return (
               <li
                 key={theme.id}
-                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}`}
+                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-card--legendary' : ''}`}
               >
                 <div className="meter-shop-card-head">
                   <span
-                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}`}
+                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-tier--legendary' : ''}`}
                   >
                     {meterThemeShopTierLabelForTheme(theme)}
                   </span>
