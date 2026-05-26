@@ -22,7 +22,7 @@ import {
   difficultySelectOptions,
   filterMyDungeonParses,
 } from '../lib/meterMyParsesFilters'
-import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
+import { loadWikiDungeonsForMeter, resolveMeterDungeonDisplayName } from '../lib/wikiDungeons'
 import type { MeterParseListRow, PublicMeterParseRow } from '../lib/meterPublicStats'
 
 function formatFixed(n: number, digits: number) {
@@ -105,12 +105,12 @@ export function MeterMyParsesPage() {
   const renderDungeonSession = (row: PublicMeterParseRow) => {
     const dungeon = dungeonFromPayload(row.payload)
     const members = partyMembersFromPayload(row.payload)
-    const title =
-      row.dungeon_name?.trim() ||
-      dungeon?.dungeonName?.trim() ||
-      row.dungeon_id ||
-      dungeon?.dungeonId ||
-      'Dungeon'
+    const title = resolveMeterDungeonDisplayName(
+      row.dungeon_id ?? dungeon?.dungeonId,
+      wikiDungeons,
+      row.dungeon_name,
+      dungeon?.dungeonName,
+    )
     const diff =
       row.difficulty?.trim() || dungeon?.difficulty?.trim() || (row.difficulty_id === 3 ? 'Hard' : row.difficulty_id === 2 ? 'Normal' : '')
     const bosses = dungeon?.bossTargets ?? []
@@ -185,6 +185,7 @@ export function MeterMyParsesPage() {
           >
             <MeterDungeonPartyReplay
               row={row}
+              fallbackDungeonName={title}
               publicRows={(() => {
                 const dungeon = dungeonFromPayload(row.payload)
                 const dungeonId = row.dungeon_id?.trim() || dungeon?.dungeonId?.trim() || ''

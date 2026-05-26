@@ -39,6 +39,7 @@ export function MeterDungeonPartyReplay({
   selectedMemberKey,
   onSelectMember,
   onBackFromMember,
+  fallbackDungeonName,
 }: {
   row: PublicMeterParseRow
   publicRows: PublicMeterParseRow[]
@@ -46,6 +47,8 @@ export function MeterDungeonPartyReplay({
   selectedMemberKey: string | null
   onSelectMember: (memberKey: string) => void
   onBackFromMember: () => void
+  /** Wiki-resolved name when upload omitted `dungeon_name`. */
+  fallbackDungeonName?: string | null
 }) {
   const dungeon = dungeonFromPayload(row.payload)
   const members = partyMembersFromPayload(row.payload)
@@ -97,7 +100,7 @@ export function MeterDungeonPartyReplay({
           </div>
           <MeterRunMeta
             dungeon={dungeon as MeterParseDungeonStored | null}
-            fallbackDungeonName={row.dungeon_name}
+            fallbackDungeonName={fallbackDungeonName ?? row.dungeon_name}
             invalid={isInvalidMeterPartyParseRow(row)}
             unranked={
               !isInvalidMeterPartyParseRow(row) && isExcludedFromLeaderboardParseRow(row)

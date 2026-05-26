@@ -17,7 +17,7 @@ import { MeterMinervamonLegendaryGroundSplit } from './MeterMinervamonLegendaryG
 import { MeterNeptunemonLegendaryWaves } from './MeterNeptunemonLegendaryWaves'
 import { MeterVenusmonLegendaryHearts } from './MeterVenusmonLegendaryHearts'
 import { MeterVulcanusmonLegendaryForge } from './MeterVulcanusmonLegendaryForge'
-import { MeterIliadBarFx } from './MeterIliadBarFx'
+import { MeterIliadBarOverlay } from './MeterIliadBarOverlay'
 import { MeterOlympusBarDigimonOverlay } from './MeterOlympusBarDigimonOverlay'
 
 type MeterPartyThemedBarProps = {
@@ -38,10 +38,23 @@ export function MeterPartyThemedBar({ theme, sharePct }: MeterPartyThemedBarProp
       className={meterPartyBarThemeBarClassName(theme)}
       style={isIliad || isLegendary ? themeStyle : undefined}
       aria-hidden
-    >
-      {isIliad ? <MeterIliadBarFx /> : null}
-    </div>
+    />
   )
+
+  if (isIliad) {
+    return (
+      <div
+        className="meter-party-bar-fill-stack meter-party-bar-fill-stack--iliad"
+        style={fillWidth}
+        aria-hidden
+      >
+        {bar}
+        <div className="meter-party-bar-iliad-layer">
+          <MeterIliadBarOverlay />
+        </div>
+      </div>
+    )
+  }
 
   if (isLegendary) {
     const styleId = theme.barStyleId
@@ -147,4 +160,9 @@ export function meterPartyMemberRareClass(theme: MeterPartyBarTheme | null | und
   if (theme?.variant === 'rare') return ' meter-party-member--rare-olympus'
   if (theme?.variant === 'legendary') return ' meter-party-member--legendary-olympus'
   return ''
+}
+
+export function meterPartyMemberThemeClass(theme: MeterPartyBarTheme | null | undefined): string {
+  if (theme?.id === MIST_DEV_REWARD_THEME_ID) return ' meter-party-member--iliad-core'
+  return meterPartyMemberRareClass(theme)
 }

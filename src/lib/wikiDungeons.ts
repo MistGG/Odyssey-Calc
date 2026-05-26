@@ -68,3 +68,19 @@ export function loadWikiDungeonsForMeter(): Promise<WikiDungeonListItem[]> {
 export function getCachedWikiDungeons(): WikiDungeonListItem[] {
   return cachedDungeons ?? []
 }
+
+/** Display name for meter parse rows when DB/payload omitted `dungeon_name`. */
+export function resolveMeterDungeonDisplayName(
+  dungeonId: string | null | undefined,
+  dungeons: WikiDungeonListItem[],
+  ...storedNames: (string | null | undefined)[]
+): string {
+  for (const name of storedNames) {
+    const trimmed = name?.trim()
+    if (trimmed) return trimmed
+  }
+  const id = dungeonId?.trim()
+  if (!id) return 'Dungeon'
+  const wiki = dungeons.find((d) => d.id === id)
+  return wiki?.name?.trim() || id
+}

@@ -15,9 +15,10 @@ import {
   meterPartyBarThemeStyle,
   METER_DEV_TAMER_BADGE,
   shouldShowMeterDevTamerBadge,
+  shouldShowMeterThemeBadge,
 } from '../lib/meterPartyBarThemes'
 import { partyMemberChromeStyle } from '../lib/meterPartyColor'
-import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberRareClass } from './MeterPartyThemedBar'
+import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -254,7 +255,7 @@ export function MeterPartyRoster({
             <button
               key={m.memberKey}
               type="button"
-              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberRareClass(barTheme)}`}
+              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberThemeClass(barTheme)}`}
               style={{
                 ...(barTheme ? themeStyle : {}),
                 boxShadow: barTheme ? undefined : `inset 3px 0 0 ${chrome.borderLeftColor}`,
@@ -288,7 +289,7 @@ export function MeterPartyRoster({
                           {METER_DEV_TAMER_BADGE}
                         </span>
                       ) : null}
-                      {barTheme && barTheme.variant !== 'legendary' ? (
+                      {shouldShowMeterThemeBadge(barTheme) ? (
                         <span
                           className="meter-party-theme-badge"
                           title={barTheme.domain}

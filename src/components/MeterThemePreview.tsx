@@ -1,4 +1,9 @@
-import { meterPartyBarThemeStyle, meterThemePreviewDigimonLine, type MeterPartyBarTheme } from '../lib/meterPartyBarThemes'
+import {
+  meterPartyBarThemeStyle,
+  meterThemePreviewDigimonLine,
+  shouldShowMeterThemeBadge,
+  type MeterPartyBarTheme,
+} from '../lib/meterPartyBarThemes'
 
 import { METER_THEME_PREVIEW_BAR_FILL, meterThemePreviewStats } from '../lib/meterThemeShop'
 
@@ -6,7 +11,7 @@ function formatInt(n: number) {
   return Math.round(n).toLocaleString('en-US')
 }
 
-import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberRareClass } from './MeterPartyThemedBar'
+import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
 
 
 
@@ -66,7 +71,7 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
             key={rowKey}
 
-            className={`meter-party-member${themed ? ' meter-party-member--bar-theme' : ''}${themed ? meterPartyMemberRareClass(theme) : ''}`}
+            className={`meter-party-member${themed ? ' meter-party-member--bar-theme' : ''}${themed ? meterPartyMemberThemeClass(theme) : ''}`}
 
             style={themeStyle}
 
@@ -100,7 +105,7 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
                     ) : null}
 
-                    {themed && theme.variant !== 'legendary' ? (
+                    {themed && shouldShowMeterThemeBadge(theme) ? (
 
                       <span className="meter-party-theme-badge" title={theme.label} aria-hidden>
 
