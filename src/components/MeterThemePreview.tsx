@@ -1,22 +1,8 @@
-import {
-
-  meterPartyBarThemeStyle,
-
-  meterPartyBarThemeBarClassName,
-
-  MIST_DEV_REWARD_THEME_ID,
-
-  meterThemePreviewDigimonLine,
-
-  type MeterPartyBarTheme,
-
-} from '../lib/meterPartyBarThemes'
-
-import { partyMemberBarBackground } from '../lib/meterPartyColor'
+import { meterPartyBarThemeStyle, meterThemePreviewDigimonLine, type MeterPartyBarTheme } from '../lib/meterPartyBarThemes'
 
 import { METER_THEME_PREVIEW_BAR_FILL } from '../lib/meterThemeShop'
 
-import { MeterIliadBarFx } from './MeterIliadBarFx'
+import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberRareClass } from './MeterPartyThemedBar'
 
 
 
@@ -52,7 +38,7 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
     <div
 
-      className={`meter-theme-preview meter-parses-meter-chrome${className ? ` ${className}` : ''}`}
+      className={`meter-theme-preview meter-parses-meter-chrome${theme.variant === 'rare' ? ' meter-theme-preview--rare' : ''}${className ? ` ${className}` : ''}`}
 
       aria-label={`${theme.label} party bar preview`}
 
@@ -68,51 +54,23 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
 
         const sharePct = row.fillPct
 
-        const iliadBar = themed && theme.id === MIST_DEV_REWARD_THEME_ID
-
         return (
 
           <div
 
             key={rowKey}
 
-            className={`meter-party-member${themed ? ' meter-party-member--bar-theme' : ''}`}
+            className={`meter-party-member${themed ? ' meter-party-member--bar-theme' : ''}${themed ? meterPartyMemberRareClass(theme) : ''}`}
 
             style={themeStyle}
 
           >
 
-            <div
-
-              className={
-
-                themed ? meterPartyBarThemeBarClassName(theme) : 'meter-party-member-bar'
-
-              }
-
-              style={{
-
-                width: `${Math.min(100, sharePct)}%`,
-
-                ...(iliadBar
-
-                  ? themeStyle
-
-                  : themed
-
-                    ? undefined
-
-                    : { background: partyMemberBarBackground(rowKey) }),
-
-              }}
-
-              aria-hidden
-
-            >
-
-              {iliadBar ? <MeterIliadBarFx /> : null}
-
-            </div>
+            {themed ? (
+              <MeterPartyThemedBar theme={theme} sharePct={sharePct} />
+            ) : (
+              <MeterPartyPlainBar sharePct={sharePct} rowKey={rowKey} />
+            )}
 
             <div className="meter-party-member-grid meter-party-member-grid--with-icon">
 

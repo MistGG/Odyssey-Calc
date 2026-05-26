@@ -114,7 +114,7 @@ export function useMeterRewards(
     const syncRes = await syncMeterPointGrants(supabase, grants)
     if (syncRes.error?.includes('meter_apply_point_grants')) {
       setError(
-        'Rewards database is not set up yet. Run supabase/migrations/20260521_meter_theme_shop.sql in Supabase.',
+        'Rewards database is not set up yet. Run the meter theme shop SQL in the Supabase SQL Editor.',
       )
     } else if (syncRes.error) {
       setError(syncRes.error)

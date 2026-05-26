@@ -8,6 +8,7 @@
     "sync:teasers": "node scripts/sync-teaser-images.mjs",
     "generate:guidebook-share": "node scripts/generate-guidebook-share.mjs",
     "generate:event-share": "node scripts/generate-event-share.mjs",
+    "process:olympus-overlays": "node scripts/process-olympus-overlays.mjs",
     "build": "npm run sync:teasers && npm run generate:guidebook-share && npm run generate:event-share && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -29,6 +30,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "sharp": "^0.34.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^5.4.21"

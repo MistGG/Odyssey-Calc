@@ -7,7 +7,8 @@ export const DEV_METER_TAMER_NAME = 'Mist'
 export const OLYMPUS_XII_SHOP_PREFIX = 'Olympus XII'
 
 export function olympusThemeShopDigimonLine(theme: MeterPartyBarTheme): string {
-  return `${OLYMPUS_XII_SHOP_PREFIX} - ${theme.label}`
+  const name = theme.label.replace(/\s*\(Rare\)\s*$/i, '').trim()
+  return `${OLYMPUS_XII_SHOP_PREFIX} - ${name}`
 }
 
 export const MIST_DEV_REWARD_THEME_ID: MeterPartyBarThemeId = 'iliad-core'
@@ -24,8 +25,7 @@ export function meterThemePreviewDigimonLine(theme: MeterPartyBarTheme): string 
 
 const EQUIPPED_THEME_STORAGE_KEY = 'odyssey-meter-bar-theme'
 
-export type MeterPartyBarThemeId =
-  | 'iliad-core'
+export type OlymposXiiBaseThemeId =
   | 'apollomon'
   | 'bacchusmon'
   | 'ceresmon'
@@ -39,8 +39,18 @@ export type MeterPartyBarThemeId =
   | 'venusmon'
   | 'vulcanusmon'
 
+export type MeterPartyBarThemeId =
+  | 'iliad-core'
+  | OlymposXiiBaseThemeId
+  | `${OlymposXiiBaseThemeId}-rare`
+
+export type MeterPartyBarThemeVariant = 'common' | 'rare'
+
 export type MeterPartyBarTheme = {
   id: MeterPartyBarThemeId
+  /** CSS gradient key (common + rare share the same bar art). */
+  barStyleId: string
+  variant?: MeterPartyBarThemeVariant
   /** UI label (Olympos XII member). */
   label: string
   /** Short badge on the party row. */
@@ -57,9 +67,9 @@ export type MeterPartyBarTheme = {
   }
 }
 
-export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
-  {
+const ILIAD_CORE_THEME: MeterPartyBarTheme = {
     id: 'iliad-core',
+    barStyleId: 'iliad-core',
     label: 'Iliad Core',
     badge: '★',
     domain: 'Digital World — Homeros',
@@ -71,9 +81,13 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
       c2: 'rgba(92, 240, 196, 0.45)',
       grid: 'rgba(62, 224, 255, 0.08)',
     },
-  },
+  }
+
+const OLYMPOS_XII_COMMON_THEMES: MeterPartyBarTheme[] = [
   {
     id: 'apollomon',
+    barStyleId: 'apollomon',
+    variant: 'common',
     label: 'Apollomon',
     badge: '☀',
     domain: 'Sun & flame',
@@ -88,6 +102,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'bacchusmon',
+    barStyleId: 'bacchusmon',
+    variant: 'common',
     label: 'Bacchusmon',
     badge: '🍇',
     domain: 'Wine & revelry',
@@ -102,6 +118,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'ceresmon',
+    barStyleId: 'ceresmon',
+    variant: 'common',
     label: 'Ceresmon',
     badge: '🌿',
     domain: 'Harvest & fertility',
@@ -116,6 +134,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'dianamon',
+    barStyleId: 'dianamon',
+    variant: 'common',
     label: 'Dianamon',
     badge: '☾',
     domain: 'Moon, water & ice',
@@ -130,6 +150,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'junomon',
+    barStyleId: 'junomon',
+    variant: 'common',
     label: 'Junomon',
     badge: '👁',
     domain: 'Foresight & order',
@@ -144,6 +166,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'jupitermon',
+    barStyleId: 'jupitermon',
+    variant: 'common',
     label: 'Jupitermon',
     badge: '⚡',
     domain: 'Thunder & sky',
@@ -158,6 +182,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'marsmon',
+    barStyleId: 'marsmon',
+    variant: 'common',
     label: 'Marsmon',
     badge: '🔥',
     domain: 'War & valor',
@@ -172,6 +198,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'mercurymon',
+    barStyleId: 'mercurymon',
+    variant: 'common',
     label: 'Mercurymon',
     badge: '💨',
     domain: 'Speed & travel',
@@ -186,6 +214,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'minervamon',
+    barStyleId: 'minervamon',
+    variant: 'common',
     label: 'Minervamon',
     badge: '⚔',
     domain: 'Strategy & wisdom',
@@ -200,6 +230,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'neptunemon',
+    barStyleId: 'neptunemon',
+    variant: 'common',
     label: 'Neptunemon',
     badge: '🌊',
     domain: 'Sea & depths',
@@ -214,6 +246,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'venusmon',
+    barStyleId: 'venusmon',
+    variant: 'common',
     label: 'Venusmon',
     badge: '♥',
     domain: 'Love & beauty',
@@ -228,6 +262,8 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
   {
     id: 'vulcanusmon',
+    barStyleId: 'vulcanusmon',
+    variant: 'common',
     label: 'Vulcanusmon',
     badge: '🔨',
     domain: 'Forge & smithing',
@@ -242,11 +278,33 @@ export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   },
 ]
 
+function olympusRareVariant(base: MeterPartyBarTheme): MeterPartyBarTheme {
+  const rareId = `${base.barStyleId}-rare` as MeterPartyBarThemeId
+  return {
+    ...base,
+    id: rareId,
+    variant: 'rare',
+    label: `${base.label} (Rare)`,
+    subtitle: `${base.subtitle} · Rare`,
+  }
+}
+
+export const OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] =
+  OLYMPOS_XII_COMMON_THEMES.map(olympusRareVariant)
+
+export const METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
+  ILIAD_CORE_THEME,
+  ...OLYMPOS_XII_COMMON_THEMES,
+  ...OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
+]
+
 const THEME_BY_ID = new Map(METER_PARTY_BAR_THEMES.map((t) => [t.id, t]))
 
 export const METER_PARTY_BAR_THEME_IDS = METER_PARTY_BAR_THEMES.map((t) => t.id)
 
 export const EARNABLE_METER_PARTY_BAR_THEMES = METER_PARTY_BAR_THEMES.filter((t) => t.earnable)
+
+export const OLYMPOS_XII_COMMON_SHOP_THEMES = OLYMPOS_XII_COMMON_THEMES
 
 function normTamerName(name: string): string {
   return name.trim().toLowerCase()
@@ -332,8 +390,13 @@ export function meterPartyBarThemeStyle(theme: MeterPartyBarTheme): CSSPropertie
   }
 }
 
+export function meterPartyBarThemeBarStyleId(theme: MeterPartyBarTheme): string {
+  return theme.barStyleId || theme.id
+}
+
 export function meterPartyBarThemeBarClassName(theme: MeterPartyBarTheme): string {
-  return `meter-party-member-bar meter-party-member-bar--bar-theme meter-party-bar-theme--${theme.id}`
+  const styleId = meterPartyBarThemeBarStyleId(theme)
+  return `meter-party-member-bar meter-party-member-bar--bar-theme meter-party-bar-theme--${styleId}${theme.variant === 'rare' ? ' meter-party-bar-theme--rare' : ''}`
 }
 
 export function mistDevPartyMemberKey(themeId: MeterPartyBarThemeId): string {

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { METER_THEME_SHOP_PRICE } from '../lib/meterThemeShop'
+import { getMeterPartyBarTheme } from '../lib/meterPartyBarThemes'
+import { meterThemeShopPriceForTheme } from '../lib/meterThemeShop'
 import type { MeterPartyBarThemeId } from '../lib/meterPartyBarThemes'
 import {
   clearEquippedMeterPartyBarThemeId,
@@ -12,9 +13,11 @@ export async function purchaseMeterTheme(
   supabase: SupabaseClient,
   themeId: MeterPartyBarThemeId,
 ): Promise<{ ok: boolean; balance: number; error: string | null }> {
+  const theme = getMeterPartyBarTheme(themeId)
+  const cost = theme ? meterThemeShopPriceForTheme(theme) : 50
   const { data, error } = await supabase.rpc('meter_purchase_theme', {
     p_theme_id: themeId,
-    p_cost: METER_THEME_SHOP_PRICE,
+    p_cost: cost,
   })
   if (error) return { ok: false, balance: 0, error: error.message }
   if (data?.error === 'insufficient_points') {

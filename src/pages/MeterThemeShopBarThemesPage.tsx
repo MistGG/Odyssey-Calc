@@ -11,8 +11,8 @@ import {
   meterShopSubcategoryByPath,
 } from '../lib/meterShopCategories'
 import {
-  METER_THEME_SHOP_PRICE,
-  METER_THEME_SHOP_TIER_LABEL,
+  meterThemeShopPriceForTheme,
+  meterThemeShopTierLabelForTheme,
   previewDigimonForTheme,
   shopMeterPartyBarThemesForSubcategory,
 } from '../lib/meterThemeShop'
@@ -75,13 +75,21 @@ export function MeterThemeShopBarThemesPage() {
       ) : (
         <ul className="meter-shop-grid">
           {themes.map((theme) => {
+            const price = meterThemeShopPriceForTheme(theme)
             const owned = rewards.ownedThemeIds.includes(theme.id)
-            const canAfford = rewards.balance >= METER_THEME_SHOP_PRICE
+            const canAfford = rewards.balance >= price
             const confirming = confirmThemeId === theme.id
             return (
-              <li key={theme.id} className="meter-shop-card">
+              <li
+                key={theme.id}
+                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}`}
+              >
                 <div className="meter-shop-card-head">
-                  <span className="meter-shop-tier">{METER_THEME_SHOP_TIER_LABEL}</span>
+                  <span
+                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}`}
+                  >
+                    {meterThemeShopTierLabelForTheme(theme)}
+                  </span>
                   <h3 className="meter-shop-card-title">{olympusThemeShopDigimonLine(theme)}</h3>
                 </div>
                 <MeterThemePreview
@@ -99,7 +107,7 @@ export function MeterThemeShopBarThemesPage() {
                   ) : confirming ? (
                     <div className="meter-shop-confirm">
                       <p className="meter-shop-confirm-text">
-                        Spend {METER_THEME_SHOP_PRICE} points for {theme.label}?
+                        Spend {price} points for {theme.label}?
                       </p>
                       <div className="meter-shop-confirm-row">
                         <button
@@ -126,7 +134,7 @@ export function MeterThemeShopBarThemesPage() {
                       disabled={!canAfford || rewards.loading}
                       onClick={() => setConfirmThemeId(theme.id)}
                     >
-                      Buy for {METER_THEME_SHOP_PRICE} pts
+                      Buy for {price} pts
                     </button>
                   )}
                 </div>

@@ -11,11 +11,11 @@ import {
 import {
   resolveMeterPartyBarTheme,
   meterPartyBarThemeStyle,
-  meterPartyBarThemeBarClassName,
   METER_DEV_TAMER_BADGE,
   shouldShowMeterDevTamerBadge,
 } from '../lib/meterPartyBarThemes'
-import { partyMemberBarBackground, partyMemberChromeStyle } from '../lib/meterPartyColor'
+import { partyMemberChromeStyle } from '../lib/meterPartyColor'
+import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberRareClass } from './MeterPartyThemedBar'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -239,36 +239,18 @@ export function MeterPartyRoster({
             <button
               key={m.memberKey}
               type="button"
-              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}`}
+              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberRareClass(barTheme)}`}
               style={{
                 ...(barTheme ? themeStyle : {}),
                 boxShadow: barTheme ? undefined : `inset 3px 0 0 ${chrome.borderLeftColor}`,
               }}
               onClick={() => onSelectMember(m.memberKey)}
             >
-              <div
-                className={
-                  barTheme ? meterPartyBarThemeBarClassName(barTheme) : 'meter-party-member-bar'
-                }
-                style={{
-                  width: `${Math.min(100, sharePct)}%`,
-                  ...(barTheme?.id === 'iliad-core'
-                    ? themeStyle
-                    : barTheme
-                      ? undefined
-                      : { background: partyMemberBarBackground(m.memberKey) }),
-                }}
-                aria-hidden
-              >
-                {barTheme?.id === 'iliad-core' ? (
-                  <>
-                    <span className="meter-party-iliad-fx meter-party-iliad-fx--wash" aria-hidden>
-                      <span className="meter-party-iliad-wash-track" aria-hidden />
-                    </span>
-                    <span className="meter-party-iliad-fx meter-party-iliad-fx--grid" aria-hidden />
-                  </>
-                ) : null}
-              </div>
+              {barTheme ? (
+                <MeterPartyThemedBar theme={barTheme} sharePct={sharePct} />
+              ) : (
+                <MeterPartyPlainBar sharePct={sharePct} rowKey={m.memberKey} />
+              )}
               <div className="meter-party-member-grid meter-party-member-grid--with-icon">
                 <span className="meter-party-name" title={digimon ? `${tamer} — ${digimon}` : tamer}>
                   {portrait ? (

@@ -15,7 +15,7 @@ import {
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
 import {
-  METER_THEME_SHOP_TIER_LABEL,
+  meterThemeShopTierLabelForTheme,
   METER_THEME_UNIQUE_TIER_LABEL,
   previewDigimonForTheme,
 } from '../lib/meterThemeShop'
@@ -166,16 +166,19 @@ export function MeterMyRewardsPage() {
             const equipped = rewards.equippedThemeId === theme.id
             const confirming = confirmEquipId === theme.id
             const isUniqueTheme = theme.id === MIST_DEV_REWARD_THEME_ID
+            const isRareTheme = theme.variant === 'rare'
             return (
               <li
                 key={theme.id}
-                className={`meter-shop-card${isUniqueTheme ? ' meter-shop-card--unique' : ''}`}
+                className={`meter-shop-card${isUniqueTheme ? ' meter-shop-card--unique' : ''}${isRareTheme ? ' meter-shop-card--rare' : ''}`}
               >
                 <div className="meter-shop-card-head">
                   <span
-                    className={`meter-shop-tier${isUniqueTheme ? ' meter-shop-tier--unique' : ''}`}
+                    className={`meter-shop-tier${isUniqueTheme ? ' meter-shop-tier--unique' : ''}${isRareTheme ? ' meter-shop-tier--rare' : ''}`}
                   >
-                    {isUniqueTheme ? METER_THEME_UNIQUE_TIER_LABEL : METER_THEME_SHOP_TIER_LABEL}
+                    {isUniqueTheme
+                      ? METER_THEME_UNIQUE_TIER_LABEL
+                      : meterThemeShopTierLabelForTheme(theme)}
                   </span>
                   <h3 className="meter-shop-card-title">
                     {meterThemeRewardsCardTitle(theme)}

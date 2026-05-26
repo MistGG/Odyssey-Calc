@@ -1,19 +1,32 @@
 import type { MeterShopSubcategoryId } from './meterShopCategories'
 import {
-  EARNABLE_METER_PARTY_BAR_THEMES,
   getMeterPartyBarTheme,
   MIST_DEV_REWARD_THEME_ID,
+  OLYMPOS_XII_COMMON_SHOP_THEMES,
+  OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
   type MeterPartyBarTheme,
   type MeterPartyBarThemeId,
 } from './meterPartyBarThemes'
 
 export const METER_THEME_SHOP_PRICE = 50
 
+export const METER_THEME_SHOP_RARE_PRICE = 75
+
 export const METER_THEME_SHOP_TIER_LABEL = 'Common'
+
+export const METER_THEME_SHOP_RARE_TIER_LABEL = 'Rare'
 
 export const METER_THEME_UNIQUE_TIER_LABEL = 'Unique'
 
-export type MeterThemeShopTierId = 'common'
+export type MeterThemeShopTierId = 'common' | 'rare'
+
+export function meterThemeShopPriceForTheme(theme: MeterPartyBarTheme): number {
+  return theme.variant === 'rare' ? METER_THEME_SHOP_RARE_PRICE : METER_THEME_SHOP_PRICE
+}
+
+export function meterThemeShopTierLabelForTheme(theme: MeterPartyBarTheme): string {
+  return theme.variant === 'rare' ? METER_THEME_SHOP_RARE_TIER_LABEL : METER_THEME_SHOP_TIER_LABEL
+}
 
 /** Filler digimon names for shop previews (party members without your theme). */
 export const METER_THEME_PREVIEW_DIGIMON_POOL = [
@@ -50,15 +63,17 @@ export const METER_POINT_EARN_RULES = [
 export const METER_IDENTITY_PARSE_NOTICE =
   'Please submit a parse to confirm your identity.'
 
-export const SHOP_METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [...EARNABLE_METER_PARTY_BAR_THEMES]
+export const SHOP_METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
+  ...OLYMPOS_XII_COMMON_SHOP_THEMES,
+  ...OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
+]
 
 /** Shop catalog for a bar-theme subcategory (e.g. Common). */
 export function shopMeterPartyBarThemesForSubcategory(
   subcategoryId: MeterShopSubcategoryId,
 ): MeterPartyBarTheme[] {
-  if (subcategoryId === 'common') {
-    return SHOP_METER_PARTY_BAR_THEMES
-  }
+  if (subcategoryId === 'common') return OLYMPOS_XII_COMMON_SHOP_THEMES
+  if (subcategoryId === 'rare') return OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES
   return []
 }
 
@@ -71,7 +86,7 @@ export function meterRewardsThemesForUser(
   ownedThemeIds: string[],
   mistDev: boolean,
 ): MeterPartyBarTheme[] {
-  const purchased = SHOP_METER_PARTY_BAR_THEMES.filter((t) => ownedThemeIds.includes(t.id))
+  const purchased = SHOP_METER_PARTY_BAR_THEMES.filter((t) => ownedThemeIds.includes(t.id as string))
   if (!mistDev) return purchased
   const devTheme = getMeterPartyBarTheme(MIST_DEV_REWARD_THEME_ID)
   if (!devTheme) return purchased
