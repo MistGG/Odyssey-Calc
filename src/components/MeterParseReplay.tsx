@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { equippedThemeIdForTamer, useEquippedThemesForPartyTamers } from '../hooks/useEquippedThemesForPartyTamers'
 import { meterBarBackgroundForSkill } from '../lib/meterSkillBarGradient'
 import {
   resolveDigimonPortraitUrl,
@@ -199,6 +201,7 @@ export function MeterPartyRoster({
   selectedMemberKey,
   onSelectMember,
   getMemberNameColor,
+  themeResolveKey,
 }: {
   members: MeterPartyMemberStored[]
   raidTotal: number
@@ -206,7 +209,18 @@ export function MeterPartyRoster({
   onSelectMember: (memberKey: string) => void
   /** Optional percentile tier color for player name (public leaderboard context). */
   getMemberNameColor?: (member: MeterPartyMemberStored, dps: number) => string | undefined
+  /** Bust equipped-theme cache when dungeon/map context changes. */
+  themeResolveKey?: string
 }) {
+  const partyTamerNames = useMemo(
+    () =>
+      members
+        .map((m) => m.tamerName?.trim() || m.displayLabel.trim())
+        .filter((name) => Boolean(name)),
+    [members],
+  )
+  const equippedThemes = useEquippedThemesForPartyTamers(partyTamerNames, themeResolveKey)
+
   const sorted = [...members].sort((a, b) => {
     const da = a.durationSec > 0 ? a.totalDamage / a.durationSec : 0
     const db = b.durationSec > 0 ? b.totalDamage / b.durationSec : 0
@@ -233,6 +247,7 @@ export function MeterPartyRoster({
           const nameColor = getMemberNameColor?.(m, dps)
           const barTheme = resolveMeterPartyBarTheme(tamer, m.meterBarThemeId, {
             isSelf: Boolean(m.isSelf),
+            remoteThemeId: equippedThemeIdForTamer(equippedThemes, tamer),
           })
           const themeStyle = barTheme ? meterPartyBarThemeStyle(barTheme) : undefined
           return (

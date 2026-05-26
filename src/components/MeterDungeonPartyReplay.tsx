@@ -111,6 +111,7 @@ export function MeterDungeonPartyReplay({
                 selectedMemberKey={selectedMemberKey}
                 onSelectMember={onSelectMember}
                 getMemberNameColor={nameColor}
+                themeResolveKey={`${row.dungeon_id ?? ''}:${row.difficulty_id ?? ''}:${row.id}`}
               />
             </section>
           ) : (
