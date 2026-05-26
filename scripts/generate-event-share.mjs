@@ -21,6 +21,8 @@ const SITE_BASE = `${SITE_ORIGIN}${BASE_PATH.startsWith('/') ? BASE_PATH : `/${B
 
 const OG = { width: 1200, height: 630 }
 
+const SHARE_REDIRECT_MS = 8000
+
 /** @type {Array<{
  *   id: string
  *   ogSlug: string
@@ -123,11 +125,18 @@ function shareHtml(event) {
     .muted{color:#94a3b8;font-weight:400}
     p.lead{color:#cbd5e1;line-height:1.55}
     a{color:#67e8f9}
+    .how{margin:18px 0 0;padding:0}
+    .how h2{margin:0 0 8px;font-size:1rem;color:#fde68a}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 0}
+    .actions a{display:inline-block;padding:8px 14px;border-radius:999px;font-size:.86rem;font-weight:700;text-decoration:none;border:1px solid rgba(103,232,249,.45)}
+    .actions a.primary{background:rgba(56,189,248,.15);color:#e0f2fe}
+    .actions a.ghost{background:transparent;color:#67e8f9}
+    #redirect-countdown{margin:14px 0 0;font-size:.84rem}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <p class="muted" style="margin:0 0 4px;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase">Community event</p>
+    <p class="muted" style="margin:0 0 4px;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase">Community event · Odyssey Calc</p>
     <h1>${escapeHtml(event.eventTitle)}</h1>
     <div class="meta">
       <span class="pill pill--date">${escapeHtml(event.eventDateLabel)}</span>
@@ -135,12 +144,50 @@ function shareHtml(event) {
     </div>
     <p class="lead"><strong>${total.toLocaleString()} crowns</strong> and <strong>${((event.prizeShopPointsPerRole ?? 0) * event.roles.length).toLocaleString()} meter shop points</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> and <strong>${event.prizeShopPointsPerRole ?? 0} shop points</strong> per #1 Best DPS.</p>
     <ul>${prizeList}</ul>
-    <p class="muted">Opening event page&hellip; <a href="${appLink}">Continue here</a>. Add <code>?stay=1</code> to preview without redirect.</p>
+    <section class="how" aria-labelledby="how-heading">
+      <h2 id="how-heading">How it works</h2>
+      <ol class="muted">
+        <li>Run the announced dungeon during the event window on Hard mode.</li>
+        <li>Record with Odyssey Companion and upload a dungeon party parse to Meter.</li>
+        <li>Top Best DPS per role on the leaderboard wins crowns and meter shop points.</li>
+      </ol>
+    </section>
+    <div class="actions">
+      <a class="primary" href="${appLink}">Open full event page</a>
+      <a class="ghost" href="${BASE_PATH === '/' ? '/#/companion' : `${BASE_PATH.replace(/\/$/, '')}/#/companion`}">About Odyssey Companion</a>
+    </div>
+    <p id="redirect-countdown" class="muted" hidden></p>
+    <p class="muted" style="margin-top:10px;font-size:.8rem">Add <code>?stay=1</code> to this URL to disable auto-redirect (for previews).</p>
   </div>
   <script>
-    if (!/([?&])stay=1(&|$)/.test(location.search)) {
-      setTimeout(function () { location.replace(${JSON.stringify(appLink)}); }, 1200);
-    }
+    (function () {
+      var target = ${JSON.stringify(appLink)};
+      var ms = ${SHARE_REDIRECT_MS};
+      if (/([?&])stay=1(&|$)/.test(location.search)) return;
+      var el = document.getElementById("redirect-countdown");
+      if (!el) return;
+      el.hidden = false;
+      var remaining = Math.ceil(ms / 1000);
+      function updateCountdown() {
+        el.textContent =
+          "Auto-opening full event page in " +
+          remaining +
+          "s… (or use the button above)";
+      }
+      updateCountdown();
+      var countdown = window.setInterval(function () {
+        remaining -= 1;
+        if (remaining <= 0) {
+          window.clearInterval(countdown);
+          return;
+        }
+        updateCountdown();
+      }, 1000);
+      window.setTimeout(function () {
+        window.clearInterval(countdown);
+        location.replace(target);
+      }, ms);
+    })();
   </script>
 </body>
 </html>

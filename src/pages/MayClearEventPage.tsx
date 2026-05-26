@@ -42,14 +42,9 @@ export function MayClearEventPage() {
           <Link className="event-cta event-cta--primary" to="/meter">
             Visit Meter page
           </Link>
-          <a
-            className="event-cta event-cta--ghost"
-            href="https://github.com/MistGG/Odyssey-Companion/releases/latest"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Get Odyssey Companion
-          </a>
+          <Link className="event-cta event-cta--ghost" to="/companion">
+            About Odyssey Companion
+          </Link>
           <button type="button" className="event-cta event-cta--ghost" onClick={copyShareLink}>
             {shareCopied ? 'Link copied!' : 'Share'}
           </button>
@@ -101,7 +96,7 @@ export function MayClearEventPage() {
             Run the announced dungeon during <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>.
           </li>
           <li>
-            Use <strong>Odyssey Companion</strong> to record the party run and upload a{' '}
+            Use <Link to="/companion">Odyssey Companion</Link> to record the party run and upload a{' '}
             <strong>dungeon party</strong> parse to the cloud.
           </li>
           <li>
