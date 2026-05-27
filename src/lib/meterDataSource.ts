@@ -14,6 +14,7 @@ import {
   setCachedGlobalRecentParses,
   setCachedScopeParses,
 } from './meterParseCache'
+import { resolveMeterParseRowPayloads } from './meterParseDigimonNames'
 import { fetchDigimonRoleMap } from './meterRoleBuckets'
 import { mapPool } from './meterPlayerProfile'
 import type { MeterUploadScope } from './meterScopeList'
@@ -189,7 +190,9 @@ export async function fetchPublicDungeonParses(
 
   if (error) return { rows: [], error: error.message }
 
-  return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
+  const eligible = leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[])
+  const rows = await resolveMeterParseRowPayloads(eligible)
+  return { rows, error: null }
 
 }
 
@@ -211,7 +214,9 @@ export async function fetchGlobalRecentPublicParses(
     .limit(limit)
 
   if (error) return { rows: [], error: error.message }
-  return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
+  const eligible = leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[])
+  const rows = await resolveMeterParseRowPayloads(eligible)
+  return { rows, error: null }
 }
 
 export async function getPublicDungeonParsesCached(
@@ -306,7 +311,9 @@ export async function fetchMyMeterParses(
 
   if (error) return { rows: [], error: error.message }
 
-  return { rows: rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId), error: null }
+  const owned = rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId)
+  const rows = await resolveMeterParseRowPayloads(owned)
+  return { rows, error: null }
 
 }
 

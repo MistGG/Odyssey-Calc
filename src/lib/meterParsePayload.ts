@@ -68,6 +68,11 @@ export type MeterParsePayloadDungeonPartyStored = {
   raidTotalDamage?: number
   dungeon: MeterParseDungeonStored
   members: MeterPartyMemberStored[]
+  /**
+   * When true, `digimons[].digimonName` may be in-game nicknames.
+   * Odyssey Calc resolves official wiki names from `digimonId` before display.
+   */
+  digimonNamesRequireWikiLookup?: boolean
 }
 
 function isSkillRow(x: unknown): x is MeterSkillRow {
