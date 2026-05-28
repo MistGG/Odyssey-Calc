@@ -188,6 +188,36 @@ export function isFailedDungeonParseRow(row: { payload: unknown }): boolean {
   return parseRunOutcomeFromPayload(row.payload) === 'fail'
 }
 
+function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
+  return /<\s*dungeon\s+boss\s*>/i.test(name)
+}
+
+/**
+ * Companion ≤0.1.52 could auto-upload after the first objective batch (partial `bossTargets`, ~0–7s timer).
+ * Excluded from leaderboards; still visible in My Parses as unranked.
+ */
+export function isPartialDungeonClearParse(
+  payload: unknown,
+  rowDurationSec = 0,
+): boolean {
+  if (!isDungeonPartyParsePayload(payload)) return false
+  const dungeon = payload.dungeon
+  const markedClear =
+    dungeon.runOutcome === 'clear' || dungeon.leaderboardEligible === true
+  if (!markedClear) return false
+
+  const members = partyMembersFromPayload(payload)
+  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
+  const bosses = dungeon.bossTargets ?? []
+  const hasFinalBoss = bosses.some((b) => bossTargetLooksLikeFinalDungeonBoss(b))
+
+  if (bosses.length >= 2 && !hasFinalBoss) return true
+
+  if (bosses.length >= 2 && sessionDur > 0 && sessionDur < 20) return true
+
+  return false
+}
+
 export function raidTotalFromPayload(
   payload: unknown,
   members: MeterPartyMemberStored[],
@@ -271,9 +301,13 @@ export function isInvalidMeterPartyParseRow(row: { payload: unknown }): boolean 
 }
 
 /** Unranked or broken — excluded from public leaderboards and percentile coloring. */
-export function isExcludedFromLeaderboardParseRow(row: { payload: unknown }): boolean {
+export function isExcludedFromLeaderboardParseRow(row: {
+  payload: unknown
+  duration_sec?: number
+}): boolean {
   if (!isDungeonPartyParsePayload(row.payload)) return false
   if (isFailedDungeonParseRow(row)) return true
+  if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0)) return true
   if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return true
   const members = partyMembersFromPayload(row.payload)
   if (isBrokenMeterPartyParse(row.payload, members)) return true
