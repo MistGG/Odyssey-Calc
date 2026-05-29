@@ -45,6 +45,9 @@ const EVENTS = [
     prizeShopPointsPerRole: 100,
     participationPrizeCrownsPerRole: 50,
     participationShopPointsAll: 25,
+    dungeonId: 'u1tl0czg',
+    dungeonName: 'Army of Steel',
+    difficultyId: 3,
     roles: [
       { label: 'Melee', prize: 200 },
       { label: 'Ranged', prize: 200 },
@@ -54,7 +57,7 @@ const EVENTS = [
       { label: 'Healer', prize: 200 },
     ],
     description:
-      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns and 100 meter shop points per role winner, random 50-crown draw per role, and 25 shop points for every eligible participant. Odyssey Calc Meter event.',
+      'May 29–June 5 — Army of Steel (Hard): 200 crowns + 100 shop points per role winner, random 50-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]
@@ -127,6 +130,7 @@ function shareHtml(event) {
     .pill{padding:4px 12px;border-radius:999px;font-size:.78rem;font-weight:700}
     .pill--date{background:rgba(180,83,9,.45);color:#fef3c7;border:1px solid rgba(251,191,36,.35)}
     .pill--diff{background:rgba(59,130,246,.2);color:#93c5fd;border:1px solid rgba(96,165,250,.4)}
+    .pill--dungeon{background:rgba(14,116,144,.35);color:#e0f2fe;border:1px solid rgba(56,189,248,.4)}
     ul{margin:0;padding-left:1.2rem;line-height:1.65}
     .muted{color:#94a3b8;font-weight:400}
     p.lead{color:#cbd5e1;line-height:1.55}
@@ -146,6 +150,7 @@ function shareHtml(event) {
     <h1>${escapeHtml(event.eventTitle)}</h1>
     <div class="meta">
       <span class="pill pill--date">${escapeHtml(event.eventDateLabel)}</span>
+      ${event.dungeonName ? `<span class="pill pill--dungeon">${escapeHtml(event.dungeonName)}</span>` : ''}
       <span class="pill pill--diff">${escapeHtml(event.difficultyLabel)}</span>
     </div>
     <p class="lead"><strong>${total.toLocaleString()} crowns</strong> and <strong>${((event.prizeShopPointsPerRole ?? 0) * event.roles.length).toLocaleString()} meter shop points</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> and <strong>${event.prizeShopPointsPerRole ?? 0} shop points</strong> per #1 Best DPS.</p>

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ForumTeaserEventEmbed } from '../components/ForumTeaserEventEmbed'
+import { MayClearEventLeaderboards } from '../components/MayClearEventLeaderboards'
 import { mayClearEventSharePageUrl } from '../lib/eventShare'
 import {
   EVENT_ANNOUNCEMENT_NOTE,
@@ -10,6 +11,7 @@ import {
   MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS,
   MAY_CLEAR_TOTAL_CROWNS,
   MAY_CLEAR_TOTAL_SHOP_POINTS,
+  mayClearEventMeterNavState,
 } from '../lib/mayClearEvent'
 
 export function MayClearEventPage() {
@@ -27,21 +29,28 @@ export function MayClearEventPage() {
   }, [shareUrl])
 
   return (
-    <div className="event-page event-page--with-teaser">
+    <div className="event-page event-page--with-teaser event-page--with-leaderboards">
       <header className="event-hero">
         <div className="event-hero__glow" aria-hidden />
         <p className="event-hero__eyebrow">Community event</p>
         <h1 className="event-hero__title">{MAY_CLEAR_EVENT.eventTitle}</h1>
         <p className="event-hero__lead">
-          Visit this page starting May 29 to see which dungeon is selected for the Hard challenge.
-          The event runs through June 5.
+          Clear <strong>{MAY_CLEAR_EVENT.dungeonName}</strong> on{' '}
+          <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window and upload a dungeon
+          party parse with Odyssey Companion. Leaderboards below update from live Meter uploads.
         </p>
         <div className="event-hero__meta">
           <span className="event-pill event-pill--date">{MAY_CLEAR_EVENT.eventDateLabel}</span>
+          <span className="event-pill event-pill--dungeon">{MAY_CLEAR_EVENT.dungeonName}</span>
           <span className="event-pill event-pill--diff">{MAY_CLEAR_EVENT.difficultyLabel}</span>
         </div>
+        {MAY_CLEAR_EVENT.dungeonSelectionProvisional ? (
+          <p className="event-hero__warn muted" role="note">
+            Featured dungeon may change before the event starts.
+          </p>
+        ) : null}
         <div className="event-hero__actions">
-          <Link className="event-cta event-cta--primary" to="/meter">
+          <Link className="event-cta event-cta--primary" to="/meter" state={mayClearEventMeterNavState()}>
             Visit Meter page
           </Link>
           <Link className="event-cta event-cta--ghost" to="/companion">
@@ -104,6 +113,8 @@ export function MayClearEventPage() {
         </ul>
       </section>
 
+      <MayClearEventLeaderboards />
+
       <section className="event-panel event-panel--teaser" aria-label="Event announcement">
         <p className="event-placeholder-note" role="note">
           {EVENT_ANNOUNCEMENT_NOTE}
@@ -117,7 +128,9 @@ export function MayClearEventPage() {
         </h2>
         <ol className="event-steps">
           <li>
-            Run the announced dungeon during <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>.
+            Run <strong>{MAY_CLEAR_EVENT.dungeonName}</strong> on{' '}
+            <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
+            <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>.
           </li>
           <li>
             Use <Link to="/companion">Odyssey Companion</Link> to record the party run and upload a{' '}

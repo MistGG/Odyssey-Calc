@@ -9,6 +9,11 @@ export const MAY_CLEAR_EVENT = {
   difficultyLabel: 'Hard',
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
+  /** Wiki dungeon id — Army of Steel (may change before go-live). */
+  dungeonId: 'u1tl0czg',
+  dungeonName: 'Army of Steel',
+  /** When true, event page shows a note that the dungeon pick may still change. */
+  dungeonSelectionProvisional: true,
   prizeCrownsPerRole: 200,
   /** Meter theme shop points for each role winner (#1 Best DPS). */
   prizeShopPointsPerRole: 100,
@@ -18,7 +23,19 @@ export const MAY_CLEAR_EVENT = {
   participationShopPointsAll: 25,
 } as const
 
-export const EVENT_ANNOUNCEMENT_NOTE = 'A dungeon will be selected on May 29!'
+export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.dungeonSelectionProvisional
+  ? 'Featured dungeon may be updated before the event goes live.'
+  : 'A dungeon will be selected on May 29!'
+
+export function mayClearEventMeterNavState(): {
+  dungeonId: string
+  difficultyId: number
+} {
+  return {
+    dungeonId: MAY_CLEAR_EVENT.dungeonId,
+    difficultyId: MAY_CLEAR_EVENT.difficultyId,
+  }
+}
 
 /** Event page announcement image (forum teaser section). */
 export const EVENT_TEASER_IMAGE_URL = 'https://i.imgur.com/5ZCqkPy.png'

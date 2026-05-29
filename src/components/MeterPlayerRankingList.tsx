@@ -20,6 +20,8 @@ export function MeterPlayerRankingList({
   poolDps,
   emptyLabel = 'No rankings yet.',
   meterContext,
+  highlightTopN = 0,
+  maxEntries,
 }: {
   title: string
   entries: PlayerRankEntry[]
@@ -27,7 +29,12 @@ export function MeterPlayerRankingList({
   poolDps: number[]
   emptyLabel?: string
   meterContext?: { dungeonId: string; difficultyId: number }
+  /** Highlight the first N ranks (e.g. event prize leader). */
+  highlightTopN?: number
+  /** Cap visible rows; omit to show all entries passed in. */
+  maxEntries?: number
 }) {
+  const visible = maxEntries != null ? entries.slice(0, maxEntries) : entries
   return (
     <section
       className="meter-public-rank meter-parses-meter-chrome"
@@ -36,14 +43,15 @@ export function MeterPlayerRankingList({
       <h3 id={`rank-${title.replace(/\s/g, '-')}`} className="meter-public-chart-title">
         {title}
       </h3>
-      {entries.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="meter-parses-muted">{emptyLabel}</p>
       ) : (
         <ol className="meter-public-rank-list meter-scroll--themed">
-          {entries.map((e, i) => {
+          {visible.map((e, i) => {
             const pct = dpsToPercentile(e.dps, poolDps)
             const portrait = portraitForPlayerEntry(e)
             const digimonLabel = e.digimonName.trim()
+            const isTop = highlightTopN > 0 && i < highlightTopN
             return (
               <li key={`${e.playerKey}-${i}`}>
                 <Link
@@ -52,14 +60,21 @@ export function MeterPlayerRankingList({
                     displayName: e.displayName,
                     fromMeter: meterContext,
                   }}
-                  className="meter-public-rank-row meter-public-rank-row--link"
+                  className={`meter-public-rank-row meter-public-rank-row--link${isTop ? ' meter-public-rank-row--top' : ''}`}
                   title={
                     digimonLabel
                       ? `View ${e.displayName} (${digimonLabel}) profile`
                       : `View ${e.displayName} profile`
                   }
                 >
-                  <span className="meter-public-rank-num">{i + 1}</span>
+                  <span className="meter-public-rank-num">
+                    {i + 1}
+                    {isTop ? (
+                      <span className="meter-public-rank-leader-badge" aria-label="Current leader">
+                        Lead
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="meter-public-rank-name" style={{ color: parseScoreColor(pct) }}>
                     {portrait ? (
                       <img
