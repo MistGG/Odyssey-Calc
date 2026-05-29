@@ -250,13 +250,13 @@ function parseRowDifficultyId(row: PublicMeterParseRow): number | null {
   return null
 }
 
-/** First eligible row in newest-first order (no extra Supabase query). */
+/** Default meter page: newest **ranked** parse (same rules as public leaderboard). */
 export function mostRecentMeterParseSelection(
   rows: PublicMeterParseRow[],
   allowedDungeonIds: Iterable<string>,
 ): MeterParseSelection | null {
   const allowed = new Set(allowedDungeonIds)
-  for (const row of rows) {
+  for (const row of leaderboardEligibleParses(rows)) {
     const dungeonId = parseRowDungeonId(row)
     const difficultyId = parseRowDifficultyId(row)
     if (!dungeonId || !allowed.has(dungeonId)) continue

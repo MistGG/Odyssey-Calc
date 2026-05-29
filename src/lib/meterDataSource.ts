@@ -114,7 +114,7 @@ export async function fetchRecentMeterParseSelection(
 
     .from('meter_parses')
 
-    .select('dungeon_id, difficulty_id, difficulty, payload, created_at')
+    .select('dungeon_id, difficulty_id, difficulty, payload, created_at, duration_sec, app_version')
 
     .eq('parse_kind', 'dungeon_party')
 
