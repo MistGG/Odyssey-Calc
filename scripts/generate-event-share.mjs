@@ -46,7 +46,8 @@ const EVENTS = [
     prizeShopPointsPerRole: 100,
     participationPrizeCrownsPerRole: 50,
     participationShopPointsAll: 25,
-    dungeonAnnounced: false,
+    dungeonAnnounced: true,
+    dungeonName: 'Fullmetal Genius',
     difficultyId: 3,
     roles: [
       { label: 'Melee', prize: 200 },
@@ -57,7 +58,7 @@ const EVENTS = [
       { label: 'Healer', prize: 200 },
     ],
     description:
-      'May 29-June 5 community dungeon clear (Hard), ends June 6, 2026, 04:00 UTC. 200 crowns + 100 shop points per role winner, random 50-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
+      'Fullmetal Genius Hard clear challenge, May 29-June 5, ends June 6, 2026, 04:00 UTC. 200 crowns + 100 shop points per role winner, random 50-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]

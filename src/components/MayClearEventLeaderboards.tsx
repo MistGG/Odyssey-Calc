@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { getPublicDungeonParsesCached, loadDigimonRoleMapForMeter } from '../lib/meterDataSource'
 import { MAY_CLEAR_EVENT, type MayClearEventDungeon } from '../lib/mayClearEvent'
@@ -81,34 +81,23 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
       ) : null}
 
       <div className="event-lb-head">
-        <div>
-          <h2 id="event-lb-heading" className="event-section-title">
-            {eventEnded ? 'Final results' : 'Live leaderboards'}
-          </h2>
-          <p className="event-section-lead muted">
-            {eventEnded ? (
-              <>
-                <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): prize leaders by
-                Best DPS and participation draw winners, one per role.
-              </>
-            ) : (
-              <>
-                <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): best parse per
-                player by role. Current #1 in each role wins the crown prize until{' '}
-                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
-              </>
-            )}
-          </p>
-        </div>
-        {!eventEnded ? (
-          <Link
-            className="event-cta event-cta--ghost event-lb-meter-link"
-            to="/meter"
-            state={meterContext}
-          >
-            Full Meter page
-          </Link>
-        ) : null}
+        <h2 id="event-lb-heading" className="event-section-title">
+          {eventEnded ? 'Final results' : 'Live leaderboards'}
+        </h2>
+        <p className="event-section-lead muted">
+          {eventEnded ? (
+            <>
+              <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): prize leaders by
+              Best DPS and participation draw winners, one per role.
+            </>
+          ) : (
+            <>
+              <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): best parse per
+              player by role. Current #1 in each role wins the crown prize until{' '}
+              <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+            </>
+          )}
+        </p>
       </div>
 
       {loadError ? <p className="meter-parses-error">{loadError}</p> : null}

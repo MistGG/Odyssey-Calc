@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 import {
   isMayClearEventDungeonAnnounced,
+  mayClearEventDungeonFallback,
   resolveMayClearEventDungeon,
   type MayClearEventDungeon,
 } from '../lib/mayClearEvent'
 
 export function useMayClearEventDungeon(): MayClearEventDungeon | null {
-  const [dungeon, setDungeon] = useState<MayClearEventDungeon | null>(null)
+  const [dungeon, setDungeon] = useState<MayClearEventDungeon | null>(() =>
+    mayClearEventDungeonFallback(),
+  )
 
   useEffect(() => {
     if (!isMayClearEventDungeonAnnounced()) {
@@ -19,7 +22,9 @@ export function useMayClearEventDungeon(): MayClearEventDungeon | null {
       .then((list) => {
         if (!cancelled) setDungeon(resolveMayClearEventDungeon(list))
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) setDungeon(mayClearEventDungeonFallback())
+      })
     return () => {
       cancelled = true
     }

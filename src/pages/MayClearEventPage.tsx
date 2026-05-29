@@ -1,13 +1,12 @@
 import { useCallback, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ForumTeaserEventEmbed } from '../components/ForumTeaserEventEmbed'
 import { MayClearEventLeaderboards } from '../components/MayClearEventLeaderboards'
 import { useMayClearEventDungeon } from '../hooks/useMayClearEventDungeon'
 import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { mayClearEventSharePageUrl } from '../lib/eventShare'
 import {
-  EVENT_ANNOUNCEMENT_NOTE,
   isMayClearEventDungeonAnnounced,
+  mayClearEventDungeonFallback,
   shouldShowMayClearEventLeaderboards,
   MAY_CLEAR_EVENT,
   MAY_CLEAR_EVENT_ROLES,
@@ -24,7 +23,8 @@ export function MayClearEventPage() {
   const eventEnded = useMayClearEventEnded(previewEnded)
   const dungeonAnnounced = isMayClearEventDungeonAnnounced()
   const eventDungeon = useMayClearEventDungeon()
-  const showLeaderboards = shouldShowMayClearEventLeaderboards(eventDungeon)
+  const activeDungeon = eventDungeon ?? mayClearEventDungeonFallback()
+  const showLeaderboards = shouldShowMayClearEventLeaderboards(activeDungeon)
 
   const [shareCopied, setShareCopied] = useState(false)
   const shareUrl = mayClearEventSharePageUrl()
@@ -41,21 +41,21 @@ export function MayClearEventPage() {
 
   return (
     <div
-      className={`event-page event-page--with-teaser${showLeaderboards ? ' event-page--with-leaderboards' : ''}`}
+      className={`event-page${showLeaderboards ? ' event-page--with-leaderboards' : ''}`}
     >
       <header className="event-hero">
         <div className="event-hero__glow" aria-hidden />
         <p className="event-hero__eyebrow">Community event</p>
         <h1 className="event-hero__title">{MAY_CLEAR_EVENT.eventTitle}</h1>
         <p className="event-hero__lead">
-          {eventEnded && eventDungeon ? (
+          {eventEnded && activeDungeon ? (
             <>
-              The <strong>{eventDungeon.dungeonName}</strong> clear challenge has ended. See final
+              The <strong>{activeDungeon.dungeonName}</strong> clear challenge has ended. See final
               leaderboard and participation draw winners below.
             </>
-          ) : dungeonAnnounced && eventDungeon ? (
+          ) : dungeonAnnounced && activeDungeon ? (
             <>
-              Clear <strong>{eventDungeon.dungeonName}</strong> on{' '}
+              Clear <strong>{activeDungeon.dungeonName}</strong> on{' '}
               <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window and upload a
               dungeon party parse with Odyssey Companion. Leaderboards below update from live Meter
               uploads until <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
@@ -73,8 +73,8 @@ export function MayClearEventPage() {
           <span className="event-pill event-pill--ends">
             Ends {MAY_CLEAR_EVENT.eventEndUtcLabel}
           </span>
-          {dungeonAnnounced && eventDungeon ? (
-            <span className="event-pill event-pill--dungeon">{eventDungeon.dungeonName}</span>
+          {dungeonAnnounced && activeDungeon ? (
+            <span className="event-pill event-pill--dungeon">{activeDungeon.dungeonName}</span>
           ) : null}
           <span className="event-pill event-pill--diff">{MAY_CLEAR_EVENT.difficultyLabel}</span>
         </div>
@@ -82,7 +82,7 @@ export function MayClearEventPage() {
           <Link
             className="event-cta event-cta--primary"
             to="/meter"
-            state={mayClearEventMeterNavState(eventDungeon?.dungeonId)}
+            state={mayClearEventMeterNavState(activeDungeon?.dungeonId)}
           >
             Visit Meter page
           </Link>
@@ -146,14 +146,7 @@ export function MayClearEventPage() {
         </ul>
       </section>
 
-      {showLeaderboards ? <MayClearEventLeaderboards dungeon={eventDungeon} /> : null}
-
-      <section className="event-panel event-panel--teaser" aria-label="Event announcement">
-        <p className="event-placeholder-note" role="note">
-          {EVENT_ANNOUNCEMENT_NOTE}
-        </p>
-        <ForumTeaserEventEmbed />
-      </section>
+      {showLeaderboards ? <MayClearEventLeaderboards dungeon={activeDungeon} /> : null}
 
       <section className="event-panel" aria-labelledby="event-rules-heading">
         <h2 id="event-rules-heading" className="event-section-title">
@@ -161,9 +154,9 @@ export function MayClearEventPage() {
         </h2>
         <ol className="event-steps">
           <li>
-            {dungeonAnnounced && eventDungeon ? (
+            {dungeonAnnounced && activeDungeon ? (
               <>
-                Run <strong>{eventDungeon.dungeonName}</strong> on{' '}
+                Run <strong>{activeDungeon.dungeonName}</strong> on{' '}
                 <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
                 <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
                 <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.

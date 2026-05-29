@@ -17,11 +17,11 @@ export const MAY_CLEAR_EVENT = {
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
   /** Set true once the in-game event dungeon is announced (May 29). */
-  dungeonAnnounced: false,
+  dungeonAnnounced: true,
   /** Primary dungeon selector (matched against wiki dungeon list). Used when announced. */
-  dungeonName: 'Army of Steel',
+  dungeonName: 'Fullmetal Genius',
   /** Fallback wiki id when the list is unavailable or the name changes. */
-  dungeonId: 'u1tl0czg',
+  dungeonId: 'u7ieoqy',
   prizeCrownsPerRole: 200,
   /** Meter theme shop points for each role winner (#1 Best DPS). */
   prizeShopPointsPerRole: 100,
@@ -38,6 +38,14 @@ export type MayClearEventDungeon = {
 
 export function isMayClearEventDungeonAnnounced(): boolean {
   return MAY_CLEAR_EVENT.dungeonAnnounced
+}
+
+export function mayClearEventDungeonFallback(): MayClearEventDungeon | null {
+  if (!MAY_CLEAR_EVENT.dungeonAnnounced) return null
+  return {
+    dungeonId: MAY_CLEAR_EVENT.dungeonId,
+    dungeonName: MAY_CLEAR_EVENT.dungeonName,
+  }
 }
 
 /** Live event leaderboards stay hidden until the dungeon is officially announced. */
@@ -64,7 +72,7 @@ export function resolveMayClearEventDungeon(
 }
 
 export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.dungeonAnnounced
-  ? 'Featured dungeon may be updated before the event goes live.'
+  ? 'Live leaderboards update from valid Hard party uploads.'
   : 'A dungeon will be selected on May 29!'
 
 export function mayClearEventMeterNavState(dungeonId?: string): {
