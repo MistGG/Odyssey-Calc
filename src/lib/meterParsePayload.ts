@@ -192,6 +192,23 @@ function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)
 }
 
+function parseCompanionAppVersion(v: string | null | undefined): [number, number, number] | null {
+  if (!v?.trim()) return null
+  const m = v.trim().match(/^(\d+)\.(\d+)\.(\d+)/)
+  if (!m) return null
+  return [Number(m[1]), Number(m[2]), Number(m[3])]
+}
+
+/** Companion ≥0.1.57 only auto-uploads verified full clears (bossTargets snapshot may be stale). */
+function companionUploadTrustsFullClear(appVersion: string | null | undefined): boolean {
+  const p = parseCompanionAppVersion(appVersion)
+  if (!p) return false
+  const [maj, min, patch] = p
+  if (maj > 0) return true
+  if (min > 1) return true
+  return patch >= 57
+}
+
 /**
  * Companion ≤0.1.52 could auto-upload after the first objective batch (partial `bossTargets`, ~0–7s timer).
  * Excluded from leaderboards; still visible in My Parses as unranked.
@@ -199,6 +216,7 @@ function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
 export function isPartialDungeonClearParse(
   payload: unknown,
   rowDurationSec = 0,
+  appVersion?: string | null,
 ): boolean {
   if (!isDungeonPartyParsePayload(payload)) return false
   const dungeon = payload.dungeon
@@ -210,6 +228,13 @@ export function isPartialDungeonClearParse(
   const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
   const bosses = dungeon.bossTargets ?? []
   const hasFinalBoss = bosses.some((b) => bossTargetLooksLikeFinalDungeonBoss(b))
+
+  if (
+    dungeon.leaderboardEligible === true &&
+    (companionUploadTrustsFullClear(appVersion) || sessionDur >= 120)
+  ) {
+    return false
+  }
 
   if (bosses.length >= 2 && !hasFinalBoss) return true
 
@@ -304,10 +329,11 @@ export function isInvalidMeterPartyParseRow(row: { payload: unknown }): boolean 
 export function isExcludedFromLeaderboardParseRow(row: {
   payload: unknown
   duration_sec?: number
+  app_version?: string | null
 }): boolean {
   if (!isDungeonPartyParsePayload(row.payload)) return false
   if (isFailedDungeonParseRow(row)) return true
-  if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0)) return true
+  if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) return true
   if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return true
   const members = partyMembersFromPayload(row.payload)
   if (isBrokenMeterPartyParse(row.payload, members)) return true

@@ -51,7 +51,7 @@ export type MeterParseListRow = PublicMeterParseRow & {
 export function leaderboardEligibleParses(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
   return rows.filter((r) => {
     if (isFailedDungeonParseRow(r)) return false
-    if (isPartialDungeonClearParse(r.payload, r.duration_sec ?? 0)) return false
+    if (isPartialDungeonClearParse(r.payload, r.duration_sec ?? 0, r.app_version)) return false
     if (!isLeaderboardEligibleDungeonParsePayload(r.payload)) return false
     const members = partyMembersFromPayload(r.payload)
     if (isBrokenMeterPartyParse(r.payload, members)) return false
