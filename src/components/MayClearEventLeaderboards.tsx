@@ -1,80 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { digimonPortraitUrl } from '../lib/digimonImage'
+import { Link, useSearchParams } from 'react-router-dom'
+import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { getPublicDungeonParsesCached, loadDigimonRoleMapForMeter } from '../lib/meterDataSource'
-import { aggregatePublicMeterStats, type PlayerRankEntry } from '../lib/meterPublicStats'
 import {
   MAY_CLEAR_EVENT,
   mayClearEventMeterNavState,
+  type MayClearEventDungeon,
 } from '../lib/mayClearEvent'
+import { buildMayClearEventResults } from '../lib/mayClearEventResults'
 import {
   METER_ROLE_BUCKET_LABELS,
   METER_ROLE_BUCKETS,
-  type MeterRoleBucket,
 } from '../lib/meterRoleBuckets'
-import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
+import { EventWinnerCard } from './EventWinnerCard'
 import { MeterPlayerRankingList } from './MeterPlayerRankingList'
 
 const EVENT_TOP_PLAYERS = 12
 
-function formatInt(n: number) {
-  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
-}
+export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventDungeon }) {
+  const [searchParams] = useSearchParams()
+  const previewEnded = searchParams.get('previewEnded') === '1'
+  const eventEnded = useMayClearEventEnded(previewEnded)
 
-function portraitForLeader(e: PlayerRankEntry): string | undefined {
-  if (e.portraitUrl?.trim()) return e.portraitUrl
-  const iconId = e.iconId?.trim()
-  if (iconId) return digimonPortraitUrl(iconId, e.digimonId, e.digimonName)
-  return undefined
-}
-
-function EventLeaderCard({
-  role,
-  leader,
-  meterContext,
-}: {
-  role: MeterRoleBucket
-  leader: PlayerRankEntry | undefined
-  meterContext: { dungeonId: string; difficultyId: number }
-}) {
-  const label = METER_ROLE_BUCKET_LABELS[role]
-  if (!leader) {
-    return (
-      <div className="event-leader-card event-leader-card--empty">
-        <span className="event-leader-card__role">{label}</span>
-        <p className="event-leader-card__empty muted">No runs yet</p>
-      </div>
-    )
-  }
-
-  const portrait = portraitForLeader(leader)
-  const digimonLabel = leader.digimonName.trim()
-
-  return (
-    <div className="event-leader-card event-leader-card--filled">
-      <span className="event-leader-card__role">{label}</span>
-      <span className="event-leader-card__badge">#1 · prize leader</span>
-      <Link
-        to={meterPlayerProfilePath(leader.playerKey)}
-        state={{ displayName: leader.displayName, fromMeter: meterContext }}
-        className="event-leader-card__player"
-      >
-        {portrait ? (
-          <img className="event-leader-card__portrait" src={portrait} alt="" width={36} height={36} />
-        ) : (
-          <span className="event-leader-card__portrait event-leader-card__portrait--empty" aria-hidden />
-        )}
-        <span className="event-leader-card__name">{leader.displayName}</span>
-      </Link>
-      {digimonLabel ? <span className="event-leader-card__digimon muted">{digimonLabel}</span> : null}
-      <span className="event-leader-card__dps">{formatInt(leader.dps)} DPS</span>
-    </div>
-  )
-}
-
-export function MayClearEventLeaderboards() {
-  const { dungeonId, difficultyId } = MAY_CLEAR_EVENT
-  const meterContext = useMemo(() => mayClearEventMeterNavState(), [])
+  const { dungeonId, dungeonName } = dungeon
+  const { difficultyId } = MAY_CLEAR_EVENT
+  const meterContext = useMemo(() => mayClearEventMeterNavState(dungeonId), [dungeonId])
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -102,61 +52,166 @@ export function MayClearEventLeaderboards() {
     }
   }, [dungeonId, difficultyId])
 
-  const stats = useMemo(() => {
+  const results = useMemo(() => {
     if (!digimonRoleById.size) return null
-    return aggregatePublicMeterStats(rows, digimonRoleById, dungeonId, difficultyId)
-  }, [rows, digimonRoleById, dungeonId, difficultyId])
+    return buildMayClearEventResults(rows, digimonRoleById, dungeonId)
+  }, [rows, digimonRoleById, dungeonId])
+
+  const leaderboardPrizeLabel = `${MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns + ${MAY_CLEAR_EVENT.prizeShopPointsPerRole} shop pts`
+  const participationPrizeLabel = `${MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns`
 
   return (
-    <section className="event-panel event-panel--leaderboards" aria-labelledby="event-lb-heading">
+    <section
+      className={`event-panel event-panel--leaderboards${eventEnded ? ' event-panel--ended' : ''}`}
+      aria-labelledby="event-lb-heading"
+    >
+      {previewEnded ? (
+        <p className="event-ended-preview-note" role="note">
+          Preview: ended state. Remove <code>?previewEnded=1</code> from the URL for the live view.
+        </p>
+      ) : null}
+
+      {eventEnded ? (
+        <div className="event-ended-banner" role="status">
+          <p className="event-ended-banner__title">Event complete</p>
+          <p className="event-ended-banner__lead muted">
+            Leaderboards closed at <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>. Winners below
+            are final.
+          </p>
+        </div>
+      ) : null}
+
       <div className="event-lb-head">
         <div>
           <h2 id="event-lb-heading" className="event-section-title">
-            Live leaderboards
+            {eventEnded ? 'Final results' : 'Live leaderboards'}
           </h2>
           <p className="event-section-lead muted">
-            <strong>{MAY_CLEAR_EVENT.dungeonName}</strong> · {MAY_CLEAR_EVENT.difficultyLabel} — best
-            parse per player by role. Current #1 in each role wins the crown prize.
+            {eventEnded ? (
+              <>
+                <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): prize leaders by
+                Best DPS and participation draw winners, one per role.
+              </>
+            ) : (
+              <>
+                <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): best parse per
+                player by role. Current #1 in each role wins the crown prize until{' '}
+                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              </>
+            )}
           </p>
         </div>
-        <Link
-          className="event-cta event-cta--ghost event-lb-meter-link"
-          to="/meter"
-          state={meterContext}
-        >
-          Full Meter page
-        </Link>
+        {!eventEnded ? (
+          <Link
+            className="event-cta event-cta--ghost event-lb-meter-link"
+            to="/meter"
+            state={meterContext}
+          >
+            Full Meter page
+          </Link>
+        ) : null}
       </div>
 
       {loadError ? <p className="meter-parses-error">{loadError}</p> : null}
-      {loading && !stats ? (
-        <p className="meter-parses-muted">Loading leaderboards…</p>
-      ) : stats ? (
+      {loading && !results ? (
+        <p className="meter-parses-muted">Loading…</p>
+      ) : results ? (
         <>
-          <div className="event-leaders-grid" role="list" aria-label="Current prize leaders by role">
-            {METER_ROLE_BUCKETS.map((role) => (
-              <EventLeaderCard
-                key={role}
-                role={role}
-                leader={stats.playersByBucket[role][0]}
-                meterContext={meterContext}
-              />
-            ))}
-          </div>
-          <div className="event-lb-ranks">
-            {METER_ROLE_BUCKETS.map((role) => (
-              <MeterPlayerRankingList
-                key={role}
-                title={METER_ROLE_BUCKET_LABELS[role]}
-                entries={stats.playersByBucket[role]}
-                poolDps={stats.sortedDpsByBucket[role]}
-                meterContext={meterContext}
-                highlightTopN={1}
-                maxEntries={EVENT_TOP_PLAYERS}
-                emptyLabel="No runs yet for this role."
-              />
-            ))}
-          </div>
+          {eventEnded ? (
+            <>
+              <section className="event-results-block" aria-labelledby="event-winners-heading">
+                <h3 id="event-winners-heading" className="event-results-block__title">
+                  Leaderboard winners
+                </h3>
+                <p className="event-results-block__lead muted">
+                  #1 Best DPS in each role during the event window.
+                </p>
+                <div className="event-winners-grid" role="list">
+                  {METER_ROLE_BUCKETS.map((role) => (
+                    <EventWinnerCard
+                      key={role}
+                      role={role}
+                      winner={results.leaderboardWinners[role]}
+                      variant="leaderboard"
+                      prizeLabel={leaderboardPrizeLabel}
+                      meterContext={meterContext}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section
+                className="event-results-block event-results-block--participation"
+                aria-labelledby="event-participation-winners-heading"
+              >
+                <h3 id="event-participation-winners-heading" className="event-results-block__title">
+                  Participation draw winners
+                </h3>
+                <p className="event-results-block__lead muted">
+                  One random eligible player per role from all valid event uploads.
+                </p>
+                <div className="event-winners-grid" role="list">
+                  {METER_ROLE_BUCKETS.map((role) => (
+                    <EventWinnerCard
+                      key={role}
+                      role={role}
+                      winner={results.participationWinners[role]}
+                      variant="participation"
+                      prizeLabel={participationPrizeLabel}
+                      meterContext={meterContext}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <details className="event-final-standings">
+                <summary className="event-final-standings__summary">Final standings (top 12 per role)</summary>
+                <div className="event-lb-ranks">
+                  {METER_ROLE_BUCKETS.map((role) => (
+                    <MeterPlayerRankingList
+                      key={role}
+                      title={METER_ROLE_BUCKET_LABELS[role]}
+                      entries={results.stats.playersByBucket[role]}
+                      poolDps={results.stats.sortedDpsByBucket[role]}
+                      meterContext={meterContext}
+                      highlightTopN={1}
+                      maxEntries={EVENT_TOP_PLAYERS}
+                      emptyLabel="No runs in this role."
+                    />
+                  ))}
+                </div>
+              </details>
+            </>
+          ) : (
+            <>
+              <div className="event-leaders-grid" role="list" aria-label="Current prize leaders by role">
+                {METER_ROLE_BUCKETS.map((role) => (
+                  <EventWinnerCard
+                    key={role}
+                    role={role}
+                    winner={results.stats.playersByBucket[role][0]}
+                    variant="leaderboard"
+                    prizeLabel="Current #1"
+                    meterContext={meterContext}
+                  />
+                ))}
+              </div>
+              <div className="event-lb-ranks">
+                {METER_ROLE_BUCKETS.map((role) => (
+                  <MeterPlayerRankingList
+                    key={role}
+                    title={METER_ROLE_BUCKET_LABELS[role]}
+                    entries={results.stats.playersByBucket[role]}
+                    poolDps={results.stats.sortedDpsByBucket[role]}
+                    meterContext={meterContext}
+                    highlightTopN={1}
+                    maxEntries={EVENT_TOP_PLAYERS}
+                    emptyLabel="No runs yet for this role."
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       ) : null}
     </section>

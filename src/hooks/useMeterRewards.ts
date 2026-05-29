@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { fetchMyMeterParses, getPublicDungeonParsesCached } from '../lib/meterDataSource'
+import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
 import {
   buildDungeonEarnProgress,
   hardMeterDungeons,
@@ -62,6 +63,11 @@ export function useMeterRewards(
     setLoading(true)
     setError(null)
 
+    const cachedTamer = readCachedConfirmedTamer()
+    if (cachedTamer) {
+      await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
+    }
+
     const myRes = await fetchMyMeterParses(supabase)
     if (myRes.error) {
       setError(myRes.error)
@@ -74,7 +80,6 @@ export function useMeterRewards(
     const confirmedFromParses = hasConfirmedTamerFromParses(myRes.rows)
     const parsedTamerName =
       identity?.confirmedFromUpload ? identity.displayName?.trim() || null : null
-    const cachedTamer = readCachedConfirmedTamer()
     if (parsedTamerName) writeCachedConfirmedTamer(parsedTamerName)
     const tamerName = parsedTamerName ?? cachedTamer
     const confirmed = confirmedFromParses || Boolean(cachedTamer)

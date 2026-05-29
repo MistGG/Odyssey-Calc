@@ -1,10 +1,13 @@
 import { useCallback, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ForumTeaserEventEmbed } from '../components/ForumTeaserEventEmbed'
 import { MayClearEventLeaderboards } from '../components/MayClearEventLeaderboards'
+import { useMayClearEventDungeon } from '../hooks/useMayClearEventDungeon'
+import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { mayClearEventSharePageUrl } from '../lib/eventShare'
 import {
   EVENT_ANNOUNCEMENT_NOTE,
+  isMayClearEventDungeonAnnounced,
   MAY_CLEAR_EVENT,
   MAY_CLEAR_EVENT_ROLES,
   MAY_CLEAR_PARTICIPATION_ROLES,
@@ -15,6 +18,12 @@ import {
 } from '../lib/mayClearEvent'
 
 export function MayClearEventPage() {
+  const [searchParams] = useSearchParams()
+  const previewEnded = searchParams.get('previewEnded') === '1'
+  const eventEnded = useMayClearEventEnded(previewEnded)
+  const dungeonAnnounced = isMayClearEventDungeonAnnounced()
+  const eventDungeon = useMayClearEventDungeon()
+
   const [shareCopied, setShareCopied] = useState(false)
   const shareUrl = mayClearEventSharePageUrl()
 
@@ -29,28 +38,50 @@ export function MayClearEventPage() {
   }, [shareUrl])
 
   return (
-    <div className="event-page event-page--with-teaser event-page--with-leaderboards">
+    <div
+      className={`event-page event-page--with-teaser${dungeonAnnounced ? ' event-page--with-leaderboards' : ''}`}
+    >
       <header className="event-hero">
         <div className="event-hero__glow" aria-hidden />
         <p className="event-hero__eyebrow">Community event</p>
         <h1 className="event-hero__title">{MAY_CLEAR_EVENT.eventTitle}</h1>
         <p className="event-hero__lead">
-          Clear <strong>{MAY_CLEAR_EVENT.dungeonName}</strong> on{' '}
-          <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window and upload a dungeon
-          party parse with Odyssey Companion. Leaderboards below update from live Meter uploads.
+          {eventEnded && eventDungeon ? (
+            <>
+              The <strong>{eventDungeon.dungeonName}</strong> clear challenge has ended. See final
+              leaderboard and participation draw winners below.
+            </>
+          ) : dungeonAnnounced && eventDungeon ? (
+            <>
+              Clear <strong>{eventDungeon.dungeonName}</strong> on{' '}
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window and upload a
+              dungeon party parse with Odyssey Companion. Leaderboards below update from live Meter
+              uploads until <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+            </>
+          ) : (
+            <>
+              Visit this page starting May 29 to see which dungeon is selected for the{' '}
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> challenge. The event runs through June
+              5. Uploads count until <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+            </>
+          )}
         </p>
         <div className="event-hero__meta">
           <span className="event-pill event-pill--date">{MAY_CLEAR_EVENT.eventDateLabel}</span>
-          <span className="event-pill event-pill--dungeon">{MAY_CLEAR_EVENT.dungeonName}</span>
+          <span className="event-pill event-pill--ends">
+            Ends {MAY_CLEAR_EVENT.eventEndUtcLabel}
+          </span>
+          {dungeonAnnounced && eventDungeon ? (
+            <span className="event-pill event-pill--dungeon">{eventDungeon.dungeonName}</span>
+          ) : null}
           <span className="event-pill event-pill--diff">{MAY_CLEAR_EVENT.difficultyLabel}</span>
         </div>
-        {MAY_CLEAR_EVENT.dungeonSelectionProvisional ? (
-          <p className="event-hero__warn muted" role="note">
-            Featured dungeon may change before the event starts.
-          </p>
-        ) : null}
         <div className="event-hero__actions">
-          <Link className="event-cta event-cta--primary" to="/meter" state={mayClearEventMeterNavState()}>
+          <Link
+            className="event-cta event-cta--primary"
+            to="/meter"
+            state={mayClearEventMeterNavState(eventDungeon?.dungeonId)}
+          >
             Visit Meter page
           </Link>
           <Link className="event-cta event-cta--ghost" to="/companion">
@@ -113,7 +144,9 @@ export function MayClearEventPage() {
         </ul>
       </section>
 
-      <MayClearEventLeaderboards />
+      {dungeonAnnounced && eventDungeon ? (
+        <MayClearEventLeaderboards dungeon={eventDungeon} />
+      ) : null}
 
       <section className="event-panel event-panel--teaser" aria-label="Event announcement">
         <p className="event-placeholder-note" role="note">
@@ -128,9 +161,20 @@ export function MayClearEventPage() {
         </h2>
         <ol className="event-steps">
           <li>
-            Run <strong>{MAY_CLEAR_EVENT.dungeonName}</strong> on{' '}
-            <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
-            <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>.
+            {dungeonAnnounced && eventDungeon ? (
+              <>
+                Run <strong>{eventDungeon.dungeonName}</strong> on{' '}
+                <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
+                <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
+                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              </>
+            ) : (
+              <>
+                Run the announced dungeon on <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
+                <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
+                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              </>
+            )}
           </li>
           <li>
             Use <Link to="/companion">Odyssey Companion</Link> to record the party run and upload a{' '}

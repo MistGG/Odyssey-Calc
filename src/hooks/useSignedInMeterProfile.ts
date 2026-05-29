@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { fetchMyMeterParses } from '../lib/meterDataSource'
+import { readCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
+import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
 import {
   resolveSignedInMeterIdentities,
   type SignedInMeterIdentity,
@@ -26,11 +28,17 @@ export function useSignedInMeterProfile(): {
 
     let cancelled = false
     setLoading(true)
-    void fetchMyMeterParses(supabase).then((result) => {
+
+    void (async () => {
+      const cachedTamer = readCachedConfirmedTamer()
+      if (cachedTamer) {
+        await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
+      }
+      const result = await fetchMyMeterParses(supabase)
       if (cancelled) return
       setMyParseRows(result.rows)
       setLoading(false)
-    })
+    })()
 
     return () => {
       cancelled = true
