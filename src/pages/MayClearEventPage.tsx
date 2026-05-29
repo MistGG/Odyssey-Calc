@@ -8,6 +8,7 @@ import { mayClearEventSharePageUrl } from '../lib/eventShare'
 import {
   EVENT_ANNOUNCEMENT_NOTE,
   isMayClearEventDungeonAnnounced,
+  shouldShowMayClearEventLeaderboards,
   MAY_CLEAR_EVENT,
   MAY_CLEAR_EVENT_ROLES,
   MAY_CLEAR_PARTICIPATION_ROLES,
@@ -23,6 +24,7 @@ export function MayClearEventPage() {
   const eventEnded = useMayClearEventEnded(previewEnded)
   const dungeonAnnounced = isMayClearEventDungeonAnnounced()
   const eventDungeon = useMayClearEventDungeon()
+  const showLeaderboards = shouldShowMayClearEventLeaderboards(eventDungeon)
 
   const [shareCopied, setShareCopied] = useState(false)
   const shareUrl = mayClearEventSharePageUrl()
@@ -39,7 +41,7 @@ export function MayClearEventPage() {
 
   return (
     <div
-      className={`event-page event-page--with-teaser${dungeonAnnounced ? ' event-page--with-leaderboards' : ''}`}
+      className={`event-page event-page--with-teaser${showLeaderboards ? ' event-page--with-leaderboards' : ''}`}
     >
       <header className="event-hero">
         <div className="event-hero__glow" aria-hidden />
@@ -144,9 +146,7 @@ export function MayClearEventPage() {
         </ul>
       </section>
 
-      {dungeonAnnounced && eventDungeon ? (
-        <MayClearEventLeaderboards dungeon={eventDungeon} />
-      ) : null}
+      {showLeaderboards ? <MayClearEventLeaderboards dungeon={eventDungeon} /> : null}
 
       <section className="event-panel event-panel--teaser" aria-label="Event announcement">
         <p className="event-placeholder-note" role="note">

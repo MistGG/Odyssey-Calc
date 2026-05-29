@@ -2,11 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { getPublicDungeonParsesCached, loadDigimonRoleMapForMeter } from '../lib/meterDataSource'
-import {
-  MAY_CLEAR_EVENT,
-  mayClearEventMeterNavState,
-  type MayClearEventDungeon,
-} from '../lib/mayClearEvent'
+import { MAY_CLEAR_EVENT, type MayClearEventDungeon } from '../lib/mayClearEvent'
 import { buildMayClearEventResults } from '../lib/mayClearEventResults'
 import {
   METER_ROLE_BUCKET_LABELS,
@@ -24,7 +20,10 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
 
   const { dungeonId, dungeonName } = dungeon
   const { difficultyId } = MAY_CLEAR_EVENT
-  const meterContext = useMemo(() => mayClearEventMeterNavState(dungeonId), [dungeonId])
+  const meterContext = useMemo(
+    () => ({ dungeonId, difficultyId }),
+    [dungeonId, difficultyId],
+  )
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)

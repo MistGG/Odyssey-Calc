@@ -40,6 +40,13 @@ export function isMayClearEventDungeonAnnounced(): boolean {
   return MAY_CLEAR_EVENT.dungeonAnnounced
 }
 
+/** Live event leaderboards stay hidden until the dungeon is officially announced. */
+export function shouldShowMayClearEventLeaderboards(
+  dungeon: MayClearEventDungeon | null,
+): dungeon is MayClearEventDungeon {
+  return isMayClearEventDungeonAnnounced() && dungeon != null
+}
+
 /** Resolve event dungeon from wiki list by name; null until announced. */
 export function resolveMayClearEventDungeon(
   wikiDungeons: { id: string; name: string }[],
