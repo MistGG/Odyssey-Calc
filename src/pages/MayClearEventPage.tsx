@@ -6,6 +6,8 @@ import {
   EVENT_ANNOUNCEMENT_NOTE,
   MAY_CLEAR_EVENT,
   MAY_CLEAR_EVENT_ROLES,
+  MAY_CLEAR_PARTICIPATION_ROLES,
+  MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS,
   MAY_CLEAR_TOTAL_CROWNS,
   MAY_CLEAR_TOTAL_SHOP_POINTS,
 } from '../lib/mayClearEvent'
@@ -80,6 +82,28 @@ export function MayClearEventPage() {
         </p>
       </section>
 
+      <section className="event-panel" aria-labelledby="event-participation-heading">
+        <h2 id="event-participation-heading" className="event-section-title">
+          Participation draw
+        </h2>
+        <p className="event-section-lead muted">
+          One random winner per role among all eligible event uploads.{' '}
+          <strong>{MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns</strong> each for a total of{' '}
+          <strong>{MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS.toLocaleString()} crowns</strong>. Everyone who
+          participates with at least one eligible upload earns{' '}
+          <strong>{MAY_CLEAR_EVENT.participationShopPointsAll} meter shop points</strong>.
+        </p>
+        <ul className="event-prize-grid">
+          {MAY_CLEAR_PARTICIPATION_ROLES.map((role) => (
+            <li key={role.id} className="event-prize-card event-prize-card--participation">
+              <span className="event-prize-card__role">{role.label}</span>
+              <span className="event-prize-card__amount">{role.prizeCrowns} crowns</span>
+              <span className="event-prize-card__hint muted">Random draw · any valid parse</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="event-panel event-panel--teaser" aria-label="Event announcement">
         <p className="event-placeholder-note" role="note">
           {EVENT_ANNOUNCEMENT_NOTE}
@@ -107,6 +131,15 @@ export function MayClearEventPage() {
             The <strong>#1 player in each role</strong> by Best DPS wins{' '}
             <strong>{MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns</strong> and{' '}
             <strong>{MAY_CLEAR_EVENT.prizeShopPointsPerRole} meter shop points</strong>.
+          </li>
+          <li>
+            A separate <strong>random participation draw</strong> picks one eligible player per role
+            for <strong>{MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns</strong> (independent of
+            leaderboard placement).
+          </li>
+          <li>
+            Every player with at least one eligible event upload receives{' '}
+            <strong>{MAY_CLEAR_EVENT.participationShopPointsAll} meter shop points</strong>.
           </li>
         </ol>
       </section>

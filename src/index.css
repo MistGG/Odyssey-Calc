@@ -14394,6 +14394,19 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   font-size: 0.72rem;
 }
 
+.event-prize-card--participation {
+  border-color: rgba(167, 139, 250, 0.28);
+  background: linear-gradient(165deg, rgba(76, 29, 149, 0.28) 0%, rgba(30, 41, 59, 0.85) 100%);
+}
+
+.event-prize-card--participation .event-prize-card__role {
+  color: #ddd6fe;
+}
+
+.event-prize-card--participation .event-prize-card__amount {
+  color: #c4b5fd;
+}
+
 .event-section-foot {
   margin: 0.85rem 0 0;
   font-size: 0.88rem;

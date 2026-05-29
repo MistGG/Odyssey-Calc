@@ -43,6 +43,8 @@ const EVENTS = [
     difficultyLabel: 'Hard',
     prizeCrownsPerRole: 200,
     prizeShopPointsPerRole: 100,
+    participationPrizeCrownsPerRole: 50,
+    participationShopPointsAll: 25,
     roles: [
       { label: 'Melee', prize: 200 },
       { label: 'Ranged', prize: 200 },
@@ -52,7 +54,7 @@ const EVENTS = [
       { label: 'Healer', prize: 200 },
     ],
     description:
-      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns and 100 meter shop points per role winner (1,200 crowns + 600 shop points total). Odyssey Calc Meter event.',
+      'May 29–June 5 community dungeon clear — Hard mode, 200 crowns and 100 meter shop points per role winner, random 50-crown draw per role, and 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]
@@ -76,6 +78,10 @@ function appUrl(event) {
 
 function totalCrowns(event) {
   return event.prizeCrownsPerRole * event.roles.length
+}
+
+function participationCrownsTotal(event) {
+  return (event.participationPrizeCrownsPerRole ?? 0) * event.roles.length
 }
 
 function shareHtml(event) {
@@ -144,12 +150,25 @@ function shareHtml(event) {
     </div>
     <p class="lead"><strong>${total.toLocaleString()} crowns</strong> and <strong>${((event.prizeShopPointsPerRole ?? 0) * event.roles.length).toLocaleString()} meter shop points</strong> across ${event.roles.length} roles — <strong>${event.prizeCrownsPerRole} crowns</strong> and <strong>${event.prizeShopPointsPerRole ?? 0} shop points</strong> per #1 Best DPS.</p>
     <ul>${prizeList}</ul>
+    ${
+      event.participationPrizeCrownsPerRole
+        ? `<section class="how" aria-labelledby="participation-heading">
+      <h2 id="participation-heading">Participation rewards</h2>
+      <p class="lead">Random draw: one winner per role for <strong>${event.participationPrizeCrownsPerRole} crowns</strong> each (<strong>${participationCrownsTotal(event).toLocaleString()} crowns</strong> total). Everyone with at least one eligible upload earns <strong>${event.participationShopPointsAll ?? 0} meter shop points</strong>.</p>
+    </section>`
+        : ''
+    }
     <section class="how" aria-labelledby="how-heading">
       <h2 id="how-heading">How it works</h2>
       <ol class="muted">
         <li>Run the announced dungeon during the event window on Hard mode.</li>
         <li>Record with Odyssey Companion and upload a dungeon party parse to Meter.</li>
         <li>Top Best DPS per role on the leaderboard wins crowns and meter shop points.</li>
+        ${
+          event.participationPrizeCrownsPerRole
+            ? `<li>Random participation draw: <strong>${event.participationPrizeCrownsPerRole} crowns</strong> per role; <strong>${event.participationShopPointsAll ?? 0} shop points</strong> for every eligible participant.</li>`
+            : ''
+        }
       </ol>
     </section>
     <div class="actions">
@@ -286,6 +305,11 @@ function buildOgSvg(event) {
   <text x="600" y="${prizesLabelY}" text-anchor="middle" fill="#fde68a" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="0.12em">PRIZES</text>
   <text x="600" y="${prizesLabelY + 18}" text-anchor="middle" fill="#cbd5e1" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="600">${event.prizeCrownsPerRole} crowns + ${event.prizeShopPointsPerRole ?? 0} shop points per role winner</text>
   ${cards}
+  ${
+    event.participationPrizeCrownsPerRole
+      ? `<text x="600" y="598" text-anchor="middle" fill="#ddd6fe" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Participation: ${event.participationPrizeCrownsPerRole} crowns/role random draw (${participationCrownsTotal(event)} total) + ${event.participationShopPointsAll ?? 0} shop pts for all eligible uploads</text>`
+      : ''
+  }
 </svg>`
 }
 

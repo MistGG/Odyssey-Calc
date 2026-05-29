@@ -12,6 +12,10 @@ export const MAY_CLEAR_EVENT = {
   prizeCrownsPerRole: 200,
   /** Meter theme shop points for each role winner (#1 Best DPS). */
   prizeShopPointsPerRole: 100,
+  /** Random participation draw: one winner per role (eligible uploads in that bucket). */
+  participationPrizeCrownsPerRole: 50,
+  /** Meter shop points for every player with at least one eligible event upload. */
+  participationShopPointsAll: 25,
 } as const
 
 export const EVENT_ANNOUNCEMENT_NOTE = 'A dungeon will be selected on May 29!'
@@ -31,3 +35,12 @@ export const MAY_CLEAR_TOTAL_CROWNS =
 
 export const MAY_CLEAR_TOTAL_SHOP_POINTS =
   MAY_CLEAR_EVENT.prizeShopPointsPerRole * MAY_CLEAR_EVENT_ROLES.length
+
+export const MAY_CLEAR_PARTICIPATION_ROLES = METER_ROLE_BUCKETS.map((id) => ({
+  id,
+  label: METER_ROLE_BUCKET_LABELS[id],
+  prizeCrowns: MAY_CLEAR_EVENT.participationPrizeCrownsPerRole,
+}))
+
+export const MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS =
+  MAY_CLEAR_EVENT.participationPrizeCrownsPerRole * MAY_CLEAR_PARTICIPATION_ROLES.length
