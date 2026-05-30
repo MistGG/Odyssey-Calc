@@ -5,6 +5,8 @@ import { useMayClearEventDungeon } from '../hooks/useMayClearEventDungeon'
 import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { mayClearEventSharePageUrl } from '../lib/eventShare'
 import {
+  areMayClearEventLeaderboardsLive,
+  EVENT_DELAY_NOTICE,
   isMayClearEventDungeonAnnounced,
   mayClearEventDungeonFallback,
   shouldShowMayClearEventLeaderboards,
@@ -22,6 +24,7 @@ export function MayClearEventPage() {
   const previewEnded = searchParams.get('previewEnded') === '1'
   const eventEnded = useMayClearEventEnded(previewEnded)
   const dungeonAnnounced = isMayClearEventDungeonAnnounced()
+  const leaderboardsLive = areMayClearEventLeaderboardsLive()
   const eventDungeon = useMayClearEventDungeon()
   const activeDungeon = eventDungeon ?? mayClearEventDungeonFallback()
   const showLeaderboards = shouldShowMayClearEventLeaderboards(activeDungeon)
@@ -53,18 +56,28 @@ export function MayClearEventPage() {
               The <strong>{activeDungeon.dungeonName}</strong> clear challenge has ended. See final
               leaderboard and participation draw winners below.
             </>
-          ) : dungeonAnnounced && activeDungeon ? (
+          ) : dungeonAnnounced && activeDungeon && leaderboardsLive ? (
             <>
               Clear <strong>{activeDungeon.dungeonName}</strong> on{' '}
               <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window and upload a
               dungeon party parse with Odyssey Companion. Leaderboards below update from live Meter
               uploads until <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
             </>
+          ) : dungeonAnnounced && activeDungeon ? (
+            <>
+              The featured dungeon is <strong>{activeDungeon.dungeonName}</strong> on{' '}
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong>. The event window starts{' '}
+              <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong> and runs until{' '}
+              <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.{' '}
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> is not live in-game yet. Live
+              leaderboards open once it is available.
+            </>
           ) : (
             <>
-              Visit this page starting May 29 to see which dungeon is selected for the{' '}
-              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> challenge. The event runs through June
-              5. Uploads count until <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              Visit this page to see which dungeon is selected for the{' '}
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> challenge during{' '}
+              <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
+              <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
             </>
           )}
         </p>
@@ -94,6 +107,14 @@ export function MayClearEventPage() {
           </button>
         </div>
       </header>
+
+      {dungeonAnnounced && activeDungeon && !leaderboardsLive && !eventEnded ? (
+        <section className="event-panel event-panel--note" aria-label="Event delay notice">
+          <p className="event-placeholder-note" role="note">
+            {EVENT_DELAY_NOTICE}
+          </p>
+        </section>
+      ) : null}
 
       <section className="event-panel" aria-labelledby="event-prizes-heading">
         <h2 id="event-prizes-heading" className="event-section-title">
@@ -202,6 +223,12 @@ export function MayClearEventPage() {
           <li>Event is community-run via Odyssey Calc.</li>
           <li>Uploads must be valid dungeon party parses.</li>
           <li>Broken meter sessions may be excluded from rankings.</li>
+          {!leaderboardsLive ? (
+            <li>
+              Dragon Dimension <strong>Hard</strong> is not available in-game yet. Ranked uploads and
+              live leaderboards begin once Hard goes live.
+            </li>
+          ) : null}
           <li>Exploits that are deemed as such by devs and patched will invalidate parses.</li>
         </ul>
       </section>

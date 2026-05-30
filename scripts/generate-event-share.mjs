@@ -39,15 +39,15 @@ const EVENTS = [
     id: 'may-clear',
     ogSlug: 'event-may-clear',
     eventTitle: 'Dungeon Clear Challenge',
-    eventDateLabel: 'May 29 - June 5, 2026',
-    eventEndUtcLabel: 'June 6, 2026, 04:00 UTC',
+    eventDateLabel: 'June 4 - June 11, 2026',
+    eventEndUtcLabel: 'June 11, 2026, 04:00 UTC',
     difficultyLabel: 'Hard',
     prizeCrownsPerRole: 200,
     prizeShopPointsPerRole: 100,
     participationPrizeCrownsPerRole: 50,
     participationShopPointsAll: 25,
     dungeonAnnounced: true,
-    dungeonName: 'Fullmetal Genius',
+    dungeonName: 'Dragon Dimension',
     difficultyId: 3,
     roles: [
       { label: 'Melee', prize: 200 },
@@ -58,7 +58,7 @@ const EVENTS = [
       { label: 'Healer', prize: 200 },
     ],
     description:
-      'Fullmetal Genius Hard clear challenge, May 29-June 5, ends June 6, 2026, 04:00 UTC. 200 crowns + 100 shop points per role winner, random 50-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
+      'Dragon Dimension Hard clear challenge (delayed to June 4), June 4-11, ends June 11, 2026, 04:00 UTC. Hard not live in-game yet. 200 crowns + 100 shop points per role winner, random 50-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]

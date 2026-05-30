@@ -1,27 +1,27 @@
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from './meterRoleBuckets'
 
 /**
- * May 29-Jun 5 community clear event.
+ * Community clear event config.
  *
- * Before deploy: set `dungeonAnnounced` to true and `dungeonName` to the wiki dungeon title.
- * Update `dungeonId` only as a fallback if the wiki list fails to load.
+ * Set `leaderboardsLive` to true once Hard is available in-game and uploads should rank.
  */
 export const MAY_CLEAR_EVENT = {
   eventTitle: 'Dungeon Clear Challenge',
-  eventDateLabel: 'May 29 - June 5, 2026',
-  eventDateIso: '2026-05-29',
-  /** Hard cutoff for uploads (9:00 PM June 5 Arizona = 04:00 UTC June 6). */
-  eventDateEndIso: '2026-06-06T04:00:00.000Z',
-  eventEndUtcLabel: 'June 6, 2026, 04:00 UTC',
+  eventDateLabel: 'June 4 - June 11, 2026',
+  eventDateIso: '2026-06-04',
+  /** Hard cutoff for uploads: June 11, 2026, 04:00 UTC. */
+  eventDateEndIso: '2026-06-11T04:00:00.000Z',
+  eventEndUtcLabel: 'June 11, 2026, 04:00 UTC',
   difficultyLabel: 'Hard',
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
-  /** Set true once the in-game event dungeon is announced (May 29). */
+  /** Show the selected dungeon on the event page. */
   dungeonAnnounced: true,
-  /** Primary dungeon selector (matched against wiki dungeon list). Used when announced. */
-  dungeonName: 'Fullmetal Genius',
+  /** Live leaderboards off until Hard is live in-game. */
+  leaderboardsLive: false,
+  dungeonName: 'Dragon Dimension',
   /** Fallback wiki id when the list is unavailable or the name changes. */
-  dungeonId: 'u7ieoqy',
+  dungeonId: 'uc4j5ut',
   prizeCrownsPerRole: 200,
   /** Meter theme shop points for each role winner (#1 Best DPS). */
   prizeShopPointsPerRole: 100,
@@ -40,6 +40,10 @@ export function isMayClearEventDungeonAnnounced(): boolean {
   return MAY_CLEAR_EVENT.dungeonAnnounced
 }
 
+export function areMayClearEventLeaderboardsLive(): boolean {
+  return MAY_CLEAR_EVENT.leaderboardsLive
+}
+
 export function mayClearEventDungeonFallback(): MayClearEventDungeon | null {
   if (!MAY_CLEAR_EVENT.dungeonAnnounced) return null
   return {
@@ -48,11 +52,15 @@ export function mayClearEventDungeonFallback(): MayClearEventDungeon | null {
   }
 }
 
-/** Live event leaderboards stay hidden until the dungeon is officially announced. */
+/** Live event leaderboards require Hard to be live and leaderboards enabled. */
 export function shouldShowMayClearEventLeaderboards(
   dungeon: MayClearEventDungeon | null,
 ): dungeon is MayClearEventDungeon {
-  return isMayClearEventDungeonAnnounced() && dungeon != null
+  return (
+    MAY_CLEAR_EVENT.leaderboardsLive &&
+    isMayClearEventDungeonAnnounced() &&
+    dungeon != null
+  )
 }
 
 /** Resolve event dungeon from wiki list by name; null until announced. */
@@ -71,9 +79,12 @@ export function resolveMayClearEventDungeon(
   }
 }
 
-export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.dungeonAnnounced
+export const EVENT_DELAY_NOTICE =
+  'Event delayed to June 4. Dragon Dimension Hard is not live in-game yet. Live leaderboards and ranked uploads open once Hard is available.'
+
+export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.leaderboardsLive
   ? 'Live leaderboards update from valid Hard party uploads.'
-  : 'A dungeon will be selected on May 29!'
+  : EVENT_DELAY_NOTICE
 
 export function mayClearEventMeterNavState(dungeonId?: string): {
   dungeonId?: string
