@@ -59,33 +59,28 @@ export function MayClearEventPage() {
           ) : dungeonAnnounced && activeDungeon && leaderboardsLive ? (
             <>
               Clear <strong>{activeDungeon.dungeonName}</strong> on{' '}
-              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window and upload a
-              dungeon party parse with Odyssey Companion. Leaderboards below update from live Meter
-              uploads until <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window (
+              <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong>) and upload a dungeon party parse
+              with Odyssey Companion. Leaderboards below update from live Meter uploads.
             </>
           ) : dungeonAnnounced && activeDungeon ? (
             <>
               The featured dungeon is <strong>{activeDungeon.dungeonName}</strong> on{' '}
-              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong>. The event window starts{' '}
-              <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong> and runs until{' '}
-              <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.{' '}
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong>. The event window is{' '}
+              <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong>.{' '}
               <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> is not live in-game yet. Live
               leaderboards open once it is available.
             </>
           ) : (
             <>
               Visit this page to see which dungeon is selected for the{' '}
-              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> challenge during{' '}
-              <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
-              <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> challenge during the event window (
+              <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong>).
             </>
           )}
         </p>
         <div className="event-hero__meta">
-          <span className="event-pill event-pill--date">{MAY_CLEAR_EVENT.eventDateLabel}</span>
-          <span className="event-pill event-pill--ends">
-            Ends {MAY_CLEAR_EVENT.eventEndUtcLabel}
-          </span>
+          <span className="event-pill event-pill--date">{MAY_CLEAR_EVENT.eventWindowLabel}</span>
           {dungeonAnnounced && activeDungeon ? (
             <span className="event-pill event-pill--dungeon">{activeDungeon.dungeonName}</span>
           ) : null}
@@ -178,15 +173,13 @@ export function MayClearEventPage() {
             {dungeonAnnounced && activeDungeon ? (
               <>
                 Run <strong>{activeDungeon.dungeonName}</strong> on{' '}
-                <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
-                <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
-                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+                <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during the event window (
+                <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong>).
               </>
             ) : (
               <>
-                Run the announced dungeon on <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during{' '}
-                <strong>{MAY_CLEAR_EVENT.eventDateLabel}</strong>. Uploads count until{' '}
-                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+                Run the announced dungeon on <strong>{MAY_CLEAR_EVENT.difficultyLabel}</strong> during
+                the event window (<strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong>).
               </>
             )}
           </li>
@@ -224,10 +217,16 @@ export function MayClearEventPage() {
           <li>Uploads must be valid dungeon party parses.</li>
           <li>Broken meter sessions may be excluded from rankings.</li>
           {!leaderboardsLive ? (
-            <li>
-              Dragon Dimension <strong>Hard</strong> is not available in-game yet. Ranked uploads and
-              live leaderboards begin once Hard goes live.
-            </li>
+            <>
+              <li>
+                Dragon Dimension <strong>Hard</strong> is not available in-game yet. Ranked uploads and
+                live leaderboards begin once Hard goes live.
+              </li>
+              <li>
+                If Hard is still unavailable by <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong>,
+                the event will be delayed further.
+              </li>
+            </>
           ) : null}
           <li>Exploits that are deemed as such by devs and patched will invalidate parses.</li>
         </ul>

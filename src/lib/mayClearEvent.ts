@@ -8,6 +8,8 @@ import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from './meterRoleBuckets
 export const MAY_CLEAR_EVENT = {
   eventTitle: 'Dungeon Clear Challenge',
   eventDateLabel: 'June 4 - June 11, 2026',
+  /** Display label for the full upload window (start through cutoff). */
+  eventWindowLabel: 'June 4 - June 11, 2026 04:00 UTC',
   eventDateIso: '2026-06-04',
   /** Hard cutoff for uploads: June 11, 2026, 04:00 UTC. */
   eventDateEndIso: '2026-06-11T04:00:00.000Z',
@@ -80,7 +82,7 @@ export function resolveMayClearEventDungeon(
 }
 
 export const EVENT_DELAY_NOTICE =
-  'Event delayed to June 4. Dragon Dimension Hard is not live in-game yet. Live leaderboards and ranked uploads open once Hard is available.'
+  'Event delayed to June 4. Dragon Dimension Hard is not live in-game yet. Live leaderboards and ranked uploads open once Hard is available. If Hard is still unavailable by the end of the event window, the event will be delayed further.'
 
 export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.leaderboardsLive
   ? 'Live leaderboards update from valid Hard party uploads.'
