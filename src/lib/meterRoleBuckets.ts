@@ -201,41 +201,61 @@ let roleMapCache: Map<string, string> | null = null
 
 let roleMapPromise: Promise<Map<string, string>> | null = null
 
+const ROLE_MAP_SESSION_KEY = 'odyssey-meter-digi-roles-v1'
+const ROLE_MAP_TTL_MS = 24 * 60 * 60 * 1000
 
+function readRoleMapFromSession(): Map<string, string> | null {
+  if (typeof sessionStorage === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(ROLE_MAP_SESSION_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { at: number; entries: [string, string][] }
+    if (!Array.isArray(parsed.entries) || Date.now() - parsed.at > ROLE_MAP_TTL_MS) return null
+    const map = new Map<string, string>(parsed.entries)
+    return map.size > 0 ? map : null
+  } catch {
+    return null
+  }
+}
+
+function writeRoleMapToSession(map: Map<string, string>): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    sessionStorage.setItem(
+      ROLE_MAP_SESSION_KEY,
+      JSON.stringify({ at: Date.now(), entries: [...map.entries()] }),
+    )
+  } catch {
+    /* quota */
+  }
+}
 
 /** Wiki digimon id → raw wiki role string. */
-
 export async function fetchDigimonRoleMap(): Promise<Map<string, string>> {
-
   if (roleMapCache) return roleMapCache
 
   if (roleMapPromise) return roleMapPromise
 
+  const sessionMap = readRoleMapFromSession()
+  if (sessionMap) {
+    roleMapCache = sessionMap
+    return sessionMap
+  }
+
   roleMapPromise = (async () => {
-
     const first = await fetchDigimonPage(0, 500)
-
     const all = [...first.data]
-
     for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
-
       const next = await fetchDigimonPage(p - 1, 500)
-
       all.push(...next.data)
-
     }
-
     const map = new Map<string, string>()
-
     for (const d of all) map.set(d.id, d.role)
-
     roleMapCache = map
-
+    writeRoleMapToSession(map)
     return map
-
   })()
 
   return roleMapPromise
-
 }
 

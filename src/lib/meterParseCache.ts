@@ -1,8 +1,8 @@
 import type { PublicMeterParseRow } from './meterPublicStats'
 
-const TTL_MS = 8 * 60 * 1000
+const TTL_MS = 15 * 60 * 1000
 const SESSION_KEY = 'odyssey-meter-parse-cache-v1'
-const MAX_PERSISTED_SCOPES = 6
+const MAX_PERSISTED_SCOPES = 24
 
 type CacheEntry = {
   rows: PublicMeterParseRow[]

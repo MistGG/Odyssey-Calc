@@ -8,11 +8,14 @@ import {
   getPublicDungeonParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
+import { getCachedScopeParses, meterScopeKey } from '../lib/meterParseCache'
 import {
   aggregatePublicMeterStats,
   type DigimonDpsSortMode,
+  type MeterPublicAggregates,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
+import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
 import {
   dungeonSelectOptions,
@@ -26,8 +29,10 @@ export function MeterPublicPage() {
   const { state: navState } = useLocation()
   const meterNav = (navState as MeterNavState | null) ?? null
   const [rows, setRows] = useState<PublicMeterParseRow[]>([])
+  const [precomputedStats, setPrecomputedStats] = useState<MeterPublicAggregates | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [bootLoading, setBootLoading] = useState(true)
+  const [parsesRefreshing, setParsesRefreshing] = useState(false)
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
@@ -36,7 +41,7 @@ export function MeterPublicPage() {
   const initialFiltersApplied = useRef(false)
 
   const loadBoot = useCallback(async () => {
-    setLoading(true)
+    setBootLoading(true)
     setLoadError(null)
     const [roles, dungeons] = await Promise.all([
       loadDigimonRoleMapForMeter(),
@@ -44,7 +49,7 @@ export function MeterPublicPage() {
     ])
     setWikiDungeons(dungeons)
     setDigimonRoleById(roles)
-    setLoading(false)
+    setBootLoading(false)
   }, [])
 
   useEffect(() => {
@@ -66,7 +71,7 @@ export function MeterPublicPage() {
       return
     }
     if (initialFiltersApplied.current) return
-    if (loading) return
+    if (bootLoading) return
     initialFiltersApplied.current = true
     const allowedIds = dungeonOptions.map((d) => d.dungeonId)
     void (async () => {
@@ -78,7 +83,7 @@ export function MeterPublicPage() {
       }
       setDungeonId(dungeonOptions[0]!.dungeonId)
     })()
-  }, [dungeonOptions, loading, meterNav?.dungeonId])
+  }, [dungeonOptions, bootLoading, meterNav?.dungeonId])
 
   useEffect(() => {
     if (!dungeonId) return
@@ -102,26 +107,47 @@ export function MeterPublicPage() {
   useEffect(() => {
     if (!dungeonId || difficultyId == null) {
       setRows([])
+      setPrecomputedStats(null)
       return
     }
     let cancelled = false
-    setLoading(true)
+    setParsesRefreshing(true)
     setLoadError(null)
-    void getPublicDungeonParsesCached({ dungeonId, difficultyId }).then((parseRes) => {
+    setPrecomputedStats(null)
+
+    void (async () => {
+      const pre = await fetchPrecomputedMeterLeaderboard({ dungeonId, difficultyId })
+      if (cancelled) return
+      if (pre.error) setLoadError(pre.error)
+      if (pre.stats) {
+        setPrecomputedStats(pre.stats)
+        setParsesRefreshing(false)
+        return
+      }
+
+      const scopeKey = meterScopeKey(dungeonId, difficultyId)
+      const cached = getCachedScopeParses(scopeKey)
+      setRows(cached ?? [])
+      const parseRes = await getPublicDungeonParsesCached({ dungeonId, difficultyId }, (updated) => {
+        if (!cancelled) setRows(updated)
+      })
       if (cancelled) return
       if (parseRes.error) setLoadError(parseRes.error)
-      setRows(parseRes.rows)
-      setLoading(false)
-    })
+      else if (!cached?.length) setRows(parseRes.rows)
+      setParsesRefreshing(false)
+    })()
+
     return () => {
       cancelled = true
     }
   }, [dungeonId, difficultyId])
 
-  const stats = useMemo(() => {
+  const legacyStats = useMemo(() => {
     if (!dungeonId || difficultyId == null || !digimonRoleById.size) return null
     return aggregatePublicMeterStats(rows, digimonRoleById, dungeonId, difficultyId)
   }, [rows, digimonRoleById, dungeonId, difficultyId])
+
+  const stats = precomputedStats ?? legacyStats
 
   const digimonByBucket = useMemo(() => {
     if (!stats) return null
@@ -135,7 +161,7 @@ export function MeterPublicPage() {
         <MeterSubNav />
       </header>
 
-      <div className="meter-public-filters">
+      <div className={`meter-public-filters${parsesRefreshing ? ' meter-public-filters--refreshing' : ''}`}>
         <label className="meter-public-filter">
           <span className="meter-public-filter-label">Dungeon</span>
           <select
@@ -144,7 +170,7 @@ export function MeterPublicPage() {
               setDungeonId(e.target.value)
               setDifficultyId(null)
             }}
-            disabled={!dungeonOptions.length}
+            disabled={!dungeonOptions.length || bootLoading}
           >
             {dungeonOptions.map((d) => (
               <option key={d.dungeonId} value={d.dungeonId}>
@@ -158,7 +184,7 @@ export function MeterPublicPage() {
           <select
             value={difficultyId ?? ''}
             onChange={(e) => setDifficultyId(Number(e.target.value))}
-            disabled={!dungeonId || difficultyOptions.length === 0}
+            disabled={!dungeonId || difficultyOptions.length === 0 || bootLoading}
           >
             {difficultyOptions.map((d) => (
               <option key={d.difficultyId} value={d.difficultyId}>
@@ -167,10 +193,17 @@ export function MeterPublicPage() {
             ))}
           </select>
         </label>
+        {parsesRefreshing ? (
+          <span className="meter-public-filter-status muted" role="status">
+            Updating…
+          </span>
+        ) : null}
       </div>
 
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
-      {loading && !rows.length ? (
+      {bootLoading && !dungeonOptions.length ? (
+        <p className="meter-parses-muted meter-parses-muted--center">Loading…</p>
+      ) : parsesRefreshing && !stats ? (
         <p className="meter-parses-muted meter-parses-muted--center">Loading leaderboard…</p>
       ) : !dungeonOptions.length ? (
         <p className="meter-parses-muted meter-parses-muted--center">Could not load dungeon list from wiki.</p>

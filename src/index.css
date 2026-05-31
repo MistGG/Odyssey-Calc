@@ -13397,8 +13397,18 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 .meter-public-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 16px;
   margin: 16px 0 20px;
+}
+
+.meter-public-filters--refreshing .meter-public-filter select {
+  border-color: rgba(34, 211, 238, 0.35);
+}
+
+.meter-public-filter-status {
+  font-size: 0.82rem;
+  padding-bottom: 8px;
 }
 
 .meter-public-filter {

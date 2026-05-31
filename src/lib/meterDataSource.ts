@@ -131,69 +131,83 @@ export async function fetchRecentMeterParseSelection(
 }
 
 export type FetchPublicDungeonParsesParams = {
-
   dungeonId: string
-
   difficultyId: number
-
   limit?: number
-
 }
 
-/** Public leaderboard for one dungeon + difficulty (anon role, not signed-in JWT). */
-
-export async function fetchPublicDungeonParses(
-
-  params: FetchPublicDungeonParsesParams,
-
-): Promise<{
-
+export type ScopeParsesResult = {
   rows: PublicMeterParseRow[]
-
   error: string | null
+  fromCache?: boolean
+}
 
-}> {
-
+async function fetchEligibleDungeonParsesFromDb(
+  params: FetchPublicDungeonParsesParams,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
   const supabase = getMeterAnonSupabase()
-
   if (!supabase) {
-
     return { rows: [], error: 'Supabase is not configured.' }
-
   }
 
   const dungeonId = params.dungeonId.trim()
-
   const difficultyId = params.difficultyId
-
   if (!dungeonId || difficultyId < 2) {
-
     return { rows: [], error: 'Select a dungeon and difficulty.' }
-
   }
 
   const { data, error } = await supabase
-
     .from('meter_parses')
-
     .select(PARSE_SELECT)
-
     .eq('parse_kind', 'dungeon_party')
-
     .eq('dungeon_id', dungeonId)
-
     .eq('difficulty_id', difficultyId)
-
     .order('created_at', { ascending: false })
-
     .limit(params.limit ?? PUBLIC_PARSE_LIMIT_PER_DUNGEON)
 
   if (error) return { rows: [], error: error.message }
+  return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
+}
 
-  const eligible = leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[])
-  const rows = await resolveMeterParseRowPayloads(eligible)
+async function finalizeScopeParses(
+  eligible: PublicMeterParseRow[],
+  cacheKey: string,
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
+): Promise<PublicMeterParseRow[]> {
+  if (!eligible.length) {
+    setCachedScopeParses(cacheKey, eligible)
+    onUpdated?.(eligible)
+    return eligible
+  }
+  onUpdated?.(eligible)
+  const resolved = await resolveMeterParseRowPayloads(eligible)
+  setCachedScopeParses(cacheKey, resolved)
+  onUpdated?.(resolved)
+  return resolved
+}
+
+async function refreshScopeParses(
+  params: FetchPublicDungeonParsesParams,
+  cacheKey: string,
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
+): Promise<ScopeParsesResult> {
+  const db = await fetchEligibleDungeonParsesFromDb(params)
+  if (db.error) return { rows: [], error: db.error, fromCache: false }
+  const rows = await finalizeScopeParses(db.rows, cacheKey, onUpdated)
+  return { rows, error: null, fromCache: false }
+}
+
+/** Public leaderboard for one dungeon + difficulty (anon role, not signed-in JWT). */
+export async function fetchPublicDungeonParses(
+  params: FetchPublicDungeonParsesParams,
+): Promise<{
+  rows: PublicMeterParseRow[]
+  error: string | null
+}> {
+  const db = await fetchEligibleDungeonParsesFromDb(params)
+  if (db.error) return db
+  const rows = await resolveMeterParseRowPayloads(db.rows)
   return { rows, error: null }
-
 }
 
 /** Recent public party parses across all dungeons (profile fast tier). */
@@ -219,18 +233,25 @@ export async function fetchGlobalRecentPublicParses(
   return { rows, error: null }
 }
 
+/**
+ * Cached public parses for one dungeon scope.
+ * Returns session cache immediately when available, revalidates in the background,
+ * and streams row updates via `onUpdated` (Supabase rows first, wiki names second).
+ */
 export async function getPublicDungeonParsesCached(
   params: FetchPublicDungeonParsesParams,
-): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
+): Promise<ScopeParsesResult> {
   const dungeonId = params.dungeonId.trim()
   const difficultyId = params.difficultyId
   const key = meterScopeKey(dungeonId, difficultyId)
   const cached = getCachedScopeParses(key)
-  if (cached) return { rows: cached, error: null }
+  if (cached) {
+    void refreshScopeParses(params, key, onUpdated)
+    return { rows: cached, error: null, fromCache: true }
+  }
 
-  const res = await fetchPublicDungeonParses(params)
-  if (!res.error) setCachedScopeParses(key, res.rows)
-  return res
+  return refreshScopeParses(params, key, onUpdated)
 }
 
 export async function getGlobalRecentPublicParsesCached(

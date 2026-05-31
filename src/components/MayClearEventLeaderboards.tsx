@@ -2,8 +2,18 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { getPublicDungeonParsesCached, loadDigimonRoleMapForMeter } from '../lib/meterDataSource'
+import { getCachedScopeParses, meterScopeKey } from '../lib/meterParseCache'
 import { MAY_CLEAR_EVENT, type MayClearEventDungeon } from '../lib/mayClearEvent'
-import { buildMayClearEventResults } from '../lib/mayClearEventResults'
+import {
+  buildMayClearEventResults,
+  buildMayClearEventResultsFromPrecomputed,
+} from '../lib/mayClearEventResults'
+import {
+  fetchParticipationPlayersInWindow,
+  fetchPrecomputedMeterLeaderboard,
+  type ParticipationPoolEntry,
+} from '../lib/meterLeaderboardPrecomputed'
+import type { MeterPublicAggregates } from '../lib/meterPublicStats'
 import {
   METER_ROLE_BUCKET_LABELS,
   METER_ROLE_BUCKETS,
@@ -25,36 +35,95 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
     [dungeonId, difficultyId],
   )
 
+  const eventWindow = useMemo(
+    () => ({
+      windowStart: `${MAY_CLEAR_EVENT.eventDateIso}T00:00:00.000Z`,
+      windowEnd: MAY_CLEAR_EVENT.eventDateEndIso,
+    }),
+    [],
+  )
+
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [parsesRefreshing, setParsesRefreshing] = useState(false)
   const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
+  const [precomputedStats, setPrecomputedStats] = useState<MeterPublicAggregates | null>(null)
+  const [participationPool, setParticipationPool] = useState<ParticipationPoolEntry[]>([])
   const [rows, setRows] = useState<Awaited<ReturnType<typeof getPublicDungeonParsesCached>>['rows']>(
     [],
   )
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
+    const scopeKey = meterScopeKey(dungeonId, difficultyId)
+    const cached = getCachedScopeParses(scopeKey)
+    if (cached?.length) {
+      setRows(cached)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+    setParsesRefreshing(true)
     setLoadError(null)
-    void Promise.all([
-      loadDigimonRoleMapForMeter(),
-      getPublicDungeonParsesCached({ dungeonId, difficultyId }),
-    ]).then(([roles, parseRes]) => {
+    setPrecomputedStats(null)
+    setParticipationPool([])
+
+    void (async () => {
+      const pre = await fetchPrecomputedMeterLeaderboard({
+        dungeonId,
+        difficultyId,
+        limitPerRole: EVENT_TOP_PLAYERS,
+        ...eventWindow,
+      })
+      if (cancelled) return
+      if (pre.error) setLoadError(pre.error)
+      if (pre.stats) {
+        setPrecomputedStats(pre.stats)
+        const poolRes = await fetchParticipationPlayersInWindow({
+          dungeonId,
+          difficultyId,
+          ...eventWindow,
+        })
+        if (!cancelled) {
+          if (poolRes.error) setLoadError(poolRes.error)
+          setParticipationPool(poolRes.entries)
+        }
+        setLoading(false)
+        setParsesRefreshing(false)
+        return
+      }
+
+      const [roles, parseRes] = await Promise.all([
+        loadDigimonRoleMapForMeter(),
+        getPublicDungeonParsesCached({ dungeonId, difficultyId }, (updated) => {
+          if (!cancelled) setRows(updated)
+        }),
+      ])
       if (cancelled) return
       setDigimonRoleById(roles)
       if (parseRes.error) setLoadError(parseRes.error)
-      setRows(parseRes.rows)
+      else if (!cached?.length) setRows(parseRes.rows)
       setLoading(false)
-    })
+      setParsesRefreshing(false)
+    })()
+
     return () => {
       cancelled = true
     }
-  }, [dungeonId, difficultyId])
+  }, [dungeonId, difficultyId, eventWindow])
 
   const results = useMemo(() => {
+    if (precomputedStats) {
+      return buildMayClearEventResultsFromPrecomputed(
+        precomputedStats,
+        participationPool,
+        dungeonId,
+        difficultyId,
+      )
+    }
     if (!digimonRoleById.size) return null
     return buildMayClearEventResults(rows, digimonRoleById, dungeonId)
-  }, [rows, digimonRoleById, dungeonId])
+  }, [precomputedStats, participationPool, rows, digimonRoleById, dungeonId, difficultyId])
 
   const leaderboardPrizeLabel = `${MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns + ${MAY_CLEAR_EVENT.prizeShopPointsPerRole} shop pts`
   const participationPrizeLabel = `${MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns`
@@ -101,9 +170,12 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
       </div>
 
       {loadError ? <p className="meter-parses-error">{loadError}</p> : null}
-      {loading && !results ? (
-        <p className="meter-parses-muted">Loading…</p>
-      ) : results ? (
+      {parsesRefreshing ? (
+        <p className="meter-parses-muted" role="status">
+          {loading && !results ? 'Loading…' : 'Updating…'}
+        </p>
+      ) : null}
+      {!loading && results ? (
         <>
           {eventEnded ? (
             <>

@@ -1,4 +1,9 @@
-import { aggregatePublicMeterStats, type PublicMeterParseRow } from './meterPublicStats'
+import type { ParticipationPoolEntry } from './meterLeaderboardPrecomputed'
+import {
+  aggregatePublicMeterStats,
+  type MeterPublicAggregates,
+  type PublicMeterParseRow,
+} from './meterPublicStats'
 import {
   memberRoleBucket,
   memberTopDigimonUsed,
@@ -98,6 +103,58 @@ export function pickMayClearParticipationWinners(
     winners[bucket] = pool[idx]!
   }
   return winners
+}
+
+/** One random eligible player per role from precomputed leaderboard entries. */
+export function pickMayClearParticipationWinnersFromEntries(
+  entries: ParticipationPoolEntry[],
+  dungeonId: string,
+  difficultyId: number,
+): Record<MeterRoleBucket, PlayerRankEntry | null> {
+  const pools = Object.fromEntries(METER_ROLE_BUCKETS.map((b) => [b, new Map<string, PlayerRankEntry>()])) as Record<
+    MeterRoleBucket,
+    Map<string, PlayerRankEntry>
+  >
+
+  for (const entry of entries) {
+    const bucket = entry.roleBucket
+    if (!pools[bucket].has(entry.playerKey)) {
+      const { roleBucket: _role, ...player } = entry
+      pools[bucket].set(entry.playerKey, player)
+    }
+  }
+
+  const winners = {} as Record<MeterRoleBucket, PlayerRankEntry | null>
+  for (const bucket of METER_ROLE_BUCKETS) {
+    const pool = [...pools[bucket].values()]
+    if (pool.length === 0) {
+      winners[bucket] = null
+      continue
+    }
+    const idx = deterministicIndex(
+      `${PARTICIPATION_DRAW_SEED}:${dungeonId}:${difficultyId}:${bucket}`,
+      pool.length,
+    )
+    winners[bucket] = pool[idx]!
+  }
+  return winners
+}
+
+export function buildMayClearEventResultsFromPrecomputed(
+  stats: MeterPublicAggregates,
+  participationEntries: ParticipationPoolEntry[],
+  dungeonId: string,
+  difficultyId: number,
+) {
+  const leaderboardWinners = Object.fromEntries(
+    METER_ROLE_BUCKETS.map((b) => [b, stats.playersByBucket[b][0] ?? null]),
+  ) as Record<MeterRoleBucket, PlayerRankEntry | null>
+  const participationWinners = pickMayClearParticipationWinnersFromEntries(
+    participationEntries,
+    dungeonId,
+    difficultyId,
+  )
+  return { stats, eventRows: [] as PublicMeterParseRow[], leaderboardWinners, participationWinners }
 }
 
 export function buildMayClearEventResults(
