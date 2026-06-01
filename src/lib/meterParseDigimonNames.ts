@@ -6,6 +6,8 @@ import {
   type MeterParsePayloadDungeonPartyStored,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
+import { METER_ROLE_BUCKETS } from './meterRoleBuckets'
+import type { DigimonBarEntry, MeterPublicAggregates, PlayerRankEntry } from './meterPublicStats'
 import { mapPool } from './meterPlayerProfile'
 
 const nameCache = new Map<string, { name: string; modelId: string }>()
@@ -139,4 +141,100 @@ export async function resolveMeterParseRowPayloads<T extends { payload: unknown 
       payload: applyWikiDigimonNamesToPayload(row.payload, officialById),
     }
   })
+}
+
+function applyOfficialNameToRankEntry(
+  entry: PlayerRankEntry,
+  officialById: Map<string, { name: string; modelId: string }>,
+): PlayerRankEntry {
+  const id = entry.digimonId.trim()
+  if (!id) return entry
+  const info = officialById.get(id) ?? officialById.get(normId(id))
+  if (!info?.name) return entry
+  return {
+    ...entry,
+    digimonName: info.name,
+    iconId: info.modelId || entry.iconId,
+    portraitUrl:
+      info.modelId
+        ? digimonPortraitUrl(info.modelId, id, info.name)
+        : entry.portraitUrl,
+  }
+}
+
+function applyOfficialNameToDigimonBar(
+  entry: DigimonBarEntry,
+  officialById: Map<string, { name: string; modelId: string }>,
+): DigimonBarEntry {
+  const id = entry.digimonId.trim()
+  if (!id) return entry
+  const info = officialById.get(id) ?? officialById.get(normId(id))
+  if (!info?.name) return entry
+  return {
+    ...entry,
+    digimonName: info.name,
+    iconId: info.modelId || entry.iconId,
+    portraitUrl:
+      info.modelId
+        ? digimonPortraitUrl(info.modelId, id, info.name)
+        : entry.portraitUrl,
+  }
+}
+
+/** Resolve wiki species names for precomputed leaderboard rows (stored nicknames → official names). */
+export async function applyOfficialNamesToMeterAggregates(
+  stats: MeterPublicAggregates,
+): Promise<MeterPublicAggregates> {
+  const idSet = new Set<string>()
+  for (const bucket of METER_ROLE_BUCKETS) {
+    for (const entry of stats.playersByBucket[bucket]) {
+      const id = entry.digimonId.trim()
+      if (id) idSet.add(id)
+    }
+    for (const entry of stats.digimonByBucketBest[bucket]) {
+      const id = entry.digimonId.trim()
+      if (id) idSet.add(id)
+    }
+    for (const entry of stats.digimonByBucketAverage[bucket]) {
+      const id = entry.digimonId.trim()
+      if (id) idSet.add(id)
+    }
+  }
+  if (!idSet.size) return stats
+
+  const officialById = await fetchOfficialDigimonInfoByIds([...idSet])
+  if (!officialById.size) return stats
+
+  const playersByBucket = { ...stats.playersByBucket }
+  const digimonByBucketBest = { ...stats.digimonByBucketBest }
+  const digimonByBucketAverage = { ...stats.digimonByBucketAverage }
+
+  for (const bucket of METER_ROLE_BUCKETS) {
+    playersByBucket[bucket] = stats.playersByBucket[bucket].map((e) =>
+      applyOfficialNameToRankEntry(e, officialById),
+    )
+    digimonByBucketBest[bucket] = stats.digimonByBucketBest[bucket].map((e) =>
+      applyOfficialNameToDigimonBar(e, officialById),
+    )
+    digimonByBucketAverage[bucket] = stats.digimonByBucketAverage[bucket].map((e) =>
+      applyOfficialNameToDigimonBar(e, officialById),
+    )
+  }
+
+  return {
+    ...stats,
+    playersByBucket,
+    digimonByBucketBest,
+    digimonByBucketAverage,
+  }
+}
+
+export async function applyOfficialNamesToPlayerRankEntries(
+  entries: PlayerRankEntry[],
+): Promise<PlayerRankEntry[]> {
+  const ids = [...new Set(entries.map((e) => e.digimonId.trim()).filter(Boolean))]
+  if (!ids.length) return entries
+  const officialById = await fetchOfficialDigimonInfoByIds(ids)
+  if (!officialById.size) return entries
+  return entries.map((e) => applyOfficialNameToRankEntry(e, officialById))
 }

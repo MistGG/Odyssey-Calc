@@ -73,7 +73,11 @@ export function AuthPage() {
       const { error: err } = await signUp(email, password, displayName)
       setBusy(false)
       if (err) {
-        setError(err)
+        setError(
+          /rate limit|too many requests|429/i.test(err)
+            ? 'Too many sign-up emails sent recently. Wait about an hour and try again, or ask an admin to confirm your account manually.'
+            : err,
+        )
       } else {
         setSuccess(
           'Account created! Check your email to confirm your address, then sign in.',

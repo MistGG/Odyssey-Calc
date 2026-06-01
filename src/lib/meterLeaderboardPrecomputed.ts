@@ -1,5 +1,9 @@
 import { getMeterAnonSupabase } from './meterDataSource'
 import {
+  applyOfficialNamesToMeterAggregates,
+  applyOfficialNamesToPlayerRankEntries,
+} from './meterParseDigimonNames'
+import {
   METER_ROLE_BUCKETS,
   type MeterRoleBucket,
 } from './meterRoleBuckets'
@@ -139,13 +143,15 @@ export async function fetchPrecomputedMeterLeaderboard(
     digimonByBucketAverage[bucket].sort((a, b) => b.dps - a.dps)
   }
 
+  const stats = await applyOfficialNamesToMeterAggregates({
+    playersByBucket,
+    sortedDpsByBucket,
+    digimonByBucketBest,
+    digimonByBucketAverage,
+  })
+
   return {
-    stats: {
-      playersByBucket,
-      sortedDpsByBucket,
-      digimonByBucketBest,
-      digimonByBucketAverage,
-    },
+    stats,
     error: null,
   }
 }
@@ -177,5 +183,12 @@ export async function fetchParticipationPlayersInWindow(
       ...mapPlayerRow(row),
       roleBucket: row.role_bucket,
     }))
-  return { entries, error: null }
+  const resolved = await applyOfficialNamesToPlayerRankEntries(entries)
+  return {
+    entries: resolved.map((entry, i) => ({
+      ...entry,
+      roleBucket: entries[i]!.roleBucket,
+    })),
+    error: null,
+  }
 }
