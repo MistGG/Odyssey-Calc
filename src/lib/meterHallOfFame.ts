@@ -1,5 +1,11 @@
 import { getMeterAnonSupabase } from './meterDataSource'
+import {
+  buildEntriesFromParseSummaries,
+  fetchScopeParseSummaries,
+  mergeSummaryEntriesIntoHistory,
+} from './meterLeaderboardSummary'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
+import { fetchDigimonRoleMap } from './meterRoleBuckets'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
 import { dpsToPercentile } from './meterParseScoreColor'
 import type { PlayerRankEntry } from './meterPublicStats'
@@ -243,13 +249,24 @@ export async function fetchScopeLeaderboardEntryHistory(
   }))
   const resolved = await applyOfficialNamesToPlayerRankEntries(forNames).catch(() => forNames)
 
-  const rows = collected.map((entry, i) => ({
+  let rows = collected.map((entry, i) => ({
     ...entry,
     displayName: resolved[i]!.displayName,
     digimonName: resolved[i]!.digimonName,
     iconId: resolved[i]!.iconId,
     portraitUrl: resolved[i]!.portraitUrl,
   }))
+
+  try {
+    const [summaries, roleMap] = await Promise.all([
+      fetchScopeParseSummaries(id, difficultyId),
+      fetchDigimonRoleMap(),
+    ])
+    const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
+    rows = mergeSummaryEntriesIntoHistory(rows, supplemental)
+  } catch {
+    /* keep table history only */
+  }
 
   return { rows, error: null }
 }

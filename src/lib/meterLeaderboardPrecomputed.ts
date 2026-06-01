@@ -1,9 +1,15 @@
 import { getMeterAnonSupabase } from './meterDataSource'
 import {
+  buildEntriesFromParseSummaries,
+  fetchScopeParseSummaries,
+  mergeSummaryEntriesIntoAggregates,
+} from './meterLeaderboardSummary'
+import {
   applyOfficialNamesToMeterAggregates,
   applyOfficialNamesToPlayerRankEntries,
 } from './meterParseDigimonNames'
 import {
+  fetchDigimonRoleMap,
   METER_ROLE_BUCKETS,
   type MeterRoleBucket,
 } from './meterRoleBuckets'
@@ -143,15 +149,27 @@ export async function fetchPrecomputedMeterLeaderboard(
     digimonByBucketAverage[bucket].sort((a, b) => b.dps - a.dps)
   }
 
-  return {
-    stats: {
-      playersByBucket,
-      sortedDpsByBucket,
-      digimonByBucketBest,
-      digimonByBucketAverage,
-    },
-    error: null,
+  let stats: MeterPublicAggregates = {
+    playersByBucket,
+    sortedDpsByBucket,
+    digimonByBucketBest,
+    digimonByBucketAverage,
   }
+
+  try {
+    const [summaries, roleMap] = await Promise.all([
+      fetchScopeParseSummaries(dungeonId, difficultyId),
+      fetchDigimonRoleMap(),
+    ])
+    const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
+    if (supplemental.length) {
+      stats = mergeSummaryEntriesIntoAggregates(stats, supplemental)
+    }
+  } catch {
+    /* keep RPC-only stats */
+  }
+
+  return { stats, error: null }
 }
 
 /** Wiki species names — run after showing precomputed stats (non-blocking for UI). */
