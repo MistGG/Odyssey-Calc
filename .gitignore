@@ -34,6 +34,7 @@ compare-*.mjs
 
 # Backend schema/setup (not published with the site)
 supabase/*
+!supabase/config.toml
 !supabase/functions/
 !supabase/functions/process-meter-leaderboard/
 

@@ -1,0 +1,4 @@
+# Deploy: npx supabase functions deploy process-meter-leaderboard --project-ref fnbixrelavkfvzprlgzc
+
+[functions.process-meter-leaderboard]
+verify_jwt = false
