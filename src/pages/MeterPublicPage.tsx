@@ -15,7 +15,10 @@ import {
   type MeterPublicAggregates,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
-import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
+import {
+  fetchPrecomputedMeterLeaderboard,
+  resolvePrecomputedLeaderboardNames,
+} from '../lib/meterLeaderboardPrecomputed'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
 import {
   dungeonSelectOptions,
@@ -122,6 +125,9 @@ export function MeterPublicPage() {
       if (pre.stats) {
         setPrecomputedStats(pre.stats)
         setParsesRefreshing(false)
+        void resolvePrecomputedLeaderboardNames(pre.stats).then((resolved) => {
+          if (!cancelled) setPrecomputedStats(resolved)
+        })
         return
       }
 

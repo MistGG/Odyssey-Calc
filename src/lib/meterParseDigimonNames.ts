@@ -44,7 +44,7 @@ export async function fetchOfficialDigimonInfoByIds(
   const unique = [...new Set(digimonIds.map((id) => id.trim()).filter(Boolean))]
   const out = new Map<string, { name: string; modelId: string }>()
 
-  await mapPool(unique, 10, async (id) => {
+  await mapPool(unique.slice(0, 120), 4, async (id) => {
     const key = normId(id)
     const cached = nameCache.get(key)
     if (cached) {

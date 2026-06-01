@@ -11,6 +11,7 @@ import {
 import {
   fetchParticipationPlayersInWindow,
   fetchPrecomputedMeterLeaderboard,
+  resolvePrecomputedLeaderboardNames,
   type ParticipationPoolEntry,
 } from '../lib/meterLeaderboardPrecomputed'
 import type { MeterPublicAggregates } from '../lib/meterPublicStats'
@@ -79,17 +80,20 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
       if (pre.error) setLoadError(pre.error)
       if (pre.stats) {
         setPrecomputedStats(pre.stats)
-        const poolRes = await fetchParticipationPlayersInWindow({
+        setLoading(false)
+        setParsesRefreshing(false)
+        void fetchParticipationPlayersInWindow({
           dungeonId,
           difficultyId,
           ...eventWindow,
-        })
-        if (!cancelled) {
+        }).then((poolRes) => {
+          if (cancelled) return
           if (poolRes.error) setLoadError(poolRes.error)
           setParticipationPool(poolRes.entries)
-        }
-        setLoading(false)
-        setParsesRefreshing(false)
+        })
+        void resolvePrecomputedLeaderboardNames(pre.stats).then((resolved) => {
+          if (!cancelled) setPrecomputedStats(resolved)
+        })
         return
       }
 

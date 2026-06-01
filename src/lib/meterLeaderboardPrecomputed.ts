@@ -143,16 +143,30 @@ export async function fetchPrecomputedMeterLeaderboard(
     digimonByBucketAverage[bucket].sort((a, b) => b.dps - a.dps)
   }
 
-  const stats = await applyOfficialNamesToMeterAggregates({
-    playersByBucket,
-    sortedDpsByBucket,
-    digimonByBucketBest,
-    digimonByBucketAverage,
-  })
-
   return {
-    stats,
+    stats: {
+      playersByBucket,
+      sortedDpsByBucket,
+      digimonByBucketBest,
+      digimonByBucketAverage,
+    },
     error: null,
+  }
+}
+
+/** Wiki species names — run after showing precomputed stats (non-blocking for UI). */
+export async function resolvePrecomputedLeaderboardNames(
+  stats: MeterPublicAggregates,
+): Promise<MeterPublicAggregates> {
+  try {
+    return await Promise.race([
+      applyOfficialNamesToMeterAggregates(stats),
+      new Promise<MeterPublicAggregates>((resolve) => {
+        window.setTimeout(() => resolve(stats), 12_000)
+      }),
+    ])
+  } catch {
+    return stats
   }
 }
 
@@ -183,7 +197,7 @@ export async function fetchParticipationPlayersInWindow(
       ...mapPlayerRow(row),
       roleBucket: row.role_bucket,
     }))
-  const resolved = await applyOfficialNamesToPlayerRankEntries(entries)
+  const resolved = await applyOfficialNamesToPlayerRankEntries(entries).catch(() => entries)
   return {
     entries: resolved.map((entry, i) => ({
       ...entry,
