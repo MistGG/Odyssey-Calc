@@ -19,6 +19,7 @@ import {
   leaderboardDpsPoolForBestEntry,
   METER_PROFILE_IDENTITY_NOTICE,
   normalizeRoutePlayerKey,
+  sortPlayerBestParsesByParseScore,
 } from '../lib/meterPlayerProfile'
 import { allMeterUploadScopes } from '../lib/meterScopeList'
 import { dpsToPercentile, parseScoreColor, type PublicMeterParseRow } from '../lib/meterPublicStats'
@@ -104,6 +105,11 @@ export function MeterPlayerProfilePage() {
         ? buildScopeLeaderboardDpsPools(rows, digimonRoleById, bestParses)
         : new Map(),
     [rows, digimonRoleById, bestParses],
+  )
+
+  const sortedBestParses = useMemo(
+    () => sortPlayerBestParsesByParseScore(bestParses, scopeLeaderboardPools),
+    [bestParses, scopeLeaderboardPools],
   )
 
   const peakEntry = useMemo(() => {
@@ -246,7 +252,7 @@ export function MeterPlayerProfilePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {bestParses.map((entry) => {
+                  {sortedBestParses.map((entry) => {
                     const pool = leaderboardDpsPoolForBestEntry(scopeLeaderboardPools, entry)
                     const pct = dpsToPercentile(entry.dps, pool)
                     return (

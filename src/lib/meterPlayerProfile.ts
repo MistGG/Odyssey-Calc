@@ -16,6 +16,7 @@ import {
   type MeterRoleBucket,
 } from './meterRoleBuckets'
 import { aggregatePublicMeterStats, type PublicMeterParseRow } from './meterPublicStats'
+import { dpsToPercentile } from './meterParseScoreColor'
 
 export function meterPlayerProfilePath(playerKey: string): string {
   return `/meter/player/${encodeURIComponent(playerKey.trim().toLowerCase())}`
@@ -160,6 +161,23 @@ export function leaderboardDpsPoolForBestEntry(
   return poolsByScope.get(`${entry.dungeonId}:${entry.difficultyId}`)?.[entry.roleBucket] ?? []
 }
 
+/** Highest parse color (percentile) first, then raw DPS. */
+export function sortPlayerBestParsesByParseScore(
+  entries: PlayerBestParseEntry[],
+  poolsByScope: Map<string, Record<MeterRoleBucket, number[]>>,
+): PlayerBestParseEntry[] {
+  return [...entries].sort((a, b) => {
+    const pctA = dpsToPercentile(a.dps, leaderboardDpsPoolForBestEntry(poolsByScope, a))
+    const pctB = dpsToPercentile(b.dps, leaderboardDpsPoolForBestEntry(poolsByScope, b))
+    if (pctB !== pctA) return pctB - pctA
+    if (b.dps !== a.dps) return b.dps - a.dps
+    const byDungeon = a.dungeonName.localeCompare(b.dungeonName)
+    if (byDungeon !== 0) return byDungeon
+    if (a.difficultyId !== b.difficultyId) return a.difficultyId - b.difficultyId
+    return a.roleLabel.localeCompare(b.roleLabel)
+  })
+}
+
 export function buildPlayerBestParses(
   rows: PublicMeterParseRow[],
   playerKey: string,
@@ -210,12 +228,7 @@ export function buildPlayerBestParses(
     }
   }
 
-  return [...best.values()].sort((a, b) => {
-    const byDungeon = a.dungeonName.localeCompare(b.dungeonName)
-    if (byDungeon !== 0) return byDungeon
-    if (a.difficultyId !== b.difficultyId) return a.difficultyId - b.difficultyId
-    return a.roleLabel.localeCompare(b.roleLabel)
-  })
+  return [...best.values()]
 }
 
 export type PlayerFavoriteDigimon = {
