@@ -19082,6 +19082,33 @@ a.guidebook-monster-panel__loot-btn:hover {
   color: var(--text-soft, #cbd5e1);
 }
 
+.meter-activity-scope-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.meter-activity-scope-label__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meter-activity-scope-label__tag {
+  flex-shrink: 0;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(251, 191, 36, 0.95);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.12);
+  border-radius: 999px;
+  padding: 0.06rem 0.34rem;
+}
+
 .meter-activity-bars__track {
   margin-top: 0.22rem;
   width: 100%;

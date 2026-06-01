@@ -43,9 +43,16 @@ type MeterActivitySummary = {
   recentClears: number
   totalMembers: number
   roleCounts: Record<MeterRoleBucket, number>
+  scopeActivity: Array<{
+    key: string
+    dungeonName: string
+    difficultyLabel: string
+    clears: number
+  }>
   topScopes: Array<{
     key: string
-    label: string
+    dungeonName: string
+    difficultyLabel: string
     clears: number
   }>
 }
@@ -114,7 +121,10 @@ export function MeterActivityPage() {
 
   const summary = useMemo<MeterActivitySummary>(() => {
     const playerKeys = new Set<string>()
-    const scopeCounts = new Map<string, { label: string; clears: number }>()
+    const scopeCounts = new Map<
+      string,
+      { dungeonName: string; difficultyLabel: string; clears: number }
+    >()
     const roleCounts = METER_ROLE_BUCKETS.reduce(
       (acc, role) => {
         acc[role] = 0
@@ -126,10 +136,11 @@ export function MeterActivityPage() {
 
     for (const item of feedItems) {
       const scopeKey = `${item.dungeonId}:${item.difficultyId}`
-      const scopeLabel = `${item.dungeonName} ${item.difficultyLabel}`.trim()
+      const dungeonName = item.dungeonName
+      const difficultyLabel = item.difficultyLabel
       const scope = scopeCounts.get(scopeKey)
       if (scope) scope.clears += 1
-      else scopeCounts.set(scopeKey, { label: scopeLabel, clears: 1 })
+      else scopeCounts.set(scopeKey, { dungeonName, difficultyLabel, clears: 1 })
       for (const member of item.members) {
         playerKeys.add(member.playerKey)
         totalMembers += 1
@@ -143,8 +154,22 @@ export function MeterActivityPage() {
       recentClears: feedItems.length,
       totalMembers,
       roleCounts,
+      scopeActivity: [...scopeCounts.entries()]
+        .map(([key, value]) => ({
+          key,
+          dungeonName: value.dungeonName,
+          difficultyLabel: value.difficultyLabel,
+          clears: value.clears,
+        }))
+        .sort((a, b) => b.clears - a.clears)
+        .slice(0, 10),
       topScopes: [...scopeCounts.entries()]
-        .map(([key, value]) => ({ key, label: value.label, clears: value.clears }))
+        .map(([key, value]) => ({
+          key,
+          dungeonName: value.dungeonName,
+          difficultyLabel: value.difficultyLabel,
+          clears: value.clears,
+        }))
         .sort((a, b) => b.clears - a.clears)
         .slice(0, 6),
     }
@@ -155,6 +180,10 @@ export function MeterActivityPage() {
     const values = METER_ROLE_BUCKETS.map((role) => source[role])
     return Math.max(1, ...values)
   }, [summary.roleCounts, totalRoleCounts])
+  const scopeMax = useMemo(
+    () => Math.max(1, ...summary.scopeActivity.map((s) => s.clears)),
+    [summary.scopeActivity],
+  )
   const feedWindowLabel = useMemo(() => formatFeedWindowLabel(feedItems), [feedItems])
 
   useEffect(() => {
@@ -221,7 +250,7 @@ export function MeterActivityPage() {
           </div>
 
           <article className="meter-activity-panel">
-            <h2 className="meter-activity-panel__title">Role count</h2>
+            <h2 className="meter-activity-panel__title">Unique tamers by role</h2>
             <ul className="meter-activity-bars">
               {METER_ROLE_BUCKETS.map((role) => {
                 const source = totalRoleCounts ?? summary.roleCounts
@@ -243,12 +272,46 @@ export function MeterActivityPage() {
           </article>
 
           <article className="meter-activity-panel">
+            <h2 className="meter-activity-panel__title">Activity by dungeon + difficulty</h2>
+            {summary.scopeActivity.length ? (
+              <ul className="meter-activity-bars">
+                {summary.scopeActivity.map((scope) => {
+                  const widthPct = Math.round((scope.clears / scopeMax) * 100)
+                  return (
+                    <li key={scope.key} className="meter-activity-bars__row">
+                      <div className="meter-activity-bars__meta">
+                        <span className="meter-activity-scope-label">
+                          <span className="meter-activity-scope-label__name">{scope.dungeonName}</span>
+                          {scope.difficultyLabel ? (
+                            <span className="meter-activity-scope-label__tag">{scope.difficultyLabel}</span>
+                          ) : null}
+                        </span>
+                        <span>{scope.clears}</span>
+                      </div>
+                      <div className="meter-activity-bars__track">
+                        <div className="meter-activity-bars__fill" style={{ width: `${widthPct}%` }} />
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <p className="meter-parses-muted">Waiting for uploads…</p>
+            )}
+          </article>
+
+          <article className="meter-activity-panel">
             <h2 className="meter-activity-panel__title">Recent clears</h2>
             {summary.topScopes.length ? (
               <ol className="meter-activity-top-scopes">
                 {summary.topScopes.map((scope) => (
                   <li key={scope.key} className="meter-activity-top-scopes__row">
-                    <span className="meter-activity-top-scopes__label">{scope.label}</span>
+                    <span className="meter-activity-scope-label">
+                      <span className="meter-activity-scope-label__name">{scope.dungeonName}</span>
+                      {scope.difficultyLabel ? (
+                        <span className="meter-activity-scope-label__tag">{scope.difficultyLabel}</span>
+                      ) : null}
+                    </span>
                     <span className="meter-activity-top-scopes__value">{scope.clears}</span>
                   </li>
                 ))}

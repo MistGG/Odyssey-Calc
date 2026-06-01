@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
@@ -29,8 +29,13 @@ import {
 type MeterNavState = { dungeonId?: string; difficultyId?: number }
 
 export function MeterPublicPage() {
-  const { state: navState } = useLocation()
+  const location = useLocation()
+  const { state: navState } = location
+  const [searchParams] = useSearchParams()
   const meterNav = (navState as MeterNavState | null) ?? null
+  const queryDungeonId = searchParams.get('dungeon')?.trim() || ''
+  const queryDifficultyRaw = searchParams.get('difficulty')
+  const queryDifficultyId = queryDifficultyRaw != null ? Number(queryDifficultyRaw) : null
   const [rows, setRows] = useState<PublicMeterParseRow[]>([])
   const [precomputedStats, setPrecomputedStats] = useState<MeterPublicAggregates | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -66,7 +71,15 @@ export function MeterPublicPage() {
   )
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [location.key])
+
+  useEffect(() => {
     if (!dungeonOptions.length) return
+    if (queryDungeonId && dungeonOptions.some((d) => d.dungeonId === queryDungeonId)) {
+      setDungeonId(queryDungeonId)
+      return
+    }
     const fromEvent = meterNav?.dungeonId?.trim()
     if (fromEvent && dungeonOptions.some((d) => d.dungeonId === fromEvent)) {
       setDungeonId(fromEvent)
@@ -85,12 +98,21 @@ export function MeterPublicPage() {
       }
       setDungeonId(dungeonOptions[0]!.dungeonId)
     })()
-  }, [dungeonOptions, bootLoading, meterNav?.dungeonId])
+  }, [dungeonOptions, bootLoading, meterNav?.dungeonId, queryDungeonId])
 
   useEffect(() => {
     if (!dungeonId) return
     if (!difficultyOptions.length) {
       setDifficultyId(null)
+      return
+    }
+    if (
+      queryDifficultyId != null &&
+      Number.isFinite(queryDifficultyId) &&
+      queryDifficultyId >= 2 &&
+      difficultyOptions.some((d) => d.difficultyId === queryDifficultyId)
+    ) {
+      setDifficultyId(queryDifficultyId)
       return
     }
     const fromEvent = meterNav?.difficultyId
@@ -104,7 +126,7 @@ export function MeterPublicPage() {
     if (difficultyId == null || !difficultyOptions.some((d) => d.difficultyId === difficultyId)) {
       setDifficultyId(difficultyOptions[0]!.difficultyId)
     }
-  }, [dungeonId, difficultyOptions, difficultyId, meterNav?.difficultyId])
+  }, [dungeonId, difficultyOptions, difficultyId, meterNav?.difficultyId, queryDifficultyId])
 
   useEffect(() => {
     if (!dungeonId || difficultyId == null) {

@@ -103,7 +103,7 @@ const METER_TAMER_COUNT_TTL_MS = 10 * 60 * 1000
 const METER_TAMER_SCAN_PAGE_SIZE = 1000
 const METER_TAMER_SCAN_MAX_ROWS = 200_000
 const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
-const METER_ROLE_COUNT_CACHE_KEY = 'odyssey-meter-total-role-counts-v1'
+const METER_ROLE_COUNT_CACHE_KEY = 'odyssey-meter-total-role-counts-v2'
 
 /** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
 
@@ -444,28 +444,45 @@ export async function fetchTotalMeterRoleCounts(): Promise<{
     }
   }
 
-  const queries = await Promise.all(
-    METER_ROLE_BUCKETS.map(async (role) => {
-      const { count, error } = await supabase
-        .from('meter_leaderboard_entries')
-        .select('id', { count: 'exact', head: true })
-        .eq('role_bucket', role)
-      return { role, count: Math.max(0, count ?? 0), error }
-    }),
+  const uniqueByRole = METER_ROLE_BUCKETS.reduce(
+    (acc, role) => ({ ...acc, [role]: new Set<string>() }),
+    {} as Record<MeterRoleBucket, Set<string>>,
   )
-  const firstError = queries.find((q) => q.error)?.error
-  if (firstError) {
-    return {
-      counts: METER_ROLE_BUCKETS.reduce(
-        (acc, role) => ({ ...acc, [role]: 0 }),
-        {} as Record<MeterRoleBucket, number>,
-      ),
-      error: firstError.message,
+
+  let offset = 0
+  while (offset < METER_TAMER_SCAN_MAX_ROWS) {
+    const to = offset + METER_TAMER_SCAN_PAGE_SIZE - 1
+    const { data, error } = await supabase
+      .from('meter_leaderboard_entries')
+      .select('role_bucket, player_key, created_at')
+      .order('created_at', { ascending: false })
+      .range(offset, to)
+    if (error) {
+      return {
+        counts: METER_ROLE_BUCKETS.reduce(
+          (acc, role) => ({ ...acc, [role]: 0 }),
+          {} as Record<MeterRoleBucket, number>,
+        ),
+        error: error.message,
+      }
     }
+    const rows = (data ?? []) as Array<{ role_bucket?: string | null; player_key?: string | null }>
+    if (!rows.length) break
+
+    for (const row of rows) {
+      const role = row.role_bucket?.trim() as MeterRoleBucket | undefined
+      const key = row.player_key?.trim().toLowerCase()
+      if (!role || !key) continue
+      if (!METER_ROLE_BUCKETS.includes(role)) continue
+      uniqueByRole[role].add(key)
+    }
+
+    if (rows.length < METER_TAMER_SCAN_PAGE_SIZE) break
+    offset += METER_TAMER_SCAN_PAGE_SIZE
   }
 
   const counts = {} as Record<MeterRoleBucket, number>
-  for (const q of queries) counts[q.role] = q.count
+  for (const role of METER_ROLE_BUCKETS) counts[role] = uniqueByRole[role].size
   writeCachedRoleCounts(counts)
   return { counts, error: null }
 }

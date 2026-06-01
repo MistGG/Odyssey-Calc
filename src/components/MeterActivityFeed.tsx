@@ -101,6 +101,7 @@ function ActivityFeedCard({
       : ''
   const leaderboardTo = {
     pathname: '/meter/leaderboard',
+    search: `?dungeon=${encodeURIComponent(item.dungeonId)}&difficulty=${item.difficultyId}`,
     state: { dungeonId: item.dungeonId, difficultyId: item.difficultyId },
   }
 
