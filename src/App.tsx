@@ -13,6 +13,7 @@ import { MeterPlayerProfilePage } from './pages/MeterPlayerProfilePage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterActivityPage } from './pages/MeterActivityPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
+import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
 import { CompanionPage } from './pages/CompanionPage'
 import { MayClearEventPage } from './pages/MayClearEventPage'
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="changes" element={<TierChangesPage />} />
           <Route path="meter" element={<MeterActivityPage />} />
           <Route path="meter/leaderboard" element={<MeterPublicPage />} />
+          <Route path="meter/hall-of-fame" element={<MeterHallOfFamePage />} />
           <Route path="meter/search" element={<MeterTamerSearchPage />} />
           <Route path="meter/player/:playerKey" element={<MeterPlayerProfilePage />} />
           <Route path="meter/my-parses" element={<MeterMyParsesPage />} />

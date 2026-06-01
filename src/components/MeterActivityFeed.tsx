@@ -143,6 +143,15 @@ function ActivityFeedCard({
         <Link to={leaderboardTo} className="meter-activity-card__leaderboard-link">
           View leaderboard →
         </Link>
+        <Link
+          to={{
+            pathname: '/meter/hall-of-fame',
+            search: `?dungeon=${encodeURIComponent(item.dungeonId)}&difficulty=${item.difficultyId}`,
+          }}
+          className="meter-activity-card__leaderboard-link meter-activity-card__hof-link"
+        >
+          Hall of Fame →
+        </Link>
       </footer>
     </article>
   )

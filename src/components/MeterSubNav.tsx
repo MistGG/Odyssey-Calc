@@ -20,6 +20,9 @@ export function MeterSubNav() {
       <NavLink to="/meter/leaderboard" className={subNavClass}>
         Leaderboard
       </NavLink>
+      <NavLink to="/meter/hall-of-fame" className={subNavClass}>
+        Hall of Fame
+      </NavLink>
       <NavLink to="/meter/search" className={subNavClass}>
         Tamer search
       </NavLink>
