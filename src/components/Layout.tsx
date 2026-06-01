@@ -3,7 +3,7 @@ import { useAuth } from '../auth/useAuth'
 import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
 import { NavMenuGroup } from './NavMenuGroup'
-import { SiteFanBanner, SiteFanFooter } from './SiteFanNotice'
+import { SiteFanFooter } from './SiteFanNotice'
 
 function navLinkClass(isActive: boolean, extra = '') {
   return `nav-link${extra ? ` ${extra}` : ''}${isActive ? ' nav-link--active' : ''}`
@@ -167,15 +167,14 @@ export function Layout() {
               <NavLink
                 to="/auth"
                 className={({ isActive }) => navLinkClass(isActive, 'nav-sign-in')}
-                title="Sign in to Odyssey Calc (fan site account, not the official game)"
+                title="Sign in to your Odyssey-Calc account (not the official game)"
               >
-                Fan site account
+                Signin to Odyssey-Calc account
               </NavLink>
             ) : null}
           </div>
         </div>
       </header>
-      <SiteFanBanner />
       <main className="main">
         <Outlet />
       </main>

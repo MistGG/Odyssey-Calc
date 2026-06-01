@@ -4,8 +4,6 @@ import './index.css'
 import { AuthProvider } from './auth/AuthProvider'
 import App from './App.tsx'
 
-document.getElementById('static-fan-notice')?.remove()
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>

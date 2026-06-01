@@ -27,7 +27,7 @@ function AuthPageLayout({ children }: { children: ReactNode }) {
           <img className="auth-brand__logo" src={LOGO_URL} alt="" width={52} height={52} decoding="async" />
           <div className="auth-brand__text">
             <p className="auth-brand__eyebrow">Odyssey Calc</p>
-            <h1 className="auth-brand__title">Fan tools account</h1>
+            <h1 className="auth-brand__title">Fan site account</h1>
             <p className="auth-brand__tagline">Tier list · DPS meter · Companion</p>
           </div>
         </header>
