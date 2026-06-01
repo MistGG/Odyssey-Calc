@@ -7597,13 +7597,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   flex-direction: column;
 }
 
-.companion-hero__disclaimer {
-  max-width: 36rem;
-  margin-inline: auto;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  color: #fde68a;
-}
 
 .auth-disclaimer {
   margin: 0 0 1rem;
@@ -8891,10 +8884,18 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   margin-bottom: 1rem;
 }
 
-.companion-hero__note {
+.companion-hero__disclaimer {
   position: relative;
-  margin: 0;
-  font-size: 0.82rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 38rem;
+  margin: 0.25rem auto 0;
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  text-align: center;
+  text-wrap: balance;
+  color: #fde68a;
 }
 
 .companion-cta {

@@ -66,7 +66,7 @@ export function CompanionPage() {
             View meter leaderboards
           </Link>
         </div>
-        <p className="companion-hero__note companion-hero__disclaimer">
+        <p className="companion-hero__disclaimer">
           Third-party Windows app from GitHub (MistGG/Odyssey-Companion). Not the official game
           installer or Digital Odyssey login. Auto-updates from GitHub releases.
         </p>
