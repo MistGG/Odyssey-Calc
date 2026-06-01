@@ -740,8 +740,7 @@ export function buildMeterProfileShareHtml(options: {
   <meta name="twitter:title" content="${escapeHtml(title)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
   <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}" />
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(appUrl)}" />
-  <link rel="canonical" href="${escapeHtml(appUrl)}" />
+  <link rel="canonical" href="${escapeHtml(sharePageUrl)}" />
   <style>
     body { margin: 0; min-height: 100vh; display: grid; place-items: center;
       font-family: system-ui, sans-serif; color: #e2e8f0;
@@ -754,8 +753,11 @@ export function buildMeterProfileShareHtml(options: {
   </style>
 </head>
 <body>
-  <p>Redirecting to <a href="${escapeHtml(appUrl)}">${escapeHtml(snapshot.displayName)}</a>…</p>
-  <script>location.replace(${JSON.stringify(appUrl)});</script>
+  <p>Open <a href="${escapeHtml(appUrl)}">${escapeHtml(snapshot.displayName)}&apos;s meter profile</a> on Odyssey Calc (fan site).</p>
+  <p class="muted" style="font-size:.85rem">Auto-redirect in 5 seconds. <a href="${escapeHtml(appUrl)}">Continue now</a>.</p>
+  <script>
+    setTimeout(function () { location.replace(${JSON.stringify(appUrl)}); }, 5000);
+  </script>
 </body>
 </html>`
 }

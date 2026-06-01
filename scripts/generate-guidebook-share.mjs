@@ -187,12 +187,29 @@ function shareHtml(section, panelHtmlBlocks) {
     <h1>${escapeHtml(section.title)}</h1>
     <p class="muted">${escapeHtml(section.description)}</p>
     <div class="panels">${panels}</div>
-    <p class="muted">Opening guidebook&hellip; <a href="${appUrl}">Continue here</a>. Add <code>?stay=1</code> to preview without redirect.</p>
+    <p class="muted" id="redirect-countdown" hidden></p>
+    <p class="muted"><a href="${appUrl}">Open in Odyssey Calc guidebook</a> · Add <code>?stay=1</code> to disable auto-redirect.</p>
   </div>
   <script>
-    if (!/([?&])stay=1(&|$)/.test(location.search)) {
-      setTimeout(function () { location.replace(${JSON.stringify(appUrl)}); }, 1200);
-    }
+    (function () {
+      if (/([?&])stay=1(&|$)/.test(location.search)) return;
+      var target = ${JSON.stringify(appUrl)};
+      var ms = 8000;
+      var el = document.getElementById("redirect-countdown");
+      if (!el) return;
+      el.hidden = false;
+      var remaining = Math.ceil(ms / 1000);
+      function tick() {
+        el.textContent = "Auto-opening guidebook in " + remaining + "s…";
+        if (remaining <= 0) {
+          location.replace(target);
+          return;
+        }
+        remaining -= 1;
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
   </script>
 </body>
 </html>

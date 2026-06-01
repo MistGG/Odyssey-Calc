@@ -41,12 +41,29 @@
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px"><span style="display:inline-block;padding:4px 10px;border-radius:6px;background:rgba(120,53,15,.9);color:#fde68a;font:700 11px system-ui,sans-serif;letter-spacing:.04em">LEVEL 70 UNCAP</span><span style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(96,165,250,.45);font:700 11px system-ui,sans-serif">Normal</span></div>
   <h2 style="margin:0;font:700 20px system-ui,sans-serif;color:#f8fafc">The Rise of the Fallen Angel</h2>
 </article></div>
-    <p class="muted">Opening guidebook&hellip; <a href="/#/guidebook?step=early-50-70">Continue here</a>. Add <code>?stay=1</code> to preview without redirect.</p>
+    <p class="muted" id="redirect-countdown" hidden></p>
+    <p class="muted"><a href="/#/guidebook?step=early-50-70">Open in Odyssey Calc guidebook</a> · Add <code>?stay=1</code> to disable auto-redirect.</p>
   </div>
   <script>
-    if (!/([?&])stay=1(&|$)/.test(location.search)) {
-      setTimeout(function () { location.replace("/#/guidebook?step=early-50-70"); }, 1200);
-    }
+    (function () {
+      if (/([?&])stay=1(&|$)/.test(location.search)) return;
+      var target = "/#/guidebook?step=early-50-70";
+      var ms = 8000;
+      var el = document.getElementById("redirect-countdown");
+      if (!el) return;
+      el.hidden = false;
+      var remaining = Math.ceil(ms / 1000);
+      function tick() {
+        el.textContent = "Auto-opening guidebook in " + remaining + "s…";
+        if (remaining <= 0) {
+          location.replace(target);
+          return;
+        }
+        remaining -= 1;
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
   </script>
 </body>
 </html>

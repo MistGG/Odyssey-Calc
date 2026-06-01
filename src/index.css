@@ -7480,6 +7480,32 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   color: #cbd5e1;
 }
 
+.auth-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #f8fafc;
+  text-align: left;
+}
+
+.auth-disclaimer {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(120, 53, 15, 0.22);
+}
+
+.auth-disclaimer a {
+  color: #fde68a;
+  font-weight: 600;
+}
+
 .auth-hint {
   margin: 0;
   font-size: 0.82rem;
@@ -14945,6 +14971,14 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+.event-hero__fan-note {
+  position: relative;
+  margin: 0 auto 0.85rem;
+  max-width: 40rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 .event-hero__lead {

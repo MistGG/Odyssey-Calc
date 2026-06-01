@@ -1,6 +1,22 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { safeReturnTo } from '../lib/safeReturnTo'
+
+const OFFICIAL_GAME_URL = 'https://thedigitalodyssey.com/'
+
+function AuthDisclaimer() {
+  return (
+    <p className="auth-disclaimer">
+      Fan-made site only. Use this login for Odyssey Calc features (tier list, meter, companion). This
+      is not the official{' '}
+      <a href={OFFICIAL_GAME_URL} target="_blank" rel="noreferrer noopener">
+        Digital Odyssey
+      </a>{' '}
+      game website.
+    </p>
+  )
+}
 
 type Tab = 'login' | 'signup'
 
@@ -9,7 +25,7 @@ export function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const returnTo = searchParams.get('returnTo') ?? '/'
+  const returnTo = safeReturnTo(searchParams.get('returnTo'))
   const [tab, setTab] = useState<Tab>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,7 +46,8 @@ export function AuthPage() {
         <div className="auth-card">
           <div className="auth-corner auth-corner--tl" aria-hidden />
           <div className="auth-corner auth-corner--br" aria-hidden />
-          <h2 className="auth-title">Account</h2>
+          <h2 className="auth-title">Odyssey Calc account</h2>
+          <AuthDisclaimer />
           <p className="auth-hint">
             {import.meta.env.DEV ? (
               <>
@@ -94,6 +111,9 @@ export function AuthPage() {
       <div className="auth-card">
         <div className="auth-corner auth-corner--tl" aria-hidden />
         <div className="auth-corner auth-corner--br" aria-hidden />
+
+        <h2 className="auth-title">Odyssey Calc account</h2>
+        <AuthDisclaimer />
 
         <div className="auth-tabs" role="tablist">
           <button

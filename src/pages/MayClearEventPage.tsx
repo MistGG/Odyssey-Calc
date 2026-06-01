@@ -48,8 +48,12 @@ export function MayClearEventPage() {
     >
       <header className="event-hero">
         <div className="event-hero__glow" aria-hidden />
-        <p className="event-hero__eyebrow">Community event</p>
+        <p className="event-hero__eyebrow">Community event · Odyssey Calc</p>
         <h1 className="event-hero__title">{MAY_CLEAR_EVENT.eventTitle}</h1>
+        <p className="event-hero__fan-note muted">
+          Run by the Odyssey Calc community. This is not an official in-game event page. Rewards are
+          community-managed (crowns / meter shop points).
+        </p>
         <p className="event-hero__lead">
           {eventEnded && activeDungeon ? (
             <>
