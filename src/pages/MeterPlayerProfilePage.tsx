@@ -158,7 +158,7 @@ export function MeterPlayerProfilePage() {
 
   const backTo = nav?.fromMeter?.dungeonId
     ? {
-        pathname: '/meter',
+        pathname: '/meter/leaderboard',
         state: {
           dungeonId: nav.fromMeter.dungeonId,
           difficultyId: nav.fromMeter.difficultyId,
@@ -180,7 +180,7 @@ export function MeterPlayerProfilePage() {
       <div className="meter-parses-page meter-player-profile-page">
         <p className="meter-parses-error meter-parses-error--center">Invalid player profile link.</p>
         <p className="meter-parses-muted meter-parses-muted--center">
-          <Link to="/meter">Back to leaderboard</Link>
+          <Link to="/meter">Back to Meter</Link>
         </p>
       </div>
     )

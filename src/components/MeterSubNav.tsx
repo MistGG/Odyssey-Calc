@@ -15,6 +15,9 @@ export function MeterSubNav() {
   return (
     <nav className="meter-sub-nav" aria-label="Meter sections">
       <NavLink to="/meter" end className={subNavClass}>
+        Activity
+      </NavLink>
+      <NavLink to="/meter/leaderboard" className={subNavClass}>
         Leaderboard
       </NavLink>
       <NavLink to="/meter/search" className={subNavClass}>

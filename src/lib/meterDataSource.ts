@@ -6,6 +6,7 @@ import {
   type MeterParseSelection,
   type PublicMeterParseRow,
 } from './meterPublicStats'
+import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
 
 import {
   getCachedGlobalRecentParses,
@@ -97,6 +98,12 @@ const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 500
 const GLOBAL_RECENT_PARSE_LIMIT = 400
 /** Max signed-in uploads considered for meter point grants (shop / rewards sync). */
 const MY_METER_PARSES_LIMIT = 150
+const METER_TAMER_COUNT_CACHE_KEY = 'odyssey-meter-total-tamers-v1'
+const METER_TAMER_COUNT_TTL_MS = 10 * 60 * 1000
+const METER_TAMER_SCAN_PAGE_SIZE = 1000
+const METER_TAMER_SCAN_MAX_ROWS = 200_000
+const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
+const METER_ROLE_COUNT_CACHE_KEY = 'odyssey-meter-total-role-counts-v1'
 
 /** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
 
@@ -210,9 +217,9 @@ export async function fetchPublicDungeonParses(
   return { rows, error: null }
 }
 
-/** Recent public party parses across all dungeons (profile fast tier). */
-export async function fetchGlobalRecentPublicParses(
-  limit = GLOBAL_RECENT_PARSE_LIMIT,
+async function refreshGlobalRecentPublicParses(
+  limit: number,
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
   const supabase = getMeterAnonSupabase()
   if (!supabase) {
@@ -229,8 +236,18 @@ export async function fetchGlobalRecentPublicParses(
 
   if (error) return { rows: [], error: error.message }
   const eligible = leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[])
+  onUpdated?.(eligible)
   const rows = await resolveMeterParseRowPayloads(eligible)
+  setCachedGlobalRecentParses(rows)
+  onUpdated?.(rows)
   return { rows, error: null }
+}
+
+/** Recent public party parses across all dungeons (profile fast tier). */
+export async function fetchGlobalRecentPublicParses(
+  limit = GLOBAL_RECENT_PARSE_LIMIT,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  return refreshGlobalRecentPublicParses(limit)
 }
 
 /**
@@ -256,13 +273,201 @@ export async function getPublicDungeonParsesCached(
 
 export async function getGlobalRecentPublicParsesCached(
   limit = GLOBAL_RECENT_PARSE_LIMIT,
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
   const cached = getCachedGlobalRecentParses()
-  if (cached) return { rows: cached, error: null }
+  if (cached) {
+    void refreshGlobalRecentPublicParses(limit, onUpdated)
+    return { rows: cached.slice(0, limit), error: null }
+  }
 
-  const res = await fetchGlobalRecentPublicParses(limit)
-  if (!res.error) setCachedGlobalRecentParses(res.rows)
-  return res
+  return refreshGlobalRecentPublicParses(limit, onUpdated)
+}
+
+type MeterTamerCountCache = {
+  value: number
+  fetchedAt: number
+}
+
+function readCachedMeterTamerCount(): number | null {
+  try {
+    const raw = sessionStorage.getItem(METER_TAMER_COUNT_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as MeterTamerCountCache
+    if (!Number.isFinite(parsed.value) || !Number.isFinite(parsed.fetchedAt)) return null
+    if (Date.now() - parsed.fetchedAt > METER_TAMER_COUNT_TTL_MS) return null
+    return Math.max(0, Math.floor(parsed.value))
+  } catch {
+    return null
+  }
+}
+
+function writeCachedMeterTamerCount(value: number): void {
+  try {
+    const payload: MeterTamerCountCache = {
+      value: Math.max(0, Math.floor(value)),
+      fetchedAt: Date.now(),
+    }
+    sessionStorage.setItem(METER_TAMER_COUNT_CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    /* ignore */
+  }
+}
+
+function readCachedNumber(key: string): number | null {
+  try {
+    const raw = sessionStorage.getItem(key)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as MeterTamerCountCache
+    if (!Number.isFinite(parsed.value) || !Number.isFinite(parsed.fetchedAt)) return null
+    if (Date.now() - parsed.fetchedAt > METER_TAMER_COUNT_TTL_MS) return null
+    return Math.max(0, Math.floor(parsed.value))
+  } catch {
+    return null
+  }
+}
+
+function writeCachedNumber(key: string, value: number): void {
+  try {
+    const payload: MeterTamerCountCache = {
+      value: Math.max(0, Math.floor(value)),
+      fetchedAt: Date.now(),
+    }
+    sessionStorage.setItem(key, JSON.stringify(payload))
+  } catch {
+    /* ignore */
+  }
+}
+
+type MeterRoleCountCache = {
+  value: Record<MeterRoleBucket, number>
+  fetchedAt: number
+}
+
+function readCachedRoleCounts(): Record<MeterRoleBucket, number> | null {
+  try {
+    const raw = sessionStorage.getItem(METER_ROLE_COUNT_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as MeterRoleCountCache
+    if (!parsed?.value || !Number.isFinite(parsed.fetchedAt)) return null
+    if (Date.now() - parsed.fetchedAt > METER_TAMER_COUNT_TTL_MS) return null
+    const out = {} as Record<MeterRoleBucket, number>
+    for (const role of METER_ROLE_BUCKETS) {
+      const n = parsed.value[role]
+      out[role] = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0
+    }
+    return out
+  } catch {
+    return null
+  }
+}
+
+function writeCachedRoleCounts(value: Record<MeterRoleBucket, number>): void {
+  try {
+    const payload: MeterRoleCountCache = { value, fetchedAt: Date.now() }
+    sessionStorage.setItem(METER_ROLE_COUNT_CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Unique player keys present in precomputed leaderboard entries (all-time). */
+export async function fetchTotalMeterTamersParsed(): Promise<{ total: number; error: string | null }> {
+  const cached = readCachedMeterTamerCount()
+  if (cached != null) return { total: cached, error: null }
+
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) return { total: 0, error: 'Supabase is not configured.' }
+
+  const keys = new Set<string>()
+  let offset = 0
+
+  while (offset < METER_TAMER_SCAN_MAX_ROWS) {
+    const to = offset + METER_TAMER_SCAN_PAGE_SIZE - 1
+    const { data, error } = await supabase
+      .from('meter_leaderboard_entries')
+      .select('player_key, created_at')
+      .order('created_at', { ascending: false })
+      .range(offset, to)
+
+    if (error) return { total: 0, error: error.message }
+    const rows = (data ?? []) as Array<{ player_key?: string | null }>
+    if (!rows.length) break
+
+    for (const row of rows) {
+      const key = row.player_key?.trim().toLowerCase()
+      if (key) keys.add(key)
+    }
+
+    if (rows.length < METER_TAMER_SCAN_PAGE_SIZE) break
+    offset += METER_TAMER_SCAN_PAGE_SIZE
+  }
+
+  const total = keys.size
+  writeCachedMeterTamerCount(total)
+  return { total, error: null }
+}
+
+/** All stored dungeon-party parses count. */
+export async function fetchTotalMeterParsesStored(): Promise<{ total: number; error: string | null }> {
+  const cached = readCachedNumber(METER_PARSE_COUNT_CACHE_KEY)
+  if (cached != null) return { total: cached, error: null }
+
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) return { total: 0, error: 'Supabase is not configured.' }
+  const { count, error } = await supabase
+    .from('meter_parses')
+    .select('id', { count: 'exact', head: true })
+    .eq('parse_kind', 'dungeon_party')
+  if (error) return { total: 0, error: error.message }
+  const total = Math.max(0, count ?? 0)
+  writeCachedNumber(METER_PARSE_COUNT_CACHE_KEY, total)
+  return { total, error: null }
+}
+
+/** All-time role entry counts from precomputed leaderboard rows. */
+export async function fetchTotalMeterRoleCounts(): Promise<{
+  counts: Record<MeterRoleBucket, number>
+  error: string | null
+}> {
+  const cached = readCachedRoleCounts()
+  if (cached) return { counts: cached, error: null }
+
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) {
+    return {
+      counts: METER_ROLE_BUCKETS.reduce(
+        (acc, role) => ({ ...acc, [role]: 0 }),
+        {} as Record<MeterRoleBucket, number>,
+      ),
+      error: 'Supabase is not configured.',
+    }
+  }
+
+  const queries = await Promise.all(
+    METER_ROLE_BUCKETS.map(async (role) => {
+      const { count, error } = await supabase
+        .from('meter_leaderboard_entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('role_bucket', role)
+      return { role, count: Math.max(0, count ?? 0), error }
+    }),
+  )
+  const firstError = queries.find((q) => q.error)?.error
+  if (firstError) {
+    return {
+      counts: METER_ROLE_BUCKETS.reduce(
+        (acc, role) => ({ ...acc, [role]: 0 }),
+        {} as Record<MeterRoleBucket, number>,
+      ),
+      error: firstError.message,
+    }
+  }
+
+  const counts = {} as Record<MeterRoleBucket, number>
+  for (const q of queries) counts[q.role] = q.count
+  writeCachedRoleCounts(counts)
+  return { counts, error: null }
 }
 
 export async function fetchAllScopeParsesCached(
