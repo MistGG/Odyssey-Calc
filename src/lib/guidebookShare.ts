@@ -35,13 +35,19 @@ const SHARE_SECTIONS: Record<string, GuidebookShareMeta> = {
     sectionId: 'early-70-beyond',
     title: 'EXP farming',
     description:
-      'The Dark Roar (Story) in Big Sight for fast EXP after your level 70 uncap. Odyssey Calc Guidebook',
+      'The Dark Roar and The Undying (Story) for fast EXP after your level 70 uncap. Odyssey Calc Guidebook',
     panels: [
       {
         badge: 'EXP farm',
         name: 'The Dark Roar',
         difficulty: 'Story',
         locationFilename: 'dark-roar-location.png',
+      },
+      {
+        badge: 'EXP farm',
+        name: 'The Undying',
+        difficulty: 'Story',
+        locationFilename: 'the-undying-location.png',
       },
     ],
   },

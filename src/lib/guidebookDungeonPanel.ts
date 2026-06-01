@@ -10,6 +10,7 @@ import {
   GUIDEBOOK_GEAR_TRADEABLE_ITEM_IDS,
   GUIDEBOOK_UNCAP_50_DUNGEON_ID,
   GUIDEBOOK_UNCAP_70_DUNGEON_ID,
+  GUIDEBOOK_UNDYING_EXP_DUNGEON_ID,
 } from './guidebookContent'
 
 export type GuidebookDungeonMedia = {
@@ -49,6 +50,10 @@ export const GUIDEBOOK_DUNGEON_MEDIA: Record<string, GuidebookDungeonMedia> = {
   [GUIDEBOOK_DARK_ROAR_DUNGEON_ID]: dungeonLocationMedia(
     'dark-roar-location.png',
     'The Dark Roar — entrance / map location (Big Sight)',
+  ),
+  [GUIDEBOOK_UNDYING_EXP_DUNGEON_ID]: dungeonLocationMedia(
+    'the-undying-location.png',
+    'The Undying — entrance / map location',
   ),
 }
 

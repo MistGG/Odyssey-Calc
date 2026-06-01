@@ -25,6 +25,9 @@ export const GUIDEBOOK_UNCAP_70_DUNGEON_ID = 'urb9jgm'
 /** The Dark Roar — EXP farm in Big Sight (Story). */
 export const GUIDEBOOK_DARK_ROAR_DUNGEON_ID = 'uzyxsi2'
 
+/** The Undying — VenomVamdemon EXP farm (Story). */
+export const GUIDEBOOK_UNDYING_EXP_DUNGEON_ID = 'u11u777w'
+
 /** Homeostasis Wish — 5 required for digivice craft/upgrade. */
 export const GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID = 'i1fgyfqa'
 

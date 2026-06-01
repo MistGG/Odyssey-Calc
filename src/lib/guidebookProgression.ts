@@ -70,11 +70,12 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
   {
     id: 'early-70-beyond',
     title: 'EXP farming',
-    zone: 'Big Sight',
+    zone: 'Gain levels',
     zoneTone: 'metro',
     summary: 'Level alts and partners quickly after your 70 uncap.',
     tasks: [
       { kind: 'farm', text: 'Run The Dark Roar (Story) in Big Sight for large EXP, solo or in a party.' },
+      { kind: 'farm', text: 'Run VenomVamdemon in The Undying (Story) for EXP, solo or in a party.' },
       { kind: 'tip', text: 'Push toward level 90 before the next level cap.' },
     ],
   },

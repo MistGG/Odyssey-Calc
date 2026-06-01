@@ -58,6 +58,7 @@ import {
 import {
   GUIDEBOOK_AGUMON_CLASSIC_ID,
   GUIDEBOOK_DARK_ROAR_DUNGEON_ID,
+  GUIDEBOOK_UNDYING_EXP_DUNGEON_ID,
   GUIDEBOOK_HIKARI_SEES_ODAIBA_QUEST_ID,
   GUIDEBOOK_DIGIVICE_FRAGMENT_EACH_COUNT,
   GUIDEBOOK_DIGIVICE_FRAGMENTS,
@@ -1503,18 +1504,25 @@ export function GuideEarlyGame70Beyond() {
             Now that you&apos;ve done that 70 uncap, you can reach 90 before the next cap. You may want
             to start leveling other digimon and the perfect place to do so is the Dark Roar dungeon in
             Big Sight. It gives a large amount of EXP in Story difficulty and can be done very easily
-            solo or in a party.
+            solo or in a party. You can also run VenomVamdemon in The Undying Story Mode for EXP, solo or in
+            a party. You can find this in Odaiba.
           </p>
         </GuideProse>
       </GuidebookNotes>
       <GuidebookDungeonPanel
-        layout="single"
-        ariaLabel="Dark Roar"
+        ariaLabel="EXP farming dungeons"
         cards={[
           {
             dungeonId: GUIDEBOOK_DARK_ROAR_DUNGEON_ID,
             nameFallback: 'The Dark Roar',
             difficulty: 'Story',
+            badgeLabel: 'EXP farm',
+          },
+          {
+            dungeonId: GUIDEBOOK_UNDYING_EXP_DUNGEON_ID,
+            nameFallback: 'The Undying',
+            difficulty: 'Story',
+            badgeLabel: 'EXP farm',
           },
         ]}
       />

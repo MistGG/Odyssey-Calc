@@ -50,9 +50,9 @@ const SECTIONS = [
   {
     id: 'early-70-beyond',
     title: 'EXP farming',
-    ogSubtitle: 'EXP farming: The Dark Roar',
+    ogSubtitle: 'EXP farming: Dark Roar & The Undying',
     description:
-      'The Dark Roar (Story) in Big Sight for fast EXP after your level 70 uncap. Odyssey Calc Guidebook',
+      'The Dark Roar and The Undying (Story) for fast EXP after your level 70 uncap. Odyssey Calc Guidebook',
     ogSlug: 'guidebook-early-70-beyond',
     panels: [
       {
@@ -61,6 +61,13 @@ const SECTIONS = [
         difficulty: 'Story',
         locationFilename: 'dark-roar-location.png',
         locationAlt: 'The Dark Roar entrance / map location (Big Sight)',
+      },
+      {
+        badge: 'EXP farm',
+        name: 'The Undying',
+        difficulty: 'Story',
+        locationFilename: 'the-undying-location.png',
+        locationAlt: 'The Undying entrance / map location',
       },
     ],
   },
