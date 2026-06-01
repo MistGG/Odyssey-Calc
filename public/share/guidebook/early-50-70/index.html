@@ -31,6 +31,7 @@
   <div class="wrap">
     <h1>Level 50 &amp; 70 uncap</h1>
     <p class="muted">Agumon's Madness and The Rise of the Fallen Angel locations for the level 50 and 70 uncap. Odyssey Calc Guidebook</p>
+    <p class="muted" style="margin:0 0 12px;padding:10px 12px;border-radius:10px;border:1px solid rgba(251,191,36,.35);background:rgba(120,53,15,.22)"><strong>Unofficial fan site.</strong> Community guidebook on Odyssey Calc, not the official game.</p>
     <div class="panels"><article style="flex:1;min-width:280px;max-width:440px;background:linear-gradient(165deg,#1e293b,#0f172a);border:1px solid rgba(148,163,184,.25);border-radius:12px;padding:14px">
   <img src="../../../guidebook/uncap-dungeons/agumons-madness-location.png" alt="Agumon's Madness entrance / map location" style="display:block;width:100%;aspect-ratio:16/9;object-fit:contain;object-position:center;border-radius:8px;border:1px solid #334155;margin-bottom:12px;background:#0b1220" />
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px"><span style="display:inline-block;padding:4px 10px;border-radius:6px;background:rgba(120,53,15,.9);color:#fde68a;font:700 11px system-ui,sans-serif;letter-spacing:.04em">LEVEL 50 UNCAP</span><span style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(96,165,250,.45);font:700 11px system-ui,sans-serif">Normal</span></div>
@@ -41,29 +42,7 @@
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px"><span style="display:inline-block;padding:4px 10px;border-radius:6px;background:rgba(120,53,15,.9);color:#fde68a;font:700 11px system-ui,sans-serif;letter-spacing:.04em">LEVEL 70 UNCAP</span><span style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(96,165,250,.45);font:700 11px system-ui,sans-serif">Normal</span></div>
   <h2 style="margin:0;font:700 20px system-ui,sans-serif;color:#f8fafc">The Rise of the Fallen Angel</h2>
 </article></div>
-    <p class="muted" id="redirect-countdown" hidden></p>
-    <p class="muted"><a href="/#/guidebook?step=early-50-70">Open in Odyssey Calc guidebook</a> · Add <code>?stay=1</code> to disable auto-redirect.</p>
+    <p class="muted"><a href="/#/guidebook?step=early-50-70">Open in Odyssey Calc guidebook</a></p>
   </div>
-  <script>
-    (function () {
-      if (/([?&])stay=1(&|$)/.test(location.search)) return;
-      var target = "/#/guidebook?step=early-50-70";
-      var ms = 8000;
-      var el = document.getElementById("redirect-countdown");
-      if (!el) return;
-      el.hidden = false;
-      var remaining = Math.ceil(ms / 1000);
-      function tick() {
-        el.textContent = "Auto-opening guidebook in " + remaining + "s…";
-        if (remaining <= 0) {
-          location.replace(target);
-          return;
-        }
-        remaining -= 1;
-        setTimeout(tick, 1000);
-      }
-      tick();
-    })();
-  </script>
 </body>
 </html>

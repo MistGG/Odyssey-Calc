@@ -753,11 +753,8 @@ export function buildMeterProfileShareHtml(options: {
   </style>
 </head>
 <body>
-  <p>Open <a href="${escapeHtml(appUrl)}">${escapeHtml(snapshot.displayName)}&apos;s meter profile</a> on Odyssey Calc (fan site).</p>
-  <p class="muted" style="font-size:.85rem">Auto-redirect in 5 seconds. <a href="${escapeHtml(appUrl)}">Continue now</a>.</p>
-  <script>
-    setTimeout(function () { location.replace(${JSON.stringify(appUrl)}); }, 5000);
-  </script>
+  <p><strong>Unofficial fan site.</strong> Odyssey Calc meter profile preview, not Digital Odyssey.</p>
+  <p>Open <a href="${escapeHtml(appUrl)}">${escapeHtml(snapshot.displayName)}&apos;s meter profile</a> on Odyssey Calc.</p>
 </body>
 </html>`
 }

@@ -60,14 +60,15 @@ export function CompanionPage() {
             target="_blank"
             rel="noreferrer noopener"
           >
-            Download for Windows
+            Download companion from GitHub
           </a>
           <Link className="companion-cta companion-cta--ghost" to="/meter">
             View meter leaderboards
           </Link>
         </div>
-        <p className="companion-hero__note muted">
-          Auto-updates from GitHub · Not affiliated with the official game
+        <p className="companion-hero__note companion-hero__disclaimer">
+          Third-party Windows app from GitHub (MistGG/Odyssey-Companion). Not the official game
+          installer or Digital Odyssey login. Auto-updates from GitHub releases.
         </p>
       </header>
 

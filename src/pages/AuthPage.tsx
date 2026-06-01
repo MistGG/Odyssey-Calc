@@ -213,7 +213,7 @@ export function AuthPage() {
               ? 'Signing in…'
               : 'Creating account…'
             : tab === 'login'
-              ? 'Sign in'
+              ? 'Sign in to Odyssey Calc'
               : 'Create account'}
         </button>
       </form>

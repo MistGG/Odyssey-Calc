@@ -40,11 +40,12 @@
     .actions a{display:inline-block;padding:8px 14px;border-radius:999px;font-size:.86rem;font-weight:700;text-decoration:none;border:1px solid rgba(103,232,249,.45)}
     .actions a.primary{background:rgba(56,189,248,.15);color:#e0f2fe}
     .actions a.ghost{background:transparent;color:#67e8f9}
-    #redirect-countdown{margin:14px 0 0;font-size:.84rem}
+    .fan-note{margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:.82rem;line-height:1.5;color:#cbd5e1;border:1px solid rgba(251,191,36,.35);background:rgba(120,53,15,.22)}
   </style>
 </head>
 <body>
   <div class="wrap">
+    <p class="fan-note"><strong>Unofficial fan site.</strong> Community-run Odyssey Calc event. Not an official in-game promotion from Digital Odyssey.</p>
     <p class="muted" style="margin:0 0 4px;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase">Community event · Odyssey Calc</p>
     <h1>Dungeon Clear Challenge</h1>
     <div class="meta">
@@ -74,41 +75,9 @@
       </ol>
     </section>
     <div class="actions">
-      <a class="primary" href="/#/event">Open full event page</a>
+      <a class="primary" href="/#/event">Open full event page on Odyssey Calc</a>
       <a class="ghost" href="/#/companion">About Odyssey Companion</a>
     </div>
-    <p id="redirect-countdown" class="muted" hidden></p>
-    <p class="muted" style="margin-top:10px;font-size:.8rem">Add <code>?stay=1</code> to this URL to disable auto-redirect (for previews).</p>
   </div>
-  <script>
-    (function () {
-      var target = "/#/event";
-      var ms = 8000;
-      if (/([?&])stay=1(&|$)/.test(location.search)) return;
-      var el = document.getElementById("redirect-countdown");
-      if (!el) return;
-      el.hidden = false;
-      var remaining = Math.ceil(ms / 1000);
-      function updateCountdown() {
-        el.textContent =
-          "Auto-opening full event page in " +
-          remaining +
-          "s… (or use the button above)";
-      }
-      updateCountdown();
-      var countdown = window.setInterval(function () {
-        remaining -= 1;
-        if (remaining <= 0) {
-          window.clearInterval(countdown);
-          return;
-        }
-        updateCountdown();
-      }, 1000);
-      window.setTimeout(function () {
-        window.clearInterval(countdown);
-        location.replace(target);
-      }, ms);
-    })();
-  </script>
 </body>
 </html>
