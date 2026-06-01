@@ -46,13 +46,12 @@ export function MeterPublicPage() {
   const loadBoot = useCallback(async () => {
     setBootLoading(true)
     setLoadError(null)
-    const [roles, dungeons] = await Promise.all([
-      loadDigimonRoleMapForMeter(),
-      loadWikiDungeonsForMeter().catch(() => []),
-    ])
+    const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
     setWikiDungeons(dungeons)
-    setDigimonRoleById(roles)
     setBootLoading(false)
+    void loadDigimonRoleMapForMeter()
+      .then(setDigimonRoleById)
+      .catch(() => {})
   }, [])
 
   useEffect(() => {

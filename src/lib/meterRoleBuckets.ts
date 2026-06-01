@@ -201,8 +201,101 @@ let roleMapCache: Map<string, string> | null = null
 
 let roleMapPromise: Promise<Map<string, string>> | null = null
 
+export type WikiDigimonCatalogEntry = {
+  name: string
+  modelId: string
+  role: string
+}
+
+let catalogCache: Map<string, WikiDigimonCatalogEntry> | null = null
+let catalogPromise: Promise<Map<string, WikiDigimonCatalogEntry>> | null = null
+
 const ROLE_MAP_SESSION_KEY = 'odyssey-meter-digi-roles-v1'
+const CATALOG_SESSION_KEY = 'odyssey-meter-digi-catalog-v1'
 const ROLE_MAP_TTL_MS = 24 * 60 * 60 * 1000
+
+function readCatalogFromSession(allowStale = false): Map<string, WikiDigimonCatalogEntry> | null {
+  if (typeof sessionStorage === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(CATALOG_SESSION_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as {
+      at: number
+      entries: [string, WikiDigimonCatalogEntry][]
+    }
+    if (!Array.isArray(parsed.entries)) return null
+    if (!allowStale && Date.now() - parsed.at > ROLE_MAP_TTL_MS) return null
+    const map = new Map<string, WikiDigimonCatalogEntry>(parsed.entries)
+    return map.size > 0 ? map : null
+  } catch {
+    return null
+  }
+}
+
+function writeCatalogToSession(map: Map<string, WikiDigimonCatalogEntry>): void {
+  if (typeof sessionStorage === 'undefined') return
+  try {
+    sessionStorage.setItem(
+      CATALOG_SESSION_KEY,
+      JSON.stringify({ at: Date.now(), entries: [...map.entries()] }),
+    )
+    const roles = new Map<string, string>()
+    for (const [id, entry] of map) roles.set(id, entry.role)
+    sessionStorage.setItem(
+      ROLE_MAP_SESSION_KEY,
+      JSON.stringify({ at: Date.now(), entries: [...roles.entries()] }),
+    )
+  } catch {
+    /* quota */
+  }
+}
+
+/** One paginated wiki fetch — names, portraits, and roles for all digimon. */
+export async function fetchWikiDigimonCatalog(): Promise<Map<string, WikiDigimonCatalogEntry>> {
+  if (catalogCache) return catalogCache
+  if (catalogPromise) return catalogPromise
+
+  const sessionCatalog = readCatalogFromSession()
+  if (sessionCatalog) {
+    catalogCache = sessionCatalog
+    roleMapCache = new Map([...sessionCatalog].map(([id, e]) => [id, e.role]))
+    return sessionCatalog
+  }
+
+  catalogPromise = (async () => {
+    try {
+      const first = await fetchDigimonPage(0, 500)
+      const all = [...first.data]
+      for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
+        const next = await fetchDigimonPage(p - 1, 500)
+        all.push(...next.data)
+      }
+      const map = new Map<string, WikiDigimonCatalogEntry>()
+      for (const d of all) {
+        map.set(d.id, {
+          name: d.name?.trim() || '',
+          modelId: d.model_id?.trim() || '',
+          role: d.role?.trim() || '',
+        })
+      }
+      catalogCache = map
+      roleMapCache = new Map([...map].map(([id, e]) => [id, e.role]))
+      writeCatalogToSession(map)
+      return map
+    } catch {
+      const stale = readCatalogFromSession(true)
+      if (stale) {
+        catalogCache = stale
+        roleMapCache = new Map([...stale].map(([id, e]) => [id, e.role]))
+        return stale
+      }
+      catalogPromise = null
+      throw new Error('Could not load wiki digimon catalog.')
+    }
+  })()
+
+  return catalogPromise
+}
 
 function readRoleMapFromSession(): Map<string, string> | null {
   if (typeof sessionStorage === 'undefined') return null
@@ -233,7 +326,6 @@ function writeRoleMapToSession(map: Map<string, string>): void {
 /** Wiki digimon id → raw wiki role string. */
 export async function fetchDigimonRoleMap(): Promise<Map<string, string>> {
   if (roleMapCache) return roleMapCache
-
   if (roleMapPromise) return roleMapPromise
 
   const sessionMap = readRoleMapFromSession()
@@ -242,19 +334,12 @@ export async function fetchDigimonRoleMap(): Promise<Map<string, string>> {
     return sessionMap
   }
 
-  roleMapPromise = (async () => {
-    const first = await fetchDigimonPage(0, 500)
-    const all = [...first.data]
-    for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
-      const next = await fetchDigimonPage(p - 1, 500)
-      all.push(...next.data)
-    }
+  roleMapPromise = fetchWikiDigimonCatalog().then((catalog) => {
     const map = new Map<string, string>()
-    for (const d of all) map.set(d.id, d.role)
+    for (const [id, entry] of catalog) map.set(id, entry.role)
     roleMapCache = map
-    writeRoleMapToSession(map)
     return map
-  })()
+  })
 
   return roleMapPromise
 }

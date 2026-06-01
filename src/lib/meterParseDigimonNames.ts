@@ -1,16 +1,11 @@
-import { fetchDigimonDetail } from '../api/digimonService'
-
 import { digimonPortraitUrl } from './digimonImage'
 import {
   isDungeonPartyParsePayload,
   type MeterParsePayloadDungeonPartyStored,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
-import { METER_ROLE_BUCKETS } from './meterRoleBuckets'
+import { fetchWikiDigimonCatalog, METER_ROLE_BUCKETS } from './meterRoleBuckets'
 import type { DigimonBarEntry, MeterPublicAggregates, PlayerRankEntry } from './meterPublicStats'
-import { mapPool } from './meterPlayerProfile'
-
-const nameCache = new Map<string, { name: string; modelId: string }>()
 
 function normId(id: string): string {
   return id.trim().toLowerCase()
@@ -21,7 +16,6 @@ export function parsePayloadNeedsDigimonWikiResolution(payload: unknown): boolea
   if (!isDungeonPartyParsePayload(payload)) return false
   if (payload.digimonNamesRequireWikiLookup === false) return false
   if (payload.digimonNamesRequireWikiLookup === true) return true
-  // Legacy rows uploaded before the flag existed (may still store in-game nicknames).
   return collectDigimonIdsFromPayload(payload).length > 0
 }
 
@@ -38,32 +32,31 @@ function collectDigimonIdsFromPayload(payload: MeterParsePayloadDungeonPartyStor
   return [...ids]
 }
 
+/** Resolve official names from the bulk wiki catalog (no per-id API calls). */
 export async function fetchOfficialDigimonInfoByIds(
   digimonIds: string[],
 ): Promise<Map<string, { name: string; modelId: string }>> {
   const unique = [...new Set(digimonIds.map((id) => id.trim()).filter(Boolean))]
   const out = new Map<string, { name: string; modelId: string }>()
+  if (!unique.length) return out
 
-  await mapPool(unique.slice(0, 120), 4, async (id) => {
-    const key = normId(id)
-    const cached = nameCache.get(key)
-    if (cached) {
-      out.set(id, cached)
-      return
-    }
-    try {
-      const detail = await fetchDigimonDetail(id)
-      const name = detail.name?.trim()
-      const modelId = detail.model_id?.trim() ?? ''
-      if (name) {
-        const entry = { name, modelId }
-        nameCache.set(key, entry)
-        out.set(id, entry)
-      }
-    } catch {
-      /* skip unresolved */
-    }
-  })
+  let catalog: Awaited<ReturnType<typeof fetchWikiDigimonCatalog>>
+  try {
+    catalog = await fetchWikiDigimonCatalog()
+  } catch {
+    return out
+  }
+
+  const byNorm = new Map<string, { id: string; name: string; modelId: string }>()
+  for (const [id, entry] of catalog) {
+    if (!entry.name) continue
+    byNorm.set(normId(id), { id, name: entry.name, modelId: entry.modelId })
+  }
+
+  for (const id of unique) {
+    const hit = byNorm.get(normId(id))
+    if (hit) out.set(id, { name: hit.name, modelId: hit.modelId })
+  }
 
   return out
 }
@@ -149,16 +142,15 @@ function applyOfficialNameToRankEntry(
 ): PlayerRankEntry {
   const id = entry.digimonId.trim()
   if (!id) return entry
-  const info = officialById.get(id) ?? officialById.get(normId(id))
+  const info = officialById.get(id)
   if (!info?.name) return entry
+  if (normId(info.name) === normId(entry.digimonName)) return entry
   return {
     ...entry,
     digimonName: info.name,
     iconId: info.modelId || entry.iconId,
     portraitUrl:
-      info.modelId
-        ? digimonPortraitUrl(info.modelId, id, info.name)
-        : entry.portraitUrl,
+      info.modelId ? digimonPortraitUrl(info.modelId, id, info.name) : entry.portraitUrl,
   }
 }
 
@@ -168,20 +160,18 @@ function applyOfficialNameToDigimonBar(
 ): DigimonBarEntry {
   const id = entry.digimonId.trim()
   if (!id) return entry
-  const info = officialById.get(id) ?? officialById.get(normId(id))
+  const info = officialById.get(id)
   if (!info?.name) return entry
+  if (normId(info.name) === normId(entry.digimonName)) return entry
   return {
     ...entry,
     digimonName: info.name,
     iconId: info.modelId || entry.iconId,
     portraitUrl:
-      info.modelId
-        ? digimonPortraitUrl(info.modelId, id, info.name)
-        : entry.portraitUrl,
+      info.modelId ? digimonPortraitUrl(info.modelId, id, info.name) : entry.portraitUrl,
   }
 }
 
-/** Resolve wiki species names for precomputed leaderboard rows (stored nicknames → official names). */
 export async function applyOfficialNamesToMeterAggregates(
   stats: MeterPublicAggregates,
 ): Promise<MeterPublicAggregates> {
