@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { digimonPortraitUrl } from '../lib/digimonImage'
-import type { MeterHallOfFameEntry } from '../lib/meterHallOfFame'
+import { withInductionRanks, type MeterHallOfFameEntry } from '../lib/meterHallOfFame'
 import { parseScoreColor } from '../lib/meterParseScoreColor'
 import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
 import {
@@ -11,8 +11,6 @@ import {
 } from '../lib/meterRoleBuckets'
 
 const GOLD = parseScoreColor(100)
-
-export type HallOfFameInductee = MeterHallOfFameEntry & { induction: number }
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -33,24 +31,6 @@ function portraitForEntry(e: MeterHallOfFameEntry): string | undefined {
   const iconId = e.iconId?.trim()
   if (iconId) return digimonPortraitUrl(iconId, e.digimonId, e.digimonName)
   return undefined
-}
-
-function withInductionRanks(entries: MeterHallOfFameEntry[]): HallOfFameInductee[] {
-  const rankByKey = new Map<string, number>()
-  for (const role of METER_ROLE_BUCKETS) {
-    const chronological = entries
-      .filter((e) => e.roleBucket === role)
-      .sort((a, b) => new Date(a.achievedAt).getTime() - new Date(b.achievedAt).getTime())
-    chronological.forEach((e, i) => {
-      rankByKey.set(`${e.roleBucket}:${e.parseId}:${e.playerKey}:${e.achievedAt}`, i + 1)
-    })
-  }
-  return [...entries]
-    .sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())
-    .map((e) => ({
-      ...e,
-      induction: rankByKey.get(`${e.roleBucket}:${e.parseId}:${e.playerKey}:${e.achievedAt}`) ?? 0,
-    }))
 }
 
 function roleClass(role: MeterRoleBucket): string {

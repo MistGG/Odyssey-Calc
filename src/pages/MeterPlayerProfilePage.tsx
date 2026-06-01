@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { MeterPlayerProfileCard } from '../components/MeterPlayerProfileCard'
+import { MeterPlayerHallOfFameCard } from '../components/MeterPlayerHallOfFameCard'
 import { MeterPlayerSharePanel } from '../components/MeterPlayerSharePanel'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { digimonPortraitUrl } from '../lib/digimonImage'
@@ -23,6 +24,7 @@ import {
 } from '../lib/meterPlayerProfile'
 import { allMeterUploadScopes } from '../lib/meterScopeList'
 import { dpsToPercentile, parseScoreColor, type PublicMeterParseRow } from '../lib/meterPublicStats'
+import { fetchPlayerHallOfFameEntries, type ProfileHallOfFameEntry } from '../lib/meterHallOfFame'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 
 type ProfileLocationState = {
@@ -48,6 +50,9 @@ export function MeterPlayerProfilePage() {
   const [scopeProgress, setScopeProgress] = useState<{ done: number; total: number } | null>(null)
   const [rows, setRows] = useState<PublicMeterParseRow[]>([])
   const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
+  const [hofEntries, setHofEntries] = useState<ProfileHallOfFameEntry[]>([])
+  const [hofLoading, setHofLoading] = useState(true)
+  const [hofError, setHofError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!playerKey) return
@@ -57,6 +62,9 @@ export function MeterPlayerProfilePage() {
       setLoading(true)
       setLoadError(null)
       setRows([])
+      setHofLoading(true)
+      setHofError(null)
+      setHofEntries([])
 
       const [roles, dungeons] = await Promise.all([
         loadDigimonRoleMapForMeter(),
@@ -68,15 +76,22 @@ export function MeterPlayerProfilePage() {
       const scopes = allMeterUploadScopes(dungeons)
       setScopeProgress({ done: 0, total: scopes.length })
 
-      const res = await fetchAllScopeParsesCached(scopes, 4, (done, total) => {
-        if (!cancelled) setScopeProgress({ done, total })
-      })
+      const [parseRes, hofRes] = await Promise.all([
+        fetchAllScopeParsesCached(scopes, 4, (done, total) => {
+          if (!cancelled) setScopeProgress({ done, total })
+        }),
+        fetchPlayerHallOfFameEntries(playerKey, dungeons),
+      ])
       if (cancelled) return
 
-      if (res.error) setLoadError(res.error)
-      setRows(res.rows)
+      if (parseRes.error) setLoadError(parseRes.error)
+      setRows(parseRes.rows)
       setLoading(false)
       setScopeProgress(null)
+
+      if (hofRes.error) setHofError(hofRes.error)
+      else setHofEntries(hofRes.entries)
+      setHofLoading(false)
     })()
 
     return () => {
@@ -153,8 +168,9 @@ export function MeterPlayerProfilePage() {
       bestEntryCount: bestParses.length,
       dungeonCount,
       favoriteDigimon,
+      hallOfFameRecordCount: hofEntries.length,
     }
-  }, [loading, displayName, peakDps, bestParses.length, dungeonCount, favoriteDigimon])
+  }, [loading, displayName, peakDps, bestParses.length, dungeonCount, favoriteDigimon, hofEntries.length])
 
   const backTo = nav?.fromMeter?.dungeonId
     ? {
@@ -210,10 +226,15 @@ export function MeterPlayerProfilePage() {
         dungeonCount={dungeonCount}
         loading={loading}
         loadProgress={scopeProgress}
+        hallOfFameRecordCount={hofEntries.length}
+        hallOfFameLoading={hofLoading}
         backTo={backTo}
       />
 
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
+      {hofError ? <p className="meter-parses-error meter-parses-error--center">{hofError}</p> : null}
+
+      <MeterPlayerHallOfFameCard entries={hofEntries} loading={hofLoading} />
 
       <MeterPlayerSharePanel
         playerKey={playerKey}

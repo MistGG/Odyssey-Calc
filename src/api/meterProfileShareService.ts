@@ -39,6 +39,8 @@ function parseSnapshot(raw: unknown): MeterProfileShareSnapshot | null {
       favorite && typeof favorite === 'object' && typeof (favorite as { digimonName?: string }).digimonName === 'string'
         ? (favorite as MeterProfileShareSnapshot['favoriteDigimon'])
         : null,
+    hallOfFameRecordCount:
+      typeof o.hallOfFameRecordCount === 'number' ? Math.max(0, o.hallOfFameRecordCount) : 0,
     shareCacheKey:
       typeof o.shareCacheKey === 'string' && o.shareCacheKey.trim() ? o.shareCacheKey.trim() : undefined,
   }

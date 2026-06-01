@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { MeterProfileHallOfFameBadge } from './MeterProfileHallOfFameBadge'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import { parseScoreColor, dpsToPercentile } from '../lib/meterPublicStats'
 import type { PlayerFavoriteDigimon } from '../lib/meterPlayerProfile'
@@ -21,6 +22,8 @@ export function MeterPlayerProfileCard({
   dungeonCount,
   loading,
   loadProgress,
+  hallOfFameRecordCount,
+  hallOfFameLoading,
   backTo,
 }: {
   displayName: string
@@ -31,6 +34,8 @@ export function MeterPlayerProfileCard({
   dungeonCount: number
   loading: boolean
   loadProgress: { done: number; total: number } | null
+  hallOfFameRecordCount: number
+  hallOfFameLoading: boolean
   backTo: { pathname: string; state?: unknown }
 }) {
   const favoritePortrait = favoriteDigimon
@@ -63,39 +68,54 @@ export function MeterPlayerProfileCard({
 
       <div className={`meter-profile-card__body${loading ? ' meter-profile-card__body--loading' : ''}`}>
         <div className="meter-profile-card__hero">
-          <div className="meter-profile-card__portrait-ring" aria-hidden>
-            {favoritePortrait ? (
-              <img className="meter-profile-card__portrait" src={favoritePortrait} alt="" />
-            ) : (
-              <span className="meter-profile-card__portrait-fallback">{tamerInitial(displayName)}</span>
-            )}
+          <div className="meter-profile-card__portrait-wrap">
+            <div className="meter-profile-card__portrait-ring" aria-hidden>
+              {favoritePortrait ? (
+                <img className="meter-profile-card__portrait" src={favoritePortrait} alt="" />
+              ) : (
+                <span className="meter-profile-card__portrait-fallback">{tamerInitial(displayName)}</span>
+              )}
+            </div>
+            {!hallOfFameLoading && hallOfFameRecordCount > 0 ? (
+              <span
+                className="meter-profile-card__hof-medallion"
+                title={`${hallOfFameRecordCount} Hall of Fame record break${hallOfFameRecordCount === 1 ? '' : 's'}`}
+                aria-hidden
+              >
+                {hallOfFameRecordCount}
+              </span>
+            ) : null}
           </div>
         </div>
 
-        <div className="meter-profile-card__main">
+        <div className="meter-profile-card__identity">
           <p className="meter-profile-card__eyebrow">Tamer</p>
           <h2 className="meter-profile-card__name">{displayName}</h2>
 
-          <dl className="meter-profile-card__stats">
-            <div className="meter-profile-card__stat">
-              <dt>Peak DPS</dt>
-              <dd style={peakColor ? { color: peakColor } : undefined}>
-                {loading && peakDps <= 0 ? '—' : formatInt(peakDps)}
-              </dd>
-            </div>
-            <div className="meter-profile-card__stat">
-              <dt>Best entries</dt>
-              <dd>{loading && bestEntryCount === 0 ? '—' : bestEntryCount}</dd>
-            </div>
-            <div className="meter-profile-card__stat">
-              <dt>Dungeons</dt>
-              <dd>{loading && dungeonCount === 0 ? '—' : dungeonCount}</dd>
-            </div>
-          </dl>
+          {!hallOfFameLoading ? (
+            <MeterProfileHallOfFameBadge recordCount={hallOfFameRecordCount} />
+          ) : null}
         </div>
 
-        <aside className="meter-profile-card__favorite-panel">
-          <p className="meter-profile-card__favorite-title">Favorite digimon</p>
+        <dl className="meter-profile-card__stats">
+          <div className="meter-profile-card__stat">
+            <dt>Peak DPS</dt>
+            <dd style={peakColor ? { color: peakColor } : undefined}>
+              {loading && peakDps <= 0 ? '—' : formatInt(peakDps)}
+            </dd>
+          </div>
+          <div className="meter-profile-card__stat">
+            <dt>Best entries</dt>
+            <dd>{loading && bestEntryCount === 0 ? '—' : bestEntryCount}</dd>
+          </div>
+          <div className="meter-profile-card__stat">
+            <dt>Dungeons</dt>
+            <dd>{loading && dungeonCount === 0 ? '—' : dungeonCount}</dd>
+          </div>
+        </dl>
+
+        <div className="meter-profile-card__favorite">
+          <span className="meter-profile-card__favorite-label">Favorite digimon</span>
           {favoriteDigimon ? (
             <div className="meter-profile-card__favorite-body">
               {favoritePortrait ? (
@@ -103,8 +123,8 @@ export function MeterPlayerProfileCard({
                   className="meter-profile-card__favorite-icon"
                   src={favoritePortrait}
                   alt=""
-                  width={40}
-                  height={40}
+                  width={32}
+                  height={32}
                 />
               ) : (
                 <span className="meter-party-portrait meter-party-portrait--empty" aria-hidden />
@@ -118,11 +138,11 @@ export function MeterPlayerProfileCard({
               </div>
             </div>
           ) : (
-            <p className="meter-profile-card__favorite-empty">
+            <span className="meter-profile-card__favorite-empty">
               {loading ? 'Loading…' : 'No parse data yet'}
-            </p>
+            </span>
           )}
-        </aside>
+        </div>
       </div>
 
       {loading && loadProgress ? (

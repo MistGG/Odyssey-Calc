@@ -13,6 +13,8 @@ export type MeterProfileShareSnapshot = {
   bestEntryCount: number
   dungeonCount: number
   favoriteDigimon: PlayerFavoriteDigimon | null
+  /** Hall of Fame record-break count (strict inductions). */
+  hallOfFameRecordCount?: number
   /** Changes each generation so Discord treats the share URL as new (cache bust). */
   shareCacheKey?: string
 }
@@ -337,6 +339,105 @@ async function drawPortraitInRing(
   ctx.restore()
 }
 
+const HOF_GOLD = '#e5cc80'
+const HOF_GOLD_LIGHT = '#f0ddb0'
+
+function drawHallOfFameMedallion(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  count: number,
+) {
+  const r = 18
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
+  grad.addColorStop(0, '#fff3c4')
+  grad.addColorStop(0.45, HOF_GOLD)
+  grad.addColorStop(1, '#b8860b')
+  ctx.fillStyle = grad
+  ctx.fill()
+  ctx.strokeStyle = HOF_GOLD_LIGHT
+  ctx.lineWidth = 3
+  ctx.stroke()
+  ctx.fillStyle = '#1a1204'
+  ctx.font = '900 16px Segoe UI, system-ui, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(String(count), cx, cy + 1)
+  ctx.restore()
+}
+
+function drawHallOfFameCrestIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  const s = size / 2
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.beginPath()
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 2
+    const px = Math.cos(angle) * s
+    const py = Math.sin(angle) * s
+    if (i === 0) ctx.moveTo(px, py)
+    else ctx.lineTo(px, py)
+  }
+  ctx.closePath()
+  const grad = ctx.createLinearGradient(-s, -s, s, s)
+  grad.addColorStop(0, '#fff3c4')
+  grad.addColorStop(0.5, HOF_GOLD)
+  grad.addColorStop(1, '#b8860b')
+  ctx.fillStyle = grad
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(240, 221, 176, 0.5)'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2)
+  ctx.fillStyle = HOF_GOLD
+  ctx.fill()
+  ctx.restore()
+}
+
+function drawHallOfFameBadge(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  recordCount: number,
+) {
+  roundRect(ctx, x, y, w, h, 10)
+  const bg = ctx.createLinearGradient(x, y, x + w, y + h)
+  bg.addColorStop(0, 'rgba(229, 204, 128, 0.16)')
+  bg.addColorStop(0.4, 'rgba(184, 134, 11, 0.08)')
+  bg.addColorStop(1, 'rgba(0, 0, 0, 0.35)')
+  ctx.fillStyle = bg
+  ctx.fill()
+  ctx.strokeStyle = 'rgba(229, 204, 128, 0.45)'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  const crestCx = x + 28
+  const crestCy = y + h / 2
+  drawHallOfFameCrestIcon(ctx, crestCx, crestCy, 34)
+
+  const textX = x + 54
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = HOF_GOLD
+  ctx.font = '800 11px Segoe UI, system-ui, sans-serif'
+  ctx.fillText('HALL OF FAME', textX, y + 14)
+
+  const label = recordCount === 1 ? 'Record break' : 'Record breaks'
+  ctx.fillStyle = HOF_GOLD_LIGHT
+  ctx.font = '900 28px Segoe UI, system-ui, sans-serif'
+  ctx.fillText(String(recordCount), textX, y + 30)
+  const countW = ctx.measureText(String(recordCount)).width
+  ctx.fillStyle = '#cbd5e1'
+  ctx.font = '700 18px Segoe UI, system-ui, sans-serif'
+  ctx.fillText(label, textX + countW + 10, y + 38)
+}
+
 function drawProfileStatBox(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -436,20 +537,28 @@ export async function renderMeterProfileShareOgPng(
   const innerX = cardX + pad
   const innerW = cardW - pad * 2
   const innerTop = cardY + pad
-  const topBandH = 196
-  const dividerY = innerTop + topBandH
+  const innerBottom = cardY + cardH - pad
+  const contentH = innerBottom - innerTop
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.moveTo(innerX, dividerY)
-  ctx.lineTo(innerX + innerW, dividerY)
-  ctx.stroke()
+  const statColW = 220
+  const statGap = 10
+  const statX = innerX + innerW - statColW
 
-  const ringR = 56
-  const portraitSize = 98
-  const heroCx = innerX + ringR + 4
-  const heroCy = innerTop + topBandH / 2
+  const ringR = 52
+  const portraitSize = 92
+  const leftColW = ringR * 2 + 16
+  const heroCx = innerX + ringR + 8
+  const heroCy = innerTop + contentH / 2
+
+  const mainX = innerX + leftColW + 18
+  const identityW = statX - mainX - 16
+
+  const favH = 96
+  const topBlockH = contentH - favH - 14
+  const statH = (topBlockH - statGap * 2) / 3
+  const statY0 = innerTop
+
+  const hofCount = Math.max(0, snapshot.hallOfFameRecordCount ?? 0)
 
   const fallbackInitial = snapshot.favoriteDigimon
     ? digimonInitial(snapshot.favoriteDigimon.digimonName)
@@ -464,9 +573,11 @@ export async function renderMeterProfileShareOgPng(
     fallbackInitial,
   )
 
-  const mainX = heroCx + ringR + 28
-  const nameBlockH = 70
-  const nameY = heroCy - nameBlockH / 2
+  if (hofCount > 0) {
+    drawHallOfFameMedallion(ctx, heroCx + ringR * 0.62, heroCy + ringR * 0.62, hofCount)
+  }
+
+  const nameY = innerTop + 6
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
   ctx.fillStyle = '#64748b'
@@ -474,14 +585,15 @@ export async function renderMeterProfileShareOgPng(
   ctx.fillText('TAMER', mainX, nameY)
 
   ctx.fillStyle = '#f8fafc'
-  ctx.font = '800 42px "Exo 2", Segoe UI, system-ui, sans-serif'
-  ctx.fillText(snapshot.displayName, mainX, nameY + 20)
+  ctx.font = '800 40px "Exo 2", Segoe UI, system-ui, sans-serif'
+  ctx.fillText(snapshot.displayName, mainX, nameY + 22)
 
-  const statColW = 272
-  const statGap = 10
-  const statH = (topBandH - statGap * 2) / 3
-  const statX = innerX + innerW - statColW
-  const statY0 = innerTop
+  if (hofCount > 0) {
+    const badgeH = 68
+    const badgeY = nameY + 22 + 44 + 10
+    drawHallOfFameBadge(ctx, mainX, badgeY, identityW, badgeH, hofCount)
+  }
+
   const peakColor = options?.peakDpsColor ?? (snapshot.peakDps > 0 ? '#e2e8f0' : '#64748b')
 
   drawProfileStatBox(
@@ -515,56 +627,55 @@ export async function renderMeterProfileShareOgPng(
     '#e2e8f0',
   )
 
-  const favX = innerX
-  const favY = dividerY + 16
-  const favW = innerW
-  const favH = cardY + cardH - pad - favY
-  roundRect(ctx, favX, favY, favW, favH, 12)
+  const favX = mainX
+  const favY = innerTop + topBlockH + 14
+  const favW = identityW
+  roundRect(ctx, favX, favY, favW, favH, 10)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
   ctx.fill()
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)'
   ctx.lineWidth = 1
   ctx.stroke()
 
-  ctx.fillStyle = '#94a3b8'
-  ctx.font = '700 14px Segoe UI, system-ui, sans-serif'
+  ctx.fillStyle = '#64748b'
+  ctx.font = '700 12px Segoe UI, system-ui, sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText('FAVORITE DIGIMON', favX + 22, favY + 18)
+  ctx.textBaseline = 'top'
+  ctx.fillText('FAVORITE DIGIMON', favX + 14, favY + 12)
 
   if (snapshot.favoriteDigimon) {
-    const bigIcon = Math.min(132, favH - 48)
-    const iconCx = favX + 22 + bigIcon / 2
-    const iconCy = favY + 28 + (favH - 36) / 2
+    const iconSize = 36
+    const iconCx = favX + 14 + iconSize / 2
+    const iconCy = favY + 38 + (favH - 38) / 2
     await drawPortraitInRing(
       ctx,
       iconCx,
       iconCy,
-      bigIcon / 2 + 6,
-      bigIcon,
+      iconSize / 2 + 3,
+      iconSize,
       portraitUrl,
       digimonInitial(snapshot.favoriteDigimon.digimonName),
     )
 
-    const textX = favX + 22 + bigIcon + 28
-    const textBlockCy = iconCy
+    const textX = favX + 14 + iconSize + 12
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = '#f1f5f9'
-    ctx.font = '800 36px "Exo 2", Segoe UI, system-ui, sans-serif'
-    ctx.fillText(snapshot.favoriteDigimon.digimonName, textX, textBlockCy - 22)
+    ctx.font = '800 22px "Exo 2", Segoe UI, system-ui, sans-serif'
+    ctx.fillText(snapshot.favoriteDigimon.digimonName, textX, iconCy - 10)
 
     const parseLabel = `Top DPS in ${snapshot.favoriteDigimon.parseCount} parse${
       snapshot.favoriteDigimon.parseCount === 1 ? '' : 's'
     }`
     ctx.fillStyle = '#94a3b8'
-    ctx.font = '500 22px Segoe UI, system-ui, sans-serif'
-    ctx.fillText(parseLabel, textX, textBlockCy + 18)
+    ctx.font = '500 16px Segoe UI, system-ui, sans-serif'
+    ctx.fillText(parseLabel, textX, iconCy + 14)
   } else {
     ctx.fillStyle = '#64748b'
-    ctx.font = '500 22px Segoe UI, system-ui, sans-serif'
+    ctx.font = '500 18px Segoe UI, system-ui, sans-serif'
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
-    ctx.fillText('No parse data yet', favX + 22, favY + favH / 2)
+    ctx.fillText('No parse data yet', favX + 14, favY + favH / 2 + 8)
   }
 
   return new Promise((resolve, reject) => {
@@ -601,9 +712,14 @@ export function buildMeterProfileShareHtml(options: {
 }): string {
   const { snapshot, sharePageUrl, ogImageUrl, appUrl } = options
   const title = `${snapshot.displayName} — Meter profile`
+  const hofCount = Math.max(0, snapshot.hallOfFameRecordCount ?? 0)
+  const hofPart =
+    hofCount > 0
+      ? ` · ${hofCount} Hall of Fame record break${hofCount === 1 ? '' : 's'}`
+      : ''
   const description = snapshot.favoriteDigimon
-    ? `Peak ${formatInt(snapshot.peakDps)} DPS · Favorite ${snapshot.favoriteDigimon.digimonName} — Odyssey Calc`
-    : `Peak ${formatInt(snapshot.peakDps)} DPS · ${snapshot.bestEntryCount} best parses — Odyssey Calc`
+    ? `Peak ${formatInt(snapshot.peakDps)} DPS${hofPart} · Favorite ${snapshot.favoriteDigimon.digimonName} — Odyssey Calc`
+    : `Peak ${formatInt(snapshot.peakDps)} DPS${hofPart} · ${snapshot.bestEntryCount} best parses — Odyssey Calc`
 
   return `<!DOCTYPE html>
 <html lang="en">
