@@ -184,7 +184,7 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     id: 'mid-corrupted-clothes',
     title: 'Olympus gear clothes',
     zone: 'Olympus gear',
-    zoneTone: 'gear',
+    zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
     summary: '',
     tasks: [{ kind: 'tip', text: 'Detailed Olympus gear clothes guide will be added here.' }],
