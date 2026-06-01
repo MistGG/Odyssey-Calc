@@ -311,18 +311,6 @@ function readRoleMapFromSession(): Map<string, string> | null {
   }
 }
 
-function writeRoleMapToSession(map: Map<string, string>): void {
-  if (typeof sessionStorage === 'undefined') return
-  try {
-    sessionStorage.setItem(
-      ROLE_MAP_SESSION_KEY,
-      JSON.stringify({ at: Date.now(), entries: [...map.entries()] }),
-    )
-  } catch {
-    /* quota */
-  }
-}
-
 /** Wiki digimon id → raw wiki role string. */
 export async function fetchDigimonRoleMap(): Promise<Map<string, string>> {
   if (roleMapCache) return roleMapCache
