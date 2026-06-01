@@ -1,15 +1,29 @@
-import { getMeterAnonSupabase } from './meterDataSource'
+import { fetchScopeEligibleParses, getMeterAnonSupabase } from './meterDataSource'
 import {
   buildEntriesFromParseSummaries,
   fetchScopeParseSummaries,
   mergeSummaryEntriesIntoHistory,
+  type SummaryLeaderboardEntry,
 } from './meterLeaderboardSummary'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
-import { fetchDigimonRoleMap } from './meterRoleBuckets'
+import {
+  isBrokenMeterPartyParse,
+  partyMembersFromPayload,
+} from './meterParsePayload'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
 import { dpsToPercentile } from './meterParseScoreColor'
-import type { PlayerRankEntry } from './meterPublicStats'
-import { METER_ROLE_BUCKETS, METER_ROLE_BUCKET_LABELS, type MeterRoleBucket } from './meterRoleBuckets'
+import { leaderboardEligibleParses, type PlayerRankEntry, type PublicMeterParseRow } from './meterPublicStats'
+import {
+  fetchDigimonRoleMap,
+  memberDpsInParse,
+  memberRoleBucket,
+  memberTopDigimonUsed,
+  METER_ROLE_BUCKETS,
+  METER_ROLE_BUCKET_LABELS,
+  normalizePlayerKey,
+  playerDisplayName,
+  type MeterRoleBucket,
+} from './meterRoleBuckets'
 import { difficultySelectOptions, dungeonSelectOptions } from './wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
 
@@ -63,6 +77,72 @@ function mapRow(row: LeaderboardEntryRow): Omit<MeterHallOfFameEntry, 'currentPe
 
 function entryKey(entry: Pick<MeterHallOfFameEntry, 'parseId' | 'playerKey' | 'achievedAt' | 'roleBucket'>) {
   return `${entry.roleBucket}:${entry.parseId}:${entry.playerKey}:${entry.achievedAt}`
+}
+
+type HofHistoryRow = Omit<MeterHallOfFameEntry, 'currentPercentile'>
+
+/** Per-role DPS pools for parse score when precomputed leaderboard RPC has no rows. */
+export function sortedDpsPoolsFromHistory(
+  rows: HofHistoryRow[],
+): Record<MeterRoleBucket, number[]> {
+  const pools = METER_ROLE_BUCKETS.reduce(
+    (acc, role) => {
+      acc[role] = [] as number[]
+      return acc
+    },
+    {} as Record<MeterRoleBucket, number[]>,
+  )
+  for (const row of rows) {
+    if (row.dps > 0) pools[row.roleBucket].push(row.dps)
+  }
+  for (const role of METER_ROLE_BUCKETS) {
+    pools[role].sort((a, b) => a - b)
+  }
+  return pools
+}
+
+/** Chronicle rows from stored parse payloads (same eligibility as public leaderboard fallback). */
+export function buildLeaderboardHistoryFromPublicParses(
+  rows: PublicMeterParseRow[],
+  digimonRoleById: Map<string, string>,
+  dungeonId: string,
+  difficultyId: number,
+): HofHistoryRow[] {
+  const id = dungeonId.trim()
+  const scoped = leaderboardEligibleParses(rows).filter(
+    (row) => row.dungeon_id === id && row.difficulty_id === difficultyId,
+  )
+  const chronological = [...scoped].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  )
+
+  const out: HofHistoryRow[] = []
+  for (const row of chronological) {
+    const members = partyMembersFromPayload(row.payload)
+    if (isBrokenMeterPartyParse(row.payload, members)) continue
+
+    for (const member of members) {
+      const roleBucket = memberRoleBucket(member, digimonRoleById)
+      if (!roleBucket) continue
+      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
+      if (dps <= 0) continue
+      const topDg = memberTopDigimonUsed(member)
+      out.push({
+        roleBucket,
+        roleLabel: METER_ROLE_BUCKET_LABELS[roleBucket],
+        parseId: row.id,
+        achievedAt: row.created_at,
+        playerKey: normalizePlayerKey(member),
+        displayName: playerDisplayName(member),
+        dps,
+        digimonId: topDg?.digimonId ?? '',
+        digimonName: topDg?.digimonName ?? '',
+        iconId: topDg?.iconId ?? null,
+        portraitUrl: topDg?.portraitUrl,
+      })
+    }
+  }
+  return out
 }
 
 /** Max gap between party uploads treated as the same clear (matches ingest dedupe window). */
@@ -268,6 +348,29 @@ export async function fetchScopeLeaderboardEntryHistory(
     /* keep table history only */
   }
 
+  if (!rows.length) {
+    try {
+      const [parseRes, roleMap] = await Promise.all([
+        fetchScopeEligibleParses({ dungeonId: id, difficultyId }),
+        fetchDigimonRoleMap(),
+      ])
+      if (!parseRes.error && parseRes.rows.length) {
+        const fromParses = buildLeaderboardHistoryFromPublicParses(
+          parseRes.rows,
+          roleMap,
+          id,
+          difficultyId,
+        )
+        rows = mergeSummaryEntriesIntoHistory(
+          rows,
+          fromParses as SummaryLeaderboardEntry[],
+        )
+      }
+    } catch {
+      /* keep prior rows */
+    }
+  }
+
   return { rows, error: null }
 }
 
@@ -383,14 +486,16 @@ export async function fetchPlayerHallOfFameEntries(
         ])
         if (history.error) return { entries: [] as ProfileHallOfFameEntry[], error: history.error }
 
-        const poolByRole = pre.stats?.sortedDpsByBucket ?? {
-          melee: [],
-          ranged: [],
-          caster: [],
-          hybrid: [],
-          tank: [],
-          healer: [],
-        }
+        const poolByRole =
+          pre.stats?.sortedDpsByBucket ??
+          (history.rows.length ? sortedDpsPoolsFromHistory(history.rows) : {
+            melee: [],
+            ranged: [],
+            caster: [],
+            hybrid: [],
+            tank: [],
+            healer: [],
+          })
         const allGold = goldParsesFromLeaderboardHistory(history.rows, poolByRole)
         const labels = resolveScopeLabels(scope.dungeonId, scope.difficultyId, wikiDungeons)
         return {

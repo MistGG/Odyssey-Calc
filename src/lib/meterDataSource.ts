@@ -149,6 +149,13 @@ export type ScopeParsesResult = {
   fromCache?: boolean
 }
 
+/** Eligible dungeon parses for one scope (used by leaderboard fallback and HoF history). */
+export async function fetchScopeEligibleParses(
+  params: FetchPublicDungeonParsesParams,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  return fetchEligibleDungeonParsesFromDb(params)
+}
+
 async function fetchEligibleDungeonParsesFromDb(
   params: FetchPublicDungeonParsesParams,
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {

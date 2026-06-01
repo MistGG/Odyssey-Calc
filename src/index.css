@@ -7549,8 +7549,7 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   line-height: 1.5;
   color: #e2e8f0;
   text-align: center;
-  background: rgba(120, 53, 15, 0.22);
-  border-top: 1px solid rgba(251, 191, 36, 0.35);
+  border-top: 1px solid var(--border);
 }
 
 .static-fan-footer a {
@@ -7563,8 +7562,7 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   margin-top: auto;
   padding: 1rem 1.25rem 1.5rem;
   text-align: center;
-  border-top: 1px solid rgba(251, 191, 36, 0.28);
-  background: rgba(120, 53, 15, 0.18);
+  border-top: 1px solid var(--border);
 }
 
 .site-fan-footer__disclaimer {
@@ -7576,7 +7574,7 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 }
 
 .site-fan-footer__disclaimer a {
-  color: #fde68a;
+  color: var(--blue);
   font-weight: 600;
 }
 

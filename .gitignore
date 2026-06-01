@@ -20,6 +20,11 @@ scripts/*
 !scripts/sync-teaser-images.mjs
 !scripts/generate-guidebook-share.mjs
 !scripts/generate-event-share.mjs
+!scripts/backfill-meter-leaderboard.mjs
+!scripts/backfill-meter-leaderboard-parses.mjs
+!scripts/backfill-meter-leaderboard-entries.mjs
+!scripts/reprocess-meter-parse.mjs
+!scripts/load-env-local.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
@@ -28,7 +33,9 @@ tmp-*.json
 compare-*.mjs
 
 # Backend schema/setup (not published with the site)
-supabase/
+supabase/*
+!supabase/functions/
+!supabase/functions/process-meter-leaderboard/
 
 # Editor directories and files
 .vscode/*

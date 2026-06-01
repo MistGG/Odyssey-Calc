@@ -10,6 +10,7 @@ import {
 import {
   fetchScopeLeaderboardEntryHistory,
   goldParsesFromLeaderboardHistory,
+  sortedDpsPoolsFromHistory,
   type MeterHallOfFameEntry,
 } from '../lib/meterHallOfFame'
 import { fetchRecentMeterParseSelection } from '../lib/meterDataSource'
@@ -200,14 +201,16 @@ export function MeterHallOfFamePage() {
         if (!cancelled && resolved) pools = resolved.sortedDpsByBucket
       }
 
-      const poolByRole = pools ?? {
-        melee: [],
-        ranged: [],
-        caster: [],
-        hybrid: [],
-        tank: [],
-        healer: [],
-      }
+      const poolByRole =
+        pools ??
+        (history.rows.length ? sortedDpsPoolsFromHistory(history.rows) : {
+          melee: [],
+          ranged: [],
+          caster: [],
+          hybrid: [],
+          tank: [],
+          healer: [],
+        })
 
       const allGold = goldParsesFromLeaderboardHistory(history.rows, poolByRole)
       const byRole = {
