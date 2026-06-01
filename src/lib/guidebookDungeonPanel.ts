@@ -89,10 +89,10 @@ export function guidebookGearDropBindTag(
   return null
 }
 
-/** Story → Normal → Hard within each dungeon; preserve first-seen dungeon order across groups. */
-export function sortGuidebookDungeonCards<T extends { dungeonId: string; difficulty: string }>(
-  cards: readonly T[],
-): T[] {
+/** Highest drop rate first; then Story → Normal → Hard within each dungeon. */
+export function sortGuidebookDungeonCards<
+  T extends { dungeonId: string; difficulty: string; dropRatePermil?: number },
+>(cards: readonly T[]): T[] {
   const dungeonOrder: string[] = []
   const seenDungeons = new Set<string>()
   for (const card of cards) {
@@ -103,6 +103,9 @@ export function sortGuidebookDungeonCards<T extends { dungeonId: string; difficu
   }
 
   return [...cards].sort((a, b) => {
+    const rateA = a.dropRatePermil ?? 0
+    const rateB = b.dropRatePermil ?? 0
+    if (rateB !== rateA) return rateB - rateA
     const byDungeon = dungeonOrder.indexOf(a.dungeonId) - dungeonOrder.indexOf(b.dungeonId)
     if (byDungeon !== 0) return byDungeon
     return (

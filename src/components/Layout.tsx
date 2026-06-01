@@ -2,7 +2,6 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
-import { ForumTeaserTvPopup } from './ForumTeaserTvPopup'
 import { NavMenuGroup } from './NavMenuGroup'
 
 function navLinkClass(isActive: boolean, extra = '') {
@@ -84,21 +83,15 @@ export function Layout() {
               Meter
             </NavLink>
 
-            <NavMenuGroup
-              triggerLabel={
-                <>
-                  <span className="nav-link-event__badge">ON</span>
-                  Event
-                </>
+            <NavLink
+              to="/event"
+              className={({ isActive }) =>
+                `nav-link-event nav-link--feat${isActive ? ' nav-link-event--active' : ''}`
               }
-              menuLabel="Event menu"
-              groupClassName="nav-menu--event"
-              triggerClassName="nav-link-event nav-link--feat"
-              items={[
-                { to: '/event', label: 'Event' },
-                { to: '/teasers', label: 'Teasers', className: 'nav-link-teasers' },
-              ]}
-            />
+            >
+              <span className="nav-link-event__badge">ON</span>
+              Event
+            </NavLink>
 
             <NavLink
               to="/companion"
@@ -180,7 +173,6 @@ export function Layout() {
       <main className="main">
         <Outlet />
       </main>
-      <ForumTeaserTvPopup />
     </div>
   )
 }

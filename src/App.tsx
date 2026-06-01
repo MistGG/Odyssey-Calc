@@ -17,7 +17,6 @@ import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
 import { CompanionPage } from './pages/CompanionPage'
 import { MayClearEventPage } from './pages/MayClearEventPage'
-import { TeasersPage } from './pages/TeasersPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 import { GuidebookPage } from './pages/GuidebookPage'
@@ -50,7 +49,6 @@ export default function App() {
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />
           <Route path="event" element={<MayClearEventPage />} />
-          <Route path="teasers" element={<TeasersPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

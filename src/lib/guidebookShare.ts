@@ -13,9 +13,9 @@ export type GuidebookShareMeta = {
 const SHARE_SECTIONS: Record<string, GuidebookShareMeta> = {
   'early-50-70': {
     sectionId: 'early-50-70',
-    title: 'Level 50 & 70 uncap dungeons',
+    title: 'Level 50 & 70 uncap',
     description:
-      "Agumon <Under Control of Black Gear> and Devimon <Devil's Incarnate> locations for the level 50 and 70 uncap - Odyssey Calc Guidebook",
+      "Agumon's Madness and The Rise of the Fallen Angel locations for the level 50 and 70 uncap. Odyssey Calc Guidebook",
     panels: [
       {
         badge: 'Level 50 uncap',
@@ -28,6 +28,20 @@ const SHARE_SECTIONS: Record<string, GuidebookShareMeta> = {
         name: 'The Rise of the Fallen Angel',
         difficulty: 'Normal',
         locationFilename: 'fallen-angel-location.png',
+      },
+    ],
+  },
+  'early-70-beyond': {
+    sectionId: 'early-70-beyond',
+    title: 'EXP farming',
+    description:
+      'The Dark Roar (Story) in Big Sight for fast EXP after your level 70 uncap. Odyssey Calc Guidebook',
+    panels: [
+      {
+        badge: 'EXP farm',
+        name: 'The Dark Roar',
+        difficulty: 'Story',
+        locationFilename: 'dark-roar-location.png',
       },
     ],
   },
@@ -47,7 +61,7 @@ export function guidebookHasSharePage(sectionId: string): boolean {
 
 /** App deep link (hash router). */
 export function guidebookAppSectionHash(sectionId: string): string {
-  return `/guidebook?section=${encodeURIComponent(sectionId)}`
+  return `/guidebook?step=${encodeURIComponent(sectionId)}`
 }
 
 function isLocalHostname(hostname: string): boolean {

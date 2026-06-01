@@ -25,9 +25,10 @@ const SITE_BASE = `${SITE_ORIGIN}${BASE_PATH.startsWith('/') ? BASE_PATH : `/${B
 const SECTIONS = [
   {
     id: 'early-50-70',
-    title: 'Level 50 & 70 uncap dungeons',
+    title: 'Level 50 & 70 uncap',
+    ogSubtitle: 'Level 50 and 70 uncap dungeons',
     description:
-      "Agumon <Under Control of Black Gear> and Devimon <Devil's Incarnate> locations for the level 50 and 70 uncap - Odyssey Calc Guidebook",
+      "Agumon's Madness and The Rise of the Fallen Angel locations for the level 50 and 70 uncap. Odyssey Calc Guidebook",
     ogSlug: 'guidebook-early-50-70',
     panels: [
       {
@@ -35,14 +36,31 @@ const SECTIONS = [
         name: "Agumon's Madness",
         difficulty: 'Normal',
         locationFilename: 'agumons-madness-location.png',
-        locationAlt: "Agumon's Madness - entrance / map location",
+        locationAlt: "Agumon's Madness entrance / map location",
       },
       {
         badge: 'Level 70 uncap',
         name: 'The Rise of the Fallen Angel',
         difficulty: 'Normal',
         locationFilename: 'fallen-angel-location.png',
-        locationAlt: 'The Rise of the Fallen Angel - entrance / map location',
+        locationAlt: 'The Rise of the Fallen Angel entrance / map location',
+      },
+    ],
+  },
+  {
+    id: 'early-70-beyond',
+    title: 'EXP farming',
+    ogSubtitle: 'EXP farming: The Dark Roar',
+    description:
+      'The Dark Roar (Story) in Big Sight for fast EXP after your level 70 uncap. Odyssey Calc Guidebook',
+    ogSlug: 'guidebook-early-70-beyond',
+    panels: [
+      {
+        badge: 'EXP farm',
+        name: 'The Dark Roar',
+        difficulty: 'Story',
+        locationFilename: 'dark-roar-location.png',
+        locationAlt: 'The Dark Roar entrance / map location (Big Sight)',
       },
     ],
   },
@@ -69,7 +87,7 @@ function escapeHtml(text) {
 
 function appHashUrl(sectionId) {
   const base = BASE_PATH === '/' ? '' : BASE_PATH.replace(/\/$/, '')
-  return `${base}/#/guidebook?section=${encodeURIComponent(sectionId)}`
+  return `${base}/#/guidebook?step=${encodeURIComponent(sectionId)}`
 }
 
 function locationImgRel(filename) {
@@ -209,10 +227,21 @@ async function buildOgSvg(section) {
     images.map((img) => (img ? fileToDataUrl(img.filePath, img.mime) : null)),
   )
 
-  const card0 = ogCardParts(36, section.panels[0], dataUrls[0], 'clip0')
-  const card1 = ogCardParts(612, section.panels[1], dataUrls[1], 'clip1')
-  const clipDefs = [card0.clipDef, card1.clipDef].join('\n')
-  const cardBodies = [card0.body, card1.body].join('\n')
+  const subtitle = escapeHtml(section.ogSubtitle ?? section.title)
+  let clipDefs = ''
+  let cardBodies = ''
+
+  if (section.panels.length === 1) {
+    const x = Math.round((OG.width - OG.cardW) / 2)
+    const card = ogCardParts(x, section.panels[0], dataUrls[0], 'clip0')
+    clipDefs = card.clipDef
+    cardBodies = card.body
+  } else {
+    const card0 = ogCardParts(36, section.panels[0], dataUrls[0], 'clip0')
+    const card1 = ogCardParts(612, section.panels[1], dataUrls[1], 'clip1')
+    clipDefs = [card0.clipDef, card1.clipDef].join('\n')
+    cardBodies = [card0.body, card1.body].join('\n')
+  }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${OG.width}" height="${OG.height}" viewBox="0 0 ${OG.width} ${OG.height}">
@@ -229,7 +258,7 @@ async function buildOgSvg(section) {
   </defs>
   <rect width="${OG.width}" height="${OG.height}" fill="url(#bg)"/>
   <text x="600" y="56" text-anchor="middle" fill="#e2e8f0" font-family="Segoe UI, system-ui, sans-serif" font-size="26" font-weight="700" letter-spacing="0.1em">ODYSSEY CALC - GUIDEBOOK</text>
-  <text x="600" y="92" text-anchor="middle" fill="#67e8f9" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="600">Level 50 and 70 uncap dungeons</text>
+  <text x="600" y="92" text-anchor="middle" fill="#67e8f9" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="600">${subtitle}</text>
   ${cardBodies}
 </svg>`
 }

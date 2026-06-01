@@ -26,6 +26,25 @@ export function GuideProse({ children }: { children: ReactNode }) {
   return <div className="guidebook-prose">{children}</div>
 }
 
+export function GuidebookNotes({
+  children,
+  ariaLabel,
+  className = '',
+}: {
+  children: ReactNode
+  ariaLabel?: string
+  className?: string
+}) {
+  return (
+    <aside
+      className={`guidebook-notes${className ? ` ${className}` : ''}`}
+      {...(ariaLabel ? { 'aria-label': ariaLabel } : {})}
+    >
+      {children}
+    </aside>
+  )
+}
+
 export function GuideTiles({ items }: { items: { title: string; hint?: string }[] }) {
   return (
     <ul className="guidebook-tiles">

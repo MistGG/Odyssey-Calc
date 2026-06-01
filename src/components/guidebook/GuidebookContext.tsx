@@ -10,25 +10,35 @@ import {
 import { useSearchParams } from 'react-router-dom'
 import type { GuidebookDetail } from '../../lib/guidebookContent'
 import {
-  copyGuidebookSectionLink,
-  lockGuidebookScrollSpy,
-  scrollToGuidebookSection,
-  writeGuidebookBookmark,
-} from '../../lib/guidebookNav'
-import { guidebookScrollIds } from '../../lib/guidebookContent'
+  guidebookNextStepId,
+  guidebookProgressionStepIds,
+  guidebookStepIsInformative,
+} from '../../lib/guidebookProgression'
+import { readGuidebookProgressStep, writeGuidebookProgressStep } from '../../lib/guidebookProgress'
+import { copyGuidebookStepLink } from '../../lib/guidebookNav'
 import { GuidebookPopup } from './GuidebookPopup'
 import { GuidebookWikiOverlayProvider } from './GuidebookWikiOverlay'
 
 type GuidebookContextValue = {
-  activeSectionId: string
-  setActiveSectionId: (id: string) => void
-  scrollToSection: (id: string) => void
+  progressStepId: string
+  viewStepId: string
+  setProgressStep: (stepId: string) => void
+  selectStep: (stepId: string) => void
+  advanceProgress: (fromStepId: string) => void
   openDetail: (detail: GuidebookDetail) => void
-  copySectionLink: (sectionId: string) => Promise<boolean>
+  copyStepLink: (stepId: string) => Promise<boolean>
   linkCopiedId: string | null
 }
 
 const GuidebookContext = createContext<GuidebookContextValue | null>(null)
+
+const VALID_STEP_IDS = new Set(guidebookProgressionStepIds())
+
+function normalizeStepId(raw: string | null | undefined): string {
+  const id = raw?.trim()
+  if (id && VALID_STEP_IDS.has(id)) return id
+  return readGuidebookProgressStep()
+}
 
 export function useGuidebook() {
   const ctx = useContext(GuidebookContext)
@@ -38,44 +48,53 @@ export function useGuidebook() {
 
 export function GuidebookProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const defaultId = guidebookScrollIds()[0] ?? 'beginners-preface'
-  const [activeSectionId, setActiveSectionId] = useState(() => {
-    const fromUrl = searchParams.get('section')?.trim()
-    if (fromUrl) return fromUrl
-    return defaultId
-  })
+  const [progressStepId, setProgressStepIdState] = useState(() => readGuidebookProgressStep())
+  const [viewStepId, setViewStepId] = useState(() =>
+    normalizeStepId(searchParams.get('step') ?? searchParams.get('section')),
+  )
   const [popup, setPopup] = useState<GuidebookDetail | null>(null)
   const [linkCopiedId, setLinkCopiedId] = useState<string | null>(null)
 
-  const scrollToSection = useCallback(
-    (id: string) => {
-      lockGuidebookScrollSpy(id, 1100)
-      setActiveSectionId(id)
-      setSearchParams({ section: id }, { replace: true })
-      scrollToGuidebookSection(id)
+  useEffect(() => {
+    const fromUrl = searchParams.get('step') ?? searchParams.get('section')
+    if (fromUrl?.trim() && VALID_STEP_IDS.has(fromUrl.trim())) {
+      setViewStepId(fromUrl.trim())
+    }
+  }, [searchParams])
+
+  const setProgressStep = useCallback((stepId: string) => {
+    if (!VALID_STEP_IDS.has(stepId) || guidebookStepIsInformative(stepId)) return
+    writeGuidebookProgressStep(stepId)
+    setProgressStepIdState(stepId)
+    setViewStepId(stepId)
+    setSearchParams({ step: stepId }, { replace: true })
+  }, [setSearchParams])
+
+  const selectStep = useCallback(
+    (stepId: string) => {
+      if (!VALID_STEP_IDS.has(stepId)) return
+      setViewStepId(stepId)
+      setSearchParams({ step: stepId }, { replace: true })
     },
     [setSearchParams],
   )
 
-  useEffect(() => {
-    const fromUrl = searchParams.get('section')?.trim()
-    if (fromUrl && document.getElementById(fromUrl)) {
-      lockGuidebookScrollSpy(fromUrl, 500)
-      setActiveSectionId(fromUrl)
-      requestAnimationFrame(() => scrollToGuidebookSection(fromUrl, 'auto'))
+  const advanceProgress = useCallback(
+    (fromStepId: string) => {
+      const next = guidebookNextStepId(fromStepId) ?? fromStepId
+      setProgressStep(next)
+    },
+    [setProgressStep],
+  )
+
+  const copyStepLink = useCallback(async (stepId: string) => {
+    const ok = await copyGuidebookStepLink(stepId)
+    if (ok) {
+      setLinkCopiedId(stepId)
+      window.setTimeout(() => setLinkCopiedId(null), 1600)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    writeGuidebookBookmark(activeSectionId)
-  }, [activeSectionId])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setSearchParams({ section: activeSectionId }, { replace: true })
-    }, 300)
-    return () => window.clearTimeout(timer)
-  }, [activeSectionId, setSearchParams])
+    return ok
+  }, [])
 
   useEffect(() => {
     if (!popup) return
@@ -91,25 +110,18 @@ export function GuidebookProvider({ children }: { children: ReactNode }) {
     }
   }, [popup])
 
-  const copySectionLink = useCallback(async (sectionId: string) => {
-    const ok = await copyGuidebookSectionLink(sectionId)
-    if (ok) {
-      setLinkCopiedId(sectionId)
-      window.setTimeout(() => setLinkCopiedId(null), 1600)
-    }
-    return ok
-  }, [])
-
   const value = useMemo<GuidebookContextValue>(
     () => ({
-      activeSectionId,
-      setActiveSectionId,
-      scrollToSection,
+      progressStepId,
+      viewStepId,
+      setProgressStep,
+      selectStep,
+      advanceProgress,
       openDetail: (detail) => setPopup(detail),
-      copySectionLink,
+      copyStepLink,
       linkCopiedId,
     }),
-    [activeSectionId, copySectionLink, linkCopiedId, scrollToSection],
+    [advanceProgress, copyStepLink, linkCopiedId, progressStepId, selectStep, setProgressStep, viewStepId],
   )
 
   return (

@@ -159,7 +159,10 @@ export function GuidebookItemProfilePanel({
     () => dedupeItemDropSources(item.drop_sources ?? []),
     [item.drop_sources],
   )
-  const raidSources = item.raid_sources ?? []
+  const raidSources = useMemo(
+    () => [...(item.raid_sources ?? [])].sort((a, b) => b.rate - a.rate),
+    [item.raid_sources],
+  )
 
   return (
     <div className="guidebook-item-panel" onMouseDown={(e) => e.stopPropagation()}>
@@ -206,7 +209,7 @@ export function GuidebookItemProfilePanel({
 
         {raidSources.length > 0 ? (
           <section className="guidebook-item-panel__section">
-            <h4 className="guidebook-item-panel__sh guidebook-item-panel__sh--raid">Raid reward from</h4>
+            <h4 className="guidebook-item-panel__sh guidebook-item-panel__sh--raid">Raid rewards</h4>
             <div className="guidebook-item-panel__list">
               {raidSources.map((raid, index) => (
                 <div key={raidSourceKey(raid, index)} className="guidebook-item-panel__raid-row">
@@ -218,7 +221,9 @@ export function GuidebookItemProfilePanel({
                       variant="inline"
                     />
                     <span className="guidebook-item-panel__raid-rank">
-                      Rank #{raid.rank_start}–{raid.rank_end}
+                      {raid.rank_start === raid.rank_end
+                        ? `Place ${raid.rank_start}`
+                        : `Places ${raid.rank_start}–${raid.rank_end}`}
                     </span>
                     <span className="guidebook-item-panel__raid-qty">
                       {formatRaidQuantity(raid.min, raid.max)}

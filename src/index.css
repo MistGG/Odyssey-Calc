@@ -16943,6 +16943,395 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   margin: 0;
 }
 
+.guidebook-prose + .guidebook-gear-dungeons,
+.guidebook-gear-dungeons + .guidebook-prose {
+  margin-top: 1rem;
+}
+
+.guidebook-fragment-farm:first-child {
+  margin-top: 0;
+}
+
+.guidebook-fragment-farm .guidebook-material-req {
+  margin-top: 0;
+}
+
+.guidebook-material-req + .guidebook-gear-dungeons {
+  margin-top: 1rem;
+}
+
+.guidebook-notes {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-left: 3px solid rgba(251, 191, 36, 0.55);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.06), rgba(0, 0, 0, 0.28));
+}
+
+.guidebook-notes__lead {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.guidebook-notes__list {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  list-style: disc;
+}
+
+.guidebook-notes__list li {
+  margin: 0;
+  padding: 0.2rem 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.guidebook-notes__list li + li {
+  margin-top: 0.35rem;
+}
+
+.guidebook-fragment-farm + .guidebook-notes {
+  margin-top: 1.25rem;
+}
+
+.guidebook-board-detail__wiki > .guidebook-notes:first-child {
+  margin-top: 0;
+}
+
+.guidebook-notes .guidebook-prose {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.guidebook-notes .guidebook-prose p {
+  margin: 0;
+}
+
+.guidebook-notes .guidebook-prose p + p {
+  margin-top: 0.65rem;
+}
+
+.guidebook-notes .guidebook-prose a {
+  color: #67e8f9;
+}
+
+.guidebook-notes .guidebook-prose a:hover {
+  color: #a5f3fc;
+}
+
+.guidebook-notes + .guidebook-uncap-dungeons {
+  margin-top: 1rem;
+}
+
+.guidebook-ring-track {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.guidebook-ring-craft.guidebook-fragment-farm {
+  margin-top: 0;
+}
+
+.guidebook-ring-craft .guidebook-notes {
+  margin-top: 0.5rem;
+}
+
+.guidebook-ring-track--corrupted .guidebook-ring-craft {
+  margin-top: 0;
+}
+
+.guidebook-corrupted-disclaimer {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+.guidebook-notes__collect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.guidebook-notes__collect-word {
+  flex-shrink: 0;
+}
+
+.guidebook-collect-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.22rem 0.5rem 0.22rem 0.35rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.guidebook-collect-pick:hover {
+  border-color: rgba(103, 232, 249, 0.4);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.guidebook-collect-pick.is-selected {
+  border-color: rgba(103, 232, 249, 0.55);
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.1);
+}
+
+.guidebook-collect-pick:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+.guidebook-collect-pick__qty {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #f8fafc;
+}
+
+.guidebook-collect-pick__icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: rgba(2, 6, 23, 0.85);
+}
+
+.guidebook-collect-pick__icon--empty {
+  display: block;
+}
+
+.guidebook-collect-pick__name {
+  font-weight: 600;
+  color: #e0f2fe;
+  line-height: 1.2;
+}
+
+.guidebook-material-sources {
+  margin-top: 0.85rem;
+}
+
+.guidebook-ring-craft .guidebook-material-sources .guidebook-gear-dungeons {
+  margin-top: 0;
+}
+
+.guidebook-material-sources__hint {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.guidebook-ring-entry .guidebook-notes {
+  margin-top: 0.5rem;
+}
+
+.guidebook-ring-entry .guidebook-fragment-farm__hint {
+  margin-top: 0.75rem;
+}
+
+.guidebook-notes__list--rolls li {
+  color: #cbd5e1;
+}
+
+.guidebook-notes__roll-label {
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.guidebook-notes__roll-stats {
+  color: #94a3b8;
+}
+
+.guidebook-material-req__chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 22rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.guidebook-material-req__chip:hover {
+  border-color: rgba(103, 232, 249, 0.45);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.guidebook-material-req__chip:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+.guidebook-material-req__qty {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  min-width: 2rem;
+  font-size: 1.35rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #f8fafc;
+}
+
+.guidebook-material-req__icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: rgba(2, 6, 23, 0.85);
+}
+
+.guidebook-material-req__icon--empty {
+  display: block;
+}
+
+.guidebook-material-req__name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e0f2fe;
+  line-height: 1.3;
+}
+
+.guidebook-material-req__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.86rem;
+}
+
+.guidebook-fragment-farm {
+  margin-top: 1rem;
+}
+
+.guidebook-fragment-farm + .guidebook-fragment-farm {
+  margin-top: 1.25rem;
+}
+
+.guidebook-fragment-farm__title {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.guidebook-fragment-farm__hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+}
+
+.guidebook-material-req + .guidebook-fragment-farm__hint {
+  margin-top: 0.5rem;
+}
+
+.guidebook-fragment-farm__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.guidebook-fragment-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 100%;
+  padding: 0.5rem 0.4rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.guidebook-fragment-chip:hover {
+  border-color: rgba(103, 232, 249, 0.4);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.guidebook-fragment-chip:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+.guidebook-fragment-chip__qty {
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #fde68a;
+  letter-spacing: 0.04em;
+}
+
+.guidebook-fragment-chip__icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  background: rgba(2, 6, 23, 0.85);
+}
+
+.guidebook-fragment-chip__icon--empty {
+  display: block;
+  min-height: 36px;
+}
+
+.guidebook-fragment-chip__name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #cbd5e1;
+}
+
+.guidebook-prose__olist {
+  margin: 0.75rem 0 0;
+  padding-left: 1.35rem;
+}
+
+.guidebook-prose__olist li + li {
+  margin-top: 0.5rem;
+}
+
 .guidebook-prose a {
   color: var(--cyan);
   text-decoration: underline;
@@ -17022,17 +17411,16 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   z-index: 45;
 }
 
-.guidebook-quest-popover {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 0.5rem);
-  z-index: 46;
-  width: min(24rem, calc(100vw - 2.5rem));
+.guidebook-quest-popover--fixed {
+  position: fixed;
+  z-index: 120;
+  width: min(24rem, calc(100vw - 1.5rem));
   min-width: 17rem;
   pointer-events: auto;
 }
 
-.guidebook-quest-popover--loading {
+.guidebook-quest-popover--fixed .guidebook-quest-popover--loading {
+  display: block;
   padding: 0.75rem 1rem;
   font-size: 0.85rem;
   line-height: 1.5;
@@ -17040,6 +17428,10 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.25);
   background: rgba(15, 23, 42, 0.95);
+}
+
+.guidebook-board-detail {
+  overflow: visible;
 }
 
 .guidebook-quest-popover-card {
@@ -20378,4 +20770,604 @@ a.guidebook-monster-panel__loot-btn:hover {
   .meter-hof-table__col--role { grid-column: 2; }
   .meter-hof-table__col--dps { grid-area: dps; justify-content: flex-start; }
   .meter-hof-table__col--date { grid-area: date; text-align: left; }
+}
+
+/* Guidebook — progression board */
+.guidebook-page--board {
+  max-width: 76rem;
+}
+
+.guidebook-hero__lead {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.guidebook-official {
+  margin-bottom: 1.75rem;
+}
+
+.guidebook-official__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.guidebook-official__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: linear-gradient(145deg, rgba(12, 28, 48, 0.85), rgba(6, 12, 22, 0.95));
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.guidebook-official__card:hover {
+  border-color: rgba(103, 232, 249, 0.55);
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.12);
+  transform: translateY(-1px);
+}
+
+.guidebook-official__card-title {
+  font-weight: 800;
+  color: #e0f2fe;
+}
+
+.guidebook-official__card-desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.guidebook-official__card-cta {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #67e8f9;
+}
+
+.guidebook-board {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.guidebook-board__trail-wrap {
+  position: sticky;
+  top: 5rem;
+  max-height: calc(100vh - 6rem);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(56, 189, 248, 0.08), transparent 60%),
+    rgba(2, 8, 18, 0.75);
+}
+
+.guidebook-board__trail-head {
+  margin-bottom: 0.65rem;
+}
+
+.guidebook-board__trail-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.guidebook-board__trail-meta {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.guidebook-board__trail {
+  list-style: none;
+  margin: 0;
+  padding: 0.15rem 0.1rem 0.15rem 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.guidebook-board__trail-item {
+  list-style: none;
+}
+
+.guidebook-board__cluster {
+  list-style: none;
+  padding: 0.45rem 0.5rem 0.55rem;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.guidebook-board__cluster--corrupted-gear {
+  border-color: rgba(192, 132, 252, 0.32);
+  background: rgba(192, 132, 252, 0.07);
+}
+
+.guidebook-board__cluster-label {
+  display: block;
+  margin: 0 0 0.4rem 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.guidebook-board__cluster--gear .guidebook-board__cluster-label {
+  color: #67e8f9;
+}
+
+.guidebook-board__cluster--corrupted-gear .guidebook-board__cluster-label {
+  color: #d8b4fe;
+}
+
+.guidebook-board__cluster-trail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.guidebook-board__cluster-trail > li:last-child .guidebook-board__space::before,
+.guidebook-board__trail-item:last-child .guidebook-board__space::before {
+  display: none;
+}
+
+.guidebook-board__space {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+
+.guidebook-board__space::before {
+  content: '';
+  position: absolute;
+  left: 0.35rem;
+  top: 100%;
+  width: 2px;
+  height: 0.4rem;
+  background: rgba(148, 163, 184, 0.2);
+  pointer-events: none;
+}
+
+
+.guidebook-board__space:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.guidebook-board__space.is-viewing {
+  border-color: rgba(103, 232, 249, 0.45);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.12);
+}
+
+.guidebook-board__space--complete {
+  opacity: 0.82;
+}
+
+.guidebook-board__space--current {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.guidebook-board__space--informative {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.guidebook-board__space-no--info {
+  border-radius: 999px;
+}
+
+.guidebook-board__space-no-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.guidebook-board__space-no {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.guidebook-board__space--starter .guidebook-board__space-no {
+  border-color: rgba(74, 222, 128, 0.4);
+  color: #86efac;
+}
+
+.guidebook-board__space--file .guidebook-board__space-no {
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+}
+
+.guidebook-board__space--odaiba .guidebook-board__space-no,
+.guidebook-board__space--metro .guidebook-board__space-no {
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #c4b5fd;
+}
+
+.guidebook-board__space--gear .guidebook-board__space-no {
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fde68a;
+}
+
+.guidebook-board__space--corrupted .guidebook-board__space-no {
+  border-color: rgba(192, 132, 252, 0.5);
+  color: #e9d5ff;
+}
+
+.guidebook-board__space--raid .guidebook-board__space-no {
+  border-color: rgba(244, 114, 182, 0.45);
+  color: #f9a8d4;
+}
+
+.guidebook-board__space-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.guidebook-board__space-zone {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.guidebook-board__space-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  line-height: 1.25;
+}
+
+.guidebook-board__space-mark {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #6ee7b7;
+}
+
+.guidebook-board__space-mark--you {
+  color: #fde68a;
+}
+
+.guidebook-board__detail-wrap {
+  min-width: 0;
+  padding: 1rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 8, 18, 0.65);
+  overflow: visible;
+}
+
+.guidebook-board-detail__head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.guidebook-board-detail__head > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.guidebook-board-detail__zone {
+  margin: 0 0 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.guidebook-board-detail__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.guidebook-board-detail__summary {
+  margin: 0;
+  font-size: 0.88rem;
+  max-width: 36rem;
+}
+
+.guidebook-board-detail__actions:not(.guidebook-board-detail__actions--current) {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto 8.75rem;
+  gap: 0.4rem 0.45rem;
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+}
+
+.guidebook-board-detail__actions--current {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.guidebook-board-detail__actions--informative {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.guidebook-board-detail__actions-side {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  width: 8.75rem;
+}
+
+.guidebook-board-detail__set-step {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 12px;
+  border: 2px solid rgba(251, 191, 36, 0.65);
+  background: linear-gradient(155deg, rgba(251, 191, 36, 0.22), rgba(180, 83, 9, 0.18));
+  box-shadow:
+    0 0 20px rgba(251, 191, 36, 0.15),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fffbeb;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.guidebook-board-detail__set-step:hover {
+  border-color: rgba(253, 224, 71, 0.85);
+  background: linear-gradient(155deg, rgba(251, 191, 36, 0.32), rgba(180, 83, 9, 0.26));
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.28);
+  transform: translateY(-1px);
+}
+
+.guidebook-board-detail__set-step:focus-visible {
+  outline: 2px solid #fde68a;
+  outline-offset: 2px;
+}
+
+.guidebook-board-detail__set-step-label {
+  white-space: nowrap;
+}
+
+.guidebook-board-detail__set-step-gif {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+
+.guidebook-board-detail__share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.38rem 0.55rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  cursor: pointer;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.guidebook-board-detail__share:hover {
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.guidebook-board-detail__share:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+.guidebook-board-detail__share.is-copied {
+  border-color: rgba(110, 231, 183, 0.4);
+  color: #6ee7b7;
+}
+
+.guidebook-board-detail__share-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.guidebook-board-detail__advance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(56, 189, 248, 0.12);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #7dd3fc;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.guidebook-board-detail__advance:hover {
+  border-color: rgba(103, 232, 249, 0.65);
+  background: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+
+.guidebook-board-detail__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.guidebook-board-detail__objectives {
+  margin-bottom: 1.1rem;
+}
+
+.guidebook-board-detail__tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.guidebook-board-detail__task {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #e2e8f0;
+}
+
+.guidebook-board-detail__task-kind {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.guidebook-board-detail__task--farm .guidebook-board-detail__task-kind {
+  border-color: rgba(74, 222, 128, 0.35);
+  color: #86efac;
+}
+
+.guidebook-board-detail__task--craft .guidebook-board-detail__task-kind {
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fde68a;
+}
+
+.guidebook-board-detail__task--quest .guidebook-board-detail__task-kind {
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #93c5fd;
+}
+
+.guidebook-board-detail__task--gear .guidebook-board-detail__task-kind {
+  border-color: rgba(244, 114, 182, 0.35);
+  color: #f9a8d4;
+}
+
+.guidebook-board-detail__task--money .guidebook-board-detail__task-kind {
+  border-color: rgba(250, 204, 21, 0.4);
+  color: #fde047;
+}
+
+.guidebook-board-detail__wiki .guidebook-prose {
+  margin-top: 0;
+}
+
+.nav-link-event.nav-link-event--active {
+  color: #fecdd3;
+  border-color: rgba(251, 113, 133, 0.45);
+}
+
+@media (max-width: 900px) {
+  .guidebook-board {
+    grid-template-columns: 1fr;
+  }
+
+  .guidebook-board__trail-wrap {
+    position: static;
+    max-height: none;
+  }
+
 }

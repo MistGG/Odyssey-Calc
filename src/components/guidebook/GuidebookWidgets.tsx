@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -58,12 +59,26 @@ import {
   GUIDEBOOK_AGUMON_CLASSIC_ID,
   GUIDEBOOK_DARK_ROAR_DUNGEON_ID,
   GUIDEBOOK_HIKARI_SEES_ODAIBA_QUEST_ID,
+  GUIDEBOOK_DIGIVICE_FRAGMENT_EACH_COUNT,
+  GUIDEBOOK_DIGIVICE_FRAGMENTS,
+  GUIDEBOOK_DIGIVICE_HOMEOSTASIS_WISH_COUNT,
+  GUIDEBOOK_EARRING_DATA_ITEM_IDS,
+  GUIDEBOOK_EARLY_EARRING_ROLLS,
   GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID,
   GUIDEBOOK_GOGGLES_DATA_ITEM_IDS,
+  GUIDEBOOK_GOGGLES_STAT_NOTES,
   GUIDEBOOK_KEYRING_DATA_ITEM_IDS,
+  GUIDEBOOK_KEYRING_STAT_NOTES_LEAD,
+  GUIDEBOOK_KEYRING_STAT_ROLLS,
   GUIDEBOOK_MASTEMON_REPORT_QUEST_ID,
   GUIDEBOOK_NECKLACE_DATA_ITEM_IDS,
-  GUIDEBOOK_RING_DATA_ITEM_ID,
+  GUIDEBOOK_RING_ENTRIES,
+  GUIDEBOOK_EARLY_NECKLACE_ROLLS,
+  GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER,
+  guidebookCorruptedGearGuide,
+  type GuidebookCorruptedCraftMaterial,
+  type GuidebookCorruptedGearGuide,
+  type GuidebookRingEntry,
   GUIDEBOOK_UNCAP_50_DUNGEON_ID,
   GUIDEBOOK_UNCAP_70_DUNGEON_ID,
   OFFICIAL_BEGINNERS_GUIDE_URL,
@@ -72,7 +87,7 @@ import {
 import { useGuidebook } from './GuidebookContext'
 import { useGuidebookWikiOverlay } from './GuidebookWikiOverlay'
 import { GuidebookMonsterLink } from './GuidebookWikiOverlayPanels'
-import { GuideProse } from './GuidebookUi'
+import { GuideProse, GuidebookNotes } from './GuidebookUi'
 import type {
   WikiDigimonDetail,
   WikiDigimonListItem,
@@ -518,6 +533,21 @@ function GuidebookQuestProfilePopover({
   )
 }
 
+const QUEST_POPOVER_WIDTH_PX = 384
+const QUEST_POPOVER_ESTIMATE_HEIGHT_PX = 420
+
+function questPopoverPosition(anchor: HTMLElement, popoverHeight: number) {
+  const rect = anchor.getBoundingClientRect()
+  const width = Math.min(QUEST_POPOVER_WIDTH_PX, window.innerWidth - 24)
+  const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))
+  const gap = 8
+  let top = rect.bottom + gap
+  if (top + popoverHeight > window.innerHeight - 12) {
+    top = Math.max(12, rect.top - gap - popoverHeight)
+  }
+  return { top, left }
+}
+
 /** Clickable quest name; hover (or tap) shows a compact quest card from the wiki API. */
 export function GuidebookQuestHoverLink({
   questId,
@@ -535,11 +565,39 @@ export function GuidebookQuestHoverLink({
   const [hover, setHover] = useState(false)
   const [pinned, setPinned] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [popoverCoords, setPopoverCoords] = useState<{ top: number; left: number } | null>(null)
   const rootRef = useRef<HTMLSpanElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<number | null>(null)
 
   const unpin = useCallback(() => {
     setPinned(false)
     setHover(false)
+  }, [])
+
+  const clearCloseTimer = useCallback(() => {
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    if (pinned) return
+    clearCloseTimer()
+    closeTimerRef.current = window.setTimeout(() => setHover(false), 140)
+  }, [clearCloseTimer, pinned])
+
+  const openHover = useCallback(() => {
+    clearCloseTimer()
+    setHover(true)
+  }, [clearCloseTimer])
+
+  const updatePopoverCoords = useCallback(() => {
+    const anchor = rootRef.current
+    if (!anchor) return
+    const height = popoverRef.current?.offsetHeight ?? QUEST_POPOVER_ESTIMATE_HEIGHT_PX
+    setPopoverCoords(questPopoverPosition(anchor, height))
   }, [])
 
   useEffect(() => {
@@ -547,6 +605,7 @@ export function GuidebookQuestHoverLink({
     function onPointerDown(e: PointerEvent) {
       const target = e.target as Node
       if (rootRef.current?.contains(target)) return
+      if (popoverRef.current?.contains(target)) return
       unpin()
     }
     function onKeyDown(e: globalThis.KeyboardEvent) {
@@ -582,58 +641,88 @@ export function GuidebookQuestHoverLink({
   const label = quest?.title_text ?? labelFallback
   const tab = tabLabel ?? quest?.title_tab
 
+  useLayoutEffect(() => {
+    if (!showCard) {
+      setPopoverCoords(null)
+      return
+    }
+    updatePopoverCoords()
+    const raf = window.requestAnimationFrame(updatePopoverCoords)
+    window.addEventListener('resize', updatePopoverCoords)
+    window.addEventListener('scroll', updatePopoverCoords, true)
+    return () => {
+      window.cancelAnimationFrame(raf)
+      window.removeEventListener('resize', updatePopoverCoords)
+      window.removeEventListener('scroll', updatePopoverCoords, true)
+    }
+  }, [showCard, quest, loading, updatePopoverCoords])
+
+  const popoverNode =
+    showCard && popoverCoords
+      ? createPortal(
+          <div
+            ref={popoverRef}
+            className="guidebook-quest-popover guidebook-quest-popover--fixed"
+            style={{ top: popoverCoords.top, left: popoverCoords.left }}
+            role="tooltip"
+            id={`guidebook-quest-popover-${questId}`}
+            onMouseEnter={openHover}
+            onMouseLeave={scheduleClose}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {quest ? (
+              <GuidebookQuestProfilePopover
+                quest={quest}
+                pinned={pinned}
+                onDismiss={pinned ? unpin : undefined}
+              />
+            ) : (
+              <span className="guidebook-quest-popover--loading" role="status">
+                Loading quest…
+              </span>
+            )}
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
-    <span
-      ref={rootRef}
-      className={`guidebook-quest-mention${pinned ? ' is-pinned' : ''}`}
-      onMouseEnter={() => {
-        setHover(true)
-        ensureQuest()
-      }}
-      onMouseLeave={(e) => {
-        if (pinned) return
-        const next = e.relatedTarget
-        if (next instanceof Node && e.currentTarget.contains(next)) return
-        setHover(false)
-      }}
-      onMouseDown={(e) => e.stopPropagation()}
-    >
-      <span className="guidebook-quest-mention__label">
-        {tab ? <span className="guidebook-quest-popover-card__tab">{tab}</span> : null}
-        <button
-          type="button"
-          className="guidebook-prose__quest-trigger"
-          aria-expanded={showCard}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation()
-            setPinned((open) => !open)
-            ensureQuest()
-          }}
-        >
-          {label}
-        </button>
+    <>
+      <span
+        ref={rootRef}
+        className={`guidebook-quest-mention${pinned ? ' is-pinned' : ''}`}
+        onMouseEnter={() => {
+          openHover()
+          ensureQuest()
+        }}
+        onMouseLeave={scheduleClose}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <span className="guidebook-quest-mention__label">
+          {tab ? <span className="guidebook-quest-popover-card__tab">{tab}</span> : null}
+          <button
+            type="button"
+            className="guidebook-prose__quest-trigger"
+            aria-expanded={showCard}
+            aria-controls={showCard ? `guidebook-quest-popover-${questId}` : undefined}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              clearCloseTimer()
+              setPinned((open) => {
+                const next = !open
+                setHover(next)
+                return next
+              })
+              ensureQuest()
+            }}
+          >
+            {label}
+          </button>
+        </span>
       </span>
-      {showCard && quest ? (
-        <span
-          className="guidebook-quest-popover"
-          role="tooltip"
-          id={`guidebook-quest-popover-${questId}`}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <GuidebookQuestProfilePopover
-            quest={quest}
-            pinned={pinned}
-            onDismiss={pinned ? unpin : undefined}
-          />
-        </span>
-      ) : null}
-      {showCard && loading && !quest ? (
-        <span className="guidebook-quest-popover guidebook-quest-popover--loading" role="status">
-          Loading quest…
-        </span>
-      ) : null}
-    </span>
+      {popoverNode}
+    </>
   )
 }
 
@@ -1349,6 +1438,7 @@ export function GuidebookDungeonPanel({
     nameFallback: string
     difficulty: string
     badgeLabel?: string
+    dropRatePermil?: number
     highlightLoot?: GuidebookRaidSourceDungeonCard['highlightLoot']
   }[]
   layout?: 'pair' | 'single'
@@ -1375,28 +1465,30 @@ export function GuidebookUncapDungeonPair() {
 export function GuideEarlyGame5070() {
   return (
     <>
-      <GuideProse>
-      <p>
-        After reaching level 50 for the first time, you will be unable to continue leveling until
-        you complete the first level uncap quest. You will be able to obtain this quest after
-        completing File Island, specifically the quest{' '}
-        <GuidebookQuestHoverLink
-          questId={GUIDEBOOK_MASTEMON_REPORT_QUEST_ID}
-          labelFallback="Mastemon's Report"
-          tabLabel="MAIN"
-        />
-        .
-      </p>
-      <p>
-        After completing the level 50 uncap, you may continue questing until level 70 and will need
-        to uncap again. You will need to continue until the quest in Odaiba called{' '}
-        <GuidebookQuestHoverLink
-          questId={GUIDEBOOK_HIKARI_SEES_ODAIBA_QUEST_ID}
-          labelFallback="Hikari Sees Odaiba"
-        />
-        .
-      </p>
-      </GuideProse>
+      <GuidebookNotes ariaLabel="Level 50 and 70 uncap">
+        <GuideProse>
+          <p>
+            After reaching level 50 for the first time, you will be unable to continue leveling until
+            you complete the first level uncap quest. You will be able to obtain this quest after
+            completing File Island, specifically the quest{' '}
+            <GuidebookQuestHoverLink
+              questId={GUIDEBOOK_MASTEMON_REPORT_QUEST_ID}
+              labelFallback="Mastemon's Report"
+              tabLabel="MAIN"
+            />
+            .
+          </p>
+          <p>
+            After completing the level 50 uncap, you may continue questing until level 70 and will need
+            to uncap again. You will need to continue until the quest in Odaiba called{' '}
+            <GuidebookQuestHoverLink
+              questId={GUIDEBOOK_HIKARI_SEES_ODAIBA_QUEST_ID}
+              labelFallback="Hikari Sees Odaiba"
+            />
+            .
+          </p>
+        </GuideProse>
+      </GuidebookNotes>
       <GuidebookUncapDungeonPair />
     </>
   )
@@ -1405,14 +1497,16 @@ export function GuideEarlyGame5070() {
 export function GuideEarlyGame70Beyond() {
   return (
     <>
-      <GuideProse>
-        <p>
-          Now that you&apos;ve done that 70 uncap, you can reach 90 before the next cap. You may want
-          to start leveling other digimon and the perfect place to do so is the Dark Roar dungeon in
-          Big Sight. It gives a large amount of EXP in Story difficulty and can be done very easily
-          solo or in a party.
-        </p>
-      </GuideProse>
+      <GuidebookNotes ariaLabel="EXP farming">
+        <GuideProse>
+          <p>
+            Now that you&apos;ve done that 70 uncap, you can reach 90 before the next cap. You may want
+            to start leveling other digimon and the perfect place to do so is the Dark Roar dungeon in
+            Big Sight. It gives a large amount of EXP in Story difficulty and can be done very easily
+            solo or in a party.
+          </p>
+        </GuideProse>
+      </GuidebookNotes>
       <GuidebookDungeonPanel
         layout="single"
         ariaLabel="Dark Roar"
@@ -1430,28 +1524,30 @@ export function GuideEarlyGame70Beyond() {
 
 export function GuideEarlyGame150() {
   return (
-    <GuideProse>
-      <p>
-        Select your favorite digimon or prioritize a role of your choosing. For beginners, you may
-        choose between a DPS (Melee, Ranged, Caster), Tank or Healer. There also exists a Hybrid
-        role, but is generally for more advanced users. Hybrid does not mean it is better, but
-        simply offers more options. If you are uncertain what to pick, you may choose{' '}
-        <GuidebookDigimonHoverLink
-          digimonId={GUIDEBOOK_AGUMON_CLASSIC_ID}
-          labelFallback="Agumon (Classic)"
-        />{' '}
-        as it has several evolution lines that are useful. In Odyssey, obtaining Digimon is not too
-        difficult and you will have many opportunities to get a new Digimon.
-      </p>
-      <p>
-        After making your choice, feel free to play any Tamer you would like. A full tamer list and
-        further information is available in the{' '}
-        <a href={OFFICIAL_BEGINNERS_GUIDE_URL} target="_blank" rel="noreferrer">
-          official beginners guide
-        </a>
-        . After doing so, please continue the story till the end of File Island.
-      </p>
-    </GuideProse>
+    <GuidebookNotes ariaLabel="Choosing your partner">
+      <GuideProse>
+        <p>
+          Select your favorite digimon or prioritize a role of your choosing. For beginners, you may
+          choose between a DPS (Melee, Ranged, Caster), Tank or Healer. There also exists a Hybrid
+          role, but is generally for more advanced users. Hybrid does not mean it is better, but
+          simply offers more options. If you are uncertain what to pick, you may choose{' '}
+          <GuidebookDigimonHoverLink
+            digimonId={GUIDEBOOK_AGUMON_CLASSIC_ID}
+            labelFallback="Agumon (Classic)"
+          />{' '}
+          as it has several evolution lines that are useful. In Odyssey, obtaining Digimon is not too
+          difficult and you will have many opportunities to get a new Digimon.
+        </p>
+        <p>
+          After making your choice, feel free to play any Tamer you would like. A full tamer list and
+          further information is available in the{' '}
+          <a href={OFFICIAL_BEGINNERS_GUIDE_URL} target="_blank" rel="noreferrer">
+            official beginners guide
+          </a>
+          . After doing so, please continue the story till the end of File Island.
+        </p>
+      </GuideProse>
+    </GuidebookNotes>
   )
 }
 
@@ -1777,9 +1873,15 @@ export function GuidebookItemRaidDungeonPanels({
 function GuideGearRaidSourcesSection({
   gearLabel,
   itemIds,
+  showWip = true,
+  dungeonAriaLabel,
+  dungeonEmptyMessage,
 }: {
   gearLabel: string
   itemIds: readonly string[]
+  showWip?: boolean
+  dungeonAriaLabel?: string
+  dungeonEmptyMessage?: string
 }) {
   const { ref, visible } = useWhenVisible<HTMLDivElement>()
   const itemIdsKey = itemIds.join(',')
@@ -1833,11 +1935,17 @@ function GuideGearRaidSourcesSection({
     }
   }, [itemIdsKey, visible])
 
+  const dungeonsLabel = dungeonAriaLabel ?? `${gearLabel} material dungeons`
+  const emptyLabel =
+    dungeonEmptyMessage ?? `No dungeon sources are listed for these materials yet.`
+
   return (
-    <div ref={ref}>
-      <GuideProse>
-        <p className="guidebook-wip muted">Work in progress — more {gearLabel} guidance coming soon.</p>
-      </GuideProse>
+    <div ref={ref} className="guidebook-gear-dungeons">
+      {showWip ? (
+        <GuideProse>
+          <p className="guidebook-wip muted">Work in progress; more {gearLabel} guidance coming soon.</p>
+        </GuideProse>
+      ) : null}
       {!visible ? null : loading && !loadError ? (
         <p className="guidebook-raid-dungeons__status muted">Loading obtain locations…</p>
       ) : null}
@@ -1846,46 +1954,480 @@ function GuideGearRaidSourcesSection({
         <GuidebookDungeonPanel
           cards={cards}
           layout={cards.length === 1 ? 'single' : 'pair'}
-          ariaLabel={`${gearLabel} raid dungeons`}
+          ariaLabel={dungeonsLabel}
         />
       ) : null}
       {visible && !loading && !loadError && !cards.length ? (
-        <p className="guidebook-raid-dungeons__status muted">
-          No raid dungeon sources are listed for these items yet.
-        </p>
+        <p className="guidebook-raid-dungeons__status muted">{emptyLabel}</p>
       ) : null}
     </div>
   )
 }
 
+function GuidebookMaterialRequirement({
+  itemId,
+  quantity,
+  labelFallback,
+  note,
+}: {
+  itemId: string
+  quantity: number
+  labelFallback: string
+  note?: string
+}) {
+  const { ref, visible } = useWhenVisible<HTMLDivElement>()
+  const { openItemRoot } = useGuidebookWikiOverlay()
+  const [item, setItem] = useState<WikiItemDetail | null>(() => getGuidebookItemDetailCached(itemId) ?? null)
+
+  useEffect(() => {
+    if (!visible) return
+    const cached = getGuidebookItemDetailCached(itemId)
+    if (cached) setItem(cached)
+    void loadGuidebookItemDetail(itemId)
+      .then(setItem)
+      .catch(() => {
+        if (!getGuidebookItemDetailCached(itemId)) setItem(null)
+      })
+  }, [itemId, visible])
+
+  const name = item?.name?.trim() || labelFallback
+  const icon = wikiItemIconUrl(item?.icon_id ?? '')
+
+  const openPanel = () => openItemRoot(itemId)
+
+  return (
+    <div ref={ref} className="guidebook-material-req">
+      <button
+        type="button"
+        className="guidebook-material-req__chip"
+        onClick={openPanel}
+        aria-label={`${quantity} ${name}, open item details`}
+      >
+        <span className="guidebook-material-req__qty">{quantity}</span>
+        {icon ? (
+          <img className="guidebook-material-req__icon" src={icon} alt="" width={48} height={48} />
+        ) : (
+          <span className="guidebook-material-req__icon guidebook-material-req__icon--empty" aria-hidden />
+        )}
+        <span className="guidebook-material-req__name">{name}</span>
+      </button>
+      {note ? <p className="guidebook-material-req__note muted">{note}</p> : null}
+    </div>
+  )
+}
+
+function GuidebookDigiviceFragmentGrid() {
+  const { openItemRoot } = useGuidebookWikiOverlay()
+
+  return (
+    <section className="guidebook-fragment-farm" aria-label="Digivice crest fragments">
+      <h4 className="guidebook-fragment-farm__title">
+        Gather {GUIDEBOOK_DIGIVICE_FRAGMENT_EACH_COUNT} of each fragment
+      </h4>
+      <p className="guidebook-fragment-farm__hint muted">
+        Click a fragment to see where it drops.
+      </p>
+      <ul className="guidebook-fragment-farm__grid">
+        {GUIDEBOOK_DIGIVICE_FRAGMENTS.map((frag) => {
+          const icon = wikiItemIconUrl(frag.iconId)
+          return (
+            <li key={frag.id}>
+              <button
+                type="button"
+                className="guidebook-fragment-chip"
+                onClick={() => openItemRoot(frag.id)}
+                aria-label={`${GUIDEBOOK_DIGIVICE_FRAGMENT_EACH_COUNT} ${frag.name}, open drop sources`}
+              >
+                <span className="guidebook-fragment-chip__qty">{GUIDEBOOK_DIGIVICE_FRAGMENT_EACH_COUNT}</span>
+                {icon ? (
+                  <img className="guidebook-fragment-chip__icon" src={icon} alt="" width={36} height={36} />
+                ) : (
+                  <span className="guidebook-fragment-chip__icon guidebook-fragment-chip__icon--empty" aria-hidden />
+                )}
+                <span className="guidebook-fragment-chip__name">{frag.name}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+function GuidebookDigiviceRollingNotes() {
+  return (
+    <GuidebookNotes ariaLabel="Rolling a digivice">
+      <p className="guidebook-notes__lead">
+        Once you have farmed the materials for a Digivice, you want to roll it with the following things
+        in mind:
+      </p>
+      <ul className="guidebook-notes__list">
+        <li>Generally, Vaccine, Virus and Data should be on the vice.</li>
+        <li>The rest can be filled with elements you use.</li>
+        <li>Unknown can be considered, but only if there are Unknown Digimon you wish to use.</li>
+        <li>
+          If you can craft 3 digivices, you can craft all 3 with VA/VI/DA/UK and different elements to have a
+          digivice for ALL scenarios.
+        </li>
+      </ul>
+    </GuidebookNotes>
+  )
+}
+
+export function GuideGearClothes() {
+  return <GuidebookComingSoon />
+}
+
+export function GuideGearOlympusClothes() {
+  return <GuidebookComingSoon />
+}
+
 export function GuideGearDigivice() {
   return (
-    <GuideGearRaidSourcesSection
-      gearLabel="digivice"
-      itemIds={[GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID]}
-    />
+    <>
+      <section className="guidebook-fragment-farm" aria-label="Homeostasis Wish">
+        <h4 className="guidebook-fragment-farm__title">
+          Gather {GUIDEBOOK_DIGIVICE_HOMEOSTASIS_WISH_COUNT} Homeostasis
+        </h4>
+        <GuidebookMaterialRequirement
+          itemId={GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID}
+          quantity={GUIDEBOOK_DIGIVICE_HOMEOSTASIS_WISH_COUNT}
+          labelFallback="Homeostasis Wish"
+        />
+        <p className="guidebook-fragment-farm__hint muted">
+          Can be obtained from the following dungeons.
+        </p>
+        <GuideGearRaidSourcesSection
+          gearLabel="digivice"
+          itemIds={[GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID]}
+          showWip={false}
+          dungeonAriaLabel="Homeostasis Wish dungeons"
+          dungeonEmptyMessage="No dungeon sources are listed for Homeostasis Wish yet."
+        />
+      </section>
+
+      <GuidebookDigiviceFragmentGrid />
+
+      <GuidebookDigiviceRollingNotes />
+    </>
+  )
+}
+
+function GuidebookRingRollingNotes({ ring }: { ring: GuidebookRingEntry }) {
+  return (
+    <GuidebookNotes ariaLabel={`${ring.name} stat rolls`}>
+      <ul className="guidebook-notes__list guidebook-notes__list--rolls">
+        {ring.rolls.map((roll) => (
+          <li key={roll.label}>
+            <span className="guidebook-notes__roll-label">{roll.label}:</span>{' '}
+            <span className="guidebook-notes__roll-stats">{roll.stats}</span>
+          </li>
+        ))}
+      </ul>
+    </GuidebookNotes>
+  )
+}
+
+function GuidebookCollectMaterialPick({
+  material,
+  selected,
+  onSelect,
+}: {
+  material: GuidebookCorruptedCraftMaterial
+  selected: boolean
+  onSelect: () => void
+}) {
+  const [item, setItem] = useState<WikiItemDetail | null>(
+    () => getGuidebookItemDetailCached(material.itemId) ?? null,
+  )
+
+  useEffect(() => {
+    const cached = getGuidebookItemDetailCached(material.itemId)
+    if (cached) setItem(cached)
+    void loadGuidebookItemDetail(material.itemId)
+      .then(setItem)
+      .catch(() => {
+        if (!getGuidebookItemDetailCached(material.itemId)) setItem(null)
+      })
+  }, [material.itemId])
+
+  const name = item?.name?.trim() || material.labelFallback
+  const icon = wikiItemIconUrl(item?.icon_id ?? '')
+
+  return (
+    <button
+      type="button"
+      className={`guidebook-collect-pick${selected ? ' is-selected' : ''}`}
+      onClick={onSelect}
+      aria-pressed={selected}
+      aria-label={`${material.quantity} ${name}, show drop sources`}
+    >
+      <span className="guidebook-collect-pick__qty">{material.quantity}</span>
+      {icon ? (
+        <img className="guidebook-collect-pick__icon" src={icon} alt="" width={22} height={22} />
+      ) : (
+        <span className="guidebook-collect-pick__icon guidebook-collect-pick__icon--empty" aria-hidden />
+      )}
+      <span className="guidebook-collect-pick__name">{name}</span>
+    </button>
+  )
+}
+
+function GuidebookCorruptedGearRollNotes({
+  rolls,
+  ariaLabel,
+}: {
+  rolls: GuidebookCorruptedGearGuide['rolls']
+  ariaLabel: string
+}) {
+  return (
+    <GuidebookNotes ariaLabel={ariaLabel}>
+      <ul className="guidebook-notes__list guidebook-notes__list--rolls">
+        {rolls.map((roll) => (
+          <li key={roll.label}>
+            <span className="guidebook-notes__roll-label">{roll.label}:</span>{' '}
+            <span className="guidebook-notes__roll-stats">{roll.stats}</span>
+          </li>
+        ))}
+      </ul>
+    </GuidebookNotes>
+  )
+}
+
+function GuidebookCorruptedCraftSection({ guide }: { guide: GuidebookCorruptedGearGuide }) {
+  const [materialA, materialB] = guide.materials
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+
+  const selectedMaterial = guide.materials.find((m) => m.itemId === selectedItemId)
+  const craftTitle = `Craft ${guide.craftLabel} at the Blacksmith in Olympus`
+
+  return (
+    <section
+      className="guidebook-fragment-farm guidebook-ring-craft"
+      aria-label={craftTitle}
+    >
+      <h4 className="guidebook-fragment-farm__title">{craftTitle}</h4>
+      {materialA && materialB ? (
+        <>
+          <GuidebookNotes ariaLabel={`${guide.craftLabel} materials`}>
+            <p className="guidebook-notes__collect">
+              <span className="guidebook-notes__collect-word">Collect</span>
+              <GuidebookCollectMaterialPick
+                material={materialA}
+                selected={selectedItemId === materialA.itemId}
+                onSelect={() =>
+                  setSelectedItemId((prev) => (prev === materialA.itemId ? null : materialA.itemId))
+                }
+              />
+              <span className="guidebook-notes__collect-word">and</span>
+              <GuidebookCollectMaterialPick
+                material={materialB}
+                selected={selectedItemId === materialB.itemId}
+                onSelect={() =>
+                  setSelectedItemId((prev) =>
+                    prev === materialB.itemId ? null : materialB.itemId,
+                  )
+                }
+              />
+            </p>
+          </GuidebookNotes>
+          <div className="guidebook-material-sources" aria-live="polite">
+            {selectedMaterial ? (
+              <GuideGearRaidSourcesSection
+                gearLabel={guide.gearLabel}
+                itemIds={[selectedMaterial.itemId]}
+                showWip={false}
+                dungeonAriaLabel={`${selectedMaterial.labelFallback} sources`}
+                dungeonEmptyMessage={`No sources are listed for ${selectedMaterial.labelFallback} yet.`}
+              />
+            ) : (
+              <p className="guidebook-material-sources__hint muted">
+                Click a material above to see where it drops.
+              </p>
+            )}
+          </div>
+        </>
+      ) : null}
+    </section>
+  )
+}
+
+function GuidebookCorruptedGearDataSection({ guide }: { guide: GuidebookCorruptedGearGuide }) {
+  return (
+    <section className="guidebook-ring-entry" aria-label={guide.dataTitle}>
+      <h4 className="guidebook-fragment-farm__title">{guide.dataTitle}</h4>
+      <GuidebookCorruptedGearRollNotes rolls={guide.rolls} ariaLabel={`${guide.dataTitle} stat rolls`} />
+      {guide.dataItemId ? (
+        <>
+          <p className="guidebook-fragment-farm__hint muted">
+            Can be obtained from the following dungeons.
+          </p>
+          <GuideGearRaidSourcesSection
+            gearLabel={guide.gearLabel}
+            itemIds={[guide.dataItemId]}
+            showWip={false}
+            dungeonAriaLabel={`${guide.dataTitle} dungeons`}
+            dungeonEmptyMessage={`No dungeon sources are listed for ${guide.dataTitle} yet.`}
+          />
+        </>
+      ) : null}
+    </section>
+  )
+}
+
+function GuidebookCorruptedGearDetail({ guide }: { guide: GuidebookCorruptedGearGuide }) {
+  return (
+    <div className="guidebook-ring-track guidebook-ring-track--corrupted">
+      <p className="guidebook-corrupted-disclaimer muted">{GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER}</p>
+      <GuidebookCorruptedCraftSection guide={guide} />
+      <GuidebookCorruptedGearDataSection guide={guide} />
+    </div>
+  )
+}
+
+function GuidebookRingEntrySection({ ring }: { ring: GuidebookRingEntry }) {
+  return (
+    <section className="guidebook-ring-entry" aria-label={ring.name}>
+      <h4 className="guidebook-fragment-farm__title">{ring.name}</h4>
+      <GuidebookRingRollingNotes ring={ring} />
+      {ring.itemId ? (
+        <>
+          <p className="guidebook-fragment-farm__hint muted">
+            Can be obtained from the following dungeons.
+          </p>
+          <GuideGearRaidSourcesSection
+            gearLabel="ring"
+            itemIds={[ring.itemId]}
+            showWip={false}
+            dungeonAriaLabel={`${ring.name} dungeons`}
+            dungeonEmptyMessage={`No dungeon sources are listed for ${ring.name} yet.`}
+          />
+        </>
+      ) : null}
+    </section>
   )
 }
 
 export function GuideGearRing() {
-  return <GuideGearRaidSourcesSection gearLabel="ring" itemIds={[GUIDEBOOK_RING_DATA_ITEM_ID]} />
+  const goldenRing = GUIDEBOOK_RING_ENTRIES.find((ring) => ring.slug === 'golden-seadragon')
+  if (!goldenRing) return null
+  return (
+    <div className="guidebook-ring-track">
+      <GuidebookRingEntrySection ring={goldenRing} />
+    </div>
+  )
+}
+
+export function GuideGearCorruptedRing() {
+  const guide = guidebookCorruptedGearGuide('corrupted-ring')
+  return guide ? <GuidebookCorruptedGearDetail guide={guide} /> : null
+}
+
+export function GuideGearEarring() {
+  return (
+    <div className="guidebook-ring-track">
+      <section className="guidebook-ring-entry" aria-label="Earring Data">
+        <GuidebookCorruptedGearRollNotes
+          rolls={GUIDEBOOK_EARLY_EARRING_ROLLS}
+          ariaLabel="Earring stat rolls"
+        />
+        <p className="guidebook-fragment-farm__hint muted">
+          Can be obtained from the following dungeons and raids.
+        </p>
+        <GuideGearRaidSourcesSection
+          gearLabel="earring"
+          itemIds={GUIDEBOOK_EARRING_DATA_ITEM_IDS}
+          showWip={false}
+          dungeonAriaLabel="Earring Data sources"
+          dungeonEmptyMessage="No sources are listed for Earring Data yet."
+        />
+      </section>
+    </div>
+  )
+}
+
+export function GuideGearCorruptedNecklace() {
+  const guide = guidebookCorruptedGearGuide('corrupted-necklace')
+  return guide ? <GuidebookCorruptedGearDetail guide={guide} /> : null
+}
+
+export function GuideGearCorruptedEarring() {
+  const guide = guidebookCorruptedGearGuide('corrupted-earring')
+  return guide ? <GuidebookCorruptedGearDetail guide={guide} /> : null
 }
 
 export function GuideGearNecklace() {
   return (
-    <GuideGearRaidSourcesSection gearLabel="necklace" itemIds={GUIDEBOOK_NECKLACE_DATA_ITEM_IDS} />
+    <div className="guidebook-ring-track">
+      <section className="guidebook-ring-entry" aria-label="Necklace Data">
+        <GuidebookCorruptedGearRollNotes
+          rolls={GUIDEBOOK_EARLY_NECKLACE_ROLLS}
+          ariaLabel="Necklace stat rolls"
+        />
+        <p className="guidebook-fragment-farm__hint muted">
+          Can be obtained from the following dungeons and raids.
+        </p>
+        <GuideGearRaidSourcesSection
+          gearLabel="necklace"
+          itemIds={GUIDEBOOK_NECKLACE_DATA_ITEM_IDS}
+          showWip={false}
+          dungeonAriaLabel="Necklace Data sources"
+          dungeonEmptyMessage="No sources are listed for Necklace Data yet."
+        />
+      </section>
+    </div>
   )
 }
 
 export function GuideGearKeyring() {
   return (
-    <GuideGearRaidSourcesSection gearLabel="keyring" itemIds={GUIDEBOOK_KEYRING_DATA_ITEM_IDS} />
+    <div className="guidebook-ring-track">
+      <section className="guidebook-ring-entry" aria-label="Keyring Data">
+        <GuidebookNotes ariaLabel="Keyring stats">
+          <p className="guidebook-notes__lead">{GUIDEBOOK_KEYRING_STAT_NOTES_LEAD}</p>
+          <ul className="guidebook-notes__list guidebook-notes__list--rolls">
+            {GUIDEBOOK_KEYRING_STAT_ROLLS.map((roll) => (
+              <li key={roll.label}>
+                <span className="guidebook-notes__roll-label">{roll.label}:</span>{' '}
+                <span className="guidebook-notes__roll-stats">{roll.stats}</span>
+              </li>
+            ))}
+          </ul>
+        </GuidebookNotes>
+        <p className="guidebook-fragment-farm__hint muted">
+          Can be obtained from the following dungeons and raids.
+        </p>
+        <GuideGearRaidSourcesSection
+          gearLabel="keyring"
+          itemIds={GUIDEBOOK_KEYRING_DATA_ITEM_IDS}
+          showWip={false}
+          dungeonAriaLabel="Keyring Data sources"
+          dungeonEmptyMessage="No sources are listed for Keyring Data yet."
+        />
+      </section>
+    </div>
   )
 }
 
 export function GuideGearGoggles() {
   return (
-    <GuideGearRaidSourcesSection gearLabel="goggles" itemIds={GUIDEBOOK_GOGGLES_DATA_ITEM_IDS} />
+    <div className="guidebook-ring-track">
+      <section className="guidebook-ring-entry" aria-label="Goggles Data">
+        <GuidebookNotes ariaLabel="Goggles stats">
+          <p className="guidebook-notes__lead">{GUIDEBOOK_GOGGLES_STAT_NOTES}</p>
+        </GuidebookNotes>
+        <p className="guidebook-fragment-farm__hint muted">
+          Can be obtained from the following dungeons and raids.
+        </p>
+        <GuideGearRaidSourcesSection
+          gearLabel="goggles"
+          itemIds={GUIDEBOOK_GOGGLES_DATA_ITEM_IDS}
+          showWip={false}
+          dungeonAriaLabel="Goggles Data sources"
+          dungeonEmptyMessage="No sources are listed for Goggles Data yet."
+        />
+      </section>
+    </div>
   )
 }
 
