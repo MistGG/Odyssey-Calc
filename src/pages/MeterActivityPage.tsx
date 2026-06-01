@@ -41,7 +41,6 @@ function formatFeedWindowLabel(items: ReturnType<typeof buildMeterActivityFeedIt
 type MeterActivitySummary = {
   uniquePlayers: number
   recentClears: number
-  recentClearsLast2h: number
   totalMembers: number
   roleCounts: Record<MeterRoleBucket, number>
   topScopes: Array<{
@@ -123,9 +122,7 @@ export function MeterActivityPage() {
       },
       {} as Record<MeterRoleBucket, number>,
     )
-    const cutoff2h = Date.now() - 2 * 60 * 60 * 1000
     let totalMembers = 0
-    let recentClearsLast2h = 0
 
     for (const item of feedItems) {
       const scopeKey = `${item.dungeonId}:${item.difficultyId}`
@@ -133,9 +130,6 @@ export function MeterActivityPage() {
       const scope = scopeCounts.get(scopeKey)
       if (scope) scope.clears += 1
       else scopeCounts.set(scopeKey, { label: scopeLabel, clears: 1 })
-      const createdMs = new Date(item.createdAt).getTime()
-      if (Number.isFinite(createdMs) && createdMs >= cutoff2h) recentClearsLast2h += 1
-
       for (const member of item.members) {
         playerKeys.add(member.playerKey)
         totalMembers += 1
@@ -147,7 +141,6 @@ export function MeterActivityPage() {
     return {
       uniquePlayers: playerKeys.size,
       recentClears: feedItems.length,
-      recentClearsLast2h,
       totalMembers,
       roleCounts,
       topScopes: [...scopeCounts.entries()]
@@ -224,10 +217,6 @@ export function MeterActivityPage() {
               <p className="meter-activity-stat-card__value">
                 {totalParsesStored != null ? formatInt(totalParsesStored) : '...'}
               </p>
-            </article>
-            <article className="meter-activity-stat-card">
-              <p className="meter-activity-stat-card__label">Recent clears (last 2h)</p>
-              <p className="meter-activity-stat-card__value">{formatInt(summary.recentClearsLast2h)}</p>
             </article>
           </div>
 

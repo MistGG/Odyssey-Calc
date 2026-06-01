@@ -19,7 +19,7 @@ export const METER_ACTIVITY_FEED_LIMIT = 40
 
 export type MeterActivityFeedMember = {
   playerKey: string
-  displayName: string
+  tamerName: string
   roleBucket: MeterRoleBucket
   roleLabel: string
   dps: number
@@ -87,9 +87,13 @@ export function buildMeterActivityFeedItems(
       const topDigimon = memberTopDigimonUsed(member)
       const digimonId = topDigimon?.digimonId ?? member.currentDigimonId?.trim() ?? ''
       const roleBucket = memberRoleBucket(member, digimonRoleById)
+      const tamerName =
+        member.tamerName?.trim() ||
+        member.memberKey?.trim() ||
+        playerDisplayName(member)
       feedMembers.push({
         playerKey: normalizePlayerKey(member),
-        displayName: playerDisplayName(member),
+        tamerName,
         roleBucket: roleBucket ?? 'melee',
         roleLabel: roleBucket ? METER_ROLE_BUCKET_LABELS[roleBucket] : '—',
         dps: memberDpsInParse(member, row.payload, durationSec, members),

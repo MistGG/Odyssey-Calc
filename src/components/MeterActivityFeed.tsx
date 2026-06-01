@@ -55,21 +55,21 @@ function FeedMemberRow({
     <li className={`meter-activity-member${highlight ? ' meter-activity-member--mvp' : ''}`}>
       <Link
         to={meterPlayerProfilePath(member.playerKey)}
-        state={{ displayName: member.displayName, fromMeter: meterContext }}
+        state={{ displayName: member.tamerName, fromMeter: meterContext }}
         className="meter-activity-member__player"
       >
         {portrait ? (
           <img className="meter-activity-member__portrait" src={portrait} alt="" width={40} height={40} />
         ) : (
           <span className="meter-activity-member__portrait meter-activity-member__portrait--fallback">
-            {tamerInitial(member.displayName)}
+            {tamerInitial(member.tamerName)}
           </span>
         )}
         <span className="meter-activity-member__meta">
-          <span className="meter-activity-member__name">{member.displayName}</span>
-          <span className="meter-activity-member__digimon">
-            {member.digimonName}
-            <span className="meter-activity-member__role">{member.roleLabel}</span>
+          <span className="meter-activity-member__name">{member.tamerName}</span>
+          <span className="meter-activity-member__digimon-row">
+            <span className="meter-activity-member__digimon">{member.digimonName}</span>
+            <span className="meter-activity-member__role-tag">{member.roleLabel}</span>
           </span>
         </span>
       </Link>
@@ -108,7 +108,9 @@ function ActivityFeedCard({
     <article className={`meter-activity-card${isNew ? ' meter-activity-card--new' : ''}`}>
       <header className="meter-activity-card__head">
         <div className="meter-activity-card__scope">
-          <h2 className="meter-activity-card__dungeon">{item.dungeonName}</h2>
+          <div className="meter-activity-card__dungeon-row">
+            <h2 className="meter-activity-card__dungeon">{item.dungeonName}</h2>
+          </div>
           <div className="meter-activity-card__pills">
             {item.difficultyLabel ? (
               <span className={`meter-activity-pill meter-activity-pill--diff ${diffClass}`}>
@@ -116,9 +118,9 @@ function ActivityFeedCard({
               </span>
             ) : null}
             <span className="meter-activity-pill">{item.partySize} players</span>
-            {duration ? <span className="meter-activity-pill meter-activity-pill--runtime">{duration}</span> : null}
           </div>
         </div>
+        {duration ? <span className="meter-activity-card__duration-watermark">Total Time: {duration}</span> : null}
         <time className="meter-activity-card__time" dateTime={item.createdAt}>
           {formatActivityTimeAgo(item.createdAt)}
         </time>
@@ -183,7 +185,7 @@ export function MeterActivityFeed({
         for (const id of incoming) next.delete(id)
         return next
       })
-    }, 1600)
+    }, 2800)
     return () => window.clearTimeout(timer)
   }, [items])
 
@@ -203,7 +205,7 @@ export function MeterActivityFeed({
   return (
     <div className={`meter-activity-feed${refreshing ? ' meter-activity-feed--refreshing' : ''}`}>
       <div className="meter-activity-feed__status" role="status">
-        {refreshing ? 'Updating feed…' : `${items.length} recent clears`}
+        {refreshing ? 'Updating feed…' : `${items.length} most recent clears`}
       </div>
       <div className="meter-activity-feed__list">
         {items.map((item) => (

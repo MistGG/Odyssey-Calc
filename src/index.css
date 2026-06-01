@@ -12574,17 +12574,21 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 }
 
 .meter-activity-card--new {
-  animation: meter-activity-new-fade 1.4s ease-out;
+  animation: meter-activity-new-fade 2.6s cubic-bezier(0.2, 0.72, 0.2, 1);
 }
 
 @keyframes meter-activity-new-fade {
   0% {
-    opacity: 0.2;
-    transform: translateY(6px);
-    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3), 0 16px 34px rgba(34, 211, 238, 0.2);
+    opacity: 0.08;
+    transform: translateY(10px) scale(0.995);
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.42), 0 20px 42px rgba(34, 211, 238, 0.28);
   }
-  55% {
+  35% {
     opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.22), 0 12px 30px rgba(34, 211, 238, 0.16);
   }
   100% {
     opacity: 1;
@@ -12594,12 +12598,18 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 }
 
 .meter-activity-card__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
+  column-gap: 0.9rem;
+  row-gap: 0.45rem;
   padding: 0.85rem 1rem 0.65rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.meter-activity-card__scope {
+  min-width: 0;
+  grid-column: 1;
 }
 
 .meter-activity-card__dungeon {
@@ -12608,6 +12618,29 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.25;
+  position: relative;
+  z-index: 1;
+}
+
+.meter-activity-card__dungeon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.meter-activity-card__duration-watermark {
+  grid-column: 2;
+  align-self: start;
+  margin-top: 0.32rem;
+  font-size: clamp(0.82rem, 1.25vw, 0.98rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: rgba(147, 197, 253, 0.3);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .meter-activity-card__pills {
@@ -12655,9 +12688,28 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 
 .meter-activity-card__time {
   flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.12rem;
+  padding: 0.32rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.68);
+}
+
+.meter-activity-card__time-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--muted, #8b9cb3);
+}
+
+.meter-activity-card__time-value {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: rgba(226, 232, 240, 0.98);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -12740,13 +12792,24 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   text-overflow: ellipsis;
 }
 
-.meter-activity-member__role {
-  margin-left: 0.35rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+.meter-activity-member__digimon-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-width: 0;
+}
+
+.meter-activity-member__role-tag {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.85);
+  color: rgba(186, 230, 253, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(14, 116, 144, 0.28);
+  border-radius: 999px;
+  padding: 0.07rem 0.38rem;
 }
 
 .meter-activity-member__dps {
@@ -19149,18 +19212,26 @@ a.guidebook-monster-panel__loot-btn:hover {
   color: rgba(191, 219, 254, 0.98);
   background: rgba(59, 130, 246, 0.22);
   border-color: rgba(96, 165, 250, 0.45);
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  padding: 0.34rem 0.84rem;
+  margin-left: 0.2rem;
+}
+
+.meter-activity-pill--runtime-inline {
+  margin-left: 0;
 }
 
 .meter-activity-card__time {
+  grid-column: 3;
   flex-shrink: 0;
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--muted, #8b9cb3);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  margin-top: 0.1rem;
 }
 
 .meter-activity-members {
