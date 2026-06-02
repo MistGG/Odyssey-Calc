@@ -21,6 +21,43 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      ;(function () {
+        function showStaleAssetMessage() {
+          var root = document.getElementById('root')
+          if (root && root.childNodes.length) return
+          document.body.innerHTML =
+            '<div style="font-family:system-ui,sans-serif;max-width:28rem;margin:4rem auto;padding:1.5rem;text-align:center;color:#cbd5e1;background:#0a0f1a;min-height:100vh;box-sizing:border-box">' +
+            '<h1 style="color:#f1f5f9;font-size:1.25rem;margin:0 0 0.75rem">Odyssey Calc</h1>' +
+            '<p style="margin:0 0 1rem;line-height:1.5">The site was updated and your browser is loading an old file. Reload once to fix the blank page.</p>' +
+            '<button type="button" style="padding:0.5rem 1rem;cursor:pointer;border-radius:8px;border:1px solid #38bdf8;background:#0f172a;color:#e2e8f0" onclick="location.reload()">Reload</button></div>'
+        }
+        function recoverStaleAsset() {
+          var key = 'odyssey-calc-stale-asset-reload'
+          try {
+            if (!sessionStorage.getItem(key)) {
+              sessionStorage.setItem(key, '1')
+              location.reload()
+              return
+            }
+          } catch (_) {}
+          showStaleAssetMessage()
+        }
+        window.addEventListener(
+          'error',
+          function (e) {
+            var t = e.target
+            if (t && t.tagName === 'SCRIPT' && t.src && /\/assets\/index-[^/]+\.js/.test(String(t.src))) {
+              recoverStaleAsset()
+            }
+          },
+          true,
+        )
+        window.addEventListener('vite:preloadError', function () {
+          location.reload()
+        })
+      })()
+    </script>
     <noscript>
       <footer class="static-fan-footer">
         <p>

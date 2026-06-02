@@ -5,6 +5,12 @@ import { AuthProvider } from './auth/AuthProvider'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import App from './App.tsx'
 
+try {
+  sessionStorage.removeItem('odyssey-calc-stale-asset-reload')
+} catch {
+  /* ignore */
+}
+
 window.addEventListener('vite:preloadError', () => {
   window.location.reload()
 })
