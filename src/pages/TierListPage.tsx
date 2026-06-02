@@ -1364,6 +1364,7 @@ export function TierListPage() {
       {!blockingAutoRefresh && updateSummary && (
         <section
           className="tier-update-banner"
+          style={{ display: 'none' }}
           aria-label="Last tier list update summary"
         >
           <div className="tier-update-summary-head">
