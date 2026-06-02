@@ -38,6 +38,12 @@ export type MeterPartyMemberStored = {
   /** Mist custom bar theme id (Olympos XII earnables). */
   meterBarThemeId?: string
   digimons?: DigimonSkillBreakdownStored[]
+  /** When false, member is excluded from leaderboards (e.g. died before clear). */
+  leaderboardEligible?: boolean
+  /** Companion death flags (any truthy value excludes the member). */
+  died?: boolean
+  isDead?: boolean
+  deathBeforeClear?: boolean
 }
 
 export type MeterParseDungeonStored = {
@@ -193,21 +199,33 @@ function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)
 }
 
-function parseCompanionAppVersion(v: string | null | undefined): [number, number, number] | null {
-  if (!v?.trim()) return null
-  const m = v.trim().match(/^(\d+)\.(\d+)\.(\d+)/)
-  if (!m) return null
-  return [Number(m[1]), Number(m[2]), Number(m[3])]
+/** Minimum fight length for a ranked dungeon clear (shorter uploads are partial or death-spike snapshots). */
+export const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 60
+
+function memberRawFlags(member: MeterPartyMemberStored): Record<string, unknown> {
+  return member as Record<string, unknown>
 }
 
-/** Companion ≥0.1.57 only auto-uploads verified full clears (bossTargets snapshot may be stale). */
-function companionUploadTrustsFullClear(appVersion: string | null | undefined): boolean {
-  const p = parseCompanionAppVersion(appVersion)
-  if (!p) return false
-  const [maj, min, patch] = p
-  if (maj > 0) return true
-  if (min > 1) return true
-  return patch >= 57
+/** Per-player ranked eligibility (companion may flag deaths even when the party upload is a clear). */
+export function isMemberLeaderboardEligible(
+  member: MeterPartyMemberStored,
+  payload?: unknown,
+  rowDurationSec = 0,
+  members?: MeterPartyMemberStored[],
+): boolean {
+  const raw = memberRawFlags(member)
+  if (member.leaderboardEligible === false || raw.leaderboardEligible === false) return false
+  if (member.died === true || member.isDead === true || member.deathBeforeClear === true) return false
+  if (raw.died === true || raw.isDead === true || raw.deathBeforeClear === true) return false
+
+  if (payload != null && members?.length) {
+    const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
+    const memberDur = Math.max(member.durationSec, 0)
+    if (sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC && memberDur > 0 && memberDur < 3) {
+      return false
+    }
+  }
+  return true
 }
 
 /**
@@ -217,7 +235,7 @@ function companionUploadTrustsFullClear(appVersion: string | null | undefined): 
 export function isPartialDungeonClearParse(
   payload: unknown,
   rowDurationSec = 0,
-  appVersion?: string | null,
+  _appVersion?: string | null,
 ): boolean {
   if (!isDungeonPartyParsePayload(payload)) return false
   const dungeon = payload.dungeon
@@ -230,16 +248,16 @@ export function isPartialDungeonClearParse(
   const bosses = dungeon.bossTargets ?? []
   const hasFinalBoss = bosses.some((b) => bossTargetLooksLikeFinalDungeonBoss(b))
 
-  if (
-    dungeon.leaderboardEligible === true &&
-    (companionUploadTrustsFullClear(appVersion) || sessionDur >= 120)
-  ) {
+  // Never trust companion `leaderboardEligible` on very short timers (death-spike / partial snapshots).
+  if (sessionDur > 0 && sessionDur < MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
+    return true
+  }
+
+  if (dungeon.leaderboardEligible === true && sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
     return false
   }
 
   if (bosses.length >= 2 && !hasFinalBoss) return true
-
-  if (bosses.length >= 2 && sessionDur > 0 && sessionDur < 20) return true
 
   return false
 }

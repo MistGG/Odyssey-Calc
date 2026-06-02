@@ -1,5 +1,6 @@
 import {
   isBrokenMeterPartyParse,
+  isMemberLeaderboardEligible,
   partyMembersFromPayload,
 } from './meterParsePayload'
 import type { SummaryLeaderboardEntry } from './meterLeaderboardSummary'
@@ -34,6 +35,7 @@ export function buildLeaderboardHistoryFromPublicParses(
     if (isBrokenMeterPartyParse(row.payload, members)) continue
 
     for (const member of members) {
+      if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue
       const roleBucket = memberRoleBucket(member, digimonRoleById)
       if (!roleBucket) continue
       const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)

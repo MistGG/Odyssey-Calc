@@ -3,8 +3,11 @@ import { ineligibleLeaderboardParseIds } from './meterCoUploadMerge'
 import {
   isBrokenMeterPartyParse,
   isLeaderboardEligibleDungeonParsePayload,
+  isMemberLeaderboardEligible,
+  isPartialDungeonClearParse,
   partyMembersFromPayload,
 } from './meterParsePayload'
+import { normalizePlayerKey } from './meterRoleBuckets'
 import type { PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
 import {
   digimonIdToBucket,
@@ -68,7 +71,7 @@ export async function fetchScopeParseSummaries(
   const [{ data, error }, scopeRes] = await Promise.all([
     supabase
       .from('meter_parses')
-      .select('id, created_at, leaderboard_summary, payload')
+      .select('id, created_at, leaderboard_summary, payload, duration_sec, app_version')
       .eq('parse_kind', 'dungeon_party')
       .eq('dungeon_id', id)
       .eq('difficulty_id', difficultyId)
@@ -90,12 +93,25 @@ export async function fetchScopeParseSummaries(
     if (!isSummaryStored(summary) || summary.eligible === false) continue
     if (dropParseIds.has(row.id)) continue
     if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
+    if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) continue
     const members = partyMembersFromPayload(row.payload)
     if (members.length && isBrokenMeterPartyParse(row.payload, members)) continue
+    const filteredMembers = summary.members.filter((sm) => {
+      const key = sm.playerKey?.trim().toLowerCase()
+      const payloadMember = members.find((m) => normalizePlayerKey(m) === key)
+      if (!payloadMember) return true
+      return isMemberLeaderboardEligible(
+        payloadMember,
+        row.payload,
+        row.duration_sec ?? 0,
+        members,
+      )
+    })
+    if (!filteredMembers.length) continue
     rows.push({
       parseId: row.id,
       createdAt: row.created_at,
-      summary,
+      summary: { ...summary, members: filteredMembers },
     })
   }
   return rows

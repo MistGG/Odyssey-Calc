@@ -77,6 +77,7 @@ type ParseRow = {
   duration_sec: number
   dungeon_id: string | null
   difficulty_id: number | null
+  app_version?: string | null
   payload: unknown
   leaderboard_summary: LeaderboardSummary | null
 }
@@ -217,6 +218,48 @@ function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): b
   return false
 }
 
+const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 60
+
+function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
+  return /<\s*dungeon\s+boss\s*>/i.test(name)
+}
+
+function isPartialDungeonClear(
+  payload: DungeonPayload,
+  rowDurationSec: number,
+  _appVersion?: string | null,
+): boolean {
+  const dungeon = payload.dungeon
+  if (!dungeon) return false
+  const markedClear = dungeon.runOutcome === 'clear' || dungeon.leaderboardEligible === true
+  if (!markedClear) return false
+  const members = payload.members ?? []
+  const sessionDur = sessionDuration(payload, rowDurationSec, members)
+  const bosses = Array.isArray(dungeon.bossTargets)
+    ? dungeon.bossTargets.filter((b): b is string => typeof b === 'string')
+    : []
+  const hasFinalBoss = bosses.some((b) => bossTargetLooksLikeFinalDungeonBoss(b))
+  if (sessionDur > 0 && sessionDur < MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
+    return true
+  }
+  if (dungeon.leaderboardEligible === true && sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
+    return false
+  }
+  if (bosses.length >= 2 && !hasFinalBoss) return true
+  return false
+}
+
+function isMemberLeaderboardEligible(member: StoredMember, sessionDur: number): boolean {
+  const raw = member as Record<string, unknown>
+  if (raw.leaderboardEligible === false) return false
+  if (raw.died === true || raw.isDead === true || raw.deathBeforeClear === true) return false
+  const memberDur = Math.max(Number(member.durationSec) || 0, 0)
+  if (sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC && memberDur > 0 && memberDur < 3) {
+    return false
+  }
+  return true
+}
+
 function isLeaderboardEligiblePayload(payload: DungeonPayload): boolean {
   const d = payload.dungeon
   if (!d) return false
@@ -306,14 +349,20 @@ async function resolveRoleBucket(
 function buildSummaryFromPayload(
   payload: DungeonPayload,
   rowDurationSec: number,
+  appVersion?: string | null,
 ): LeaderboardSummary | null {
   if (payload.kind !== 'dungeon_party' || !Array.isArray(payload.members)) return null
   if (!isLeaderboardEligiblePayload(payload)) return { version: 1, eligible: false, members: [] }
+  if (isPartialDungeonClear(payload, rowDurationSec, appVersion)) {
+    return { version: 1, eligible: false, members: [] }
+  }
   const members = payload.members
   if (isBrokenPartyParse(payload, members)) return { version: 1, eligible: false, members: [] }
 
+  const sessionDur = sessionDuration(payload, rowDurationSec, members)
   const out: SummaryMember[] = []
   for (const member of members) {
+    if (!isMemberLeaderboardEligible(member, sessionDur)) continue
     const primary = memberPrimaryDigimon(member)
     const dps = memberDps(member, payload, rowDurationSec, members)
     out.push({
@@ -397,9 +446,14 @@ async function processParse(
     await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
   }
 
+  const appVersion = row.app_version ?? null
+  if (isPartialDungeonClear(payload, Number(row.duration_sec) || 0, appVersion)) {
+    return { inserted: 0, skipped: 'partial dungeon clear' }
+  }
+
   let summary = row.leaderboard_summary
   if (!summary?.members?.length) {
-    summary = buildSummaryFromPayload(payload, Number(row.duration_sec) || 0)
+    summary = buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, appVersion)
   }
   if (!summary?.eligible) return { inserted: 0, skipped: 'not leaderboard eligible' }
 
@@ -442,7 +496,9 @@ async function processParse(
   const nameCache = new Map<string, string | null>()
   const entries: Array<Record<string, unknown>> = []
 
+  const sessionDur = sessionDuration(payload, Number(row.duration_sec) || 0, members)
   for (const member of memberList) {
+    if (!isMemberLeaderboardEligible(member, sessionDur)) continue
     const playerKey = normalizePlayerKey(member)
     if (!playerKey || existingPlayerKeys.has(playerKey)) continue
     const sm = summaryByKey.get(playerKey)
@@ -590,7 +646,9 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from('meter_parses')
-      .select('id, created_at, duration_sec, dungeon_id, difficulty_id, payload, leaderboard_summary')
+      .select(
+        'id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
+      )
       .in('id', ids)
 
     if (error) return json(500, { ok: false, error: error.message })
@@ -626,7 +684,9 @@ Deno.serve(async (req) => {
 
   const { data, error } = await supabase
     .from('meter_parses')
-    .select('id, created_at, duration_sec, dungeon_id, difficulty_id, payload, leaderboard_summary')
+    .select(
+      'id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
+    )
     .eq('id', parseId)
     .maybeSingle()
 

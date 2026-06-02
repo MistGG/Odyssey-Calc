@@ -4,6 +4,7 @@ import {
   isDungeonPartyParsePayload,
   isFailedDungeonParseRow,
   isLeaderboardEligibleDungeonParsePayload,
+  isMemberLeaderboardEligible,
   isPartialDungeonClearParse,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
@@ -158,10 +159,13 @@ export function aggregatePublicMeterStats(
 
     const members = partyMembersFromPayload(row.payload)
     if (isBrokenMeterPartyParse(row.payload, members)) continue
+    if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
+    if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) continue
 
     const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
 
     for (const member of members) {
+      if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue
       const bucket = memberRoleBucket(member, digimonRoleById)
       if (!bucket) continue
       const primaryDigimonId = memberPrimaryDigimonId(member)
