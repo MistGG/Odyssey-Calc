@@ -254,6 +254,20 @@ function tierEntryWithAttributeTarget(
   }
 }
 
+function isTierListCacheShape(value: unknown): value is TierListCache {
+  if (!value || typeof value !== 'object') return false
+  const o = value as Record<string, unknown>
+  return (
+    typeof o.version === 'number' &&
+    typeof o.total === 'number' &&
+    Array.isArray(o.queue) &&
+    !!o.entries &&
+    typeof o.entries === 'object' &&
+    !!o.listSignatures &&
+    typeof o.listSignatures === 'object'
+  )
+}
+
 export function TierListPage() {
   const { supabase } = useAuth()
   const [cache, setCache] = useState<TierListCache | null>(null)
@@ -351,6 +365,33 @@ export function TierListPage() {
       setInitializing(true)
       setError(null)
       const existing = loadTierListCache()
+      if (supabase) {
+        try {
+          const { data: remoteRow, error: remoteErr } = await supabase
+            .from('tier_list_live')
+            .select('cache, updated_at')
+            .eq('singleton', true)
+            .maybeSingle()
+          if (!remoteErr && remoteRow && isTierListCacheShape(remoteRow.cache)) {
+            const remoteCache = remoteRow.cache as TierListCache
+            const remoteAt = new Date(remoteRow.updated_at ?? 0).getTime()
+            const localAt = new Date(existing?.lastCheckedAt ?? 0).getTime()
+            const localEntryCount = Object.keys(existing?.entries ?? {}).length
+            const remoteEntryCount = Object.keys(remoteCache.entries ?? {}).length
+            if (!existing || remoteAt > localAt || remoteEntryCount > localEntryCount) {
+              saveTierListCache(remoteCache)
+              if (!cancelled) {
+                setCache(remoteCache)
+                setStatus('Loaded latest published tier snapshot.')
+                setInitializing(false)
+              }
+              return
+            }
+          }
+        } catch {
+          /* best effort */
+        }
+      }
       if (existing) {
         if (!cancelled) {
           setCache(existing)
@@ -370,7 +411,7 @@ export function TierListPage() {
         if (!cancelled) {
           setListMeta(meta)
           setCache(created)
-          setStatus('Tier cache initialized. Press Update to build slowly.')
+          setStatus('Tier cache initialized. Automatic sync will keep it current.')
         }
       } catch (e: unknown) {
         if (!cancelled) {
@@ -384,7 +425,7 @@ export function TierListPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     if (!supabase) {
@@ -853,6 +894,20 @@ export function TierListPage() {
 
       if (working.queue.length === 0) {
         setStatus('Tier list refresh complete. All Digimon were recalculated.')
+        if (supabase) {
+          try {
+            await supabase.from('tier_list_live').upsert(
+              {
+                singleton: true,
+                cache: working,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'singleton' },
+            )
+          } catch {
+            /* non-fatal */
+          }
+        }
         if (refreshedIds.size > 0) {
           const nextSummary = buildTierListUpdateSummary(
             'force',
