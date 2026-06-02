@@ -434,26 +434,42 @@ export function TierListPage() {
   useEffect(() => {
     if (!supabase || !cache || initializing || building || autoStarted) return
     let cancelled = false
-    void supabase
-      .from('tier_sync_runs')
-      .select('id, created_at, status, added_count, removed_count, changed_count')
-      .in('status', ['changed', 'no_changes'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (cancelled || error || !data) return
-        setAutoSyncCheckedAt(data.created_at)
-        if (data.status !== 'changed') return
-        const remoteAt = new Date(data.created_at).getTime()
-        const localAt = new Date(cache.lastCheckedAt || 0).getTime()
-        const hasDiff =
-          (data.added_count ?? 0) + (data.removed_count ?? 0) + (data.changed_count ?? 0) > 0
-        if (!hasDiff || !Number.isFinite(remoteAt) || remoteAt <= localAt) return
-        setAutoStarted(true)
-        setBlockingAutoRefresh(true)
-        void updateTierList().finally(() => setBlockingAutoRefresh(false))
-      })
+    void Promise.all([
+      supabase
+        .from('tier_sync_runs')
+        .select('id, created_at, status')
+        .in('status', ['changed', 'no_changes'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('tier_sync_state')
+        .select('updated_at, total_count')
+        .eq('singleton', true)
+        .maybeSingle(),
+    ]).then(([runRes, stateRes]) => {
+      if (cancelled) return
+      if (runRes.error || stateRes.error) return
+
+      const latestRunAt = runRes.data?.created_at ?? null
+      const latestStateAt = stateRes.data?.updated_at ?? null
+      const remoteAtIso = latestStateAt || latestRunAt
+      if (remoteAtIso) setAutoSyncCheckedAt(remoteAtIso)
+
+      const remoteAt = new Date(remoteAtIso ?? 0).getTime()
+      const localAt = new Date(cache.lastCheckedAt || 0).getTime()
+      const remoteTotal = Number(stateRes.data?.total_count) || 0
+      const localEntryCount = Object.keys(cache.entries).length
+      const localLooksPartial =
+        (remoteTotal > 0 && localEntryCount < remoteTotal) ||
+        (remoteTotal > 0 && (cache.total ?? 0) < remoteTotal)
+      const remoteIsNewer = Number.isFinite(remoteAt) && remoteAt > localAt
+      if (!remoteIsNewer && !localLooksPartial) return
+
+      setAutoStarted(true)
+      setBlockingAutoRefresh(true)
+      void updateTierList().finally(() => setBlockingAutoRefresh(false))
+    })
     return () => {
       cancelled = true
     }
