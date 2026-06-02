@@ -23,7 +23,7 @@ scripts/*
 !scripts/backfill-meter-leaderboard.mjs
 !scripts/backfill-meter-leaderboard-parses.mjs
 !scripts/backfill-meter-leaderboard-entries.mjs
-!scripts/reprocess-meter-parse.mjs
+!scripts/invalidate-dual-meter-uploads.mjs
 !scripts/load-env-local.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)

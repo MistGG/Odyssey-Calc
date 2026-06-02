@@ -10,7 +10,7 @@ import {
   sessionDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
-import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
+import { collapseCoUploadedParseRows, excludeSupersededCoUploadParses } from './meterCoUploadMerge'
 import { dpsToPercentile, parseScoreColor } from './meterParseScoreColor'
 import {
   digimonIdToBucket,
@@ -50,7 +50,7 @@ export type MeterParseListRow = PublicMeterParseRow & {
 
 /** Clears with valid party attribution — excludes failed, incomplete, and broken meter runs. */
 export function leaderboardEligibleParses(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
-  return rows.filter((r) => {
+  return excludeSupersededCoUploadParses(rows).filter((r) => {
     if (isFailedDungeonParseRow(r)) return false
     if (isPartialDungeonClearParse(r.payload, r.duration_sec ?? 0, r.app_version)) return false
     if (!isLeaderboardEligibleDungeonParsePayload(r.payload)) return false

@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "backfill:meter-leaderboard": "node scripts/backfill-meter-leaderboard.mjs",
-    "backfill:meter-parses": "node scripts/backfill-meter-leaderboard-parses.mjs"
+    "backfill:meter-parses": "node scripts/backfill-meter-leaderboard-parses.mjs",
+    "invalidate:dual-meter": "node scripts/invalidate-dual-meter-uploads.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",

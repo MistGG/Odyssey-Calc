@@ -4,7 +4,7 @@ import {
   fetchScopeParseSummaries,
   mergeSummaryEntriesIntoHistory,
 } from './meterLeaderboardSummary'
-import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
+import { collapseCoUploadedParseRows, filterLeaderboardHistoryByScopeParses } from './meterCoUploadMerge'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
 import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
@@ -315,6 +315,15 @@ export async function fetchScopeLeaderboardEntryHistory(
     } catch {
       /* keep prior rows */
     }
+  }
+
+  try {
+    const parseRes = await fetchScopeEligibleParses({ dungeonId: id, difficultyId })
+    if (!parseRes.error && parseRes.rows.length) {
+      rows = filterLeaderboardHistoryByScopeParses(rows, parseRes.rows)
+    }
+  } catch {
+    /* keep prior rows */
   }
 
   return { rows, error: null }

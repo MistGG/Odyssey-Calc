@@ -2,7 +2,7 @@ import {
   dungeonFromPayload,
   partyMembersFromPayload,
 } from './meterParsePayload'
-import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
+import { collapseCoUploadedParseRows, excludeSupersededCoUploadParses } from './meterCoUploadMerge'
 import { dpsToPercentile } from './meterParseScoreColor'
 import type { MeterPublicAggregates, PublicMeterParseRow } from './meterPublicStats'
 import { meterScopeKey } from './meterParseCache'
@@ -71,7 +71,7 @@ export function buildMeterActivityFeedItems(
   digimonRoleById: Map<string, string>,
 ): MeterActivityFeedItem[] {
   const items: MeterActivityFeedItem[] = []
-  const mergedRows = collapseCoUploadedParseRows(rows)
+  const mergedRows = collapseCoUploadedParseRows(excludeSupersededCoUploadParses(rows))
 
   for (const row of mergedRows) {
     const members = partyMembersFromPayload(row.payload)

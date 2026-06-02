@@ -4,7 +4,11 @@ import {
   fetchScopeParseSummaries,
   mergeSummaryEntriesIntoAggregates,
 } from './meterLeaderboardSummary'
-import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
+import {
+  collapseCoUploadedParseRows,
+  excludeSupersededCoUploadParses,
+  filterLeaderboardHistoryByScopeParses,
+} from './meterCoUploadMerge'
 import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
 import { fetchScopeEligibleParses } from './meterDataSource'
 import {
@@ -166,11 +170,15 @@ export async function fetchPrecomputedMeterLeaderboard(
       fetchScopeEligibleParses({ dungeonId, difficultyId }),
     ])
     const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
-    if (supplemental.length) {
-      stats = mergeSummaryEntriesIntoAggregates(stats, supplemental)
+    const supplementalFiltered = parseRes.error
+      ? supplemental
+      : filterLeaderboardHistoryByScopeParses(supplemental, parseRes.rows)
+    if (supplementalFiltered.length) {
+      stats = mergeSummaryEntriesIntoAggregates(stats, supplementalFiltered)
     }
     if (!parseRes.error && parseRes.rows.length) {
-      const collapsed = collapseCoUploadedParseRows(parseRes.rows)
+      const eligible = excludeSupersededCoUploadParses(parseRes.rows)
+      const collapsed = collapseCoUploadedParseRows(eligible)
       const fromParses = buildLeaderboardHistoryFromPublicParses(
         collapsed,
         roleMap,

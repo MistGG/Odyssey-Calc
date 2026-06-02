@@ -179,6 +179,7 @@ export function parseRunOutcomeFromPayload(payload: unknown): MeterParseDungeonS
 export function isLeaderboardEligibleDungeonParsePayload(payload: unknown): boolean {
   const dungeon = dungeonFromPayload(payload)
   if (!dungeon) return false
+  if (dungeon.leaderboardEligible === false) return false
   if (typeof dungeon.leaderboardEligible === 'boolean') return dungeon.leaderboardEligible
   return dungeon.runOutcome === 'clear'
 }
