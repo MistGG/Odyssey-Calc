@@ -1,4 +1,8 @@
-import { dungeonFromPayload, partyMembersFromPayload } from './meterParsePayload'
+import {
+  dungeonFromPayload,
+  isBrokenMeterPartyParse,
+  partyMembersFromPayload,
+} from './meterParsePayload'
 import type { MeterPartyMemberStored } from './meterParsePayload'
 import {
   PARTY_UPLOAD_CLUSTER_MS,
@@ -190,6 +194,8 @@ function markSupersededInClusters(
     if (cluster.length <= 1) continue
     if (cluster.every((row) => isDualMeterFixedCompanionVersion(row.app_version))) continue
 
+    const wouldDrop = new Set<string>()
+
     const stats = cluster.map((row) => ({
       id: row.id,
       memberCount: partyMembersFromPayload(row.payload).length,
@@ -222,15 +228,19 @@ function markSupersededInClusters(
         }
       }
 
-      if (drop) superseded.add(s.id)
+      if (drop) wouldDrop.add(s.id)
     }
 
-    const remaining = stats.filter((s) => !superseded.has(s.id))
+    const remaining = stats.filter((s) => !wouldDrop.has(s.id))
     if (remaining.length > 1) {
       const bestMembers = Math.max(...remaining.map((s) => s.memberCount))
       for (const s of remaining) {
-        if (s.memberCount < bestMembers) superseded.add(s.id)
+        if (s.memberCount < bestMembers) wouldDrop.add(s.id)
       }
+    }
+
+    if (wouldDrop.size > 0) {
+      for (const row of cluster) superseded.add(row.id)
     }
   }
 }
@@ -246,6 +256,8 @@ export function ineligibleLeaderboardParseIds(rows: PublicMeterParseRow[]): Set<
   for (const row of rows) {
     const dungeon = dungeonFromPayload(row.payload)
     if (dungeon?.leaderboardEligible === false) drop.add(row.id)
+    const members = partyMembersFromPayload(row.payload)
+    if (members.length && isBrokenMeterPartyParse(row.payload, members)) drop.add(row.id)
   }
   return drop
 }

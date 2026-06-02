@@ -1,4 +1,4 @@
-import { fetchScopeEligibleParses, getMeterAnonSupabase } from './meterDataSource'
+import { fetchScopeEligibleParses, fetchScopeParsesRaw, getMeterAnonSupabase } from './meterDataSource'
 import {
   buildEntriesFromParseSummaries,
   fetchScopeParseSummaries,
@@ -318,7 +318,7 @@ export async function fetchScopeLeaderboardEntryHistory(
   }
 
   try {
-    const parseRes = await fetchScopeEligibleParses({ dungeonId: id, difficultyId })
+    const parseRes = await fetchScopeParsesRaw({ dungeonId: id, difficultyId })
     if (!parseRes.error && parseRes.rows.length) {
       rows = filterLeaderboardHistoryByScopeParses(rows, parseRes.rows)
     }

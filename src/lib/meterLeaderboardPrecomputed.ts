@@ -10,7 +10,7 @@ import {
   filterLeaderboardHistoryByScopeParses,
 } from './meterCoUploadMerge'
 import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
-import { fetchScopeEligibleParses } from './meterDataSource'
+import { fetchScopeEligibleParses, fetchScopeParsesRaw } from './meterDataSource'
 import {
   applyOfficialNamesToMeterAggregates,
   applyOfficialNamesToPlayerRankEntries,
@@ -164,15 +164,16 @@ export async function fetchPrecomputedMeterLeaderboard(
   }
 
   try {
-    const [summaries, roleMap, parseRes] = await Promise.all([
+    const [summaries, roleMap, parseRes, scopeRaw] = await Promise.all([
       fetchScopeParseSummaries(dungeonId, difficultyId),
       fetchDigimonRoleMap(),
       fetchScopeEligibleParses({ dungeonId, difficultyId }),
+      fetchScopeParsesRaw({ dungeonId, difficultyId }),
     ])
     const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
-    const supplementalFiltered = parseRes.error
+    const supplementalFiltered = scopeRaw.error
       ? supplemental
-      : filterLeaderboardHistoryByScopeParses(supplemental, parseRes.rows)
+      : filterLeaderboardHistoryByScopeParses(supplemental, scopeRaw.rows)
     if (supplementalFiltered.length) {
       stats = mergeSummaryEntriesIntoAggregates(stats, supplementalFiltered)
     }

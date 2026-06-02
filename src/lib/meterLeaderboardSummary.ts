@@ -1,4 +1,10 @@
-import { getMeterAnonSupabase } from './meterDataSource'
+import { getMeterAnonSupabase, fetchScopeParsesRaw } from './meterDataSource'
+import { ineligibleLeaderboardParseIds } from './meterCoUploadMerge'
+import {
+  isBrokenMeterPartyParse,
+  isLeaderboardEligibleDungeonParsePayload,
+  partyMembersFromPayload,
+} from './meterParsePayload'
 import type { PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
 import {
   digimonIdToBucket,
@@ -59,22 +65,33 @@ export async function fetchScopeParseSummaries(
   const id = dungeonId.trim()
   if (!id || difficultyId < 2) return []
 
-  const { data, error } = await supabase
-    .from('meter_parses')
-    .select('id, created_at, leaderboard_summary')
-    .eq('parse_kind', 'dungeon_party')
-    .eq('dungeon_id', id)
-    .eq('difficulty_id', difficultyId)
-    .not('leaderboard_summary', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(SUMMARY_PARSE_LIMIT)
+  const [{ data, error }, scopeRes] = await Promise.all([
+    supabase
+      .from('meter_parses')
+      .select('id, created_at, leaderboard_summary, payload')
+      .eq('parse_kind', 'dungeon_party')
+      .eq('dungeon_id', id)
+      .eq('difficulty_id', difficultyId)
+      .not('leaderboard_summary', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(SUMMARY_PARSE_LIMIT),
+    fetchScopeParsesRaw({ dungeonId: id, difficultyId }),
+  ])
 
   if (error || !data?.length) return []
+
+  const dropParseIds = scopeRes.error
+    ? new Set<string>()
+    : ineligibleLeaderboardParseIds(scopeRes.rows)
 
   const rows: ParseSummaryRow[] = []
   for (const row of data) {
     const summary = row.leaderboard_summary
     if (!isSummaryStored(summary) || summary.eligible === false) continue
+    if (dropParseIds.has(row.id)) continue
+    if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
+    const members = partyMembersFromPayload(row.payload)
+    if (members.length && isBrokenMeterPartyParse(row.payload, members)) continue
     rows.push({
       parseId: row.id,
       createdAt: row.created_at,

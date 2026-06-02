@@ -153,10 +153,13 @@ export type ScopeParsesResult = {
 export async function fetchScopeEligibleParses(
   params: FetchPublicDungeonParsesParams,
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
-  return fetchEligibleDungeonParsesFromDb(params)
+  const res = await fetchScopeParsesRaw(params)
+  if (res.error) return res
+  return { rows: leaderboardEligibleParses(res.rows), error: null }
 }
 
-async function fetchEligibleDungeonParsesFromDb(
+/** All stored parses for a scope (includes ineligible — used for dual-meter supersession). */
+export async function fetchScopeParsesRaw(
   params: FetchPublicDungeonParsesParams,
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
   const supabase = getMeterAnonSupabase()
@@ -180,7 +183,7 @@ async function fetchEligibleDungeonParsesFromDb(
     .limit(params.limit ?? PUBLIC_PARSE_LIMIT_PER_DUNGEON)
 
   if (error) return { rows: [], error: error.message }
-  return { rows: leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[]), error: null }
+  return { rows: (data ?? []) as PublicMeterParseRow[], error: null }
 }
 
 async function finalizeScopeParses(
@@ -205,7 +208,7 @@ async function refreshScopeParses(
   cacheKey: string,
   onUpdated?: (rows: PublicMeterParseRow[]) => void,
 ): Promise<ScopeParsesResult> {
-  const db = await fetchEligibleDungeonParsesFromDb(params)
+  const db = await fetchScopeEligibleParses(params)
   if (db.error) return { rows: [], error: db.error, fromCache: false }
   const rows = await finalizeScopeParses(db.rows, cacheKey, onUpdated)
   return { rows, error: null, fromCache: false }
@@ -218,7 +221,7 @@ export async function fetchPublicDungeonParses(
   rows: PublicMeterParseRow[]
   error: string | null
 }> {
-  const db = await fetchEligibleDungeonParsesFromDb(params)
+  const db = await fetchScopeEligibleParses(params)
   if (db.error) return db
   const rows = await resolveMeterParseRowPayloads(db.rows)
   return { rows, error: null }

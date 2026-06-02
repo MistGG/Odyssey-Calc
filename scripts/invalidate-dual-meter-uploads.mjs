@@ -117,6 +117,7 @@ function supersededIds(rows) {
     if (cluster.length <= 1) continue
     if (cluster.every((row) => isFixedCompanion(row.app_version))) continue
 
+    const wouldDrop = new Set()
     const stats = cluster.map((row) => {
       const members = partyMembers(row.payload)
       const self = members.find((m) => m.isSelf === true)
@@ -158,15 +159,19 @@ function supersededIds(rows) {
           }
         }
       }
-      if (mark) drop.add(s.id)
+      if (mark) wouldDrop.add(s.id)
     }
 
-    const remaining = stats.filter((s) => !drop.has(s.id))
+    const remaining = stats.filter((s) => !wouldDrop.has(s.id))
     if (remaining.length > 1) {
       const bestMembers = Math.max(...remaining.map((s) => s.memberCount))
       for (const s of remaining) {
-        if (s.memberCount < bestMembers) drop.add(s.id)
+        if (s.memberCount < bestMembers) wouldDrop.add(s.id)
       }
+    }
+
+    if (wouldDrop.size > 0) {
+      for (const row of cluster) drop.add(row.id)
     }
   }
   return drop
@@ -221,7 +226,7 @@ for await (const row of iterParses()) {
 }
 
 const dropIds = supersededIds(all)
-console.log(`Scanned ${all.length} parses, ${dropIds.size} superseded dual-meter upload(s)`)
+console.log(`Scanned ${all.length} parses, ${dropIds.size} invalid dual-meter upload(s)`)
 
 if (!dropIds.size) {
   console.log('Nothing to invalidate.')
