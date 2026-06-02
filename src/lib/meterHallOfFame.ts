@@ -3,25 +3,17 @@ import {
   buildEntriesFromParseSummaries,
   fetchScopeParseSummaries,
   mergeSummaryEntriesIntoHistory,
-  type SummaryLeaderboardEntry,
 } from './meterLeaderboardSummary'
+import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
-import {
-  isBrokenMeterPartyParse,
-  partyMembersFromPayload,
-} from './meterParsePayload'
+import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
 import { dpsToPercentile } from './meterParseScoreColor'
-import { leaderboardEligibleParses, type PlayerRankEntry, type PublicMeterParseRow } from './meterPublicStats'
+import type { PlayerRankEntry } from './meterPublicStats'
 import {
   fetchDigimonRoleMap,
-  memberDpsInParse,
-  memberRoleBucket,
-  memberTopDigimonUsed,
   METER_ROLE_BUCKETS,
   METER_ROLE_BUCKET_LABELS,
-  normalizePlayerKey,
-  playerDisplayName,
   type MeterRoleBucket,
 } from './meterRoleBuckets'
 import { difficultySelectOptions, dungeonSelectOptions } from './wikiDungeons'
@@ -99,50 +91,6 @@ export function sortedDpsPoolsFromHistory(
     pools[role].sort((a, b) => a - b)
   }
   return pools
-}
-
-/** Chronicle rows from stored parse payloads (same eligibility as public leaderboard fallback). */
-export function buildLeaderboardHistoryFromPublicParses(
-  rows: PublicMeterParseRow[],
-  digimonRoleById: Map<string, string>,
-  dungeonId: string,
-  difficultyId: number,
-): HofHistoryRow[] {
-  const id = dungeonId.trim()
-  const scoped = leaderboardEligibleParses(rows).filter(
-    (row) => row.dungeon_id === id && row.difficulty_id === difficultyId,
-  )
-  const chronological = [...scoped].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-  )
-
-  const out: HofHistoryRow[] = []
-  for (const row of chronological) {
-    const members = partyMembersFromPayload(row.payload)
-    if (isBrokenMeterPartyParse(row.payload, members)) continue
-
-    for (const member of members) {
-      const roleBucket = memberRoleBucket(member, digimonRoleById)
-      if (!roleBucket) continue
-      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
-      if (dps <= 0) continue
-      const topDg = memberTopDigimonUsed(member)
-      out.push({
-        roleBucket,
-        roleLabel: METER_ROLE_BUCKET_LABELS[roleBucket],
-        parseId: row.id,
-        achievedAt: row.created_at,
-        playerKey: normalizePlayerKey(member),
-        displayName: playerDisplayName(member),
-        dps,
-        digimonId: topDg?.digimonId ?? '',
-        digimonName: topDg?.digimonName ?? '',
-        iconId: topDg?.iconId ?? null,
-        portraitUrl: topDg?.portraitUrl,
-      })
-    }
-  }
-  return out
 }
 
 /** Max gap between party uploads treated as the same clear (matches ingest dedupe window). */
@@ -355,16 +303,14 @@ export async function fetchScopeLeaderboardEntryHistory(
         fetchDigimonRoleMap(),
       ])
       if (!parseRes.error && parseRes.rows.length) {
+        const collapsed = collapseCoUploadedParseRows(parseRes.rows)
         const fromParses = buildLeaderboardHistoryFromPublicParses(
-          parseRes.rows,
+          collapsed,
           roleMap,
           id,
           difficultyId,
         )
-        rows = mergeSummaryEntriesIntoHistory(
-          rows,
-          fromParses as SummaryLeaderboardEntry[],
-        )
+        rows = mergeSummaryEntriesIntoHistory(rows, fromParses)
       }
     } catch {
       /* keep prior rows */

@@ -10,6 +10,7 @@ import {
   sessionDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
+import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
 import { dpsToPercentile, parseScoreColor } from './meterParseScoreColor'
 import {
   digimonIdToBucket,
@@ -141,6 +142,7 @@ export function aggregatePublicMeterStats(
   dungeonId: string,
   difficultyId: number,
 ): MeterPublicAggregates {
+  const collapsed = collapseCoUploadedParseRows(rows)
   const digimonAvg = emptyBucketRecord<Map<string, DigimonDpsAccum>>()
   const playerBest = emptyBucketRecord<Map<string, PlayerRankBase>>()
   for (const b of METER_ROLE_BUCKETS) {
@@ -148,7 +150,7 @@ export function aggregatePublicMeterStats(
     playerBest[b] = new Map()
   }
 
-  for (const row of rows) {
+  for (const row of collapsed) {
     if (isFailedDungeonParseRow(row)) continue
     if (row.dungeon_id !== dungeonId) continue
     if (row.difficulty_id !== difficultyId) continue

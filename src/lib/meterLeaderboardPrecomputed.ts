@@ -4,6 +4,9 @@ import {
   fetchScopeParseSummaries,
   mergeSummaryEntriesIntoAggregates,
 } from './meterLeaderboardSummary'
+import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
+import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
+import { fetchScopeEligibleParses } from './meterDataSource'
 import {
   applyOfficialNamesToMeterAggregates,
   applyOfficialNamesToPlayerRankEntries,
@@ -157,13 +160,29 @@ export async function fetchPrecomputedMeterLeaderboard(
   }
 
   try {
-    const [summaries, roleMap] = await Promise.all([
+    const [summaries, roleMap, parseRes] = await Promise.all([
       fetchScopeParseSummaries(dungeonId, difficultyId),
       fetchDigimonRoleMap(),
+      fetchScopeEligibleParses({ dungeonId, difficultyId }),
     ])
     const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
     if (supplemental.length) {
       stats = mergeSummaryEntriesIntoAggregates(stats, supplemental)
+    }
+    if (!parseRes.error && parseRes.rows.length) {
+      const collapsed = collapseCoUploadedParseRows(parseRes.rows)
+      const fromParses = buildLeaderboardHistoryFromPublicParses(
+        collapsed,
+        roleMap,
+        dungeonId,
+        difficultyId,
+      )
+      if (fromParses.length) {
+        stats = mergeSummaryEntriesIntoAggregates(
+          stats,
+          fromParses,
+        )
+      }
     }
   } catch {
     /* keep RPC-only stats */
