@@ -15,6 +15,7 @@
 import process from 'node:process'
 import { chromium } from 'playwright'
 import { createClient } from '@supabase/supabase-js'
+import ws from 'ws'
 
 const siteOrigin = (process.env.TIER_WORKER_SITE_ORIGIN || 'https://odyssey-calc.com').replace(/\/$/, '')
 const timeoutMs = Math.max(Number(process.env.TIER_WORKER_TIMEOUT_MS) || 1_200_000, 60_000)
@@ -32,7 +33,10 @@ if (!email || !password || !supabaseUrl || !anonKey) {
   process.exit(1)
 }
 
-const sb = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } })
+const sb = createClient(supabaseUrl, anonKey, {
+  auth: { persistSession: false },
+  global: { WebSocket: ws },
+})
 
 async function readSnapshotUpdatedAt() {
   const { data, error } = await sb
