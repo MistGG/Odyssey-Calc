@@ -1,0 +1,31 @@
+name: Tier Sync (Supabase)
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Supabase tier sync function
+        env:
+          TIER_SYNC_FUNCTION_URL: ${{ secrets.TIER_SYNC_FUNCTION_URL }}
+          TIER_SYNC_CRON_KEY: ${{ secrets.TIER_SYNC_CRON_KEY }}
+        run: |
+          if [ -z "$TIER_SYNC_FUNCTION_URL" ]; then
+            echo "Missing secret: TIER_SYNC_FUNCTION_URL"
+            exit 1
+          fi
+          if [ -z "$TIER_SYNC_CRON_KEY" ]; then
+            echo "Missing secret: TIER_SYNC_CRON_KEY"
+            exit 1
+          fi
+
+          curl --fail --show-error --silent \
+            -X POST "$TIER_SYNC_FUNCTION_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-sync-key: $TIER_SYNC_CRON_KEY" \
+            -d '{"source":"github-actions-cron"}'
+

@@ -264,6 +264,7 @@ export function TierListPage() {
   const [, setStatus] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
+  const [autoSyncCheckedAt, setAutoSyncCheckedAt] = useState<string | null>(null)
   /** Empty = show all. Otherwise OR-filter by listed values (multi-select). */
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([])
@@ -431,6 +432,33 @@ export function TierListPage() {
       cancelled = true
     }
   }, [cache, listMeta])
+
+  useEffect(() => {
+    if (!supabase || !cache || initializing || building || autoStarted) return
+    let cancelled = false
+    void supabase
+      .from('tier_sync_runs')
+      .select('id, created_at, status, added_count, removed_count, changed_count')
+      .in('status', ['changed', 'no_changes'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled || error || !data) return
+        setAutoSyncCheckedAt(data.created_at)
+        if (data.status !== 'changed') return
+        const remoteAt = new Date(data.created_at).getTime()
+        const localAt = new Date(cache.lastCheckedAt || 0).getTime()
+        const hasDiff =
+          (data.added_count ?? 0) + (data.removed_count ?? 0) + (data.changed_count ?? 0) > 0
+        if (!hasDiff || !Number.isFinite(remoteAt) || remoteAt <= localAt) return
+        setAutoStarted(true)
+        void updateTierList()
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, cache, initializing, building, autoStarted])
 
   /** Tier matrix + wiki fallback cache + changelog; then empty queue + fresh index (same as first visit). */
   async function clearTierCachesAndReinit() {
@@ -1377,6 +1405,14 @@ export function TierListPage() {
                 Last checked: {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
               </span>
             )}
+            {autoSyncCheckedAt ? (
+              <span
+                className="tier-shell-meta muted"
+                title={`Latest Supabase sync: ${new Date(autoSyncCheckedAt).toLocaleString()}`}
+              >
+                Auto sync: {new Date(autoSyncCheckedAt).toLocaleString()}
+              </span>
+            ) : null}
           </div>
         </div>
         {error ? <p className="error tier-shell-error" role="alert">{error}</p> : null}

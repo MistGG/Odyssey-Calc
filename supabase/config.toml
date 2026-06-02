@@ -2,3 +2,6 @@
 
 [functions.process-meter-leaderboard]
 verify_jwt = false
+
+[functions.sync-tier-index]
+verify_jwt = false

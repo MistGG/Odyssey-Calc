@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 import { contentStatusLabel, type DigimonContentStatus } from '../lib/contentStatus'
 import { loadTierListCache } from '../lib/tierList'
 import {
@@ -622,7 +623,74 @@ function normalizeDigimonSearch(raw: string): string {
   return raw.trim().toLowerCase()
 }
 
+function emptySummary(finishedAt: string, refreshedCount: number) {
+  return {
+    finishedAt,
+    mode: 'incremental' as const,
+    refreshedCount,
+    dpsUp: [],
+    dpsDown: [],
+    dpsNew: [],
+    statusChanges: [],
+    tankUp: [],
+    tankDown: [],
+    tankNew: [],
+    healerUp: [],
+    healerDown: [],
+    healerNew: [],
+  }
+}
+
+function mapRemoteTierSyncRunToHistoryRow(
+  row: {
+    id: string
+    created_at: string
+    total_count: number
+    added_count: number
+    removed_count: number
+    changed_count: number
+    sample_digimon: unknown
+    api_diffs: unknown
+  },
+): TierListChangeHistoryRow {
+  const rawSample = Array.isArray(row.sample_digimon) ? row.sample_digimon : []
+  const rawDiffs = Array.isArray(row.api_diffs) ? row.api_diffs : []
+  const sampleDigimon = rawSample
+    .filter(
+      (d): d is { id: string; name: string } =>
+        !!d && typeof d === 'object' && typeof (d as { id?: unknown }).id === 'string',
+    )
+    .map((d) => ({ id: d.id, name: d.name || d.id, cause: 'api' as const }))
+    .slice(0, 20)
+  const apiDiffs = rawDiffs
+    .filter(
+      (d): d is { id: string; name: string; lines: string[] } =>
+        !!d &&
+        typeof d === 'object' &&
+        typeof (d as { id?: unknown }).id === 'string' &&
+        Array.isArray((d as { lines?: unknown }).lines),
+    )
+    .map((d) => ({
+      id: d.id,
+      name: d.name || d.id,
+      lines: d.lines.filter((x): x is string => typeof x === 'string').slice(0, 20),
+    }))
+    .slice(0, 60)
+  return {
+    id: row.id,
+    finishedAt: row.created_at,
+    mode: 'incremental',
+    refreshedCount: row.total_count,
+    apiCount: row.added_count + row.removed_count + row.changed_count,
+    tierCount: 0,
+    sampleDigimon,
+    apiDiffs,
+    summary: emptySummary(row.created_at, row.total_count),
+  }
+}
+
 export function TierChangesPage() {
+  const { supabase } = useAuth()
   const location = useLocation()
   const [hideNoChanges, setHideNoChanges] = useState(readHideNoChangesPref)
   const [showPreviousValues, setShowPreviousValues] = useState(readShowPreviousPref)
@@ -638,8 +706,49 @@ export function TierChangesPage() {
     }
     return map
   }, [])
+  const [remoteRows, setRemoteRows] = useState<TierListChangeHistoryRow[]>([])
 
-  const historyRows = useMemo(() => loadTierChangeHistory(), [location.key])
+  useEffect(() => {
+    if (!supabase) return
+    let cancelled = false
+    void supabase
+      .from('tier_sync_runs')
+      .select(
+        'id, created_at, status, total_count, added_count, removed_count, changed_count, sample_digimon, api_diffs',
+      )
+      .order('created_at', { ascending: false })
+      .limit(120)
+      .then(({ data, error }) => {
+        if (cancelled || error || !data) return
+        const rows = data
+          .filter((r) => r.status === 'changed' || r.status === 'no_changes')
+          .map((r) =>
+            mapRemoteTierSyncRunToHistoryRow({
+              id: r.id,
+              created_at: r.created_at,
+              total_count: r.total_count ?? 0,
+              added_count: r.added_count ?? 0,
+              removed_count: r.removed_count ?? 0,
+              changed_count: r.changed_count ?? 0,
+              sample_digimon: r.sample_digimon,
+              api_diffs: r.api_diffs,
+            }),
+          )
+        setRemoteRows(rows)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, location.key])
+
+  const historyRows = useMemo(() => {
+    const local = loadTierChangeHistory()
+    const merged = new Map<string, TierListChangeHistoryRow>()
+    for (const row of [...remoteRows, ...local]) merged.set(row.id, row)
+    return [...merged.values()].sort(
+      (a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime(),
+    )
+  }, [location.key, remoteRows])
 
   const rows = useMemo(
     () =>
@@ -680,8 +789,8 @@ export function TierChangesPage() {
       </div>
       <section className="lab-result">
         <p className="tier-wip-note tier-wip-note-wide">
-          This page is a work in progress. Entries are stored locally and reflect comparisons against your cached
-          wiki snapshot at the time of each run.
+          This page is a work in progress. It merges local browser runs with automatic Supabase sync checks.
+          API diffs reflect comparisons at each sync interval.
         </p>
         <div className="tier-filter-panel tier-changes-filter-panel">
           <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">

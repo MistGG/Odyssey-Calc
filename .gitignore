@@ -37,6 +37,9 @@ supabase/*
 !supabase/config.toml
 !supabase/functions/
 !supabase/functions/process-meter-leaderboard/
+!supabase/functions/sync-tier-index/
+!supabase/migrations/
+!supabase/migrations/*.sql
 
 # Editor directories and files
 .vscode/*
