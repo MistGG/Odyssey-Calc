@@ -70,13 +70,7 @@ import {
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
-import {
-  clearTierListRebuildFlag,
-  isTierListRebuildActive,
-  markTierListRebuildProgress,
-  markTierListRebuildStarted,
-  publishTierListLiveSnapshot,
-} from '../lib/tierListLive'
+import { publishTierListLiveSnapshot } from '../lib/tierListLive'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
@@ -287,7 +281,6 @@ export function TierListPage() {
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
   const [autoSyncCheckedAt, setAutoSyncCheckedAt] = useState<string | null>(null)
-  const [serverRebuild, setServerRebuild] = useState<{ done: number; total: number } | null>(null)
   const [awaitingPublishedSnapshot, setAwaitingPublishedSnapshot] = useState(false)
   /** Empty = show all. Otherwise OR-filter by listed values (multi-select). */
   const [selectedStages, setSelectedStages] = useState<string[]>([])
@@ -380,7 +373,7 @@ export function TierListPage() {
           const remoteRes = await Promise.race([
             supabase
               .from('tier_list_live')
-              .select('cache, updated_at, rebuilding_at, rebuild_done, rebuild_total')
+              .select('cache, updated_at')
               .eq('singleton', true)
               .maybeSingle(),
             new Promise<{ data: null; error: null }>((resolve) => {
@@ -389,12 +382,6 @@ export function TierListPage() {
           ])
           const remoteRow = remoteRes.data
           const remoteErr = remoteRes.error
-          if (remoteRow && isTierListRebuildActive(remoteRow.rebuilding_at)) {
-            setServerRebuild({
-              done: Number(remoteRow.rebuild_done) || 0,
-              total: Number(remoteRow.rebuild_total) || 0,
-            })
-          }
           if (!remoteErr && remoteRow && isTierListCacheShape(remoteRow.cache)) {
             const remoteCache = remoteRow.cache as TierListCache
             const remoteAt = new Date(remoteRow.updated_at ?? 0).getTime()
@@ -504,7 +491,7 @@ export function TierListPage() {
       const [liveRes, stateRes] = await Promise.all([
         sb
           .from('tier_list_live')
-          .select('cache, updated_at, rebuilding_at, rebuild_done, rebuild_total')
+          .select('cache, updated_at')
           .eq('singleton', true)
           .maybeSingle(),
         sb
@@ -517,21 +504,9 @@ export function TierListPage() {
 
       const live = liveRes.data
       if (liveRes.error || !live) {
-        setServerRebuild(null)
         setAwaitingPublishedSnapshot(false)
         return
       }
-
-      if (isTierListRebuildActive(live.rebuilding_at)) {
-        setServerRebuild({
-          done: Number(live.rebuild_done) || 0,
-          total: Number(live.rebuild_total) || 0,
-        })
-        setAwaitingPublishedSnapshot(false)
-        return
-      }
-
-      setServerRebuild(null)
 
       const snapshotAt = new Date(live.updated_at ?? 0).getTime()
       const syncAt = new Date(stateRes.data?.updated_at ?? 0).getTime()
@@ -684,12 +659,7 @@ export function TierListPage() {
       if (working.queue.length === 0) {
         setStatus('Digimon index is empty — nothing to refresh.')
         setTierBuildQueueTotal(null)
-        if (supabase) void clearTierListRebuildFlag(supabase)
         return
-      }
-
-      if (supabase) {
-        await markTierListRebuildStarted(supabase, working, initialBuildQueueTotal)
       }
 
       let processed = 0
@@ -956,10 +926,6 @@ export function TierListPage() {
         } finally {
           window.clearTimeout(slowHintTimer)
         }
-        if (supabase && initialBuildQueueTotal > 0 && processed % 3 === 0) {
-          const done = initialBuildQueueTotal - working.queue.length
-          void markTierListRebuildProgress(supabase, done, initialBuildQueueTotal)
-        }
         await sleep(REQUEST_DELAY_MS)
       }
 
@@ -1019,7 +985,6 @@ export function TierListPage() {
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Tier update failed.')
-      if (supabase) void clearTierListRebuildFlag(supabase)
     } finally {
       setBuilding(false)
       setTierBuildQueueTotal(null)
@@ -1482,29 +1447,19 @@ export function TierListPage() {
             Loading published tier list…
           </p>
         ) : null}
-        {!initializing && serverRebuild && serverRebuild.total > 0 ? (
+        {!initializing && building ? (
           <p className="tier-server-rebuild-banner" role="status" aria-live="polite">
-            Publishing updated tier list…{' '}
-            <strong>
-              {serverRebuild.done}/{serverRebuild.total}
-            </strong>{' '}
-            ({((serverRebuild.done / serverRebuild.total) * 100).toFixed(0)}%). Showing the previous
-            snapshot until ready.
-          </p>
-        ) : null}
-        {!initializing && !serverRebuild?.total && awaitingPublishedSnapshot ? (
-          <p className="tier-server-rebuild-banner muted" role="status">
-            A new tier list is being prepared. Showing the previous snapshot until the server publish
-            finishes.
-          </p>
-        ) : null}
-        {!initializing && building && workerForceRefresh ? (
-          <p className="tier-server-rebuild-banner" role="status" aria-live="polite">
-            Worker rebuild in progress…{' '}
+            Updating tier list…{' '}
             <strong>
               {progressNumerator}/{progressDenominator || '…'}
             </strong>{' '}
             ({progress.toFixed(0)}%)
+          </p>
+        ) : null}
+        {!initializing && !building && awaitingPublishedSnapshot ? (
+          <p className="tier-server-rebuild-banner muted" role="status">
+            A new tier list is being prepared. Showing the previous snapshot until the server publish
+            finishes.
           </p>
         ) : null}
       </div>

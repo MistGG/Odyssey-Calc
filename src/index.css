@@ -1491,6 +1491,42 @@ a.nav-user-pill--link:focus-visible {
   line-height: 1.45;
 }
 
+.app-fatal {
+  margin: 2.5rem auto;
+  max-width: 36rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-card);
+}
+
+.app-fatal__title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.app-fatal__hint {
+  margin: 0 0 0.85rem;
+}
+
+.app-fatal__detail {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  word-break: break-word;
+}
+
+.app-fatal__retry {
+  font: inherit;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--cyan-dim);
+  color: var(--text);
+}
+
 .tier-matrix-section {
   margin-top: 0;
 }

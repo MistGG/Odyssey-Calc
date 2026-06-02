@@ -36,12 +36,9 @@ const restHeaders = {
   Authorization: `Bearer ${anonKey}`,
 }
 
-async function readLiveRow() {
+async function readSnapshotUpdatedAt() {
   const url = new URL(`${supabaseUrl}/rest/v1/tier_list_live`)
-  url.searchParams.set(
-    'select',
-    'updated_at,rebuilding_at,rebuild_done,rebuild_total',
-  )
+  url.searchParams.set('select', 'updated_at')
   url.searchParams.set('singleton', 'eq.true')
   url.searchParams.set('limit', '1')
 
@@ -50,7 +47,8 @@ async function readLiveRow() {
     throw new Error(`Supabase REST ${res.status}: ${await res.text()}`)
   }
   const rows = await res.json()
-  return rows[0] ?? null
+  const updatedAt = rows[0]?.updated_at
+  return updatedAt ? new Date(updatedAt).getTime() : 0
 }
 
 function formatElapsed(ms) {
@@ -60,35 +58,39 @@ function formatElapsed(ms) {
   return `${min}m ${sec % 60}s`
 }
 
-function logProgress(elapsedMs, row, beforeAt) {
-  const elapsed = formatElapsed(elapsedMs)
-  const rebuildingAt = row?.rebuilding_at ? new Date(row.rebuilding_at).getTime() : 0
-  const rebuildActive =
-    Number.isFinite(rebuildingAt) && rebuildingAt > 0 && Date.now() - rebuildingAt < 2 * 60 * 60 * 1000
+async function readPageBuildProgress(page) {
+  try {
+    const strong = await page.locator('.tier-shell-bar-main strong').first().textContent({
+      timeout: 2_000,
+    })
+    const text = strong?.trim()
+    if (text && /\d/.test(text)) return text
+  } catch {
+    /* page still loading */
+  }
+  return null
+}
 
-  if (rebuildActive) {
-    const done = Number(row?.rebuild_done) || 0
-    const total = Number(row?.rebuild_total) || 0
-    const pct = total > 0 ? ((done / total) * 100).toFixed(1) : '…'
-    console.log(`[tier-worker] ${elapsed} — rebuild ${done}/${total} (${pct}%)`)
+async function logStatus(elapsedMs, page, beforeAt) {
+  const elapsed = formatElapsed(elapsedMs)
+  const pageProgress = await readPageBuildProgress(page)
+  if (pageProgress) {
+    console.log(`[tier-worker] ${elapsed} — page build ${pageProgress}`)
     return
   }
-
-  const updatedAt = row?.updated_at ? new Date(row.updated_at).getTime() : 0
-  if (updatedAt > beforeAt) {
+  const afterAt = await readSnapshotUpdatedAt()
+  if (afterAt > beforeAt) {
     console.log(`[tier-worker] ${elapsed} — snapshot published`)
     return
   }
-
-  console.log(`[tier-worker] ${elapsed} — waiting for browser rebuild to start or finish…`)
+  console.log(`[tier-worker] ${elapsed} — waiting for rebuild…`)
 }
 
 async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const beforeRow = await readLiveRow()
-const beforeAt = beforeRow?.updated_at ? new Date(beforeRow.updated_at).getTime() : 0
+const beforeAt = await readSnapshotUpdatedAt()
 console.log(
   '[tier-worker] snapshot before:',
   beforeAt ? new Date(beforeAt).toISOString() : 'none',
@@ -112,24 +114,17 @@ try {
   const start = Date.now()
   let lastLogAt = 0
   while (Date.now() - start < timeoutMs) {
-    const row = await readLiveRow()
-    const afterAt = row?.updated_at ? new Date(row.updated_at).getTime() : 0
-    const rebuildingAt = row?.rebuilding_at ? new Date(row.rebuilding_at).getTime() : 0
-    const rebuildActive =
-      Number.isFinite(rebuildingAt) &&
-      rebuildingAt > 0 &&
-      Date.now() - rebuildingAt < 2 * 60 * 60 * 1000
-
-    const elapsed = Date.now() - start
-    if (elapsed - lastLogAt >= 15_000) {
-      logProgress(elapsed, row, beforeAt)
-      lastLogAt = elapsed
-    }
-
-    if (afterAt > beforeAt && !rebuildActive) {
+    const afterAt = await readSnapshotUpdatedAt()
+    if (afterAt > beforeAt) {
       console.log('[tier-worker] done — snapshot updated:', new Date(afterAt).toISOString())
       process.exitCode = 0
       break
+    }
+
+    const elapsed = Date.now() - start
+    if (elapsed - lastLogAt >= 15_000) {
+      await logStatus(elapsed, page, beforeAt)
+      lastLogAt = elapsed
     }
     await sleep(5_000)
   }
