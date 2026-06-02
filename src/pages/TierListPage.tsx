@@ -73,7 +73,6 @@ import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
-  clearAllTierListStoredCaches,
   fetchAllDigimonIndex,
   formatTierStatus,
   labHrefForTierEntry,
@@ -265,6 +264,7 @@ export function TierListPage() {
   const [error, setError] = useState<string | null>(null)
   const [autoStarted, setAutoStarted] = useState(false)
   const [autoSyncCheckedAt, setAutoSyncCheckedAt] = useState<string | null>(null)
+  const [blockingAutoRefresh, setBlockingAutoRefresh] = useState(false)
   /** Empty = show all. Otherwise OR-filter by listed values (multi-select). */
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([])
@@ -296,8 +296,6 @@ export function TierListPage() {
     () => new Map(),
   )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
-  const [clearingTierCache, setClearingTierCache] = useState(false)
-  const [clearCacheConfirmPending, setClearCacheConfirmPending] = useState(false)
 
   function setTierModePersist(next: TierListMode) {
     setTierMode(next)
@@ -453,45 +451,13 @@ export function TierListPage() {
           (data.added_count ?? 0) + (data.removed_count ?? 0) + (data.changed_count ?? 0) > 0
         if (!hasDiff || !Number.isFinite(remoteAt) || remoteAt <= localAt) return
         setAutoStarted(true)
-        void updateTierList()
+        setBlockingAutoRefresh(true)
+        void updateTierList().finally(() => setBlockingAutoRefresh(false))
       })
     return () => {
       cancelled = true
     }
   }, [supabase, cache, initializing, building, autoStarted])
-
-  /** Tier matrix + wiki fallback cache + changelog; then empty queue + fresh index (same as first visit). */
-  async function clearTierCachesAndReinit() {
-    if (building || clearingTierCache) return
-    setClearCacheConfirmPending(false)
-    setClearingTierCache(true)
-    setError(null)
-    try {
-      setDpsTargetEnemyAttribute('')
-      writeTierDpsTargetEnemyAttribute('')
-      clearAllTierListStoredCaches()
-      setUpdateSummary(null)
-      saveTierUpdateSummaryToStorage(null)
-      setCache(null)
-      setListMeta({})
-      setInitializing(true)
-      setStatus('Fetching Digimon index…')
-      const { all, meta, signatures } = await fetchAllDigimonIndex()
-      const ids = all.map((d) => d.id)
-      const created = createEmptyTierListCache(ids)
-      created.listSignatures = signatures
-      saveTierListCache(created)
-      setListMeta(meta)
-      setCache(created)
-      setStatus('Cache cleared. Press Update tier list to rebuild.')
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to reload index after clearing cache.')
-      setStatus('Could not fetch Digimon index after clearing cache. Try again or refresh the page.')
-    } finally {
-      setInitializing(false)
-      setClearingTierCache(false)
-    }
-  }
 
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {
@@ -507,7 +473,6 @@ export function TierListPage() {
     setTierFightDurationSec(TIER_FIGHT_DURATION_DEFAULT_SEC)
     setFightDurationAppliedSec(TIER_FIGHT_DURATION_DEFAULT_SEC)
     writeTierFightDurationSec(TIER_FIGHT_DURATION_DEFAULT_SEC)
-    setClearCacheConfirmPending(false)
     setBuilding(true)
     setError(null)
     const working: TierListCache = {
@@ -1335,7 +1300,8 @@ export function TierListPage() {
     if (autoStarted || initializing || building || !cache) return
     if (Object.keys(cache.entries).length === 0 && cache.queue.length > 0) {
       setAutoStarted(true)
-      void updateTierList()
+      setBlockingAutoRefresh(true)
+      void updateTierList().finally(() => setBlockingAutoRefresh(false))
     }
   }, [autoStarted, building, cache, initializing])
 
@@ -1366,36 +1332,8 @@ export function TierListPage() {
             ) : null}
           </div>
         </div>
-        <div className="tier-shell-bar" aria-label="Tier list actions">
-          {clearCacheConfirmPending ? (
-            <p className="tier-clear-cache-warning" role="status">
-              Clearing cache will reset the Changes page.
-            </p>
-          ) : null}
+        <div className="tier-shell-bar" aria-label="Tier list status">
           <div className="tier-shell-bar-main">
-            <button type="button" className="tier-update-btn" disabled={initializing || building || clearingTierCache || !cache} onClick={() => void updateTierList()}>
-              {building ? 'Checking…' : 'Update tier list'}
-            </button>
-            <button
-              type="button"
-              className={clearCacheConfirmPending ? 'tier-update-btn tier-update-btn-danger' : 'tier-update-btn tier-update-btn-secondary'}
-              disabled={building || clearingTierCache || initializing}
-              aria-busy={clearingTierCache}
-              title={clearCacheConfirmPending ? 'Confirm clearing tier results, wiki cache, and changelog' : 'Remove saved tier results, wiki fallback cache, and tier changelog from this browser, then reload the Digimon index. Filter toggles are kept.'}
-              onClick={() => { if (clearCacheConfirmPending) void clearTierCachesAndReinit(); else setClearCacheConfirmPending(true) }}
-            >
-              {clearingTierCache ? 'Clearing…' : clearCacheConfirmPending ? 'Confirm' : 'Clear cache'}
-            </button>
-            {clearCacheConfirmPending ? (
-              <button
-                type="button"
-                className="tier-update-btn tier-update-btn-cancel"
-                disabled={building || clearingTierCache || initializing}
-                onClick={() => setClearCacheConfirmPending(false)}
-              >
-                Cancel
-              </button>
-            ) : null}
             {building ? (
               <span className="tier-shell-meta muted" aria-live="polite">
                 <strong>{progressNumerator}/{progressDenominator || '…'}</strong> ({progress.toFixed(0)}%)
@@ -1416,9 +1354,14 @@ export function TierListPage() {
           </div>
         </div>
         {error ? <p className="error tier-shell-error" role="alert">{error}</p> : null}
+        {blockingAutoRefresh ? (
+          <p className="muted" role="status">
+            Applying latest automatic tier sync before showing results…
+          </p>
+        ) : null}
       </div>
 
-      {updateSummary && (
+      {!blockingAutoRefresh && updateSummary && (
         <section
           className="tier-update-banner"
           aria-label="Last tier list update summary"
