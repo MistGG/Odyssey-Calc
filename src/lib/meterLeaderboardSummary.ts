@@ -8,7 +8,7 @@ import {
   partyMembersFromPayload,
 } from './meterParsePayload'
 import { normalizePlayerKey } from './meterRoleBuckets'
-import type { PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
+import type { DigimonBarEntry, PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
 import {
   digimonIdToBucket,
   METER_ROLE_BUCKETS,
@@ -175,25 +175,31 @@ export function mergeSummaryEntriesIntoHistory<T extends SummaryLeaderboardEntry
 }
 
 const TOP_PLAYERS = 100
+const TOP_DIGIMON = 10
 
-/** Raise per-player bests using stored parse summaries (same DPS as profile). */
+/** Raise per-player and per-digimon bests using supplemental parse rows (raw payloads / summaries). */
 export function mergeSummaryEntriesIntoAggregates(
   stats: MeterPublicAggregates,
   supplemental: SummaryLeaderboardEntry[],
 ): MeterPublicAggregates {
   const playerBest = new Map<MeterRoleBucket, Map<string, PlayerRankEntry>>()
+  const digimonBest = new Map<MeterRoleBucket, Map<string, DigimonBarEntry>>()
   for (const bucket of METER_ROLE_BUCKETS) {
     playerBest.set(
       bucket,
       new Map(stats.playersByBucket[bucket].map((p) => [p.playerKey, p])),
     )
+    digimonBest.set(
+      bucket,
+      new Map(stats.digimonByBucketBest[bucket].map((d) => [d.digimonId, d])),
+    )
   }
 
   for (const entry of supplemental) {
-    const map = playerBest.get(entry.roleBucket)!
-    const prev = map.get(entry.playerKey)
+    const playerMap = playerBest.get(entry.roleBucket)!
+    const prev = playerMap.get(entry.playerKey)
     if (!prev || entry.dps > prev.dps) {
-      map.set(entry.playerKey, {
+      playerMap.set(entry.playerKey, {
         playerKey: entry.playerKey,
         displayName: entry.displayName,
         dps: entry.dps,
@@ -203,10 +209,25 @@ export function mergeSummaryEntriesIntoAggregates(
         portraitUrl: entry.portraitUrl,
       })
     }
+
+    const digimonId = entry.digimonId?.trim()
+    if (!digimonId) continue
+    const digimonMap = digimonBest.get(entry.roleBucket)!
+    const prevDigimon = digimonMap.get(digimonId)
+    if (!prevDigimon || entry.dps > prevDigimon.dps) {
+      digimonMap.set(digimonId, {
+        digimonId,
+        digimonName: entry.digimonName,
+        iconId: entry.iconId,
+        portraitUrl: entry.portraitUrl,
+        dps: entry.dps,
+      })
+    }
   }
 
   const playersByBucket = { ...stats.playersByBucket }
   const sortedDpsByBucket = { ...stats.sortedDpsByBucket }
+  const digimonByBucketBest = { ...stats.digimonByBucketBest }
 
   for (const bucket of METER_ROLE_BUCKETS) {
     const entries = [...playerBest.get(bucket)!.values()]
@@ -214,11 +235,16 @@ export function mergeSummaryEntriesIntoAggregates(
       .slice(0, TOP_PLAYERS)
     playersByBucket[bucket] = entries
     sortedDpsByBucket[bucket] = entries.map((p) => p.dps).sort((a, b) => a - b)
+
+    digimonByBucketBest[bucket] = [...digimonBest.get(bucket)!.values()]
+      .sort((a, b) => b.dps - a.dps)
+      .slice(0, TOP_DIGIMON)
   }
 
   return {
     ...stats,
     playersByBucket,
     sortedDpsByBucket,
+    digimonByBucketBest,
   }
 }

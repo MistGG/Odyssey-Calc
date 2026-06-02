@@ -27,6 +27,7 @@ scripts/*
 !scripts/load-env-local.mjs
 !scripts/tier-worker-refresh.mjs
 !scripts/invalidate-short-meter-uploads.mjs
+!scripts/invalidate-meter-parses.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
