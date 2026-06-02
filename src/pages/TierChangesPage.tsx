@@ -4,9 +4,9 @@ import { useAuth } from '../auth/useAuth'
 import { contentStatusLabel, type DigimonContentStatus } from '../lib/contentStatus'
 import { loadTierListCache } from '../lib/tierList'
 import {
-  loadTierChangeHistory,
   type TierChangeCause,
   type TierListChangeHistoryRow,
+  type TierListUpdateSummary,
 } from './tierList/tierListModel'
 
 const TIER_CHANGES_HIDE_NO_CHANGES_KEY = 'odysseyCalc.tierChanges.hideNoChanges.v1'
@@ -47,6 +47,39 @@ function writeShowPreviousPref(on: boolean) {
   } catch {
     /* ignore */
   }
+}
+
+function isTierListUpdateSummary(v: unknown): v is TierListUpdateSummary {
+  if (!v || typeof v !== 'object') return false
+  const o = v as Record<string, unknown>
+  return (
+    typeof o.finishedAt === 'string' &&
+    (o.mode === 'incremental' || o.mode === 'force') &&
+    typeof o.refreshedCount === 'number' &&
+    Array.isArray(o.dpsUp) &&
+    Array.isArray(o.dpsDown) &&
+    Array.isArray(o.dpsNew) &&
+    Array.isArray(o.statusChanges)
+  )
+}
+
+function normalizeTierUpdateSummary(parsed: TierListUpdateSummary): TierListUpdateSummary {
+  return {
+    ...parsed,
+    tankUp: Array.isArray(parsed.tankUp) ? parsed.tankUp : [],
+    tankDown: Array.isArray(parsed.tankDown) ? parsed.tankDown : [],
+    tankNew: Array.isArray(parsed.tankNew) ? parsed.tankNew : [],
+    healerUp: Array.isArray(parsed.healerUp) ? parsed.healerUp : [],
+    healerDown: Array.isArray(parsed.healerDown) ? parsed.healerDown : [],
+    healerNew: Array.isArray(parsed.healerNew) ? parsed.healerNew : [],
+  }
+}
+
+function runKindLabel(row: TierListChangeHistoryRow): string {
+  if (row.runKind === 'api_sync') return 'API sync'
+  if (row.runKind === 'tier_recompute') return 'Tier recompute'
+  if (row.mode === 'force') return 'Full refresh'
+  return 'Tier update'
 }
 
 function causeLabel(cause: TierChangeCause): string {
@@ -680,12 +713,74 @@ function mapRemoteTierSyncRunToHistoryRow(
     id: row.id,
     finishedAt: row.created_at,
     mode: 'incremental',
+    runKind: 'api_sync',
     refreshedCount: row.total_count,
     apiCount: row.added_count + row.removed_count + row.changed_count,
     tierCount: 0,
     sampleDigimon,
     apiDiffs,
     summary: emptySummary(row.created_at, row.total_count),
+  }
+}
+
+function mapRemoteTierRecomputeRunToHistoryRow(row: {
+  id: string
+  created_at: string
+  mode: string
+  total_count: number
+  tier_count: number
+  api_count: number
+  tier_summary: unknown
+  sample_digimon: unknown
+  api_diffs: unknown
+  api_diff_by_id: unknown
+}): TierListChangeHistoryRow | null {
+  const summaryRaw = row.tier_summary
+  if (!isTierListUpdateSummary(summaryRaw)) return null
+  const summary = normalizeTierUpdateSummary(summaryRaw)
+  const rawSample = Array.isArray(row.sample_digimon) ? row.sample_digimon : []
+  const sampleDigimon = rawSample
+    .filter(
+      (d): d is { id: string; name: string; cause?: string } =>
+        !!d && typeof d === 'object' && typeof (d as { id?: unknown }).id === 'string',
+    )
+    .map((d) => ({
+      id: d.id,
+      name: d.name || d.id,
+      cause: d.cause === 'api' ? ('api' as const) : ('tier' as const),
+    }))
+    .slice(0, 12)
+  const rawApiDiffs = Array.isArray(row.api_diffs) ? row.api_diffs : []
+  const apiDiffs = rawApiDiffs
+    .filter(
+      (d): d is { id: string; name: string; lines: string[] } =>
+        !!d &&
+        typeof d === 'object' &&
+        typeof (d as { id?: unknown }).id === 'string' &&
+        Array.isArray((d as { lines?: unknown }).lines),
+    )
+    .map((d) => ({
+      id: d.id,
+      name: d.name || d.id,
+      lines: d.lines.filter((x): x is string => typeof x === 'string').slice(0, 20),
+    }))
+    .slice(0, 60)
+  const apiDiffById =
+    row.api_diff_by_id && typeof row.api_diff_by_id === 'object'
+      ? (row.api_diff_by_id as Record<string, string[]>)
+      : undefined
+  return {
+    id: row.id,
+    finishedAt: row.created_at,
+    mode: row.mode === 'force' ? 'force' : 'incremental',
+    runKind: 'tier_recompute',
+    refreshedCount: row.total_count,
+    apiCount: row.api_count,
+    tierCount: row.tier_count,
+    sampleDigimon,
+    apiDiffs,
+    apiDiffById,
+    summary,
   }
 }
 
@@ -711,44 +806,74 @@ export function TierChangesPage() {
   useEffect(() => {
     if (!supabase) return
     let cancelled = false
-    void supabase
-      .from('tier_sync_runs')
-      .select(
-        'id, created_at, status, total_count, added_count, removed_count, changed_count, sample_digimon, api_diffs',
-      )
-      .order('created_at', { ascending: false })
-      .limit(120)
-      .then(({ data, error }) => {
-        if (cancelled || error || !data) return
-        const rows = data
-          .filter((r) => r.status === 'changed' || r.status === 'no_changes')
-          .map((r) =>
-            mapRemoteTierSyncRunToHistoryRow({
-              id: r.id,
-              created_at: r.created_at,
-              total_count: r.total_count ?? 0,
-              added_count: r.added_count ?? 0,
-              removed_count: r.removed_count ?? 0,
-              changed_count: r.changed_count ?? 0,
-              sample_digimon: r.sample_digimon,
-              api_diffs: r.api_diffs,
-            }),
+    void (async () => {
+      const [syncRes, recomputeRes] = await Promise.all([
+        supabase
+          .from('tier_sync_runs')
+          .select(
+            'id, created_at, status, total_count, added_count, removed_count, changed_count, sample_digimon, api_diffs',
           )
-        setRemoteRows(rows)
-      })
+          .order('created_at', { ascending: false })
+          .limit(120),
+        supabase
+          .from('tier_recompute_runs')
+          .select(
+            'id, created_at, mode, total_count, tier_count, api_count, tier_summary, sample_digimon, api_diffs, api_diff_by_id, sync_run_id',
+          )
+          .order('created_at', { ascending: false })
+          .limit(120),
+      ])
+      if (cancelled) return
+      if (syncRes.error && recomputeRes.error) return
+
+      const coveredSyncIds = new Set<string>()
+      const recomputeRows: TierListChangeHistoryRow[] = []
+      for (const row of recomputeRes.data ?? []) {
+        if (row.sync_run_id) coveredSyncIds.add(String(row.sync_run_id))
+        const mapped = mapRemoteTierRecomputeRunToHistoryRow({
+          id: row.id,
+          created_at: row.created_at,
+          mode: row.mode ?? 'force',
+          total_count: row.total_count ?? 0,
+          tier_count: row.tier_count ?? 0,
+          api_count: row.api_count ?? 0,
+          tier_summary: row.tier_summary,
+          sample_digimon: row.sample_digimon,
+          api_diffs: row.api_diffs,
+          api_diff_by_id: row.api_diff_by_id,
+        })
+        if (mapped) recomputeRows.push(mapped)
+      }
+
+      const syncRows = (syncRes.data ?? [])
+        .filter((r) => (r.status === 'changed' || r.status === 'no_changes') && !coveredSyncIds.has(r.id))
+        .map((r) =>
+          mapRemoteTierSyncRunToHistoryRow({
+            id: r.id,
+            created_at: r.created_at,
+            total_count: r.total_count ?? 0,
+            added_count: r.added_count ?? 0,
+            removed_count: r.removed_count ?? 0,
+            changed_count: r.changed_count ?? 0,
+            sample_digimon: r.sample_digimon,
+            api_diffs: r.api_diffs,
+          }),
+        )
+
+      setRemoteRows([...recomputeRows, ...syncRows])
+    })()
     return () => {
       cancelled = true
     }
   }, [supabase, location.key])
 
-  const historyRows = useMemo(() => {
-    const local = loadTierChangeHistory()
-    const merged = new Map<string, TierListChangeHistoryRow>()
-    for (const row of [...remoteRows, ...local]) merged.set(row.id, row)
-    return [...merged.values()].sort(
-      (a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime(),
-    )
-  }, [location.key, remoteRows])
+  const historyRows = useMemo(
+    () =>
+      [...remoteRows].sort(
+        (a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime(),
+      ),
+    [remoteRows],
+  )
 
   const rows = useMemo(
     () =>
@@ -862,8 +987,8 @@ export function TierChangesPage() {
           <p className="muted">
             {rows.length === 0 ? (
               <>
-                No tier change history yet. Run <Link to="/tier-list">Update tier list</Link> to create
-                an entry.
+                No tier change history yet. GitHub Actions runs the wiki API sync every 2 hours; when
+                the tier list is rebuilt, new entries appear here automatically.
               </>
             ) : searchNorm ? (
               <>No entries match your search and the current filters.</>
@@ -884,7 +1009,7 @@ export function TierChangesPage() {
                       {finished.toLocaleString()}
                     </time>
                     <span className={`tier-changes-mode-badge tier-changes-mode-badge--${row.mode}`}>
-                      {row.mode === 'force' ? 'Full refresh' : 'Legacy incremental'}
+                      {runKindLabel(row)}
                     </span>
                   </div>
                   <div className="tier-changes-run-header-meta">

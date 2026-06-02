@@ -28,6 +28,7 @@ scripts/*
 !scripts/tier-worker-refresh.mjs
 !scripts/invalidate-short-meter-uploads.mjs
 !scripts/invalidate-meter-parses.mjs
+!scripts/wipe-tier-change-history.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json

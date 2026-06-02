@@ -70,7 +70,7 @@ import {
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
-import { publishTierListLiveSnapshot } from '../lib/tierListLive'
+import { publishTierListLiveSnapshot, publishTierRecomputeRun } from '../lib/tierListLive'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
@@ -969,7 +969,7 @@ export function TierListPage() {
             apiDiffBuckets += 1
             if (apiDiffBuckets >= 60) break
           }
-          appendTierChangeHistory({
+          const historyRow: TierListChangeHistoryRow = {
             id: `${nextSummary.finishedAt}-${Math.random().toString(36).slice(2, 8)}`,
             finishedAt: nextSummary.finishedAt,
             mode: 'force',
@@ -980,7 +980,11 @@ export function TierListPage() {
             apiDiffById: compactApiDiffById,
             apiDiffs: compactApiDiffs,
             summary: nextSummary,
-          })
+          }
+          appendTierChangeHistory(historyRow)
+          if (supabase) {
+            await publishTierRecomputeRun(supabase, historyRow)
+          }
         }
       }
     } catch (e: unknown) {

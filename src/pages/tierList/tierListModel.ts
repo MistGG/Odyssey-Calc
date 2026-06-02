@@ -128,6 +128,8 @@ export type TierListChangeHistoryRow = {
   apiDiffById?: Record<string, string[]>
   /** API field-level diffs with display names (preferred shape). */
   apiDiffs?: Array<{ id: string; name: string; lines: string[] }>
+  /** Where this run was recorded (Supabase automation). */
+  runKind?: 'api_sync' | 'tier_recompute'
   summary: TierListUpdateSummary
 }
 

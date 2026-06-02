@@ -16,7 +16,8 @@
     "backfill:meter-parses": "node scripts/backfill-meter-leaderboard-parses.mjs",
     "invalidate:dual-meter": "node scripts/invalidate-dual-meter-uploads.mjs",
     "invalidate:short-meter": "node scripts/invalidate-short-meter-uploads.mjs",
-    "invalidate:meter-parses": "node scripts/invalidate-meter-parses.mjs"
+    "invalidate:meter-parses": "node scripts/invalidate-meter-parses.mjs",
+    "wipe:tier-changes": "node scripts/wipe-tier-change-history.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
