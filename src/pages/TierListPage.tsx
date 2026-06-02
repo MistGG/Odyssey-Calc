@@ -270,16 +270,16 @@ function isTierListCacheShape(value: unknown): value is TierListCache {
 }
 
 export function TierListPage() {
-  const { supabase } = useAuth()
+  const { supabase, user, authReady } = useAuth()
   const [searchParams] = useSearchParams()
   const workerForceRefresh = searchParams.get('forceRefresh') === '1'
+  const workerForceRefreshStartedRef = useRef(false)
   const [cache, setCache] = useState<TierListCache | null>(null)
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
   const [initializing, setInitializing] = useState(true)
   const [building, setBuilding] = useState(false)
   const [, setStatus] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [autoStarted, setAutoStarted] = useState(false)
   const [autoSyncCheckedAt, setAutoSyncCheckedAt] = useState<string | null>(null)
   const [awaitingPublishedSnapshot, setAwaitingPublishedSnapshot] = useState(false)
   /** Empty = show all. Otherwise OR-filter by listed values (multi-select). */
@@ -548,10 +548,13 @@ export function TierListPage() {
   }, [supabase, cache, initializing, workerForceRefresh])
 
   useEffect(() => {
-    if (!workerForceRefresh || !supabase || !cache || initializing || building || autoStarted) return
-    setAutoStarted(true)
+    if (!workerForceRefresh || !supabase || !authReady || !user || !cache || initializing || building) {
+      return
+    }
+    if (workerForceRefreshStartedRef.current) return
+    workerForceRefreshStartedRef.current = true
     void updateTierList()
-  }, [workerForceRefresh, supabase, cache, initializing, building, autoStarted])
+  }, [workerForceRefresh, supabase, authReady, user, cache, initializing, building])
 
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {
@@ -932,7 +935,11 @@ export function TierListPage() {
       if (working.queue.length === 0) {
         setStatus('Tier list refresh complete. All Digimon were recalculated.')
         if (supabase) {
-          await publishTierListLiveSnapshot(supabase, working)
+          const publishRes = await publishTierListLiveSnapshot(supabase, working)
+          if (!publishRes.ok) {
+            console.error('[tier-list] publish tier_list_live failed:', publishRes.error)
+            setError(publishRes.error ?? 'Failed to publish tier list snapshot.')
+          }
         }
         if (refreshedIds.size > 0) {
           const nextSummary = buildTierListUpdateSummary(
@@ -983,7 +990,10 @@ export function TierListPage() {
           }
           appendTierChangeHistory(historyRow)
           if (supabase) {
-            await publishTierRecomputeRun(supabase, historyRow)
+            const runRes = await publishTierRecomputeRun(supabase, historyRow)
+            if (!runRes.ok) {
+              console.error('[tier-list] publish tier_recompute_runs failed:', runRes.error)
+            }
           }
         }
       }
@@ -1397,8 +1407,16 @@ export function TierListPage() {
     )
   }, [updateSummarySections])
 
+  const tierWorkerState = initializing
+    ? 'init'
+    : building
+      ? 'building'
+      : workerForceRefresh
+        ? 'ready'
+        : 'idle'
+
   return (
-    <div className="tier-page">
+    <div className="tier-page" data-tier-worker-state={tierWorkerState}>
       <div className="tier-shell">
         <div className="tier-shell-nav">
           <div

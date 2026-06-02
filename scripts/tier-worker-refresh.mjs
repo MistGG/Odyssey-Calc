@@ -9,17 +9,17 @@
  *
  * Optional:
  * - TIER_WORKER_SITE_ORIGIN (default: https://odyssey-calc.com)
- * - TIER_WORKER_TIMEOUT_MS (default: 1200000 / 20m)
+ * - TIER_WORKER_TIMEOUT_MS (default: 3600000 / 60m)
  * - TIER_WORKER_FORCE=1 — append ?forceRefresh=1 so tier list always rebuilds
  */
 import process from 'node:process'
 import { chromium } from 'playwright'
 
 const siteOrigin = (process.env.TIER_WORKER_SITE_ORIGIN || 'https://odyssey-calc.com').replace(/\/$/, '')
-const timeoutMs = Math.max(Number(process.env.TIER_WORKER_TIMEOUT_MS) || 1_200_000, 60_000)
+const timeoutMs = Math.max(Number(process.env.TIER_WORKER_TIMEOUT_MS) || 3_600_000, 60_000)
 const forceRefresh =
   process.env.TIER_WORKER_FORCE === '1' || process.env.TIER_WORKER_FORCE === 'true'
-const tierListPath = forceRefresh ? '/#/tier-list?forceRefresh=1' : '/#/tier-list'
+const tierListReturnTo = forceRefresh ? '/tier-list?forceRefresh=1' : '/tier-list'
 
 const email = (process.env.TIER_WORKER_EMAIL || '').trim()
 const password = (process.env.TIER_WORKER_PASSWORD || '').trim()
@@ -51,6 +51,21 @@ async function readSnapshotUpdatedAt() {
   return updatedAt ? new Date(updatedAt).getTime() : 0
 }
 
+async function readLatestRecomputeRunAt() {
+  const url = new URL(`${supabaseUrl}/rest/v1/tier_recompute_runs`)
+  url.searchParams.set('select', 'created_at')
+  url.searchParams.set('order', 'created_at.desc')
+  url.searchParams.set('limit', '1')
+
+  const res = await fetch(url, { headers: restHeaders })
+  if (!res.ok) {
+    return 0
+  }
+  const rows = await res.json()
+  const createdAt = rows[0]?.created_at
+  return createdAt ? new Date(createdAt).getTime() : 0
+}
+
 function formatElapsed(ms) {
   const sec = Math.floor(ms / 1000)
   if (sec < 60) return `${sec}s`
@@ -71,11 +86,45 @@ async function readPageBuildProgress(page) {
   return null
 }
 
-async function logStatus(elapsedMs, page, beforeAt) {
+async function readPageWorkerState(page) {
+  try {
+    return await page.locator('[data-tier-worker-state]').first().getAttribute('data-tier-worker-state', {
+      timeout: 2_000,
+    })
+  } catch {
+    return null
+  }
+}
+
+async function readPageStatusLine(page) {
+  try {
+    const banner = await page.locator('.tier-server-rebuild-banner').first().textContent({ timeout: 2_000 })
+    if (banner?.trim()) return banner.trim().replace(/\s+/g, ' ')
+  } catch {
+    /* ignore */
+  }
+  try {
+    const err = await page.locator('.tier-shell-error').first().textContent({ timeout: 1_000 })
+    if (err?.trim()) return `Error: ${err.trim()}`
+  } catch {
+    /* ignore */
+  }
+  return null
+}
+
+async function logStatus(elapsedMs, page, beforeAt, beforeRecomputeAt) {
   const elapsed = formatElapsed(elapsedMs)
   const pageProgress = await readPageBuildProgress(page)
+  const workerState = await readPageWorkerState(page)
+  const statusLine = await readPageStatusLine(page)
+  const url = page.url()
+
   if (pageProgress) {
-    console.log(`[tier-worker] ${elapsed} — page build ${pageProgress}`)
+    console.log(`[tier-worker] ${elapsed} — page build ${pageProgress} (state=${workerState ?? '?'})`)
+    return
+  }
+  if (statusLine) {
+    console.log(`[tier-worker] ${elapsed} — ${statusLine} (state=${workerState ?? '?'})`)
     return
   }
   const afterAt = await readSnapshotUpdatedAt()
@@ -83,7 +132,12 @@ async function logStatus(elapsedMs, page, beforeAt) {
     console.log(`[tier-worker] ${elapsed} — snapshot published`)
     return
   }
-  console.log(`[tier-worker] ${elapsed} — waiting for rebuild…`)
+  const recomputeAt = await readLatestRecomputeRunAt()
+  if (recomputeAt > beforeRecomputeAt) {
+    console.log(`[tier-worker] ${elapsed} — tier_recompute_runs row recorded`)
+    return
+  }
+  console.log(`[tier-worker] ${elapsed} — waiting (state=${workerState ?? '?'}, url=${url})`)
 }
 
 async function sleep(ms) {
@@ -91,45 +145,70 @@ async function sleep(ms) {
 }
 
 const beforeAt = await readSnapshotUpdatedAt()
+const beforeRecomputeAt = await readLatestRecomputeRunAt()
 console.log(
   '[tier-worker] snapshot before:',
   beforeAt ? new Date(beforeAt).toISOString() : 'none',
 )
+console.log('[tier-worker] site:', siteOrigin, forceRefresh ? '(force refresh)' : '')
 
 const browser = await chromium.launch({ headless: true })
 const ctx = await browser.newContext()
 const page = await ctx.newPage()
 
+page.on('console', (msg) => {
+  const type = msg.type()
+  if (type === 'error' || type === 'warning') {
+    console.log(`[tier-worker][page-${type}]`, msg.text())
+  }
+})
+page.on('pageerror', (err) => {
+  console.error('[tier-worker][page-error]', err.message)
+})
+
 try {
-  const authUrl = `${siteOrigin}/#/auth?returnTo=%2Ftier-list`
+  const returnTo = encodeURIComponent(tierListReturnTo)
+  const authUrl = `${siteOrigin}/#/auth?returnTo=${returnTo}`
+  console.log('[tier-worker] signing in…')
   await page.goto(authUrl, { waitUntil: 'domcontentloaded' })
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Sign in to Odyssey Calc' }).click()
 
-  await page.waitForURL(/#\/tier-list/, { timeout: 60_000 })
-  await page.goto(`${siteOrigin}${tierListPath}`, { waitUntil: 'domcontentloaded' })
-  if (forceRefresh) console.log('[tier-worker] force refresh requested')
+  await page.waitForURL(/#\/tier-list/, { timeout: 120_000 })
+  if (forceRefresh && !page.url().includes('forceRefresh=1')) {
+    await page.goto(`${siteOrigin}/#${tierListReturnTo}`, { waitUntil: 'domcontentloaded' })
+  }
+  console.log('[tier-worker] on tier list:', page.url())
 
   const start = Date.now()
   let lastLogAt = 0
   while (Date.now() - start < timeoutMs) {
     const afterAt = await readSnapshotUpdatedAt()
-    if (afterAt > beforeAt) {
-      console.log('[tier-worker] done — snapshot updated:', new Date(afterAt).toISOString())
+    const recomputeAt = await readLatestRecomputeRunAt()
+    if (afterAt > beforeAt || recomputeAt > beforeRecomputeAt) {
+      console.log('[tier-worker] done —', {
+        snapshotUpdated: afterAt > beforeAt ? new Date(afterAt).toISOString() : null,
+        recomputeRecorded: recomputeAt > beforeRecomputeAt ? new Date(recomputeAt).toISOString() : null,
+      })
       process.exitCode = 0
       break
     }
 
     const elapsed = Date.now() - start
     if (elapsed - lastLogAt >= 15_000) {
-      await logStatus(elapsed, page, beforeAt)
+      await logStatus(elapsed, page, beforeAt, beforeRecomputeAt)
       lastLogAt = elapsed
     }
     await sleep(5_000)
   }
 
   if (process.exitCode !== 0) {
+    const workerState = await readPageWorkerState(page)
+    const statusLine = await readPageStatusLine(page)
+    console.error('[tier-worker] final page url:', page.url())
+    console.error('[tier-worker] final worker state:', workerState)
+    if (statusLine) console.error('[tier-worker] final status:', statusLine)
     throw new Error('Timed out waiting for tier_list_live to update.')
   }
 } finally {

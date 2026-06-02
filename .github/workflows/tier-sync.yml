@@ -42,6 +42,7 @@ jobs:
 
   recompute:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     needs: sync
     if: >-
       needs.sync.outputs.changed == 'true' ||
@@ -65,6 +66,7 @@ jobs:
         env:
           # Always force a full rebuild so tier_recompute_runs is written for Tier changes page.
           TIER_WORKER_FORCE: '1'
+          TIER_WORKER_TIMEOUT_MS: '3600000'
           TIER_WORKER_EMAIL: ${{ secrets.TIER_WORKER_EMAIL }}
           TIER_WORKER_PASSWORD: ${{ secrets.TIER_WORKER_PASSWORD }}
           TIER_WORKER_SITE_ORIGIN: ${{ secrets.TIER_WORKER_SITE_ORIGIN }}

@@ -8,9 +8,13 @@ import type {
 export async function publishTierListLiveSnapshot(
   supabase: SupabaseClient,
   cache: TierListCache,
-): Promise<void> {
+): Promise<{ ok: boolean; error?: string }> {
   try {
-    await supabase.from('tier_list_live').upsert(
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (!sessionData.session) {
+      return { ok: false, error: 'Not signed in — cannot publish tier_list_live.' }
+    }
+    const { error } = await supabase.from('tier_list_live').upsert(
       {
         singleton: true,
         cache,
@@ -18,8 +22,11 @@ export async function publishTierListLiveSnapshot(
       },
       { onConflict: 'singleton' },
     )
-  } catch {
-    /* non-fatal */
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, error: msg }
   }
 }
 
@@ -54,8 +61,12 @@ function countSummaryChanges(summary: TierListUpdateSummary): number {
 export async function publishTierRecomputeRun(
   supabase: SupabaseClient,
   row: TierRecomputeRunInsert,
-): Promise<void> {
+): Promise<{ ok: boolean; error?: string }> {
   try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (!sessionData.session) {
+      return { ok: false, error: 'Not signed in — cannot record tier_recompute_runs.' }
+    }
     const tierSummaryChanges = countSummaryChanges(row.summary)
     const status =
       row.tierCount + row.apiCount + tierSummaryChanges === 0 ? 'no_changes' : 'changed'
@@ -67,7 +78,7 @@ export async function publishTierRecomputeRun(
       .limit(1)
       .maybeSingle()
 
-    await supabase.from('tier_recompute_runs').insert({
+    const { error } = await supabase.from('tier_recompute_runs').insert({
       sync_run_id: syncRun?.id ?? null,
       status,
       mode: row.mode,
@@ -79,7 +90,10 @@ export async function publishTierRecomputeRun(
       api_diffs: row.apiDiffs ?? [],
       api_diff_by_id: row.apiDiffById ?? {},
     })
-  } catch {
-    /* non-fatal */
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, error: msg }
   }
 }
