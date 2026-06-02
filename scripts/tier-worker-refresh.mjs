@@ -31,32 +31,68 @@ if (!email || !password || !supabaseUrl || !anonKey) {
   process.exit(1)
 }
 
-async function readSnapshotUpdatedAt() {
+const restHeaders = {
+  apikey: anonKey,
+  Authorization: `Bearer ${anonKey}`,
+}
+
+async function readLiveRow() {
   const url = new URL(`${supabaseUrl}/rest/v1/tier_list_live`)
-  url.searchParams.set('select', 'updated_at')
+  url.searchParams.set(
+    'select',
+    'updated_at,rebuilding_at,rebuild_done,rebuild_total',
+  )
   url.searchParams.set('singleton', 'eq.true')
   url.searchParams.set('limit', '1')
 
-  const res = await fetch(url, {
-    headers: {
-      apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`,
-    },
-  })
+  const res = await fetch(url, { headers: restHeaders })
   if (!res.ok) {
     throw new Error(`Supabase REST ${res.status}: ${await res.text()}`)
   }
   const rows = await res.json()
-  const updatedAt = rows[0]?.updated_at
-  return updatedAt ? new Date(updatedAt).getTime() : 0
+  return rows[0] ?? null
+}
+
+function formatElapsed(ms) {
+  const sec = Math.floor(ms / 1000)
+  if (sec < 60) return `${sec}s`
+  const min = Math.floor(sec / 60)
+  return `${min}m ${sec % 60}s`
+}
+
+function logProgress(elapsedMs, row, beforeAt) {
+  const elapsed = formatElapsed(elapsedMs)
+  const rebuildingAt = row?.rebuilding_at ? new Date(row.rebuilding_at).getTime() : 0
+  const rebuildActive =
+    Number.isFinite(rebuildingAt) && rebuildingAt > 0 && Date.now() - rebuildingAt < 2 * 60 * 60 * 1000
+
+  if (rebuildActive) {
+    const done = Number(row?.rebuild_done) || 0
+    const total = Number(row?.rebuild_total) || 0
+    const pct = total > 0 ? ((done / total) * 100).toFixed(1) : '…'
+    console.log(`[tier-worker] ${elapsed} — rebuild ${done}/${total} (${pct}%)`)
+    return
+  }
+
+  const updatedAt = row?.updated_at ? new Date(row.updated_at).getTime() : 0
+  if (updatedAt > beforeAt) {
+    console.log(`[tier-worker] ${elapsed} — snapshot published`)
+    return
+  }
+
+  console.log(`[tier-worker] ${elapsed} — waiting for browser rebuild to start or finish…`)
 }
 
 async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const beforeAt = await readSnapshotUpdatedAt()
-console.log('[tier-worker] snapshot before:', beforeAt || 'none')
+const beforeRow = await readLiveRow()
+const beforeAt = beforeRow?.updated_at ? new Date(beforeRow.updated_at).getTime() : 0
+console.log(
+  '[tier-worker] snapshot before:',
+  beforeAt ? new Date(beforeAt).toISOString() : 'none',
+)
 
 const browser = await chromium.launch({ headless: true })
 const ctx = await browser.newContext()
@@ -74,14 +110,28 @@ try {
   if (forceRefresh) console.log('[tier-worker] force refresh requested')
 
   const start = Date.now()
+  let lastLogAt = 0
   while (Date.now() - start < timeoutMs) {
-    const afterAt = await readSnapshotUpdatedAt()
-    if (afterAt > beforeAt) {
-      console.log('[tier-worker] snapshot updated:', new Date(afterAt).toISOString())
+    const row = await readLiveRow()
+    const afterAt = row?.updated_at ? new Date(row.updated_at).getTime() : 0
+    const rebuildingAt = row?.rebuilding_at ? new Date(row.rebuilding_at).getTime() : 0
+    const rebuildActive =
+      Number.isFinite(rebuildingAt) &&
+      rebuildingAt > 0 &&
+      Date.now() - rebuildingAt < 2 * 60 * 60 * 1000
+
+    const elapsed = Date.now() - start
+    if (elapsed - lastLogAt >= 15_000) {
+      logProgress(elapsed, row, beforeAt)
+      lastLogAt = elapsed
+    }
+
+    if (afterAt > beforeAt && !rebuildActive) {
+      console.log('[tier-worker] done — snapshot updated:', new Date(afterAt).toISOString())
       process.exitCode = 0
       break
     }
-    await sleep(15_000)
+    await sleep(5_000)
   }
 
   if (process.exitCode !== 0) {

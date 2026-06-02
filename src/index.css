@@ -1480,6 +1480,17 @@ a.nav-user-pill--link:focus-visible {
   font-size: 0.78rem;
 }
 
+.tier-server-rebuild-banner {
+  margin: 0.65rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--cyan-dim);
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .tier-matrix-section {
   margin-top: 0;
 }
