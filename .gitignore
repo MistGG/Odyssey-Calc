@@ -25,6 +25,7 @@ scripts/*
 !scripts/backfill-meter-leaderboard-entries.mjs
 !scripts/invalidate-dual-meter-uploads.mjs
 !scripts/load-env-local.mjs
+!scripts/tier-worker-refresh.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json

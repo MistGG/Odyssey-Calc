@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { fetchApprovedRotations, type CommunityRotation } from '../lib/communityRotations'
 import { useAuth } from '../auth/useAuth'
 import { fetchDigimonDetail } from '../api/digimonService'
@@ -270,6 +270,8 @@ function isTierListCacheShape(value: unknown): value is TierListCache {
 
 export function TierListPage() {
   const { supabase } = useAuth()
+  const [searchParams] = useSearchParams()
+  const workerForceRefresh = searchParams.get('forceRefresh') === '1'
   const [cache, setCache] = useState<TierListCache | null>(null)
   const [listMeta, setListMeta] = useState<Record<string, WikiDigimonListItem>>({})
   const [initializing, setInitializing] = useState(true)
@@ -515,6 +517,13 @@ export function TierListPage() {
       cancelled = true
     }
   }, [supabase, cache, initializing, building, autoStarted])
+
+  useEffect(() => {
+    if (!workerForceRefresh || !supabase || !cache || initializing || building || autoStarted) return
+    setAutoStarted(true)
+    setBlockingAutoRefresh(true)
+    void updateTierList().finally(() => setBlockingAutoRefresh(false))
+  }, [workerForceRefresh, supabase, cache, initializing, building, autoStarted])
 
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {

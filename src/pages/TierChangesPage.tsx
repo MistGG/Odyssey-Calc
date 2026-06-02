@@ -788,10 +788,6 @@ export function TierChangesPage() {
         <h1>Tier list changes</h1>
       </div>
       <section className="lab-result">
-        <p className="tier-wip-note tier-wip-note-wide">
-          This page is a work in progress. It merges local browser runs with automatic Supabase sync checks.
-          API diffs reflect comparisons at each sync interval.
-        </p>
         <div className="tier-filter-panel tier-changes-filter-panel">
           <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">
             <span className="tier-filter-label">Options</span>
