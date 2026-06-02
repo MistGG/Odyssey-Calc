@@ -56,7 +56,7 @@ jobs:
           node-version: 20
 
       - name: Install worker dependencies
-        run: npm install --no-save playwright @supabase/supabase-js ws
+        run: npm install --no-save playwright
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium

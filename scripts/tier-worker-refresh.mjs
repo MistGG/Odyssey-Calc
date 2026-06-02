@@ -14,8 +14,6 @@
  */
 import process from 'node:process'
 import { chromium } from 'playwright'
-import { createClient } from '@supabase/supabase-js'
-import ws from 'ws'
 
 const siteOrigin = (process.env.TIER_WORKER_SITE_ORIGIN || 'https://odyssey-calc.com').replace(/\/$/, '')
 const timeoutMs = Math.max(Number(process.env.TIER_WORKER_TIMEOUT_MS) || 1_200_000, 60_000)
@@ -33,19 +31,24 @@ if (!email || !password || !supabaseUrl || !anonKey) {
   process.exit(1)
 }
 
-const sb = createClient(supabaseUrl, anonKey, {
-  auth: { persistSession: false },
-  global: { WebSocket: ws },
-})
-
 async function readSnapshotUpdatedAt() {
-  const { data, error } = await sb
-    .from('tier_list_live')
-    .select('updated_at')
-    .eq('singleton', true)
-    .maybeSingle()
-  if (error) throw new Error(error.message)
-  return data?.updated_at ? new Date(data.updated_at).getTime() : 0
+  const url = new URL(`${supabaseUrl}/rest/v1/tier_list_live`)
+  url.searchParams.set('select', 'updated_at')
+  url.searchParams.set('singleton', 'eq.true')
+  url.searchParams.set('limit', '1')
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${anonKey}`,
+    },
+  })
+  if (!res.ok) {
+    throw new Error(`Supabase REST ${res.status}: ${await res.text()}`)
+  }
+  const rows = await res.json()
+  const updatedAt = rows[0]?.updated_at
+  return updatedAt ? new Date(updatedAt).getTime() : 0
 }
 
 async function sleep(ms) {
@@ -88,4 +91,3 @@ try {
   await ctx.close()
   await browser.close()
 }
-
