@@ -1,26 +1,19 @@
 import { getMeterAnonSupabase } from './meterDataSource'
 import {
-  buildEntriesFromParseSummaries,
-  fetchScopeParseSummaries,
-  mergeSummaryEntriesIntoAggregates,
-} from './meterLeaderboardSummary'
-import {
-  collapseCoUploadedParseRows,
-  excludeSupersededCoUploadParses,
-  filterLeaderboardHistoryByScopeParses,
-} from './meterCoUploadMerge'
-import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
-import { fetchScopeEligibleParses, fetchScopeParsesRaw } from './meterDataSource'
+  getCachedLeaderboardStats,
+  setCachedLeaderboardStats,
+} from './meterLeaderboardStatsCache'
 import {
   applyOfficialNamesToMeterAggregates,
   applyOfficialNamesToPlayerRankEntries,
 } from './meterParseDigimonNames'
-import {
-  fetchDigimonRoleMap,
-  METER_ROLE_BUCKETS,
-  type MeterRoleBucket,
-} from './meterRoleBuckets'
+import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
 import type { DigimonBarEntry, MeterPublicAggregates, PlayerRankEntry } from './meterPublicStats'
+
+const precomputedInflight = new Map<
+  string,
+  Promise<{ stats: MeterPublicAggregates | null; error: string | null }>
+>()
 
 export type PrecomputedLeaderboardParams = {
   dungeonId: string
@@ -87,7 +80,34 @@ function mapDigimonRow(row: DigimonRow): DigimonBarEntry {
   }
 }
 
+function precomputedScopeKey(dungeonId: string, difficultyId: number): string {
+  return `${dungeonId.trim()}:${difficultyId}`
+}
+
 export async function fetchPrecomputedMeterLeaderboard(
+  params: PrecomputedLeaderboardParams,
+): Promise<{ stats: MeterPublicAggregates | null; error: string | null }> {
+  const dungeonId = params.dungeonId.trim()
+  const difficultyId = params.difficultyId
+  if (!dungeonId || difficultyId < 2) {
+    return { stats: null, error: 'Select a dungeon and difficulty.' }
+  }
+
+  const cached = getCachedLeaderboardStats(dungeonId, difficultyId)
+  if (cached) return { stats: cached, error: null }
+
+  const inflightKey = precomputedScopeKey(dungeonId, difficultyId)
+  const existing = precomputedInflight.get(inflightKey)
+  if (existing) return existing
+
+  const promise = fetchPrecomputedMeterLeaderboardUncached(params).finally(() => {
+    precomputedInflight.delete(inflightKey)
+  })
+  precomputedInflight.set(inflightKey, promise)
+  return promise
+}
+
+async function fetchPrecomputedMeterLeaderboardUncached(
   params: PrecomputedLeaderboardParams,
 ): Promise<{ stats: MeterPublicAggregates | null; error: string | null }> {
   const supabase = getMeterAnonSupabase()
@@ -95,9 +115,6 @@ export async function fetchPrecomputedMeterLeaderboard(
 
   const dungeonId = params.dungeonId.trim()
   const difficultyId = params.difficultyId
-  if (!dungeonId || difficultyId < 2) {
-    return { stats: null, error: 'Select a dungeon and difficulty.' }
-  }
 
   const rpcArgs = {
     p_dungeon_id: dungeonId,
@@ -156,59 +173,39 @@ export async function fetchPrecomputedMeterLeaderboard(
     digimonByBucketAverage[bucket].sort((a, b) => b.dps - a.dps)
   }
 
-  let stats: MeterPublicAggregates = {
+  const stats: MeterPublicAggregates = {
     playersByBucket,
     sortedDpsByBucket,
     digimonByBucketBest,
     digimonByBucketAverage,
   }
 
-  try {
-    const [summaries, roleMap, parseRes, scopeRaw] = await Promise.all([
-      fetchScopeParseSummaries(dungeonId, difficultyId),
-      fetchDigimonRoleMap(),
-      fetchScopeEligibleParses({ dungeonId, difficultyId }),
-      fetchScopeParsesRaw({ dungeonId, difficultyId }),
-    ])
-    const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
-    const supplementalFiltered = scopeRaw.error
-      ? supplemental
-      : filterLeaderboardHistoryByScopeParses(supplemental, scopeRaw.rows)
-    if (supplementalFiltered.length) {
-      stats = mergeSummaryEntriesIntoAggregates(stats, supplementalFiltered)
-    }
-    if (!parseRes.error && parseRes.rows.length) {
-      const eligible = excludeSupersededCoUploadParses(parseRes.rows)
-      const collapsed = collapseCoUploadedParseRows(eligible)
-      const fromParses = buildLeaderboardHistoryFromPublicParses(
-        collapsed,
-        roleMap,
-        dungeonId,
-        difficultyId,
-      )
-      if (fromParses.length) {
-        stats = mergeSummaryEntriesIntoAggregates(
-          stats,
-          fromParses,
-        )
-      }
-    }
-  } catch {
-    /* keep RPC-only stats */
-  }
-
+  setCachedLeaderboardStats(dungeonId, difficultyId, stats)
   return { stats, error: null }
 }
 
-/** Wiki species names — run after showing precomputed stats (non-blocking for UI). */
+function statsDigimonNamesLookResolved(stats: MeterPublicAggregates): boolean {
+  for (const bucket of METER_ROLE_BUCKETS) {
+    for (const entry of stats.playersByBucket[bucket]) {
+      const name = entry.digimonName.trim()
+      const id = entry.digimonId.trim()
+      if (!id || !name) continue
+      if (name === id || /^[0-9a-f-]{30,}$/i.test(name)) return false
+    }
+  }
+  return true
+}
+
+/** Wiki species names — optional polish; skip when RPC already has display names. */
 export async function resolvePrecomputedLeaderboardNames(
   stats: MeterPublicAggregates,
 ): Promise<MeterPublicAggregates> {
+  if (statsDigimonNamesLookResolved(stats)) return stats
   try {
     return await Promise.race([
       applyOfficialNamesToMeterAggregates(stats),
       new Promise<MeterPublicAggregates>((resolve) => {
-        window.setTimeout(() => resolve(stats), 12_000)
+        window.setTimeout(() => resolve(stats), 4_000)
       }),
     ])
   } catch {

@@ -17,6 +17,10 @@ import {
 } from './meterRoleBuckets'
 import { aggregatePublicMeterStats, type PublicMeterParseRow } from './meterPublicStats'
 import { dpsToPercentile } from './meterParseScoreColor'
+import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
+import type { PlayerLeaderboardEntryRow } from './meterDataSource'
+import { difficultySelectOptions, dungeonSelectOptions } from './wikiDungeons'
+import type { WikiDungeonListItem } from '../types/wikiApi'
 
 export function meterPlayerProfilePath(playerKey: string): string {
   return `/meter/player/${encodeURIComponent(playerKey.trim().toLowerCase())}`
@@ -176,6 +180,132 @@ export function sortPlayerBestParsesByParseScore(
     if (a.difficultyId !== b.difficultyId) return a.difficultyId - b.difficultyId
     return a.roleLabel.localeCompare(b.roleLabel)
   })
+}
+
+export function displayNameFromLeaderboardEntries(
+  entries: PlayerLeaderboardEntryRow[],
+  playerKey: string,
+): string {
+  for (const entry of entries) {
+    if (entry.displayName.trim()) return entry.displayName.trim()
+  }
+  return playerKey
+}
+
+export function buildPlayerBestParsesFromLeaderboardEntries(
+  entries: PlayerLeaderboardEntryRow[],
+  wikiDungeons: WikiDungeonListItem[],
+): PlayerBestParseEntry[] {
+  const best = new Map<string, PlayerBestParseEntry>()
+
+  for (const entry of entries) {
+    const scopeKey = `${entry.dungeonId}:${entry.difficultyId}:${entry.roleBucket}`
+    const prev = best.get(scopeKey)
+    if (prev && prev.dps >= entry.dps) continue
+
+    const { dungeonName, difficultyLabel } = resolveProfileScopeLabels(
+      entry.dungeonId,
+      entry.difficultyId,
+      wikiDungeons,
+    )
+    best.set(scopeKey, {
+      dungeonId: entry.dungeonId,
+      dungeonName,
+      difficultyId: entry.difficultyId,
+      difficultyLabel,
+      roleBucket: entry.roleBucket,
+      roleLabel: METER_ROLE_BUCKET_LABELS[entry.roleBucket],
+      dps: entry.dps,
+      digimonName: entry.digimonName,
+      parseId: entry.parseId,
+      createdAt: entry.createdAt,
+    })
+  }
+
+  return [...best.values()]
+}
+
+function resolveProfileScopeLabels(
+  dungeonId: string,
+  difficultyId: number,
+  wikiDungeons: WikiDungeonListItem[],
+): { dungeonName: string; difficultyLabel: string } {
+  const dungeonName =
+    dungeonSelectOptions(wikiDungeons).find((d) => d.dungeonId === dungeonId)?.dungeonName ?? dungeonId
+  const difficultyLabel =
+    difficultySelectOptions(wikiDungeons, dungeonId).find((d) => d.difficultyId === difficultyId)?.label ??
+    (difficultyId === 3 ? 'Hard' : difficultyId === 2 ? 'Normal' : String(difficultyId))
+  return { dungeonName, difficultyLabel }
+}
+
+/** Most frequently used digimon from precomputed leaderboard rows. */
+export function buildPlayerFavoriteDigimonFromLeaderboardEntries(
+  entries: PlayerLeaderboardEntryRow[],
+): PlayerFavoriteDigimon | null {
+  const tallies = new Map<
+    string,
+    PlayerFavoriteDigimon & { totalDps: number }
+  >()
+
+  for (const entry of entries) {
+    const digimonId = entry.digimonId.trim()
+    if (!digimonId) continue
+    const prev = tallies.get(digimonId)
+    if (!prev) {
+      tallies.set(digimonId, {
+        digimonId,
+        digimonName: entry.digimonName,
+        iconId: entry.iconId,
+        portraitUrl: entry.portraitUrl,
+        parseCount: 1,
+        totalDps: entry.dps,
+      })
+    } else {
+      prev.parseCount += 1
+      prev.totalDps += entry.dps
+      if (entry.digimonName.trim()) prev.digimonName = entry.digimonName
+      if (entry.iconId) prev.iconId = entry.iconId
+      if (entry.portraitUrl) prev.portraitUrl = entry.portraitUrl
+    }
+  }
+
+  let best: (PlayerFavoriteDigimon & { totalDps: number }) | null = null
+  for (const entry of tallies.values()) {
+    if (
+      !best ||
+      entry.parseCount > best.parseCount ||
+      (entry.parseCount === best.parseCount && entry.totalDps > best.totalDps)
+    ) {
+      best = entry
+    }
+  }
+
+  if (!best) return null
+  const { totalDps: _omit, ...favorite } = best
+  return favorite
+}
+
+export async function buildScopeLeaderboardDpsPoolsFromPrecomputed(
+  bestEntries: PlayerBestParseEntry[],
+): Promise<Map<string, Record<MeterRoleBucket, number[]>>> {
+  const pools = new Map<string, Record<MeterRoleBucket, number[]>>()
+  const scopes: Array<{ dungeonId: string; difficultyId: number }> = []
+  const seen = new Set<string>()
+
+  for (const entry of bestEntries) {
+    const scopeKey = `${entry.dungeonId}:${entry.difficultyId}`
+    if (seen.has(scopeKey)) continue
+    seen.add(scopeKey)
+    scopes.push({ dungeonId: entry.dungeonId, difficultyId: entry.difficultyId })
+  }
+
+  await mapPool(scopes, 4, async (scope) => {
+    const scopeKey = `${scope.dungeonId}:${scope.difficultyId}`
+    const pre = await fetchPrecomputedMeterLeaderboard(scope)
+    if (pre.stats) pools.set(scopeKey, pre.stats.sortedDpsByBucket)
+  })
+
+  return pools
 }
 
 export function buildPlayerBestParses(

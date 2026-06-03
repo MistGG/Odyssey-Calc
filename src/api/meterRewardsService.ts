@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getMeterPartyBarTheme } from '../lib/meterPartyBarThemes'
 import { meterThemeShopPriceForTheme } from '../lib/meterThemeShop'
 import type { MeterPartyBarThemeId } from '../lib/meterPartyBarThemes'
+import { isGrantOnlyMeterThemeId, isShopPurchasableMeterThemeId } from '../lib/meterThemeGrants'
 import {
   clearEquippedMeterPartyBarThemeId,
   MIST_DEV_REWARD_THEME_ID,
@@ -13,6 +14,9 @@ export async function purchaseMeterTheme(
   supabase: SupabaseClient,
   themeId: MeterPartyBarThemeId,
 ): Promise<{ ok: boolean; balance: number; error: string | null }> {
+  if (!isShopPurchasableMeterThemeId(themeId)) {
+    return { ok: false, balance: 0, error: 'This theme cannot be purchased.' }
+  }
   const theme = getMeterPartyBarTheme(themeId)
   const cost = theme ? meterThemeShopPriceForTheme(theme) : 50
   const { data, error } = await supabase.rpc('meter_purchase_theme', {
@@ -40,6 +44,9 @@ export async function equipMeterTheme(
     if (options?.mistDevIliadBypass && themeId === MIST_DEV_REWARD_THEME_ID) {
       writeEquippedMeterPartyBarThemeId(themeId)
       return { ok: true, error: null }
+    }
+    if (isGrantOnlyMeterThemeId(themeId)) {
+      return { ok: false, error: 'You have not earned this theme yet.' }
     }
     return { ok: false, error: 'Purchase this theme before equipping.' }
   }

@@ -41,7 +41,7 @@ export function MeterShopLayout() {
             How to earn points
           </h2>
           <MeterThemeShopEarnPanels
-            loading={rewards.loading}
+            loading={rewards.syncing}
             dungeonProgress={rewards.dungeonEarnProgress}
             grantKeys={rewards.grantKeys}
             dailyCompletedToday={rewards.dailyCompletedToday}

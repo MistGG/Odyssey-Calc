@@ -2,7 +2,6 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 import {
   leaderboardEligibleParses,
-  mostRecentMeterParseSelection,
   type MeterParseSelection,
   type PublicMeterParseRow,
 } from './meterPublicStats'
@@ -23,8 +22,12 @@ import type { MeterUploadScope } from './meterScopeList'
 
 
 const PARSE_SELECT =
-
   'id, created_at, duration_sec, app_version, total_damage, hit_count, payload, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id'
+
+const FEED_PARSE_SELECT =
+  'id, created_at, duration_sec, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
+
+const CO_UPLOAD_FILTER_SELECT = 'id, created_at, app_version, payload'
 
 
 
@@ -94,12 +97,21 @@ function rowsOwnedByUser(rows: MeterParseRowDb[], userId: string): PublicMeterPa
 
 
 
-const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 500
-const GLOBAL_RECENT_PARSE_LIMIT = 400
+const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 150
+const GLOBAL_RECENT_PARSE_LIMIT = 80
+const PARSE_IDS_BATCH_SIZE = 80
 /** Max signed-in uploads considered for meter point grants (shop / rewards sync). */
 const MY_METER_PARSES_LIMIT = 150
 const METER_TAMER_COUNT_CACHE_KEY = 'odyssey-meter-total-tamers-v1'
-const METER_TAMER_COUNT_TTL_MS = 10 * 60 * 1000
+/** Site-wide stats scans are expensive; refresh at most once per day per browser. */
+const METER_TAMER_COUNT_TTL_MS = 24 * 60 * 60 * 1000
+
+const scopeRefreshInflight = new Map<string, Promise<ScopeParsesResult>>()
+let globalRecentRefreshInflight: Promise<{ rows: PublicMeterParseRow[]; error: string | null }> | null =
+  null
+
+let myMeterParsesInflight: Promise<{ rows: PublicMeterParseRow[]; error: string | null }> | null = null
+let myMeterParsesInflightUserId: string | null = null
 const METER_TAMER_SCAN_PAGE_SIZE = 1000
 const METER_TAMER_SCAN_MAX_ROWS = 200_000
 const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
@@ -121,7 +133,7 @@ export async function fetchRecentMeterParseSelection(
 
     .from('meter_parses')
 
-    .select('dungeon_id, difficulty_id, difficulty, payload, created_at, duration_sec, app_version')
+    .select('dungeon_id, difficulty_id, difficulty, created_at')
 
     .eq('parse_kind', 'dungeon_party')
 
@@ -133,7 +145,22 @@ export async function fetchRecentMeterParseSelection(
 
   if (error || !data?.length) return null
 
-  return mostRecentMeterParseSelection(data as PublicMeterParseRow[], allowedDungeonIds)
+  return mostRecentMeterParseSelectionFromColumns(data, allowedDungeonIds)
+}
+
+/** Default filters when only row columns are available (no payload). */
+function mostRecentMeterParseSelectionFromColumns(
+  rows: Array<{ dungeon_id?: string | null; difficulty_id?: number | null }>,
+  allowedDungeonIds: Iterable<string>,
+): MeterParseSelection | null {
+  const allowed = new Set(allowedDungeonIds)
+  for (const row of rows) {
+    const dungeonId = row.dungeon_id?.trim()
+    const difficultyId = row.difficulty_id ?? 0
+    if (!dungeonId || !allowed.has(dungeonId) || difficultyId < 2) continue
+    return { dungeonId, difficultyId }
+  }
+  return null
 
 }
 
@@ -214,6 +241,31 @@ async function refreshScopeParses(
   return { rows, error: null, fromCache: false }
 }
 
+function refreshScopeParsesDeduped(
+  params: FetchPublicDungeonParsesParams,
+  cacheKey: string,
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
+): Promise<ScopeParsesResult> {
+  const existing = scopeRefreshInflight.get(cacheKey)
+  if (existing) return existing
+  const promise = refreshScopeParses(params, cacheKey, onUpdated).finally(() => {
+    scopeRefreshInflight.delete(cacheKey)
+  })
+  scopeRefreshInflight.set(cacheKey, promise)
+  return promise
+}
+
+function refreshGlobalRecentParsesDeduped(
+  limit: number,
+  onUpdated?: (rows: PublicMeterParseRow[]) => void,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  if (globalRecentRefreshInflight) return globalRecentRefreshInflight
+  globalRecentRefreshInflight = refreshGlobalRecentPublicParses(limit, onUpdated).finally(() => {
+    globalRecentRefreshInflight = null
+  })
+  return globalRecentRefreshInflight
+}
+
 /** Public leaderboard for one dungeon + difficulty (anon role, not signed-in JWT). */
 export async function fetchPublicDungeonParses(
   params: FetchPublicDungeonParsesParams,
@@ -238,19 +290,114 @@ async function refreshGlobalRecentPublicParses(
 
   const { data, error } = await supabase
     .from('meter_parses')
-    .select(PARSE_SELECT)
+    .select(FEED_PARSE_SELECT)
     .eq('parse_kind', 'dungeon_party')
     .gte('difficulty_id', 2)
+    .not('leaderboard_summary', 'is', null)
     .order('created_at', { ascending: false })
     .limit(limit)
 
   if (error) return { rows: [], error: error.message }
-  const eligible = leaderboardEligibleParses((data ?? []) as PublicMeterParseRow[])
-  onUpdated?.(eligible)
-  const rows = await resolveMeterParseRowPayloads(eligible)
+  const rows = feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[])
+  onUpdated?.(rows)
   setCachedGlobalRecentParses(rows)
   onUpdated?.(rows)
   return { rows, error: null }
+}
+
+type FeedSummaryRow = {
+  id: string
+  created_at: string
+  duration_sec: number | null
+  dungeon_id: string | null
+  dungeon_name: string | null
+  difficulty: string | null
+  difficulty_id: number | null
+  leaderboard_summary: unknown
+}
+
+function feedRowsFromSummaryQuery(rows: FeedSummaryRow[]): PublicMeterParseRow[] {
+  const out: PublicMeterParseRow[] = []
+  for (const row of rows) {
+    const summary = row.leaderboard_summary
+    if (!summary || typeof summary !== 'object') continue
+    const rawMembers = (summary as { members?: unknown }).members
+    if (!Array.isArray(rawMembers) || !rawMembers.length) continue
+
+    const durationSec = Math.max(row.duration_sec ?? 0, 1)
+    const members = rawMembers.map((raw) => {
+      const sm = raw as {
+        playerKey?: string
+        displayName?: string
+        dps?: number
+        digimonId?: string
+        digimonName?: string
+        iconId?: string | null
+        portraitUrl?: string
+      }
+      const playerKey = sm.playerKey?.trim() ?? ''
+      const dps = Number(sm.dps) || 0
+      const digimonId = sm.digimonId?.trim() ?? ''
+      const totalDamage = dps * durationSec
+      return {
+        memberKey: playerKey,
+        displayLabel: sm.displayName?.trim() || playerKey,
+        tamerName: sm.displayName?.trim() || playerKey,
+        totalDamage,
+        durationSec,
+        skills: [],
+        currentDigimonId: digimonId || null,
+        currentDigimonName: sm.digimonName?.trim() || null,
+        portraitIconId: sm.iconId ?? null,
+        portraitUrl: sm.portraitUrl,
+        digimons: digimonId
+          ? [
+              {
+                digimonId,
+                digimonName: sm.digimonName?.trim() ?? '',
+                iconId: sm.iconId ?? null,
+                portraitUrl: sm.portraitUrl,
+                totalDamage,
+                skills: [],
+              },
+            ]
+          : [],
+      }
+    })
+
+    out.push({
+      id: row.id,
+      created_at: row.created_at,
+      duration_sec: row.duration_sec ?? 0,
+      app_version: undefined,
+      total_damage: undefined,
+      hit_count: undefined,
+      parse_kind: 'dungeon_party',
+      dungeon_id: row.dungeon_id,
+      dungeon_name: row.dungeon_name,
+      difficulty: row.difficulty,
+      difficulty_id: row.difficulty_id,
+      payload: {
+        schemaVersion: 3,
+        kind: 'dungeon_party',
+        capturedAtMs: new Date(row.created_at).getTime(),
+        sessionDurationSec: durationSec,
+        digimonNamesRequireWikiLookup: false,
+        dungeon: {
+          dungeonId: row.dungeon_id?.trim() ?? '',
+          dungeonName: row.dungeon_name,
+          difficulty: row.difficulty?.trim() ?? '',
+          difficultyId: row.difficulty_id ?? 0,
+          mapName: null,
+          partyId: null,
+          bossTargets: [],
+          runOutcome: 'clear',
+        },
+        members,
+      },
+    })
+  }
+  return out
 }
 
 /** Recent public party parses across all dungeons (profile fast tier). */
@@ -274,11 +421,10 @@ export async function getPublicDungeonParsesCached(
   const key = meterScopeKey(dungeonId, difficultyId)
   const cached = getCachedScopeParses(key)
   if (cached) {
-    void refreshScopeParses(params, key, onUpdated)
     return { rows: cached, error: null, fromCache: true }
   }
 
-  return refreshScopeParses(params, key, onUpdated)
+  return refreshScopeParsesDeduped(params, key, onUpdated)
 }
 
 export async function getGlobalRecentPublicParsesCached(
@@ -287,11 +433,10 @@ export async function getGlobalRecentPublicParsesCached(
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
   const cached = getCachedGlobalRecentParses()
   if (cached) {
-    void refreshGlobalRecentPublicParses(limit, onUpdated)
     return { rows: cached.slice(0, limit), error: null }
   }
 
-  return refreshGlobalRecentPublicParses(limit, onUpdated)
+  return refreshGlobalRecentParsesDeduped(limit, onUpdated)
 }
 
 type MeterTamerCountCache = {
@@ -497,6 +642,120 @@ export async function fetchTotalMeterRoleCounts(): Promise<{
   return { counts, error: null }
 }
 
+export async function fetchParsesForCoUploadFilter(
+  parseIds: string[],
+): Promise<PublicMeterParseRow[]> {
+  const supabase = getMeterAnonSupabase()
+  if (!supabase || !parseIds.length) return []
+
+  const unique = [...new Set(parseIds.map((id) => id.trim()).filter(Boolean))]
+  const out: PublicMeterParseRow[] = []
+
+  for (let offset = 0; offset < unique.length; offset += PARSE_IDS_BATCH_SIZE) {
+    const chunk = unique.slice(offset, offset + PARSE_IDS_BATCH_SIZE)
+    const { data, error } = await supabase
+      .from('meter_parses')
+      .select(CO_UPLOAD_FILTER_SELECT)
+      .in('id', chunk)
+    if (error || !data?.length) continue
+    out.push(...(data as PublicMeterParseRow[]))
+  }
+
+  return out
+}
+
+export type PlayerLeaderboardEntryRow = {
+  parseId: string
+  dungeonId: string
+  difficultyId: number
+  roleBucket: MeterRoleBucket
+  playerKey: string
+  displayName: string
+  dps: number
+  digimonId: string
+  digimonName: string
+  iconId: string | null
+  portraitUrl?: string
+  createdAt: string
+}
+
+const PLAYER_LEADERBOARD_SCAN_PAGE_SIZE = 1000
+const PLAYER_LEADERBOARD_SCAN_MAX_ROWS = 20_000
+
+/** All precomputed leaderboard rows for one tamer (small columns, no parse payloads). */
+export async function fetchPlayerMeterLeaderboardEntries(
+  playerKey: string,
+): Promise<{ entries: PlayerLeaderboardEntryRow[]; error: string | null }> {
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
+
+  const key = playerKey.trim().toLowerCase()
+  if (!key) return { entries: [], error: null }
+
+  const entries: PlayerLeaderboardEntryRow[] = []
+  let offset = 0
+
+  while (offset < PLAYER_LEADERBOARD_SCAN_MAX_ROWS) {
+    const to = offset + PLAYER_LEADERBOARD_SCAN_PAGE_SIZE - 1
+    const { data, error } = await supabase
+      .from('meter_leaderboard_entries')
+      .select(
+        'parse_id, created_at, role_bucket, player_key, display_name, dps, digimon_id, digimon_name, icon_id, portrait_url, dungeon_id, difficulty_id',
+      )
+      .eq('player_key', key)
+      .gte('difficulty_id', 2)
+      .order('created_at', { ascending: false })
+      .range(offset, to)
+
+    if (error) return { entries: [], error: error.message }
+    const page = (data ?? []) as Array<{
+      parse_id?: string | null
+      created_at?: string
+      role_bucket?: string | null
+      player_key?: string | null
+      display_name?: string | null
+      dps?: number | null
+      digimon_id?: string | null
+      digimon_name?: string | null
+      icon_id?: string | null
+      portrait_url?: string | null
+      dungeon_id?: string | null
+      difficulty_id?: number | null
+    }>
+    if (!page.length) break
+
+    for (const row of page) {
+      const role = row.role_bucket?.trim() as MeterRoleBucket | undefined
+      if (!role || !METER_ROLE_BUCKETS.includes(role)) continue
+      const parseId = row.parse_id?.trim() ?? ''
+      const dungeonId = row.dungeon_id?.trim() ?? ''
+      const difficultyId = row.difficulty_id ?? 0
+      if (!parseId || !dungeonId || difficultyId < 2) continue
+      const dps = Number(row.dps) || 0
+      if (dps <= 0) continue
+      entries.push({
+        parseId,
+        dungeonId,
+        difficultyId,
+        roleBucket: role,
+        playerKey: row.player_key?.trim().toLowerCase() ?? key,
+        displayName: row.display_name?.trim() || key,
+        dps,
+        digimonId: row.digimon_id?.trim() ?? '',
+        digimonName: row.digimon_name?.trim() ?? '',
+        iconId: row.icon_id ?? null,
+        portraitUrl: row.portrait_url ?? undefined,
+        createdAt: row.created_at ?? '',
+      })
+    }
+
+    if (page.length < PLAYER_LEADERBOARD_SCAN_PAGE_SIZE) break
+    offset += PLAYER_LEADERBOARD_SCAN_PAGE_SIZE
+  }
+
+  return { entries, error: null }
+}
+
 export async function fetchAllScopeParsesCached(
   scopes: MeterUploadScope[],
   concurrency = 4,
@@ -546,27 +805,35 @@ export async function fetchMyMeterParses(
 
   }
 
+  if (myMeterParsesInflight && myMeterParsesInflightUserId === userId) {
+    return myMeterParsesInflight
+  }
 
+  myMeterParsesInflightUserId = userId
+  myMeterParsesInflight = (async () => {
+    const { data, error } = await supabase
 
-  const { data, error } = await supabase
+      .from('meter_parses')
 
-    .from('meter_parses')
+      .select(`${PARSE_SELECT}, user_id`)
 
-    .select(`${PARSE_SELECT}, user_id`)
+      .eq('user_id', userId)
 
-    .eq('user_id', userId)
+      .order('created_at', { ascending: false })
 
-    .order('created_at', { ascending: false })
+      .limit(MY_METER_PARSES_LIMIT)
 
-    .limit(MY_METER_PARSES_LIMIT)
+    if (error) return { rows: [], error: error.message }
 
+    const owned = rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId)
+    const rows = await resolveMeterParseRowPayloads(owned)
+    return { rows, error: null }
+  })().finally(() => {
+    myMeterParsesInflight = null
+    myMeterParsesInflightUserId = null
+  })
 
-
-  if (error) return { rows: [], error: error.message }
-
-  const owned = rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId)
-  const rows = await resolveMeterParseRowPayloads(owned)
-  return { rows, error: null }
+  return myMeterParsesInflight
 
 }
 

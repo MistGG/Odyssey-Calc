@@ -1,30 +1,32 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
 import {
   fetchRecentMeterParseSelection,
-  getPublicDungeonParsesCached,
+  fetchScopeEligibleParses,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
-import { getCachedScopeParses, meterScopeKey } from '../lib/meterParseCache'
+import { getCachedLeaderboardStats } from '../lib/meterLeaderboardStatsCache'
 import {
   aggregatePublicMeterStats,
   type DigimonDpsSortMode,
   type MeterPublicAggregates,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
-import {
-  fetchPrecomputedMeterLeaderboard,
-  resolvePrecomputedLeaderboardNames,
-} from '../lib/meterLeaderboardPrecomputed'
+import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
 import {
   dungeonSelectOptions,
   difficultySelectOptions,
   loadWikiDungeonsForMeter,
 } from '../lib/wikiDungeons'
+
+/** Visible player rows per role (RPC may return more; keeps DOM light). */
+const LEADERBOARD_VISIBLE_PLAYERS = 40
+
+const LEGACY_PARSE_LIMIT = 120
 
 type MeterNavState = { dungeonId?: string; difficultyId?: number }
 
@@ -47,6 +49,7 @@ export function MeterPublicPage() {
   const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
   const [digimonDpsSort, setDigimonDpsSort] = useState<DigimonDpsSortMode>('best')
   const initialFiltersApplied = useRef(false)
+  const [, startTransition] = useTransition()
 
   const loadBoot = useCallback(async () => {
     setBootLoading(true)
@@ -134,10 +137,16 @@ export function MeterPublicPage() {
       setPrecomputedStats(null)
       return
     }
+
     let cancelled = false
     setParsesRefreshing(true)
     setLoadError(null)
-    setPrecomputedStats(null)
+
+    const cachedStats = getCachedLeaderboardStats(dungeonId, difficultyId)
+    if (cachedStats) {
+      setPrecomputedStats(cachedStats)
+      setRows([])
+    }
 
     void (async () => {
       const pre = await fetchPrecomputedMeterLeaderboard({ dungeonId, difficultyId })
@@ -145,22 +154,22 @@ export function MeterPublicPage() {
       if (pre.error) setLoadError(pre.error)
       if (pre.stats) {
         setPrecomputedStats(pre.stats)
+        setRows([])
         setParsesRefreshing(false)
-        void resolvePrecomputedLeaderboardNames(pre.stats).then((resolved) => {
-          if (!cancelled) setPrecomputedStats(resolved)
-        })
         return
       }
 
-      const scopeKey = meterScopeKey(dungeonId, difficultyId)
-      const cached = getCachedScopeParses(scopeKey)
-      setRows(cached ?? [])
-      const parseRes = await getPublicDungeonParsesCached({ dungeonId, difficultyId }, (updated) => {
-        if (!cancelled) setRows(updated)
+      const parseRes = await fetchScopeEligibleParses({
+        dungeonId,
+        difficultyId,
+        limit: LEGACY_PARSE_LIMIT,
       })
       if (cancelled) return
       if (parseRes.error) setLoadError(parseRes.error)
-      else if (!cached?.length) setRows(parseRes.rows)
+      startTransition(() => {
+        setRows(parseRes.rows)
+        setPrecomputedStats(null)
+      })
       setParsesRefreshing(false)
     })()
 
@@ -170,7 +179,7 @@ export function MeterPublicPage() {
   }, [dungeonId, difficultyId])
 
   const legacyStats = useMemo(() => {
-    if (!dungeonId || difficultyId == null || !digimonRoleById.size) return null
+    if (!dungeonId || difficultyId == null || !rows.length) return null
     return aggregatePublicMeterStats(rows, digimonRoleById, dungeonId, difficultyId)
   }, [rows, digimonRoleById, dungeonId, difficultyId])
 
@@ -180,6 +189,8 @@ export function MeterPublicPage() {
     if (!stats) return null
     return digimonDpsSort === 'best' ? stats.digimonByBucketBest : stats.digimonByBucketAverage
   }, [stats, digimonDpsSort])
+
+  const showLoading = parsesRefreshing && !stats
 
   return (
     <div className="meter-parses-page meter-public-page">
@@ -230,7 +241,7 @@ export function MeterPublicPage() {
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
       {bootLoading && !dungeonOptions.length ? (
         <p className="meter-parses-muted meter-parses-muted--center">Loading…</p>
-      ) : parsesRefreshing && !stats ? (
+      ) : showLoading ? (
         <p className="meter-parses-muted meter-parses-muted--center">Loading leaderboard…</p>
       ) : !dungeonOptions.length ? (
         <p className="meter-parses-muted meter-parses-muted--center">Could not load dungeon list from wiki.</p>
@@ -272,7 +283,7 @@ export function MeterPublicPage() {
               </div>
             </div>
             <div className="meter-public-section">
-              <h2 className="meter-parses-section-title">Player rankings (top 100)</h2>
+              <h2 className="meter-parses-section-title">Player rankings</h2>
               <div className="meter-public-ranks-2col">
                 {METER_ROLE_BUCKETS.map((b) => (
                   <MeterPlayerRankingList
@@ -280,6 +291,7 @@ export function MeterPublicPage() {
                     title={METER_ROLE_BUCKET_LABELS[b]}
                     entries={stats.playersByBucket[b]}
                     poolDps={stats.sortedDpsByBucket[b]}
+                    maxEntries={LEADERBOARD_VISIBLE_PLAYERS}
                     meterContext={{ dungeonId, difficultyId }}
                   />
                 ))}
@@ -287,7 +299,9 @@ export function MeterPublicPage() {
             </div>
           </div>
         </>
-      ) : null}
+      ) : (
+        <p className="meter-parses-muted meter-parses-muted--center">No rankings for this dungeon yet.</p>
+      )}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { fetchScopeEligibleParses, fetchScopeParsesRaw, getMeterAnonSupabase } from './meterDataSource'
+import { fetchParsesForCoUploadFilter, fetchScopeEligibleParses, getMeterAnonSupabase } from './meterDataSource'
 import {
   buildEntriesFromParseSummaries,
   fetchScopeParseSummaries,
@@ -299,7 +299,7 @@ export async function fetchScopeLeaderboardEntryHistory(
   if (!rows.length) {
     try {
       const [parseRes, roleMap] = await Promise.all([
-        fetchScopeEligibleParses({ dungeonId: id, difficultyId }),
+        fetchScopeEligibleParses({ dungeonId: id, difficultyId, limit: 120 }),
         fetchDigimonRoleMap(),
       ])
       if (!parseRes.error && parseRes.rows.length) {
@@ -318,9 +318,10 @@ export async function fetchScopeLeaderboardEntryHistory(
   }
 
   try {
-    const parseRes = await fetchScopeParsesRaw({ dungeonId: id, difficultyId })
-    if (!parseRes.error && parseRes.rows.length) {
-      rows = filterLeaderboardHistoryByScopeParses(rows, parseRes.rows)
+    const parseIds = [...new Set(rows.map((entry) => entry.parseId))]
+    const scopeParses = await fetchParsesForCoUploadFilter(parseIds)
+    if (scopeParses.length) {
+      rows = filterLeaderboardHistoryByScopeParses(rows, scopeParses)
     }
   } catch {
     /* keep prior rows */
@@ -415,16 +416,27 @@ async function fetchPlayerMeterScopes(
 
 const HOF_SCOPE_BATCH = 4
 
+export type FetchPlayerHallOfFameOptions = {
+  /** Cap dungeon scopes scanned (grant checks use a small limit). */
+  maxScopes?: number
+  /** Stop after first matching induction (faster eligibility checks). */
+  stopAfterFirst?: boolean
+}
+
 /** All Hall of Fame record-break entries for one tamer (across dungeons). */
 export async function fetchPlayerHallOfFameEntries(
   playerKey: string,
   wikiDungeons: WikiDungeonListItem[],
+  options?: FetchPlayerHallOfFameOptions,
 ): Promise<{ entries: ProfileHallOfFameEntry[]; error: string | null }> {
   const key = playerKey.trim().toLowerCase()
   if (!key) return { entries: [], error: null }
 
-  const scopes = await fetchPlayerMeterScopes(key)
+  let scopes = await fetchPlayerMeterScopes(key)
   if (!scopes.length) return { entries: [], error: null }
+
+  const maxScopes = options?.maxScopes
+  if (maxScopes != null && maxScopes > 0) scopes = scopes.slice(0, maxScopes)
 
   const all: ProfileHallOfFameEntry[] = []
 
@@ -470,6 +482,9 @@ export async function fetchPlayerHallOfFameEntries(
     for (const result of batchResults) {
       if (result.error) return { entries: all, error: result.error }
       all.push(...result.entries)
+      if (options?.stopAfterFirst && all.length > 0) {
+        return { entries: all, error: null }
+      }
     }
   }
 

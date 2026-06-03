@@ -39,10 +39,10 @@ export function MeterMyRewardsPage() {
   const { supabase, user, authReady, profileDisplayName } = useAuth()
   const rewards = useMeterRewards(supabase, profileDisplayName, Boolean(user))
   const catalog = useMeterRewardsCatalog(
-    supabase,
+    rewards.loading,
+    rewards.ownedThemeIds,
     profileDisplayName,
     rewards.confirmedTamerName,
-    Boolean(user),
   )
   const [busyThemeId, setBusyThemeId] = useState<string | null>(null)
   const [confirmEquipId, setConfirmEquipId] = useState<MeterPartyBarThemeId | null>(null)
@@ -77,7 +77,7 @@ export function MeterMyRewardsPage() {
     }
     setConfirmEquipId(null)
     rewards.setEquippedThemeId(themeId)
-    void catalog.refresh()
+    void rewards.refresh()
   }
 
   async function onUseDefaultBar() {
@@ -92,7 +92,6 @@ export function MeterMyRewardsPage() {
     }
     rewards.setEquippedThemeId(null)
     void rewards.refresh()
-    void catalog.refresh()
   }
 
   return (
@@ -151,7 +150,7 @@ export function MeterMyRewardsPage() {
       ) : rewardThemes.length === 0 ? (
         <div className="meter-rewards-empty">
           <p className="meter-parses-muted meter-parses-muted--center">
-            You have not purchased any themes yet.
+            You have not earned or purchased any themes yet.
           </p>
           <Link
             to={DEFAULT_METER_SHOP_PATH}

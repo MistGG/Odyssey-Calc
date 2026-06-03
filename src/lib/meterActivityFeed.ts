@@ -11,6 +11,7 @@ import {
   memberRoleBucket,
   memberTopDigimonUsed,
   METER_ROLE_BUCKET_LABELS,
+  METER_ROLE_BUCKETS,
   normalizePlayerKey,
   playerDisplayName,
   type MeterRoleBucket,
@@ -121,6 +122,7 @@ export function buildMeterActivityFeedItems(
     })
   }
 
+  items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   return items
 }
 
@@ -150,6 +152,34 @@ export function scopePoolsFromPrecomputedStats(
     const key = meterScopeKey(scope.dungeonId, scope.difficultyId)
     const stats = statsByScope.get(key)
     if (stats) pools.set(key, stats.sortedDpsByBucket)
+  }
+  return pools
+}
+
+/** Parse-score pools from visible feed rows only (no extra Supabase scope downloads). */
+export function scopePoolsFromFeedItems(items: MeterActivityFeedItem[]): ActivityFeedScopePools {
+  const pools: ActivityFeedScopePools = new Map()
+  for (const item of items) {
+    const key = meterScopeKey(item.dungeonId, item.difficultyId)
+    let byRole = pools.get(key)
+    if (!byRole) {
+      byRole = METER_ROLE_BUCKETS.reduce(
+        (acc, role) => {
+          acc[role] = []
+          return acc
+        },
+        {} as Record<MeterRoleBucket, number[]>,
+      )
+      pools.set(key, byRole)
+    }
+    for (const member of item.members) {
+      if (member.dps > 0 && byRole) byRole[member.roleBucket].push(member.dps)
+    }
+  }
+  for (const byRole of pools.values()) {
+    for (const role of METER_ROLE_BUCKETS) {
+      byRole[role].sort((a, b) => a - b)
+    }
   }
   return pools
 }

@@ -9,21 +9,20 @@ import { MeterSubNav } from '../components/MeterSubNav'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import type { MeterProfileShareSnapshot } from '../lib/meterPlayerShare'
 import {
-  fetchAllScopeParsesCached,
-  loadDigimonRoleMapForMeter,
+  fetchPlayerMeterLeaderboardEntries,
+  type PlayerLeaderboardEntryRow,
 } from '../lib/meterDataSource'
 import {
-  buildPlayerBestParses,
-  buildPlayerFavoriteDigimon,
-  buildScopeLeaderboardDpsPools,
-  displayNameForPlayerKey,
+  buildPlayerBestParsesFromLeaderboardEntries,
+  buildPlayerFavoriteDigimonFromLeaderboardEntries,
+  buildScopeLeaderboardDpsPoolsFromPrecomputed,
+  displayNameFromLeaderboardEntries,
   leaderboardDpsPoolForBestEntry,
   METER_PROFILE_IDENTITY_NOTICE,
   normalizeRoutePlayerKey,
   sortPlayerBestParsesByParseScore,
 } from '../lib/meterPlayerProfile'
-import { allMeterUploadScopes } from '../lib/meterScopeList'
-import { dpsToPercentile, parseScoreColor, type PublicMeterParseRow } from '../lib/meterPublicStats'
+import { dpsToPercentile, parseScoreColor } from '../lib/meterPublicStats'
 import { fetchPlayerHallOfFameEntries, type ProfileHallOfFameEntry } from '../lib/meterHallOfFame'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 
@@ -47,9 +46,13 @@ export function MeterPlayerProfilePage() {
   const playerKey = normalizeRoutePlayerKey(playerKeyParam ?? '')
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [scopeProgress, setScopeProgress] = useState<{ done: number; total: number } | null>(null)
-  const [rows, setRows] = useState<PublicMeterParseRow[]>([])
-  const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
+  const [leaderboardEntries, setLeaderboardEntries] = useState<PlayerLeaderboardEntryRow[]>([])
+  const [wikiDungeons, setWikiDungeons] = useState<
+    Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>
+  >([])
+  const [scopeLeaderboardPools, setScopeLeaderboardPools] = useState<
+    Awaited<ReturnType<typeof buildScopeLeaderboardDpsPoolsFromPrecomputed>>
+  >(() => new Map())
   const [hofEntries, setHofEntries] = useState<ProfileHallOfFameEntry[]>([])
   const [hofLoading, setHofLoading] = useState(true)
   const [hofError, setHofError] = useState<string | null>(null)
@@ -61,33 +64,33 @@ export function MeterPlayerProfilePage() {
     void (async () => {
       setLoading(true)
       setLoadError(null)
-      setRows([])
+      setLeaderboardEntries([])
+      setScopeLeaderboardPools(new Map())
       setHofLoading(true)
       setHofError(null)
       setHofEntries([])
 
-      const [roles, dungeons] = await Promise.all([
-        loadDigimonRoleMapForMeter(),
-        loadWikiDungeonsForMeter().catch(() => []),
-      ])
+      const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
       if (cancelled) return
-      setDigimonRoleById(roles)
+      setWikiDungeons(dungeons)
 
-      const scopes = allMeterUploadScopes(dungeons)
-      setScopeProgress({ done: 0, total: scopes.length })
-
-      const [parseRes, hofRes] = await Promise.all([
-        fetchAllScopeParsesCached(scopes, 4, (done, total) => {
-          if (!cancelled) setScopeProgress({ done, total })
-        }),
+      const [leaderboardRes, hofRes] = await Promise.all([
+        fetchPlayerMeterLeaderboardEntries(playerKey),
         fetchPlayerHallOfFameEntries(playerKey, dungeons),
       ])
       if (cancelled) return
 
-      if (parseRes.error) setLoadError(parseRes.error)
-      setRows(parseRes.rows)
+      if (leaderboardRes.error) setLoadError(leaderboardRes.error)
+      setLeaderboardEntries(leaderboardRes.entries)
+
+      const bestFromEntries = buildPlayerBestParsesFromLeaderboardEntries(
+        leaderboardRes.entries,
+        dungeons,
+      )
+      const pools = await buildScopeLeaderboardDpsPoolsFromPrecomputed(bestFromEntries)
+      if (cancelled) return
+      setScopeLeaderboardPools(pools)
       setLoading(false)
-      setScopeProgress(null)
 
       if (hofRes.error) setHofError(hofRes.error)
       else setHofEntries(hofRes.entries)
@@ -101,25 +104,20 @@ export function MeterPlayerProfilePage() {
 
   const displayName = useMemo(() => {
     if (nav?.displayName?.trim()) return nav.displayName.trim()
-    return displayNameForPlayerKey(rows, playerKey) || playerKey
-  }, [nav?.displayName, rows, playerKey])
+    return displayNameFromLeaderboardEntries(leaderboardEntries, playerKey) || playerKey
+  }, [nav?.displayName, leaderboardEntries, playerKey])
 
   const favoriteDigimon = useMemo(
-    () => buildPlayerFavoriteDigimon(rows, playerKey),
-    [rows, playerKey],
+    () => buildPlayerFavoriteDigimonFromLeaderboardEntries(leaderboardEntries),
+    [leaderboardEntries],
   )
 
   const bestParses = useMemo(
-    () => (digimonRoleById.size ? buildPlayerBestParses(rows, playerKey, digimonRoleById) : []),
-    [rows, playerKey, digimonRoleById],
-  )
-
-  const scopeLeaderboardPools = useMemo(
     () =>
-      digimonRoleById.size && rows.length
-        ? buildScopeLeaderboardDpsPools(rows, digimonRoleById, bestParses)
-        : new Map(),
-    [rows, digimonRoleById, bestParses],
+      leaderboardEntries.length
+        ? buildPlayerBestParsesFromLeaderboardEntries(leaderboardEntries, wikiDungeons)
+        : [],
+    [leaderboardEntries, wikiDungeons],
   )
 
   const sortedBestParses = useMemo(
@@ -225,7 +223,7 @@ export function MeterPlayerProfilePage() {
         bestEntryCount={bestParses.length}
         dungeonCount={dungeonCount}
         loading={loading}
-        loadProgress={scopeProgress}
+        loadProgress={null}
         hallOfFameRecordCount={hofEntries.length}
         hallOfFameLoading={hofLoading}
         backTo={backTo}

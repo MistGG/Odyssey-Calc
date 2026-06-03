@@ -1,6 +1,7 @@
 import type { PublicMeterParseRow } from './meterPublicStats'
 
-const TTL_MS = 15 * 60 * 1000
+/** Full parse payloads are large; avoid re-fetching from PostgREST too often. */
+const TTL_MS = 60 * 60 * 1000
 const SESSION_KEY = 'odyssey-meter-parse-cache-v1'
 const MAX_PERSISTED_SCOPES = 24
 
@@ -60,6 +61,16 @@ function persistToSession(): void {
   } catch {
     /* quota */
   }
+}
+
+export function isScopeParseCacheFresh(key: string): boolean {
+  hydrateFromSession()
+  return isFresh(scopeMemory.get(key))
+}
+
+export function isGlobalRecentParseCacheFresh(): boolean {
+  hydrateFromSession()
+  return isFresh(globalRecentMemory)
 }
 
 export function getCachedScopeParses(key: string): PublicMeterParseRow[] | null {

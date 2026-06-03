@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { fetchMyMeterParses, getPublicDungeonParsesCached } from '../lib/meterDataSource'
@@ -32,6 +32,19 @@ import {
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
 import { HARD_DIFFICULTY_ID } from '../lib/meterPointGrants'
+import { markMeterGrantSyncDone, shouldRunMeterGrantSync } from '../lib/meterGrantSyncSession'
+import {
+  readMeterRewardsWalletCache,
+  writeMeterRewardsWalletCache,
+} from '../lib/meterRewardsWalletCache'
+
+function applyEquippedTheme(equipped: string | null): void {
+  if (equipped && getMeterPartyBarTheme(equipped)) {
+    writeEquippedMeterPartyBarThemeId(equipped as MeterPartyBarThemeId)
+  } else {
+    clearEquippedMeterPartyBarThemeId()
+  }
+}
 
 export function useMeterRewards(
   supabase: SupabaseClient | null,
@@ -39,6 +52,7 @@ export function useMeterRewards(
   enabled: boolean,
 ) {
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
   const [balance, setBalance] = useState(0)
   const [ownedThemeIds, setOwnedThemeIds] = useState<string[]>([])
   const [equippedThemeId, setEquippedThemeId] = useState<string | null>(null)
@@ -54,91 +68,172 @@ export function useMeterRewards(
   const [dungeonEarnProgress, setDungeonEarnProgress] = useState<MeterDungeonEarnProgress[]>([])
   const [grantKeys, setGrantKeys] = useState<Set<string>>(() => new Set())
   const [hardDungeons, setHardDungeons] = useState<{ dungeonId: string; dungeonName: string }[]>([])
+  const syncGenRef = useRef(0)
 
-  const refresh = useCallback(async () => {
-    if (!supabase || !enabled) {
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setError(null)
-
-    const cachedTamer = readCachedConfirmedTamer()
-    if (cachedTamer) {
-      await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
-    }
-
-    const myRes = await fetchMyMeterParses(supabase)
-    if (myRes.error) {
-      setError(myRes.error)
-      setLoading(false)
-      return
-    }
-    setMyParses(myRes.rows)
-
-    const identity = resolveSignedInMeterIdentity(profileDisplayName, myRes.rows)
-    const confirmedFromParses = hasConfirmedTamerFromParses(myRes.rows)
-    const parsedTamerName =
-      identity?.confirmedFromUpload ? identity.displayName?.trim() || null : null
-    if (parsedTamerName) writeCachedConfirmedTamer(parsedTamerName)
-    const tamerName = parsedTamerName ?? cachedTamer
-    const confirmed = confirmedFromParses || Boolean(cachedTamer)
-    setIdentityConfirmed(confirmed)
-    setConfirmedTamerName(tamerName)
-    setShowIdentityNotice(!confirmed)
-    const mistDev = isMistMeterShopDev(profileDisplayName, tamerName)
-    setMistShopDev(mistDev)
-
-    const wikiDungeons: WikiDungeonListItem[] = await loadWikiDungeonsForMeter().catch(() => [])
-    const hardList = hardMeterDungeons(wikiDungeons)
-    setHardDungeons(hardList)
-
-    const dungeonIds = new Set<string>()
-    for (const row of myRes.rows) {
-      const d = row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
-      const diff = row.difficulty_id ?? dungeonFromPayload(row.payload)?.difficultyId
-      if (d && diff === HARD_DIFFICULTY_ID) dungeonIds.add(d)
-    }
-
-    const publicRowsByDungeon = new Map<string, PublicMeterParseRow[]>()
-    await Promise.all(
-      [...dungeonIds].map(async (dungeonId) => {
-        const pub = await getPublicDungeonParsesCached({
-          dungeonId,
-          difficultyId: HARD_DIFFICULTY_ID,
+  const applyWalletState = useCallback(
+    (
+      state: Awaited<ReturnType<typeof fetchMeterRewardsState>>,
+      userId: string | null,
+      balanceOverride?: number,
+    ) => {
+      const equipped = state.equippedThemeId?.trim() || null
+      const nextBalance = balanceOverride ?? state.balance
+      setBalance(nextBalance)
+      setOwnedThemeIds(state.ownedThemeIds)
+      setEquippedThemeId(equipped)
+      setDailyCompletedToday(state.dailyCompletedToday)
+      applyEquippedTheme(equipped)
+      if (userId) {
+        writeMeterRewardsWalletCache({
+          userId,
+          balance: nextBalance,
+          ownedThemeIds: state.ownedThemeIds,
+          equippedThemeId: equipped,
+          dailyCompletedToday: state.dailyCompletedToday,
+          at: Date.now(),
         })
-        if (!pub.error) publicRowsByDungeon.set(dungeonId, pub.rows)
-      }),
-    )
+      }
+    },
+    [],
+  )
 
-    const keys = await fetchMeterGrantKeys(supabase)
-    setGrantKeys(keys)
-    setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, publicRowsByDungeon))
+  const refreshWallet = useCallback(async (): Promise<string | null> => {
+    if (!supabase) return null
+    const { data: auth } = await supabase.auth.getUser()
+    const userId = auth.user?.id ?? null
+    if (!userId) {
+      setLoading(false)
+      return null
+    }
 
-    const grants = computeMeterPointGrants(myRes.rows, publicRowsByDungeon)
-    const syncRes = await syncMeterPointGrants(supabase, grants)
-    if (syncRes.error?.includes('meter_apply_point_grants')) {
-      setError(
-        'Rewards database is not set up yet. Run the meter theme shop SQL in the Supabase SQL Editor.',
-      )
-    } else if (syncRes.error) {
-      setError(syncRes.error)
+    const cached = readMeterRewardsWalletCache(userId)
+    if (cached) {
+      setBalance(cached.balance)
+      setOwnedThemeIds(cached.ownedThemeIds)
+      setEquippedThemeId(cached.equippedThemeId)
+      setDailyCompletedToday(cached.dailyCompletedToday)
+      applyEquippedTheme(cached.equippedThemeId)
+      setLoading(false)
     }
 
     const state = await fetchMeterRewardsState(supabase)
-    if (state.error && !syncRes.error) setError(state.error)
-    setBalance(syncRes.error ? state.balance : syncRes.balance || state.balance)
-    setOwnedThemeIds(state.ownedThemeIds)
-    const equipped = state.equippedThemeId?.trim() || null
-    if (equipped && getMeterPartyBarTheme(equipped)) {
-      writeEquippedMeterPartyBarThemeId(equipped as MeterPartyBarThemeId)
-    } else {
-      clearEquippedMeterPartyBarThemeId()
+    if (state.error) {
+      if (!cached) setError(state.error)
+      setLoading(false)
+      return userId
     }
-    setEquippedThemeId(equipped)
-    setDailyCompletedToday(state.dailyCompletedToday)
+    applyWalletState(state, userId)
     setLoading(false)
-  }, [supabase, enabled, profileDisplayName])
+    return userId
+  }, [supabase, applyWalletState])
+
+  const refreshGrantSync = useCallback(
+    async (userId: string) => {
+      if (!supabase) return
+      const gen = ++syncGenRef.current
+      setSyncing(true)
+
+      const cachedTamer = readCachedConfirmedTamer()
+      if (cachedTamer) {
+        await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
+      }
+
+      const myRes = await fetchMyMeterParses(supabase)
+      if (gen !== syncGenRef.current) return
+      if (myRes.error) {
+        setError(myRes.error)
+        setSyncing(false)
+        return
+      }
+      setMyParses(myRes.rows)
+
+      const identity = resolveSignedInMeterIdentity(profileDisplayName, myRes.rows)
+      const confirmedFromParses = hasConfirmedTamerFromParses(myRes.rows)
+      const parsedTamerName =
+        identity?.confirmedFromUpload ? identity.displayName?.trim() || null : null
+      if (parsedTamerName) writeCachedConfirmedTamer(parsedTamerName)
+      const tamerName = parsedTamerName ?? cachedTamer
+      const confirmed = confirmedFromParses || Boolean(cachedTamer)
+      setIdentityConfirmed(confirmed)
+      setConfirmedTamerName(tamerName)
+      setShowIdentityNotice(!confirmed)
+      const mistDev = isMistMeterShopDev(profileDisplayName, tamerName)
+      setMistShopDev(mistDev)
+
+      const wikiDungeons: WikiDungeonListItem[] = await loadWikiDungeonsForMeter().catch(() => [])
+      if (gen !== syncGenRef.current) return
+      const hardList = hardMeterDungeons(wikiDungeons)
+      setHardDungeons(hardList)
+
+      const dungeonIds = new Set<string>()
+      for (const row of myRes.rows) {
+        const d = row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
+        const diff = row.difficulty_id ?? dungeonFromPayload(row.payload)?.difficultyId
+        if (d && diff === HARD_DIFFICULTY_ID) dungeonIds.add(d)
+      }
+
+      const publicRowsByDungeon = new Map<string, PublicMeterParseRow[]>()
+      await Promise.all(
+        [...dungeonIds].map(async (dungeonId) => {
+          const pub = await getPublicDungeonParsesCached({
+            dungeonId,
+            difficultyId: HARD_DIFFICULTY_ID,
+            limit: 120,
+          })
+          if (!pub.error) publicRowsByDungeon.set(dungeonId, pub.rows)
+        }),
+      )
+      if (gen !== syncGenRef.current) return
+
+      const keys = await fetchMeterGrantKeys(supabase)
+      setGrantKeys(keys)
+      setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, publicRowsByDungeon))
+
+      const grants = computeMeterPointGrants(myRes.rows, publicRowsByDungeon)
+      const syncRes = await syncMeterPointGrants(supabase, grants)
+      if (gen !== syncGenRef.current) return
+
+      if (syncRes.error?.includes('meter_apply_point_grants')) {
+        setError(
+          'Rewards database is not set up yet. Run the meter theme shop SQL in the Supabase SQL Editor.',
+        )
+      } else if (syncRes.error) {
+        setError(syncRes.error)
+      }
+
+      const state = await fetchMeterRewardsState(supabase)
+      if (gen !== syncGenRef.current) return
+      if (state.error && !syncRes.error) setError(state.error)
+      const nextBalance = syncRes.error ? state.balance : syncRes.balance || state.balance
+      applyWalletState(state, userId, nextBalance)
+      setSyncing(false)
+    },
+    [supabase, profileDisplayName, applyWalletState],
+  )
+
+  const refresh = useCallback(
+    async (opts?: { syncGrants?: boolean }) => {
+      if (!supabase || !enabled) {
+        setLoading(false)
+        setSyncing(false)
+        return
+      }
+      setError(null)
+      const walletOnly = opts?.syncGrants === false
+      if (!walletOnly) setLoading(true)
+
+      const userId = await refreshWallet()
+      if (!userId) return
+
+      if (walletOnly) return
+
+      const runGrantSync = opts?.syncGrants === true || shouldRunMeterGrantSync()
+      if (runGrantSync) {
+        void refreshGrantSync(userId).finally(() => markMeterGrantSyncDone())
+      }
+    },
+    [supabase, enabled, refreshWallet, refreshGrantSync],
+  )
 
   useEffect(() => {
     void refresh()
@@ -146,6 +241,7 @@ export function useMeterRewards(
 
   return {
     loading,
+    syncing,
     balance,
     ownedThemeIds,
     equippedThemeId,

@@ -1,4 +1,5 @@
 import type { MeterShopSubcategoryId } from './meterShopCategories'
+import { isShopPurchasableMeterThemeId } from './meterThemeGrants'
 import {
   getMeterPartyBarTheme,
   MIST_DEV_REWARD_THEME_ID,
@@ -24,6 +25,9 @@ export const METER_THEME_UNIQUE_TIER_LABEL = 'Unique'
 export type MeterThemeShopTierId = 'common' | 'rare'
 
 export function meterThemeShopPriceForTheme(theme: MeterPartyBarTheme): number {
+  if (!isShopPurchasableMeterThemeId(theme.id)) {
+    return Number.POSITIVE_INFINITY
+  }
   if (theme.variant === 'legendary') return METER_THEME_SHOP_LEGENDARY_PRICE
   if (theme.variant === 'rare') return METER_THEME_SHOP_RARE_PRICE
   return METER_THEME_SHOP_PRICE

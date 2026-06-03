@@ -144,7 +144,10 @@ export function mergeCoUploadedParseCluster(cluster: PublicMeterParseRow[]): Pub
 
 /** One representative parse per party clear when several tamers uploaded within the dedupe window. */
 export function collapseCoUploadedParseRows(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
-  return clusterCoUploadedParseRows(rows).map(mergeCoUploadedParseCluster)
+  const merged = clusterCoUploadedParseRows(rows).map(mergeCoUploadedParseCluster)
+  return merged.sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )
 }
 
 export const DUAL_METER_INVALIDATE_REASON = 'dual_meter_superseded_v1'

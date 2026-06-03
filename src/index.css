@@ -9712,6 +9712,24 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   overflow: hidden;
 }
 
+.meter-parses-meter-chrome .meter-party-member--hall-of-fame {
+  background: rgba(32, 22, 6, 0.62);
+  box-shadow:
+    inset 3px 0 0 var(--mb-accent, #f5c451),
+    inset 0 0 0 1px rgba(245, 196, 81, 0.22),
+    0 0 16px rgba(245, 196, 81, 0.1);
+}
+
+.meter-parses-meter-chrome .meter-party-member-bar.meter-party-bar-theme--hall-of-fame {
+  background: linear-gradient(
+    90deg,
+    var(--mb-c1) 0%,
+    var(--mb-c2) 50%,
+    color-mix(in srgb, var(--mb-accent) 35%, transparent) 100%
+  );
+  overflow: hidden;
+}
+
 .meter-parses-meter-chrome .meter-party-bar-fill-stack--iliad {
   min-height: 36px;
 }
@@ -13811,6 +13829,30 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   background: linear-gradient(180deg, #f0e0a8 0%, #c9a227 55%, #8a6b1a 100%);
   border: 1px solid rgba(255, 230, 160, 0.55);
   box-shadow: 0 0 10px rgba(229, 204, 128, 0.25);
+}
+
+.meter-shop-card--hof {
+  background: linear-gradient(
+    155deg,
+    rgba(88, 58, 12, 0.5) 0%,
+    rgba(36, 24, 8, 0.58) 50%,
+    rgba(12, 14, 20, 0.65) 100%
+  );
+  border-color: rgba(245, 196, 81, 0.48);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 196, 81, 0.14),
+    0 0 28px rgba(245, 196, 81, 0.1);
+}
+
+.meter-shop-card--hof .meter-shop-card-title {
+  color: #f5d78a;
+}
+
+.meter-shop-tier--hof {
+  color: #1f1406;
+  background: linear-gradient(180deg, #ffe9a8 0%, #e8b84a 50%, #a67c1a 100%);
+  border: 1px solid rgba(255, 220, 140, 0.6);
+  box-shadow: 0 0 12px rgba(245, 196, 81, 0.28);
 }
 
 .meter-shop-card-title {

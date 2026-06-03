@@ -5,11 +5,9 @@ import { MeterSubNav } from '../components/MeterSubNav'
 import {
   buildMeterActivityFeedItems,
   METER_ACTIVITY_FEED_LIMIT,
-  scopePoolsFromPrecomputedStats,
-  uniqueActivityFeedScopes,
+  scopePoolsFromFeedItems,
   type ActivityFeedScopePools,
 } from '../lib/meterActivityFeed'
-import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
 import {
   fetchTotalMeterParsesStored,
   fetchTotalMeterRoleCounts,
@@ -17,10 +15,11 @@ import {
   getGlobalRecentPublicParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
-import type { MeterPublicAggregates, PublicMeterParseRow } from '../lib/meterPublicStats'
+import type { PublicMeterParseRow } from '../lib/meterPublicStats'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS, type MeterRoleBucket } from '../lib/meterRoleBuckets'
 
-const FEED_REFRESH_MS = 60_000
+const FEED_REFRESH_MS = 5 * 60_000
+const ACTIVITY_STATS_DEFER_MS = 2500
 
 function formatInt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -90,21 +89,26 @@ export function MeterActivityPage() {
     void loadDigimonRoleMapForMeter()
       .then(setDigimonRoleById)
       .catch(() => {})
-    void fetchTotalMeterTamersParsed()
-      .then((res) => {
-        if (!res.error) setTotalTamersParsed(res.total)
-      })
-      .catch(() => {})
-    void fetchTotalMeterParsesStored()
-      .then((res) => {
-        if (!res.error) setTotalParsesStored(res.total)
-      })
-      .catch(() => {})
-    void fetchTotalMeterRoleCounts()
-      .then((res) => {
-        if (!res.error) setTotalRoleCounts(res.counts)
-      })
-      .catch(() => {})
+
+    const statsTimer = window.setTimeout(() => {
+      void fetchTotalMeterParsesStored()
+        .then((res) => {
+          if (!res.error) setTotalParsesStored(res.total)
+        })
+        .catch(() => {})
+      void fetchTotalMeterTamersParsed()
+        .then((res) => {
+          if (!res.error) setTotalTamersParsed(res.total)
+        })
+        .catch(() => {})
+      void fetchTotalMeterRoleCounts()
+        .then((res) => {
+          if (!res.error) setTotalRoleCounts(res.counts)
+        })
+        .catch(() => {})
+    }, ACTIVITY_STATS_DEFER_MS)
+
+    return () => window.clearTimeout(statsTimer)
   }, [loadFeed])
 
   useEffect(() => {
@@ -187,26 +191,7 @@ export function MeterActivityPage() {
   const feedWindowLabel = useMemo(() => formatFeedWindowLabel(feedItems), [feedItems])
 
   useEffect(() => {
-    if (!feedItems.length) return
-    let cancelled = false
-    const scopes = uniqueActivityFeedScopes(feedItems).slice(0, 12)
-
-    void (async () => {
-      const statsByScope = new Map<string, MeterPublicAggregates | null>()
-      await Promise.all(
-        scopes.map(async (scope) => {
-          const key = `${scope.dungeonId}:${scope.difficultyId}`
-          const pre = await fetchPrecomputedMeterLeaderboard(scope)
-          statsByScope.set(key, pre.stats)
-        }),
-      )
-      if (cancelled) return
-      setPoolsByScope(scopePoolsFromPrecomputedStats(scopes, statsByScope))
-    })()
-
-    return () => {
-      cancelled = true
-    }
+    setPoolsByScope(scopePoolsFromFeedItems(feedItems))
   }, [feedItems])
 
   return (

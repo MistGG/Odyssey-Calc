@@ -1,13 +1,4 @@
-import { getMeterAnonSupabase, fetchScopeParsesRaw } from './meterDataSource'
-import { ineligibleLeaderboardParseIds } from './meterCoUploadMerge'
-import {
-  isBrokenMeterPartyParse,
-  isLeaderboardEligibleDungeonParsePayload,
-  isMemberLeaderboardEligible,
-  isPartialDungeonClearParse,
-  partyMembersFromPayload,
-} from './meterParsePayload'
-import { normalizePlayerKey } from './meterRoleBuckets'
+import { getMeterAnonSupabase } from './meterDataSource'
 import type { DigimonBarEntry, PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
 import {
   digimonIdToBucket,
@@ -40,7 +31,7 @@ export type ParseSummaryRow = {
   summary: MeterLeaderboardSummaryStored
 }
 
-const SUMMARY_PARSE_LIMIT = 500
+const SUMMARY_PARSE_LIMIT = 200
 
 function isSummaryStored(value: unknown): value is MeterLeaderboardSummaryStored {
   if (!value || typeof value !== 'object') return false
@@ -68,50 +59,32 @@ export async function fetchScopeParseSummaries(
   const id = dungeonId.trim()
   if (!id || difficultyId < 2) return []
 
-  const [{ data, error }, scopeRes] = await Promise.all([
-    supabase
-      .from('meter_parses')
-      .select('id, created_at, leaderboard_summary, payload, duration_sec, app_version')
-      .eq('parse_kind', 'dungeon_party')
-      .eq('dungeon_id', id)
-      .eq('difficulty_id', difficultyId)
-      .not('leaderboard_summary', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(SUMMARY_PARSE_LIMIT),
-    fetchScopeParsesRaw({ dungeonId: id, difficultyId }),
-  ])
+  const { data, error } = await supabase
+    .from('meter_parses')
+    .select('id, created_at, leaderboard_summary')
+    .eq('parse_kind', 'dungeon_party')
+    .eq('dungeon_id', id)
+    .eq('difficulty_id', difficultyId)
+    .not('leaderboard_summary', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(SUMMARY_PARSE_LIMIT)
 
   if (error || !data?.length) return []
-
-  const dropParseIds = scopeRes.error
-    ? new Set<string>()
-    : ineligibleLeaderboardParseIds(scopeRes.rows)
 
   const rows: ParseSummaryRow[] = []
   for (const row of data) {
     const summary = row.leaderboard_summary
     if (!isSummaryStored(summary) || summary.eligible === false) continue
-    if (dropParseIds.has(row.id)) continue
-    if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
-    if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) continue
-    const members = partyMembersFromPayload(row.payload)
-    if (members.length && isBrokenMeterPartyParse(row.payload, members)) continue
-    const filteredMembers = summary.members.filter((sm) => {
+    const members = summary.members.filter((sm) => {
       const key = sm.playerKey?.trim().toLowerCase()
-      const payloadMember = members.find((m) => normalizePlayerKey(m) === key)
-      if (!payloadMember) return true
-      return isMemberLeaderboardEligible(
-        payloadMember,
-        row.payload,
-        row.duration_sec ?? 0,
-        members,
-      )
+      const dps = Number(sm.dps) || 0
+      return Boolean(key) && dps > 0
     })
-    if (!filteredMembers.length) continue
+    if (!members.length) continue
     rows.push({
       parseId: row.id,
       createdAt: row.created_at,
-      summary: { ...summary, members: filteredMembers },
+      summary: { ...summary, members },
     })
   }
   return rows

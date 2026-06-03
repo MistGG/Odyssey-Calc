@@ -248,6 +248,9 @@ export function MeterHallOfFamePage() {
     <div className="meter-parses-page meter-public-page meter-hof-page">
       <header className="meter-parses-logged-head meter-parses-logged-head--bar meter-public-head">
         <h1 className="meter-parses-title">Hall of Fame</h1>
+        <p className="meter-parses-muted">
+          Record-break clears across dungeons and roles.
+        </p>
         <MeterSubNav />
       </header>
 
