@@ -41,6 +41,7 @@ export type PublicMeterParseRow = {
   dungeon_name?: string | null
   difficulty?: string | null
   difficulty_id?: number | null
+  leaderboard_summary?: unknown
 }
 
 export type MeterParseListRow = PublicMeterParseRow & {

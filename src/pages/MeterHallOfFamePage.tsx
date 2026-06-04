@@ -4,13 +4,7 @@ import { MeterHallOfFameBoard } from '../components/MeterHallOfFameBoard'
 import { MeterHallOfFameDungeonNav } from '../components/MeterHallOfFameDungeonNav'
 import { MeterSubNav } from '../components/MeterSubNav'
 import {
-  fetchPrecomputedMeterLeaderboard,
-  resolvePrecomputedLeaderboardNames,
-} from '../lib/meterLeaderboardPrecomputed'
-import {
-  fetchScopeLeaderboardEntryHistory,
-  goldParsesFromLeaderboardHistory,
-  sortedDpsPoolsFromHistory,
+  fetchScopeHallOfFameGoldEntries,
   type MeterHallOfFameEntry,
 } from '../lib/meterHallOfFame'
 import { fetchRecentMeterParseSelection } from '../lib/meterDataSource'
@@ -184,35 +178,14 @@ export function MeterHallOfFamePage() {
     setLoadError(null)
 
     void (async () => {
-      const [history, pre] = await Promise.all([
-        fetchScopeLeaderboardEntryHistory(dungeonId, difficultyId),
-        fetchPrecomputedMeterLeaderboard({ dungeonId, difficultyId }),
-      ])
+      const goldRes = await fetchScopeHallOfFameGoldEntries(dungeonId, difficultyId)
       if (cancelled) return
-      if (history.error) {
-        setLoadError(history.error)
+      if (goldRes.error) {
+        setLoadError(goldRes.error)
         setLoading(false)
         return
       }
 
-      let pools = pre.stats?.sortedDpsByBucket
-      if (pre.stats) {
-        const resolved = await resolvePrecomputedLeaderboardNames(pre.stats).catch(() => pre.stats!)
-        if (!cancelled && resolved) pools = resolved.sortedDpsByBucket
-      }
-
-      const poolByRole =
-        pools ??
-        (history.rows.length ? sortedDpsPoolsFromHistory(history.rows) : {
-          melee: [],
-          ranged: [],
-          caster: [],
-          hybrid: [],
-          tank: [],
-          healer: [],
-        })
-
-      const allGold = goldParsesFromLeaderboardHistory(history.rows, poolByRole)
       const byRole = {
         melee: [] as MeterHallOfFameEntry[],
         ranged: [] as MeterHallOfFameEntry[],
@@ -221,7 +194,7 @@ export function MeterHallOfFamePage() {
         tank: [] as MeterHallOfFameEntry[],
         healer: [] as MeterHallOfFameEntry[],
       }
-      for (const entry of allGold) byRole[entry.roleBucket].push(entry)
+      for (const entry of goldRes.entries) byRole[entry.roleBucket].push(entry)
 
       if (!cancelled) {
         setGoldByRole(byRole)

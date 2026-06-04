@@ -23,13 +23,11 @@ import type { MeterUploadScope } from './meterScopeList'
 
 const METER_PARSES_PUBLIC_TABLE = 'meter_parses_public'
 
-const PARSE_SELECT =
-  'id, created_at, duration_sec, app_version, total_damage, hit_count, payload, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id'
-
 const PUBLIC_PARSE_SELECT =
   'id, created_at, duration_sec, app_version, total_damage, hit_count, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
 
-const FEED_PARSE_SELECT = PUBLIC_PARSE_SELECT
+const FEED_PARSE_SELECT =
+  'id, created_at, duration_sec, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
 
 
 
@@ -109,6 +107,9 @@ const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 150
 const GLOBAL_RECENT_PARSE_LIMIT = 80
 const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
 const MY_METER_PARSES_LIMIT = 150
+const MY_METER_PARSE_LIST_SELECT =
+  'id, created_at, duration_sec, app_version, total_damage, hit_count, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
+const MY_METER_PARSE_PAYLOAD_SELECT = 'id, payload'
 const METER_TAMER_COUNT_CACHE_KEY = 'odyssey-meter-total-tamers-v1'
 /** Site-wide stats scans are expensive; refresh at most once per day per browser. */
 const METER_TAMER_COUNT_TTL_MS = 24 * 60 * 60 * 1000
@@ -613,7 +614,52 @@ export type PlayerLeaderboardEntryRow = {
 }
 
 const PLAYER_LEADERBOARD_SCAN_PAGE_SIZE = 1000
-const PLAYER_LEADERBOARD_SCAN_MAX_ROWS = 20_000
+const PLAYER_LEADERBOARD_SCAN_MAX_ROWS = 500
+const PLAYER_LEADERBOARD_RPC_LIMIT = 500
+
+type PlayerLeaderboardRpcRow = {
+  parse_id?: string | null
+  created_at?: string
+  role_bucket?: string | null
+  player_key?: string | null
+  display_name?: string | null
+  dps?: number | null
+  digimon_id?: string | null
+  digimon_name?: string | null
+  icon_id?: string | null
+  portrait_url?: string | null
+  dungeon_id?: string | null
+  difficulty_id?: number | null
+}
+
+function mapPlayerLeaderboardRpcRow(
+  row: PlayerLeaderboardRpcRow,
+  fallbackKey: string,
+): PlayerLeaderboardEntryRow | null {
+  const role = row.role_bucket?.trim() as MeterRoleBucket | undefined
+  if (!role || !METER_ROLE_BUCKETS.includes(role)) return null
+  const parseId = row.parse_id?.trim?.() ?? String(row.parse_id ?? '').trim()
+  const dungeonId = row.dungeon_id?.trim() ?? ''
+  const difficultyId = row.difficulty_id ?? 0
+  if (!parseId || !dungeonId || difficultyId < 2) return null
+  const dps = Number(row.dps) || 0
+  if (dps <= 0) return null
+  const key = row.player_key?.trim().toLowerCase() ?? fallbackKey
+  return {
+    parseId,
+    dungeonId,
+    difficultyId,
+    roleBucket: role,
+    playerKey: key,
+    displayName: row.display_name?.trim() || key,
+    dps,
+    digimonId: row.digimon_id?.trim() ?? '',
+    digimonName: row.digimon_name?.trim() ?? '',
+    iconId: row.icon_id ?? null,
+    portraitUrl: row.portrait_url ?? undefined,
+    createdAt: row.created_at ?? '',
+  }
+}
 
 /** All precomputed leaderboard rows for one tamer (small columns, no parse payloads). */
 export async function fetchPlayerMeterLeaderboardEntries(
@@ -624,6 +670,24 @@ export async function fetchPlayerMeterLeaderboardEntries(
 
   const key = playerKey.trim().toLowerCase()
   if (!key) return { entries: [], error: null }
+
+  const { data, error } = await supabase.rpc('get_meter_player_leaderboard_entries', {
+    p_player_key: key,
+    p_limit: PLAYER_LEADERBOARD_RPC_LIMIT,
+  })
+
+  if (!error && data?.length) {
+    const entries: PlayerLeaderboardEntryRow[] = []
+    for (const row of data as PlayerLeaderboardRpcRow[]) {
+      const mapped = mapPlayerLeaderboardRpcRow(row, key)
+      if (mapped) entries.push(mapped)
+    }
+    return { entries, error: null }
+  }
+
+  if (error && !/could not find the function|schema cache/i.test(error.message)) {
+    return { entries: [], error: error.message }
+  }
 
   const entries: PlayerLeaderboardEntryRow[] = []
   let offset = 0
@@ -714,28 +778,18 @@ export async function fetchAllScopeParsesCached(
   return { rows: [...byId.values()], error: firstError }
 }
 
-/** Signed-in user's uploads only (session uid + server filter + client verification). */
-
+/** Signed-in user's uploads — metadata only (no payloads). Use fetchMyMeterParsePayload for replay. */
 export async function fetchMyMeterParses(
-
   supabase: SupabaseClient | null,
-
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
-
   if (!supabase) {
-
     return { rows: [], error: null }
-
   }
 
   const { data: authData, error: authError } = await supabase.auth.getUser()
-
   const userId = authData.user?.id
-
   if (authError || !userId) {
-
     return { rows: [], error: null }
-
   }
 
   if (myMeterParsesInflight && myMeterParsesInflightUserId === userId) {
@@ -745,29 +799,57 @@ export async function fetchMyMeterParses(
   myMeterParsesInflightUserId = userId
   myMeterParsesInflight = (async () => {
     const { data, error } = await supabase
-
       .from('meter_parses')
-
-      .select(`${PARSE_SELECT}, user_id`)
-
+      .select(`${MY_METER_PARSE_LIST_SELECT}, user_id`)
       .eq('user_id', userId)
-
       .order('created_at', { ascending: false })
-
       .limit(MY_METER_PARSES_LIMIT)
 
     if (error) return { rows: [], error: error.message }
 
-    const owned = rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId)
-    const rows = await resolveMeterParseRowPayloads(owned)
-    return { rows, error: null }
+    const owned = rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId).map((row) => ({
+      ...row,
+      payload: null,
+    }))
+    return { rows: owned, error: null }
   })().finally(() => {
     myMeterParsesInflight = null
     myMeterParsesInflightUserId = null
   })
 
   return myMeterParsesInflight
+}
 
+/** Fetch one owned parse payload for replay (lazy load on expand). */
+export async function fetchMyMeterParsePayload(
+  supabase: SupabaseClient | null,
+  parseId: string,
+): Promise<{ row: PublicMeterParseRow | null; error: string | null }> {
+  if (!supabase) return { row: null, error: null }
+
+  const id = parseId.trim()
+  if (!id) return { row: null, error: null }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+  const userId = authData.user?.id
+  if (authError || !userId) return { row: null, error: null }
+
+  const { data, error } = await supabase
+    .from('meter_parses')
+    .select(`${MY_METER_PARSE_PAYLOAD_SELECT}, user_id`)
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) return { row: null, error: error.message }
+  if (!data) return { row: null, error: null }
+
+  const dbRow = data as MeterParseRowDb
+  if (dbRow.user_id !== userId) return { row: null, error: null }
+
+  const { user_id: _omit, ...rest } = dbRow
+  const rows = await resolveMeterParseRowPayloads([rest as PublicMeterParseRow])
+  return { row: rows[0] ?? null, error: null }
 }
 
 

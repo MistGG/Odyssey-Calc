@@ -4,7 +4,9 @@ import { difficultySelectOptions, dungeonSelectOptions } from './wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
 
 export function dungeonParseRows(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
-  return rows.filter((r) => isDungeonPartyParsePayload(r.payload))
+  return rows.filter(
+    (r) => r.parse_kind === 'dungeon_party' || isDungeonPartyParsePayload(r.payload),
+  )
 }
 
 export function filterMyDungeonParses(

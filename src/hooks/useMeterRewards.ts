@@ -19,7 +19,7 @@ import {
 } from '../lib/meterPointGrants'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
-import { resolveSignedInMeterIdentity } from '../lib/meterPlayerProfile'
+import { resolveSignedInMeterIdentity, normalizeRoutePlayerKey } from '../lib/meterPlayerProfile'
 import type { PublicMeterParseRow } from '../lib/meterPublicStats'
 import { dungeonFromPayload } from '../lib/meterParsePayload'
 import {
@@ -192,7 +192,12 @@ export function useMeterRewards(
       setGrantKeys(keys)
       setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, new Map()))
 
-      const grants = computeMeterPointGrants(myRes.rows, new Map(), hardDungeonPools)
+      const grants = computeMeterPointGrants(
+        myRes.rows,
+        new Map(),
+        hardDungeonPools,
+        tamerName ? normalizeRoutePlayerKey(tamerName) : null,
+      )
       const syncRes = await syncMeterPointGrants(supabase, grants)
       if (gen !== syncGenRef.current) return
 

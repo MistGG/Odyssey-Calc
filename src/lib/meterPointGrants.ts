@@ -26,23 +26,74 @@ function todayUtcKey(): string {
   return utcDateKey(new Date().toISOString())
 }
 
-function isEligibleHardParse(row: PublicMeterParseRow): boolean {
+type LeaderboardSummaryShape = {
+  eligible?: boolean
+  members?: Array<{ playerKey?: string; dps?: number }>
+}
+
+function summaryFromRow(row: PublicMeterParseRow): LeaderboardSummaryShape | null {
+  const raw = row.leaderboard_summary
+  if (!raw || typeof raw !== 'object') return null
+  return raw as LeaderboardSummaryShape
+}
+
+function normalizeTamerKey(raw: string): string {
+  return raw.trim().toLowerCase()
+}
+
+function resolveSelfPlayerKey(
+  myParses: PublicMeterParseRow[],
+  confirmedPlayerKey?: string | null,
+): string | null {
+  for (const row of myParses) {
+    if (!row.payload) continue
+    for (const member of partyMembersFromPayload(row.payload)) {
+      const self = selfTamerFromMember(member)
+      if (self) return self.playerKey
+    }
+  }
+  const key = confirmedPlayerKey?.trim()
+  return key ? normalizeTamerKey(key) : null
+}
+
+function isEligibleHardParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): boolean {
   const dungeon = dungeonFromPayload(row.payload)
   const difficultyId = row.difficulty_id ?? dungeon?.difficultyId
   if (difficultyId !== HARD_DIFFICULTY_ID) return false
-  if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return false
-  const members = partyMembersFromPayload(row.payload)
-  if (members.length === 0) return false
-  return members.some((m) => m.isSelf)
+
+  if (row.payload && isLeaderboardEligibleDungeonParsePayload(row.payload)) {
+    const members = partyMembersFromPayload(row.payload)
+    if (members.length === 0) return false
+    return members.some((m) => m.isSelf)
+  }
+
+  const summary = summaryFromRow(row)
+  if (summary?.eligible === false) return false
+  if (summary?.eligible !== true || !selfPlayerKey) return false
+  return (summary.members ?? []).some(
+    (m) => normalizeTamerKey(m.playerKey ?? '') === selfPlayerKey && (Number(m.dps) || 0) > 0,
+  )
 }
 
-function selfDpsInParse(row: PublicMeterParseRow): number {
-  const members = partyMembersFromPayload(row.payload)
+function selfDpsInParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): number {
+  if (row.payload) {
+    const members = partyMembersFromPayload(row.payload)
+    let best = 0
+    for (const member of members) {
+      if (!member.isSelf) continue
+      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
+      if (dps > best) best = dps
+    }
+    return best
+  }
+
+  const summary = summaryFromRow(row)
+  if (!summary?.members?.length || !selfPlayerKey) return 0
   let best = 0
-  for (const member of members) {
-    if (!member.isSelf) continue
-    const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
-    if (dps > best) best = dps
+  for (const member of summary.members) {
+    const key = normalizeTamerKey(member.playerKey ?? '')
+    if (key !== selfPlayerKey) continue
+    best = Math.max(best, Number(member.dps) || 0)
   }
   return best
 }
@@ -77,13 +128,14 @@ export function bestParseScoreForHardDungeonWithPool(
   myParses: PublicMeterParseRow[],
   pool: number[],
   dungeonId: string,
+  selfPlayerKey?: string | null,
 ): number {
   const did = dungeonId.trim()
   let myBest = 0
   for (const row of myParses) {
     const d = row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
-    if (d !== did || !isEligibleHardParse(row)) continue
-    myBest = Math.max(myBest, selfDpsInParse(row))
+    if (d !== did || !isEligibleHardParse(row, selfPlayerKey)) continue
+    myBest = Math.max(myBest, selfDpsInParse(row, selfPlayerKey))
   }
   if (myBest <= 0) return 0
   return dpsToPercentile(myBest, pool)
@@ -116,14 +168,16 @@ export function computeMeterPointGrants(
   myParses: PublicMeterParseRow[],
   publicRowsByDungeon: Map<string, PublicMeterParseRow[]>,
   hardDungeonPools?: Map<string, number[]>,
+  confirmedPlayerKey?: string | null,
 ): MeterPointGrant[] {
   const grants: MeterPointGrant[] = []
   const firstClearDungeons = new Set<string>()
   let dailyGranted = false
   const today = todayUtcKey()
+  const selfPlayerKey = resolveSelfPlayerKey(myParses, confirmedPlayerKey)
 
   for (const row of myParses) {
-    if (!isEligibleHardParse(row)) continue
+    if (!isEligibleHardParse(row, selfPlayerKey)) continue
     const dungeonId =
       row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
     if (!dungeonId) continue
@@ -143,7 +197,7 @@ export function computeMeterPointGrants(
   for (const dungeonId of firstClearDungeons) {
     const pool = hardDungeonPools?.get(dungeonId) ?? poolDpsValues(publicRowsByDungeon.get(dungeonId) ?? [])
     const score = hardDungeonPools?.has(dungeonId)
-      ? bestParseScoreForHardDungeonWithPool(myParses, pool, dungeonId)
+      ? bestParseScoreForHardDungeonWithPool(myParses, pool, dungeonId, selfPlayerKey)
       : bestParseScoreForHardDungeon(myParses, publicRowsByDungeon.get(dungeonId) ?? [], dungeonId)
     if (score >= 90) grants.push({ grantKey: `score90:${dungeonId}`, points: 3 })
     if (score >= 99) grants.push({ grantKey: `score99:${dungeonId}`, points: 4 })

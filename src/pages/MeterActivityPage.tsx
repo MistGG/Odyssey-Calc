@@ -13,6 +13,7 @@ import {
   getGlobalRecentPublicParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
+import { isGlobalRecentParseCacheFresh } from '../lib/meterParseCache'
 import type { PublicMeterParseRow } from '../lib/meterPublicStats'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS, type MeterRoleBucket } from '../lib/meterRoleBuckets'
 
@@ -104,6 +105,7 @@ export function MeterActivityPage() {
 
   useEffect(() => {
     const id = window.setInterval(() => {
+      if (isGlobalRecentParseCacheFresh()) return
       void loadFeed({ silent: true })
     }, FEED_REFRESH_MS)
     return () => window.clearInterval(id)

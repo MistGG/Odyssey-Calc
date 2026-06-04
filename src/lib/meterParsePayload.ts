@@ -349,13 +349,25 @@ export function isExcludedFromLeaderboardParseRow(row: {
   payload: unknown
   duration_sec?: number
   app_version?: string | null
+  leaderboard_summary?: unknown
 }): boolean {
-  if (!isDungeonPartyParsePayload(row.payload)) return false
-  if (isFailedDungeonParseRow(row)) return true
-  if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) return true
-  if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return true
-  const members = partyMembersFromPayload(row.payload)
-  if (isBrokenMeterPartyParse(row.payload, members)) return true
+  if (isDungeonPartyParsePayload(row.payload)) {
+    if (isFailedDungeonParseRow(row)) return true
+    if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) return true
+    if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return true
+    const members = partyMembersFromPayload(row.payload)
+    if (isBrokenMeterPartyParse(row.payload, members)) return true
+    return false
+  }
+
+  const summary = row.leaderboard_summary as { eligible?: boolean } | null | undefined
+  if (summary && typeof summary === 'object') {
+    if (summary.eligible === false) return true
+    if (summary.eligible === true) return false
+  }
+
+  const dur = row.duration_sec ?? 0
+  if (dur > 0 && dur < MIN_LEADERBOARD_DUNGEON_SESSION_SEC) return true
   return false
 }
 

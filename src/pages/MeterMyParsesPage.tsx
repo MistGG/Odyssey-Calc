@@ -12,6 +12,7 @@ import {
   sessionDurationFromPayload,
 } from '../lib/meterParsePayload'
 import {
+  fetchMyMeterParsePayload,
   fetchMyMeterParses,
   getPublicDungeonParsesCached,
   loadDigimonRoleMapForMeter,
@@ -39,6 +40,8 @@ export function MeterMyParsesPage() {
   const location = useLocation()
 
   const [rows, setRows] = useState<MeterParseListRow[]>([])
+  const [payloadByParseId, setPayloadByParseId] = useState<Record<string, PublicMeterParseRow>>({})
+  const [payloadLoadingIds, setPayloadLoadingIds] = useState<Set<string>>(() => new Set())
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
@@ -84,6 +87,33 @@ export function MeterMyParsesPage() {
     [],
   )
 
+  const ensureParsePayload = useCallback(
+    async (row: PublicMeterParseRow) => {
+      const parseId = row.id
+      if (payloadByParseId[parseId]?.payload || payloadLoadingIds.has(parseId) || !supabase) return
+      setPayloadLoadingIds((prev) => new Set(prev).add(parseId))
+      const res = await fetchMyMeterParsePayload(supabase, parseId)
+      setPayloadLoadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(parseId)
+        return next
+      })
+      if (res.row?.payload) {
+        const loaded = res.row
+        setPayloadByParseId((prev) => ({
+          ...prev,
+          [parseId]: { ...row, ...loaded, payload: loaded.payload },
+        }))
+      }
+    },
+    [supabase, payloadByParseId, payloadLoadingIds],
+  )
+
+  const rowWithPayload = useCallback(
+    (row: PublicMeterParseRow): PublicMeterParseRow => payloadByParseId[row.id] ?? row,
+    [payloadByParseId],
+  )
+
   const loadParses = useCallback(async () => {
     if (!supabase || !user) return
     setLoading(true)
@@ -101,6 +131,7 @@ export function MeterMyParsesPage() {
     setDigimonRoleById(roles)
     if (mine.error) setLoadError(mine.error)
     setRows(mine.rows as MeterParseListRow[])
+    setPayloadByParseId({})
     setLoading(false)
   }, [supabase, user])
 
@@ -109,8 +140,10 @@ export function MeterMyParsesPage() {
   }, [loadParses])
 
   const renderDungeonSession = (row: PublicMeterParseRow) => {
-    const dungeon = dungeonFromPayload(row.payload)
-    const members = partyMembersFromPayload(row.payload)
+    const hydrated = rowWithPayload(row)
+    const hasPayload = Boolean(hydrated.payload)
+    const dungeon = dungeonFromPayload(hydrated.payload)
+    const members = hasPayload ? partyMembersFromPayload(hydrated.payload) : []
     const title = resolveMeterDungeonDisplayName(
       row.dungeon_id ?? dungeon?.dungeonId,
       wikiDungeons,
@@ -123,13 +156,18 @@ export function MeterMyParsesPage() {
     const bossLine = bosses.length ? bosses.join(', ') : ''
     const outcome =
       dungeon?.runOutcome === 'clear' ? 'Clear' : dungeon?.runOutcome === 'fail' ? 'Fail' : ''
-    const invalid = isInvalidMeterPartyParseRow(row)
-    const unranked = !invalid && isExcludedFromLeaderboardParseRow(row)
-    const raidTotal = raidTotalFromPayload(row.payload, members)
-    const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
+    const invalid = hasPayload ? isInvalidMeterPartyParseRow(hydrated) : false
+    const unranked = hasPayload ? !invalid && isExcludedFromLeaderboardParseRow(hydrated) : isExcludedFromLeaderboardParseRow(row)
+    const raidTotal = hasPayload
+      ? raidTotalFromPayload(hydrated.payload, members)
+      : Math.round(row.total_damage ?? 0)
+    const sessionDur = hasPayload
+      ? sessionDurationFromPayload(hydrated.payload, row.duration_sec, members)
+      : Math.max(row.duration_sec ?? 0, 0)
     const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
     const open = expandedIds.has(row.id)
     const memberKey = partyMemberByParseId[row.id]
+    const payloadLoading = payloadLoadingIds.has(row.id)
 
     return (
       <li
@@ -153,6 +191,7 @@ export function MeterMyParsesPage() {
               else {
                 next.add(row.id)
                 void ensurePublicRowsForParse(row)
+                void ensureParsePayload(row)
               }
               return next
             })
@@ -189,13 +228,16 @@ export function MeterMyParsesPage() {
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
+            {payloadLoading && !hasPayload ? (
+              <p className="meter-parses-muted">Loading parse details…</p>
+            ) : hasPayload ? (
             <MeterDungeonPartyReplay
-              row={row}
+              row={hydrated}
               fallbackDungeonName={title}
               publicRows={(() => {
-                const dungeon = dungeonFromPayload(row.payload)
-                const dungeonId = row.dungeon_id?.trim() || dungeon?.dungeonId?.trim() || ''
-                const difficultyId = row.difficulty_id ?? dungeon?.difficultyId
+                const d = dungeonFromPayload(hydrated.payload)
+                const dungeonId = row.dungeon_id?.trim() || d?.dungeonId?.trim() || ''
+                const difficultyId = row.difficulty_id ?? d?.difficultyId
                 if (!dungeonId || difficultyId == null) return []
                 return publicRowsByScope[publicScopeKey(dungeonId, difficultyId)] ?? []
               })()}
@@ -211,6 +253,9 @@ export function MeterMyParsesPage() {
                 })
               }}
             />
+            ) : (
+              <p className="meter-parses-muted">Could not load parse details.</p>
+            )}
           </div>
         ) : null}
       </li>
