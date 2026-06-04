@@ -47,9 +47,12 @@
           'error',
           function (e) {
             var t = e.target
-            if (t && t.tagName === 'SCRIPT' && t.src && /\/assets\/index-[^/]+\.js/.test(String(t.src))) {
-              recoverStaleAsset()
-            }
+            if (!t || !t.src) return
+            var src = String(t.src)
+            var stale =
+              (t.tagName === 'SCRIPT' && /\/assets\/index-[^/]+\.js/.test(src)) ||
+              (t.tagName === 'LINK' && /\/assets\/index-[^/]+\.css/.test(src))
+            if (stale) recoverStaleAsset()
           },
           true,
         )

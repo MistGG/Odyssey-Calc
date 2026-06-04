@@ -36,14 +36,11 @@ tmp-*.json
 *-bench.mjs
 compare-*.mjs
 
-# Backend schema/setup (not published with the site)
+# Backend / Supabase (not published with the static site; run migrations via CLI locally)
 supabase/*
 !supabase/config.toml
 !supabase/functions/
 !supabase/functions/process-meter-leaderboard/
-!supabase/functions/sync-tier-index/
-!supabase/migrations/
-!supabase/migrations/*.sql
 
 # Editor directories and files
 .vscode/*

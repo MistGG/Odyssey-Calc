@@ -187,19 +187,44 @@ function memberDps(
   return dur > 0 ? damage / dur : 0
 }
 
+/** Highest-damage digimon in the run; ignores end-of-run swap (`currentDigimonId`) when multiple forms fought. */
 function memberPrimaryDigimon(member: StoredMember) {
   const digimons = memberDigimons(member)
-  const dur = Math.max(Number(member.durationSec) || 0, 1e-6)
-  let best = digimons[0]
-  let bestDps = -1
-  for (const dg of digimons) {
-    const dps = (Number(dg.totalDamage) || 0) / dur
-    if (dps > bestDps) {
-      bestDps = dps
+  const current = member.currentDigimonId?.trim() || ''
+  const pool =
+    digimons.length > 1 && current
+      ? digimons.filter((d) => (d.digimonId?.trim() || '') !== current)
+      : digimons
+  const candidates = pool.length > 0 ? pool : digimons
+
+  let best = candidates[0]
+  let bestDamage = -1
+  for (const dg of candidates) {
+    const damage = Math.max(0, Number(dg.totalDamage) || 0)
+    if (damage > bestDamage) {
+      bestDamage = damage
       best = dg
     }
   }
   return best
+}
+
+function primaryDigimonDamage(member: StoredMember): number {
+  const primary = memberPrimaryDigimon(member)
+  return Math.max(0, Number(primary?.totalDamage) || 0)
+}
+
+function memberDpsForLeaderboard(
+  member: StoredMember,
+  payload: DungeonPayload,
+  rowDurationSec: number,
+  members: StoredMember[],
+): number {
+  const digimons = memberDigimons(member)
+  const damage =
+    digimons.length > 1 ? primaryDigimonDamage(member) : memberDamageTotal(member)
+  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  return dur > 0 ? damage / dur : 0
 }
 
 function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): boolean {
@@ -321,15 +346,12 @@ async function fetchWikiDigimon(digimonId: string): Promise<{ name: string | nul
 
 async function resolveRoleBucket(
   member: StoredMember,
-  summaryMember: SummaryMember | undefined,
+  _summaryMember: SummaryMember | undefined,
   roleCache: Map<string, RoleBucket | null>,
   wikiCatalog: Map<string, RoleBucket | null>,
 ): Promise<RoleBucket | null> {
-  const fromSummary = summaryMember?.roleBucket
-  if (fromSummary && ROLE_BUCKETS.includes(fromSummary)) return fromSummary
-
   const primary = memberPrimaryDigimon(member)
-  const digimonId = summaryMember?.digimonId?.trim() || primary?.digimonId?.trim() || ''
+  const digimonId = primary?.digimonId?.trim() || ''
   if (!digimonId) return null
 
   if (roleCache.has(digimonId)) return roleCache.get(digimonId) ?? null
@@ -364,7 +386,7 @@ function buildSummaryFromPayload(
   for (const member of members) {
     if (!isMemberLeaderboardEligible(member, sessionDur)) continue
     const primary = memberPrimaryDigimon(member)
-    const dps = memberDps(member, payload, rowDurationSec, members)
+    const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members)
     out.push({
       playerKey: normalizePlayerKey(member),
       displayName: member.tamerName?.trim() || member.displayLabel?.trim() || '',
@@ -459,6 +481,8 @@ async function processParse(
   if (!summary?.members?.length) {
     summary = buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, appVersion)
   }
+
+  const wikiCatalog = await loadWikiRoleCatalog()
   if (!summary?.eligible) return { inserted: 0, skipped: 'not leaderboard eligible' }
 
   if (members.length && isBrokenPartyParse(payload, members)) {
@@ -487,8 +511,6 @@ async function processParse(
         ],
       }))
 
-  const wikiCatalog = await loadWikiRoleCatalog()
-
   if (!force && existingPlayerKeys.size > 0) {
     const expected = await countResolvableMembers(memberList, summaryByKey, wikiCatalog)
     if (expected > 0 && existingPlayerKeys.size >= expected) {
@@ -510,7 +532,7 @@ async function processParse(
     if (!roleBucket) continue
 
     const primary = memberPrimaryDigimon(member)
-    const digimonId = sm?.digimonId?.trim() || primary?.digimonId?.trim() || ''
+    const digimonId = primary?.digimonId?.trim() || ''
     let officialName: string | null = null
     if (digimonId) {
       if (nameCache.has(digimonId)) {
@@ -525,7 +547,7 @@ async function processParse(
       }
     }
 
-    const dps = sm?.dps ?? memberDps(member, payload, Number(row.duration_sec) || 0, memberList)
+    const dps = memberDpsForLeaderboard(member, payload, Number(row.duration_sec) || 0, memberList)
     if (!(dps > 0)) continue
 
     entries.push({

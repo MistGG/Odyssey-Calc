@@ -92,20 +92,6 @@ export function digimonIdToBucket(
 
 
 
-/** DPS for one member in a dungeon/party parse (session duration, damage from breakdown). */
-export function memberDpsInParse(
-  member: MeterPartyMemberStored,
-  payload: unknown,
-  rowDurationSec: number,
-  members: MeterPartyMemberStored[],
-): number {
-  if (isBrokenMeterPartyParse(payload, members)) return 0
-  const damage = memberDamageTotal(member)
-  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
-  const dur = Math.max(sessionDur, member.durationSec, 1e-6)
-  return dur > 0 ? damage / dur : 0
-}
-
 /** Fallback when parse context is unavailable. */
 export function memberDps(member: MeterPartyMemberStored): number {
   const damage = memberDamageTotal(member)
@@ -115,23 +101,42 @@ export function memberDps(member: MeterPartyMemberStored): number {
 
 
 
-/** Digimon that dealt the most DPS for this member in the parse; fallback `currentDigimonId`. */
+/** Digimon that dealt the most damage this run (ignores end-of-run swap / evolution active slot). */
 export function memberPrimaryDigimonId(member: MeterPartyMemberStored): string | null {
-  const digimons = memberDigimonBreakdowns(member)
-  const dur = Math.max(member.durationSec, 1e-6)
-  let bestId: string | null = member.currentDigimonId?.trim() || null
-  let bestDps = -1
-  for (const dg of digimons) {
-    const dps = dg.totalDamage / dur
-    if (dps > bestDps) {
-      bestDps = dps
-      bestId = dg.digimonId
-    }
-  }
-  return bestId
+  const top = memberTopDigimonUsed(member)
+  return top?.digimonId?.trim() || member.currentDigimonId?.trim() || null
 }
 
-/** Role bucket from highest-DPS digimon used; fallback `currentDigimonId`. */
+/** Damage credited to the leaderboard-attributed digimon (not end-of-run swap). */
+export function memberLeaderboardDamage(
+  member: MeterPartyMemberStored,
+  payload?: unknown,
+  members?: MeterPartyMemberStored[],
+): number {
+  const digimons = memberDigimonBreakdowns(member)
+  if (digimons.length <= 1) return memberDamageTotal(member)
+  const top = memberTopDigimonUsed(member)
+  if (!top) return memberDamageTotal(member)
+  const row = digimons.find((d) => d.digimonId === top.digimonId)
+  const dmg = Math.max(0, row?.totalDamage ?? 0)
+  return dmg > 0 ? dmg : memberDamageTotal(member)
+}
+
+/** DPS for leaderboard from the digimon that dealt the most damage (multi-form runs). */
+export function memberDpsInParse(
+  member: MeterPartyMemberStored,
+  payload: unknown,
+  rowDurationSec: number,
+  members: MeterPartyMemberStored[],
+): number {
+  if (isBrokenMeterPartyParse(payload, members)) return 0
+  const damage = memberLeaderboardDamage(member, payload, members)
+  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
+  const dur = Math.max(sessionDur, member.durationSec, 1e-6)
+  return dur > 0 ? damage / dur : 0
+}
+
+/** Role bucket from leaderboard attribution digimon; fallback `currentDigimonId`. */
 export function memberRoleBucket(
   member: MeterPartyMemberStored,
   digimonRoleById: Map<string, string>,
@@ -159,7 +164,30 @@ export function playerDisplayName(member: MeterPartyMemberStored): string {
 
 }
 
-/** Digimon that contributed the most DPS in this member's parse (for player leaderboard label). */
+function pickLeaderboardDigimon(
+  digimons: ReturnType<typeof memberDigimonBreakdowns>,
+  currentDigimonId: string | null | undefined,
+): (typeof digimons)[number] | null {
+  const current = currentDigimonId?.trim() || ''
+  const pool =
+    digimons.length > 1 && current
+      ? digimons.filter((d) => d.digimonId.trim() !== current)
+      : digimons
+  const candidates = pool.length > 0 ? pool : digimons
+
+  let best: (typeof digimons)[number] | null = null
+  let bestDamage = -1
+  for (const dg of candidates) {
+    const damage = Math.max(0, dg.totalDamage)
+    if (damage > bestDamage) {
+      bestDamage = damage
+      best = dg
+    }
+  }
+  return best
+}
+
+/** Digimon used for leaderboard role + label (most damage; ignores end-of-run swap). */
 export function memberTopDigimonUsed(member: MeterPartyMemberStored): {
   digimonId: string
   digimonName: string
@@ -167,16 +195,7 @@ export function memberTopDigimonUsed(member: MeterPartyMemberStored): {
   portraitUrl?: string
 } | null {
   const digimons = memberDigimonBreakdowns(member)
-  const dur = Math.max(member.durationSec, 1e-6)
-  let best: (typeof digimons)[number] | null = null
-  let bestDps = -1
-  for (const dg of digimons) {
-    const dps = dg.totalDamage / dur
-    if (dps > bestDps) {
-      bestDps = dps
-      best = dg
-    }
-  }
+  const best = pickLeaderboardDigimon(digimons, member.currentDigimonId)
   if (best) {
     return {
       digimonId: best.digimonId,
