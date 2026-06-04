@@ -67,6 +67,12 @@ export function getMeterAnonSupabase(): SupabaseClient | null {
 
     },
 
+    global: {
+      headers: {
+        'x-odyssey-client': 'odyssey-calc',
+      },
+    },
+
   })
 
   return meterAnonClient
