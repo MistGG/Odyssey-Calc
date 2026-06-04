@@ -93,7 +93,7 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
   {
     id: 'mid-raids',
     title: 'Raids',
-    zone: 'Casual Content',
+    zone: 'General Content',
     zoneTone: 'raid',
     informativeOnly: true,
     summary: 'Join scheduled raid bosses for raid rewards and gear materials. Always available alongside your main progression.',
@@ -106,12 +106,23 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
   {
     id: 'mid-seals',
     title: 'Seals',
-    zone: 'Casual Content',
+    zone: 'General Content',
     zoneTone: 'raid',
     informativeOnly: true,
     summary: 'Seal systems and rewards. Guide in progress. Always available alongside your main progression.',
     tasks: [
       { kind: 'tip', text: 'Detailed seal priorities will be added here.' },
+    ],
+  },
+  {
+    id: 'mid-clones',
+    title: 'Clones',
+    zone: 'General Content',
+    zoneTone: 'raid',
+    informativeOnly: true,
+    summary: 'Digimon cloning for additional stats',
+    tasks: [
+      { kind: 'tip', text: 'Stats scale as a percentage of your base value, except Block.' },
     ],
   },
   {

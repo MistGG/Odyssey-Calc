@@ -330,3 +330,46 @@ export type GuidebookDetail = {
 }
 
 export const GUIDEBOOK_DETAILS: Record<string, GuidebookDetail> = {}
+
+export type GuidebookPerfectCloneTier = 1 | 2 | 3 | 4 | 5
+
+export type GuidebookPerfectCloneRow = {
+  level: number
+  attack: string
+  critical: string
+  block: string
+  evasion: string
+  health: string
+  tier: GuidebookPerfectCloneTier
+}
+
+/** Perfect clone stat bonuses by level (wiki Perfect Clone Table). */
+export const GUIDEBOOK_PERFECT_CLONE_TABLE_ROWS: readonly GuidebookPerfectCloneRow[] = [
+  { level: 1, attack: '3%', critical: '15%', block: '2%', evasion: '12%', health: '2%', tier: 1 },
+  { level: 2, attack: '6%', critical: '30%', block: '4%', evasion: '24%', health: '4%', tier: 1 },
+  { level: 3, attack: '9%', critical: '45%', block: '6%', evasion: '36%', health: '6%', tier: 1 },
+  { level: 4, attack: '14%', critical: '70%', block: '9%', evasion: '56%', health: '9%', tier: 2 },
+  { level: 5, attack: '19%', critical: '95%', block: '12%', evasion: '76%', health: '12%', tier: 2 },
+  { level: 6, attack: '24%', critical: '120%', block: '15%', evasion: '96%', health: '15%', tier: 2 },
+  { level: 7, attack: '34%', critical: '170%', block: '21%', evasion: '136%', health: '19%', tier: 3 },
+  { level: 8, attack: '44%', critical: '220%', block: '27%', evasion: '176%', health: '23%', tier: 3 },
+  { level: 9, attack: '54%', critical: '270%', block: '33%', evasion: '216%', health: '27%', tier: 3 },
+  { level: 10, attack: '69%', critical: '345%', block: '42%', evasion: '276%', health: '31%', tier: 4 },
+  { level: 11, attack: '84%', critical: '420%', block: '51%', evasion: '336%', health: '35%', tier: 4 },
+  { level: 12, attack: '99%', critical: '495%', block: '60%', evasion: '396%', health: '39%', tier: 4 },
+  { level: 13, attack: '114%', critical: '570%', block: '69%', evasion: '456%', health: '44%', tier: 5 },
+  { level: 14, attack: '129%', critical: '645%', block: '78%', evasion: '516%', health: '49%', tier: 5 },
+  { level: 15, attack: '144%', critical: '720%', block: '87%', evasion: '576%', health: '54%', tier: 5 },
+]
+
+/** Priority clone stat targets by role. */
+export const GUIDEBOOK_CLONE_RECOMMENDATIONS: readonly GuidebookCorruptedGearRollLine[] = [
+  {
+    label: 'DPS/Healer',
+    stats: '15 Attack, Enough CT to reach 100% CT, Evasion, Block',
+  },
+  {
+    label: 'Tank',
+    stats: '15 Attack, Enough CT to reach 100% CT, Block, Evasion',
+  },
+]

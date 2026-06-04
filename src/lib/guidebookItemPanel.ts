@@ -108,8 +108,8 @@ export async function buildRaidSourceDungeonCards(
   const cards: GuidebookRaidSourceDungeonCard[] = []
   for (const entry of entries) {
     const detail = await loadGuidebookDungeonDetail(entry.dungeonId)
-    const difficulty =
-      findDungeonDifficultyForRaidItem(detail, item.id, entry.bossId) ?? 'Normal'
+    const difficulty = findDungeonDifficultyForRaidItem(detail, item.id, entry.bossId)
+    if (!difficulty) continue
     cards.push({
       dungeonId: entry.dungeonId,
       nameFallback: entry.nameFallback,

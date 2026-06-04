@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { GuidebookDetail } from '../../lib/guidebookContent'
+import {
+  GUIDEBOOK_PERFECT_CLONE_TABLE_ROWS,
+} from '../../lib/guidebookContent'
 import { useGuidebook } from './GuidebookContext'
 
 export function GuideCard({
@@ -42,6 +45,124 @@ export function GuidebookNotes({
     >
       {children}
     </aside>
+  )
+}
+
+export type GuidebookGearStatRoll = {
+  label: string
+  stats: string
+}
+
+function parseGuidebookStatRollItems(stats: string): string[] {
+  const trimmed = stats.trim()
+  if (!trimmed) return []
+  if (trimmed.includes('>')) {
+    return trimmed.split('>').map((part) => part.trim()).filter(Boolean)
+  }
+  if (trimmed.includes(',')) {
+    return trimmed.split(',').map((part) => part.trim()).filter(Boolean)
+  }
+  return [trimmed]
+}
+
+function GuidebookStatRollPanel({
+  title,
+  stats,
+  tone,
+}: {
+  title: string
+  stats: string
+  tone?: 'dps' | 'tank'
+}) {
+  const items = parseGuidebookStatRollItems(stats)
+  const toneClass = tone ? ` guidebook-stat-roll-panel--${tone}` : ''
+
+  return (
+    <section
+      className={`guidebook-stat-roll-panel${toneClass}`}
+      aria-label={`${title} stat targets`}
+    >
+      <h5 className="guidebook-stat-roll-panel__title">{title}</h5>
+      <ul className="guidebook-stat-roll-panel__list">
+        {items.map((item, index) => (
+          <li key={`${item}-${index}`}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+/** DPS/Healer vs Tank stat targets in a recommendations section. */
+export function GuidebookGearStatRollPanels({
+  rolls,
+  ariaLabel,
+  sectionTitle = 'Stat Recommendations',
+}: {
+  rolls: readonly GuidebookGearStatRoll[]
+  ariaLabel: string
+  sectionTitle?: string
+}) {
+  const dpsHealer = rolls[0]
+  const tank = rolls[1]
+
+  return (
+    <section className="guidebook-stat-recommendations" aria-label={ariaLabel}>
+      <header className="guidebook-stat-recommendations__header">
+        <h4 className="guidebook-stat-recommendations__title">{sectionTitle}</h4>
+      </header>
+      <div className="guidebook-stat-roll-panels">
+        {dpsHealer && tank ? (
+          <>
+            <GuidebookStatRollPanel title="DPS/Healer" stats={dpsHealer.stats} tone="dps" />
+            <GuidebookStatRollPanel title="Tank" stats={tank.stats} tone="tank" />
+          </>
+        ) : (
+          rolls.map((roll) => (
+            <GuidebookStatRollPanel key={roll.label} title={roll.label} stats={roll.stats} />
+          ))
+        )}
+      </div>
+    </section>
+  )
+}
+
+/** Perfect clone stat bonuses by level. */
+export function GuidebookPerfectCloneTable() {
+  return (
+    <section className="guidebook-stat-recommendations guidebook-clone-table-section" aria-label="Perfect Clone Table">
+      <header className="guidebook-stat-recommendations__header">
+        <h4 className="guidebook-stat-recommendations__title">Perfect Clone Table</h4>
+      </header>
+      <div className="guidebook-clone-table-scroll">
+        <table className="guidebook-clone-table">
+          <thead>
+            <tr>
+              <th scope="col">Clone Lv</th>
+              <th scope="col">Attack</th>
+              <th scope="col">Critical</th>
+              <th scope="col">Block</th>
+              <th scope="col">Evasion</th>
+              <th scope="col">Health</th>
+            </tr>
+          </thead>
+          <tbody>
+            {GUIDEBOOK_PERFECT_CLONE_TABLE_ROWS.map((row) => (
+              <tr
+                key={row.level}
+                className={`guidebook-clone-table__row guidebook-clone-table__row--tier-${row.tier}`}
+              >
+                <th scope="row">{row.level}</th>
+                <td>{row.attack}</td>
+                <td>{row.critical}</td>
+                <td>{row.block}</td>
+                <td>{row.evasion}</td>
+                <td>{row.health}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   )
 }
 

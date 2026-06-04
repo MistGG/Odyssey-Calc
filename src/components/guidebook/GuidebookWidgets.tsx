@@ -76,6 +76,7 @@ import {
   GUIDEBOOK_RING_ENTRIES,
   GUIDEBOOK_EARLY_NECKLACE_ROLLS,
   GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER,
+  GUIDEBOOK_CLONE_RECOMMENDATIONS,
   guidebookCorruptedGearGuide,
   type GuidebookCorruptedCraftMaterial,
   type GuidebookCorruptedGearGuide,
@@ -88,7 +89,7 @@ import {
 import { useGuidebook } from './GuidebookContext'
 import { useGuidebookWikiOverlay } from './GuidebookWikiOverlay'
 import { GuidebookMonsterLink } from './GuidebookWikiOverlayPanels'
-import { GuideProse, GuidebookNotes } from './GuidebookUi'
+import { GuideProse, GuidebookGearStatRollPanels, GuidebookNotes, GuidebookPerfectCloneTable } from './GuidebookUi'
 import type {
   WikiDigimonDetail,
   WikiDigimonListItem,
@@ -1799,6 +1800,19 @@ export function GuidebookComingSoon() {
   )
 }
 
+export function GuidebookClones() {
+  return (
+    <div className="guidebook-clones">
+      <GuidebookGearStatRollPanels
+        rolls={GUIDEBOOK_CLONE_RECOMMENDATIONS}
+        ariaLabel="Clone recommendations"
+        sectionTitle="Clone Recommendations"
+      />
+      <GuidebookPerfectCloneTable />
+    </div>
+  )
+}
+
 /** Dungeon panels derived from an item&apos;s wiki `raid_sources` (updates when API data changes). */
 export function GuidebookItemRaidDungeonPanels({
   itemId,
@@ -2123,16 +2137,7 @@ export function GuideGearDigivice() {
 
 function GuidebookRingRollingNotes({ ring }: { ring: GuidebookRingEntry }) {
   return (
-    <GuidebookNotes ariaLabel={`${ring.name} stat rolls`}>
-      <ul className="guidebook-notes__list guidebook-notes__list--rolls">
-        {ring.rolls.map((roll) => (
-          <li key={roll.label}>
-            <span className="guidebook-notes__roll-label">{roll.label}:</span>{' '}
-            <span className="guidebook-notes__roll-stats">{roll.stats}</span>
-          </li>
-        ))}
-      </ul>
-    </GuidebookNotes>
+    <GuidebookGearStatRollPanels rolls={ring.rolls} ariaLabel={`${ring.name} stat rolls`} />
   )
 }
 
@@ -2188,18 +2193,7 @@ function GuidebookCorruptedGearRollNotes({
   rolls: GuidebookCorruptedGearGuide['rolls']
   ariaLabel: string
 }) {
-  return (
-    <GuidebookNotes ariaLabel={ariaLabel}>
-      <ul className="guidebook-notes__list guidebook-notes__list--rolls">
-        {rolls.map((roll) => (
-          <li key={roll.label}>
-            <span className="guidebook-notes__roll-label">{roll.label}:</span>{' '}
-            <span className="guidebook-notes__roll-stats">{roll.stats}</span>
-          </li>
-        ))}
-      </ul>
-    </GuidebookNotes>
-  )
+  return <GuidebookGearStatRollPanels rolls={rolls} ariaLabel={ariaLabel} />
 }
 
 function GuidebookCorruptedCraftSection({ guide }: { guide: GuidebookCorruptedGearGuide }) {

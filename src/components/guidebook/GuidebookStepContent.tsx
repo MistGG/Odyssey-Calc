@@ -1,5 +1,6 @@
 import {
   GuidebookComingSoon,
+  GuidebookClones,
   GuideEarlyGame150,
   GuideEarlyGame5070,
   GuideEarlyGame70Beyond,
@@ -32,6 +33,8 @@ export function GuidebookStepContent({ stepId }: { stepId: string }) {
       return <GuidebookRaids />
     case 'mid-seals':
       return <GuidebookComingSoon />
+    case 'mid-clones':
+      return <GuidebookClones />
     case 'mid-clothes':
       return <GuideGearClothes />
     case 'mid-digivice':

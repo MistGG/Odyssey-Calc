@@ -165,7 +165,7 @@ export function findDungeonDifficultyForRaidItem(
   for (const diff of diffs) {
     if (difficultyHasItem(diff, false)) return diff.difficulty
   }
-  return diffs[0]?.difficulty ?? null
+  return null
 }
 
 export function wikiDungeonDifficulty(
