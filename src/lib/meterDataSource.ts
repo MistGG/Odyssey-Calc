@@ -14,7 +14,10 @@ import {
   setCachedGlobalRecentParses,
   setCachedScopeParses,
 } from './meterParseCache'
-import { resolveMeterParseRowPayloads } from './meterParseDigimonNames'
+import {
+  applyOfficialNamesToPlayerRankEntries,
+  resolveMeterParseRowPayloads,
+} from './meterParseDigimonNames'
 import { fetchDigimonRoleMap } from './meterRoleBuckets'
 import { mapPool } from './meterPlayerProfile'
 import type { MeterUploadScope } from './meterScopeList'
@@ -632,6 +635,28 @@ type PlayerLeaderboardRpcRow = {
   difficulty_id?: number | null
 }
 
+async function resolvePlayerLeaderboardEntryNames(
+  entries: PlayerLeaderboardEntryRow[],
+): Promise<PlayerLeaderboardEntryRow[]> {
+  if (!entries.length) return entries
+  const forNames = entries.map((e) => ({
+    playerKey: e.playerKey,
+    displayName: e.displayName,
+    dps: e.dps,
+    digimonId: e.digimonId,
+    digimonName: e.digimonName,
+    iconId: e.iconId,
+    portraitUrl: e.portraitUrl,
+  }))
+  const resolved = await applyOfficialNamesToPlayerRankEntries(forNames).catch(() => forNames)
+  return entries.map((entry, i) => ({
+    ...entry,
+    digimonName: resolved[i]!.digimonName,
+    iconId: resolved[i]!.iconId,
+    portraitUrl: resolved[i]!.portraitUrl,
+  }))
+}
+
 function mapPlayerLeaderboardRpcRow(
   row: PlayerLeaderboardRpcRow,
   fallbackKey: string,
@@ -682,7 +707,7 @@ export async function fetchPlayerMeterLeaderboardEntries(
       const mapped = mapPlayerLeaderboardRpcRow(row, key)
       if (mapped) entries.push(mapped)
     }
-    return { entries, error: null }
+    return { entries: await resolvePlayerLeaderboardEntryNames(entries), error: null }
   }
 
   if (error && !/could not find the function|schema cache/i.test(error.message)) {
@@ -750,7 +775,7 @@ export async function fetchPlayerMeterLeaderboardEntries(
     offset += PLAYER_LEADERBOARD_SCAN_PAGE_SIZE
   }
 
-  return { entries, error: null }
+  return { entries: await resolvePlayerLeaderboardEntryNames(entries), error: null }
 }
 
 export async function fetchAllScopeParsesCached(

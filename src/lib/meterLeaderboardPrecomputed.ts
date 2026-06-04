@@ -173,41 +173,34 @@ async function fetchPrecomputedMeterLeaderboardUncached(
     digimonByBucketAverage[bucket].sort((a, b) => b.dps - a.dps)
   }
 
-  const stats: MeterPublicAggregates = {
+  let stats: MeterPublicAggregates = {
     playersByBucket,
     sortedDpsByBucket,
     digimonByBucketBest,
     digimonByBucketAverage,
   }
 
-  setCachedLeaderboardStats(dungeonId, difficultyId, stats)
-  return { stats, error: null }
-}
-
-function statsDigimonNamesLookResolved(stats: MeterPublicAggregates): boolean {
-  for (const bucket of METER_ROLE_BUCKETS) {
-    for (const entry of stats.playersByBucket[bucket]) {
-      const name = entry.digimonName.trim()
-      const id = entry.digimonId.trim()
-      if (!id || !name) continue
-      if (name === id || /^[0-9a-f-]{30,}$/i.test(name)) return false
-    }
-  }
-  return true
-}
-
-/** Wiki species names — optional polish; skip when RPC already has display names. */
-export async function resolvePrecomputedLeaderboardNames(
-  stats: MeterPublicAggregates,
-): Promise<MeterPublicAggregates> {
-  if (statsDigimonNamesLookResolved(stats)) return stats
   try {
-    return await Promise.race([
+    stats = await Promise.race([
       applyOfficialNamesToMeterAggregates(stats),
       new Promise<MeterPublicAggregates>((resolve) => {
         window.setTimeout(() => resolve(stats), 4_000)
       }),
     ])
+  } catch {
+    /* keep RPC names */
+  }
+
+  setCachedLeaderboardStats(dungeonId, difficultyId, stats)
+  return { stats, error: null }
+}
+
+/** Replace stream nicknames with wiki species names from digimon_id. */
+export async function resolvePrecomputedLeaderboardNames(
+  stats: MeterPublicAggregates,
+): Promise<MeterPublicAggregates> {
+  try {
+    return await applyOfficialNamesToMeterAggregates(stats)
   } catch {
     return stats
   }

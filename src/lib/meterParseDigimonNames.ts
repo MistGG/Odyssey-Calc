@@ -144,7 +144,6 @@ function applyOfficialNameToRankEntry(
   if (!id) return entry
   const info = officialById.get(id)
   if (!info?.name) return entry
-  if (normId(info.name) === normId(entry.digimonName)) return entry
   return {
     ...entry,
     digimonName: info.name,
@@ -162,7 +161,6 @@ function applyOfficialNameToDigimonBar(
   if (!id) return entry
   const info = officialById.get(id)
   if (!info?.name) return entry
-  if (normId(info.name) === normId(entry.digimonName)) return entry
   return {
     ...entry,
     digimonName: info.name,

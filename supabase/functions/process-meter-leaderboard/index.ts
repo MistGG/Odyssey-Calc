@@ -564,11 +564,7 @@ async function processParse(
         playerKey,
       dps,
       digimon_id: digimonId,
-      digimon_name:
-        officialName ||
-        sm?.digimonName?.trim() ||
-        primary?.digimonName?.trim() ||
-        '',
+      digimon_name: officialName || '',
       icon_id: sm?.iconId?.trim() || primary?.iconId?.trim() || null,
       portrait_url: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
     })

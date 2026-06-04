@@ -108,11 +108,7 @@ export function memberPrimaryDigimonId(member: MeterPartyMemberStored): string |
 }
 
 /** Damage credited to the leaderboard-attributed digimon (not end-of-run swap). */
-export function memberLeaderboardDamage(
-  member: MeterPartyMemberStored,
-  payload?: unknown,
-  members?: MeterPartyMemberStored[],
-): number {
+export function memberLeaderboardDamage(member: MeterPartyMemberStored): number {
   const digimons = memberDigimonBreakdowns(member)
   if (digimons.length <= 1) return memberDamageTotal(member)
   const top = memberTopDigimonUsed(member)
@@ -130,7 +126,7 @@ export function memberDpsInParse(
   members: MeterPartyMemberStored[],
 ): number {
   if (isBrokenMeterPartyParse(payload, members)) return 0
-  const damage = memberLeaderboardDamage(member, payload, members)
+  const damage = memberLeaderboardDamage(member)
   const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
   const dur = Math.max(sessionDur, member.durationSec, 1e-6)
   return dur > 0 ? damage / dur : 0
