@@ -1,10 +1,10 @@
-import { fetchParsesForCoUploadFilter, fetchScopeEligibleParses, getMeterAnonSupabase } from './meterDataSource'
+import { fetchScopeEligibleParses, getMeterAnonSupabase } from './meterDataSource'
 import {
   buildEntriesFromParseSummaries,
   fetchScopeParseSummaries,
   mergeSummaryEntriesIntoHistory,
 } from './meterLeaderboardSummary'
-import { collapseCoUploadedParseRows, filterLeaderboardHistoryByScopeParses } from './meterCoUploadMerge'
+import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
 import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
@@ -286,12 +286,14 @@ export async function fetchScopeLeaderboardEntryHistory(
   }))
 
   try {
-    const [summaries, roleMap] = await Promise.all([
-      fetchScopeParseSummaries(id, difficultyId),
-      fetchDigimonRoleMap(),
-    ])
-    const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
-    rows = mergeSummaryEntriesIntoHistory(rows, supplemental)
+    if (!rows.length) {
+      const [summaries, roleMap] = await Promise.all([
+        fetchScopeParseSummaries(id, difficultyId),
+        fetchDigimonRoleMap(),
+      ])
+      const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
+      rows = mergeSummaryEntriesIntoHistory(rows, supplemental)
+    }
   } catch {
     /* keep table history only */
   }
@@ -315,16 +317,6 @@ export async function fetchScopeLeaderboardEntryHistory(
     } catch {
       /* keep prior rows */
     }
-  }
-
-  try {
-    const parseIds = [...new Set(rows.map((entry) => entry.parseId))]
-    const scopeParses = await fetchParsesForCoUploadFilter(parseIds)
-    if (scopeParses.length) {
-      rows = filterLeaderboardHistoryByScopeParses(rows, scopeParses)
-    }
-  } catch {
-    /* keep prior rows */
   }
 
   return { rows, error: null }

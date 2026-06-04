@@ -1,4 +1,6 @@
 import { getMeterAnonSupabase } from './meterDataSource'
+
+const METER_PARSES_PUBLIC_TABLE = 'meter_parses_public'
 import type { DigimonBarEntry, PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
 import {
   digimonIdToBucket,
@@ -60,7 +62,7 @@ export async function fetchScopeParseSummaries(
   if (!id || difficultyId < 2) return []
 
   const { data, error } = await supabase
-    .from('meter_parses')
+    .from(METER_PARSES_PUBLIC_TABLE)
     .select('id, created_at, leaderboard_summary')
     .eq('parse_kind', 'dungeon_party')
     .eq('dungeon_id', id)

@@ -6,7 +6,7 @@ import {
   partyMembersFromPayload,
 } from './meterParsePayload'
 import { dpsToPercentile } from './meterParseScoreColor'
-import { memberDpsInParse } from './meterRoleBuckets'
+import { memberDpsInParse, METER_ROLE_BUCKETS } from './meterRoleBuckets'
 import type { PublicMeterParseRow } from './meterPublicStats'
 import { selfTamerFromMember } from './meterPlayerProfile'
 
@@ -59,6 +59,36 @@ function poolDpsValues(publicRows: PublicMeterParseRow[]): number[] {
   return values
 }
 
+export function poolDpsValuesFromPrecomputed(
+  stats: { sortedDpsByBucket: Record<(typeof METER_ROLE_BUCKETS)[number], number[]> } | null | undefined,
+): number[] {
+  if (!stats) return []
+  const values: number[] = []
+  for (const bucket of METER_ROLE_BUCKETS) {
+    for (const dps of stats.sortedDpsByBucket[bucket]) {
+      if (dps > 0) values.push(dps)
+    }
+  }
+  return values
+}
+
+/** Best parse score for a Hard dungeon using a precomputed DPS pool (no public payload download). */
+export function bestParseScoreForHardDungeonWithPool(
+  myParses: PublicMeterParseRow[],
+  pool: number[],
+  dungeonId: string,
+): number {
+  const did = dungeonId.trim()
+  let myBest = 0
+  for (const row of myParses) {
+    const d = row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
+    if (d !== did || !isEligibleHardParse(row)) continue
+    myBest = Math.max(myBest, selfDpsInParse(row))
+  }
+  if (myBest <= 0) return 0
+  return dpsToPercentile(myBest, pool)
+}
+
 /** Best parse score for a Hard dungeon — max self DPS across all uploads (any role/digimon), vs full pool. */
 export function bestParseScoreForHardDungeon(
   myParses: PublicMeterParseRow[],
@@ -85,6 +115,7 @@ export function bestParseScoreForHardDungeon(
 export function computeMeterPointGrants(
   myParses: PublicMeterParseRow[],
   publicRowsByDungeon: Map<string, PublicMeterParseRow[]>,
+  hardDungeonPools?: Map<string, number[]>,
 ): MeterPointGrant[] {
   const grants: MeterPointGrant[] = []
   const firstClearDungeons = new Set<string>()
@@ -110,8 +141,10 @@ export function computeMeterPointGrants(
 
   // Score tiers: one grant key per dungeon (not per role). DB unique (user_id, grant_key) prevents re-award.
   for (const dungeonId of firstClearDungeons) {
-    const pool = publicRowsByDungeon.get(dungeonId) ?? []
-    const score = bestParseScoreForHardDungeon(myParses, pool, dungeonId)
+    const pool = hardDungeonPools?.get(dungeonId) ?? poolDpsValues(publicRowsByDungeon.get(dungeonId) ?? [])
+    const score = hardDungeonPools?.has(dungeonId)
+      ? bestParseScoreForHardDungeonWithPool(myParses, pool, dungeonId)
+      : bestParseScoreForHardDungeon(myParses, publicRowsByDungeon.get(dungeonId) ?? [], dungeonId)
     if (score >= 90) grants.push({ grantKey: `score90:${dungeonId}`, points: 3 })
     if (score >= 99) grants.push({ grantKey: `score99:${dungeonId}`, points: 4 })
     if (score >= 100) grants.push({ grantKey: `score100:${dungeonId}`, points: 10 })

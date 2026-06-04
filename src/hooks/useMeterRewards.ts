@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { fetchMyMeterParses, getPublicDungeonParsesCached } from '../lib/meterDataSource'
+import { fetchMyMeterParses } from '../lib/meterDataSource'
+import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
 import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
 import {
   buildDungeonEarnProgress,
@@ -13,6 +14,7 @@ import {
   fetchMeterGrantKeys,
   fetchMeterRewardsState,
   hasConfirmedTamerFromParses,
+  poolDpsValuesFromPrecomputed,
   syncMeterPointGrants,
 } from '../lib/meterPointGrants'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
@@ -172,24 +174,25 @@ export function useMeterRewards(
         if (d && diff === HARD_DIFFICULTY_ID) dungeonIds.add(d)
       }
 
-      const publicRowsByDungeon = new Map<string, PublicMeterParseRow[]>()
+      const hardDungeonPools = new Map<string, number[]>()
       await Promise.all(
         [...dungeonIds].map(async (dungeonId) => {
-          const pub = await getPublicDungeonParsesCached({
+          const pre = await fetchPrecomputedMeterLeaderboard({
             dungeonId,
             difficultyId: HARD_DIFFICULTY_ID,
-            limit: 120,
           })
-          if (!pub.error) publicRowsByDungeon.set(dungeonId, pub.rows)
+          if (pre.stats) {
+            hardDungeonPools.set(dungeonId, poolDpsValuesFromPrecomputed(pre.stats))
+          }
         }),
       )
       if (gen !== syncGenRef.current) return
 
       const keys = await fetchMeterGrantKeys(supabase)
       setGrantKeys(keys)
-      setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, publicRowsByDungeon))
+      setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, new Map()))
 
-      const grants = computeMeterPointGrants(myRes.rows, publicRowsByDungeon)
+      const grants = computeMeterPointGrants(myRes.rows, new Map(), hardDungeonPools)
       const syncRes = await syncMeterPointGrants(supabase, grants)
       if (gen !== syncGenRef.current) return
 

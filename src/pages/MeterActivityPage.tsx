@@ -9,9 +9,7 @@ import {
   type ActivityFeedScopePools,
 } from '../lib/meterActivityFeed'
 import {
-  fetchTotalMeterParsesStored,
-  fetchTotalMeterRoleCounts,
-  fetchTotalMeterTamersParsed,
+  fetchMeterSiteStats,
   getGlobalRecentPublicParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
@@ -91,19 +89,12 @@ export function MeterActivityPage() {
       .catch(() => {})
 
     const statsTimer = window.setTimeout(() => {
-      void fetchTotalMeterParsesStored()
+      void fetchMeterSiteStats()
         .then((res) => {
-          if (!res.error) setTotalParsesStored(res.total)
-        })
-        .catch(() => {})
-      void fetchTotalMeterTamersParsed()
-        .then((res) => {
-          if (!res.error) setTotalTamersParsed(res.total)
-        })
-        .catch(() => {})
-      void fetchTotalMeterRoleCounts()
-        .then((res) => {
-          if (!res.error) setTotalRoleCounts(res.counts)
+          if (res.error) return
+          setTotalParsesStored(res.totalParses)
+          setTotalTamersParsed(res.uniqueTamers)
+          setTotalRoleCounts(res.roleCounts)
         })
         .catch(() => {})
     }, ACTIVITY_STATS_DEFER_MS)

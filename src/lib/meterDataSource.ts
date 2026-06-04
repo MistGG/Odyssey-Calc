@@ -21,13 +21,15 @@ import type { MeterUploadScope } from './meterScopeList'
 
 
 
+const METER_PARSES_PUBLIC_TABLE = 'meter_parses_public'
+
 const PARSE_SELECT =
   'id, created_at, duration_sec, app_version, total_damage, hit_count, payload, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id'
 
-const FEED_PARSE_SELECT =
-  'id, created_at, duration_sec, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
+const PUBLIC_PARSE_SELECT =
+  'id, created_at, duration_sec, app_version, total_damage, hit_count, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
 
-const CO_UPLOAD_FILTER_SELECT = 'id, created_at, app_version, payload'
+const FEED_PARSE_SELECT = PUBLIC_PARSE_SELECT
 
 
 
@@ -99,8 +101,7 @@ function rowsOwnedByUser(rows: MeterParseRowDb[], userId: string): PublicMeterPa
 
 const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 150
 const GLOBAL_RECENT_PARSE_LIMIT = 80
-const PARSE_IDS_BATCH_SIZE = 80
-/** Max signed-in uploads considered for meter point grants (shop / rewards sync). */
+const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
 const MY_METER_PARSES_LIMIT = 150
 const METER_TAMER_COUNT_CACHE_KEY = 'odyssey-meter-total-tamers-v1'
 /** Site-wide stats scans are expensive; refresh at most once per day per browser. */
@@ -112,9 +113,6 @@ let globalRecentRefreshInflight: Promise<{ rows: PublicMeterParseRow[]; error: s
 
 let myMeterParsesInflight: Promise<{ rows: PublicMeterParseRow[]; error: string | null }> | null = null
 let myMeterParsesInflightUserId: string | null = null
-const METER_TAMER_SCAN_PAGE_SIZE = 1000
-const METER_TAMER_SCAN_MAX_ROWS = 200_000
-const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
 const METER_ROLE_COUNT_CACHE_KEY = 'odyssey-meter-total-role-counts-v2'
 
 /** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
@@ -130,9 +128,7 @@ export async function fetchRecentMeterParseSelection(
   if (!supabase) return null
 
   const { data, error } = await supabase
-
-    .from('meter_parses')
-
+    .from(METER_PARSES_PUBLIC_TABLE)
     .select('dungeon_id, difficulty_id, difficulty, created_at')
 
     .eq('parse_kind', 'dungeon_party')
@@ -185,7 +181,7 @@ export async function fetchScopeEligibleParses(
   return { rows: leaderboardEligibleParses(res.rows), error: null }
 }
 
-/** All stored parses for a scope (includes ineligible — used for dual-meter supersession). */
+/** All stored parses for a scope (summary-backed public rows; no raw payload). */
 export async function fetchScopeParsesRaw(
   params: FetchPublicDungeonParsesParams,
 ): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
@@ -201,16 +197,17 @@ export async function fetchScopeParsesRaw(
   }
 
   const { data, error } = await supabase
-    .from('meter_parses')
-    .select(PARSE_SELECT)
+    .from(METER_PARSES_PUBLIC_TABLE)
+    .select(PUBLIC_PARSE_SELECT)
     .eq('parse_kind', 'dungeon_party')
     .eq('dungeon_id', dungeonId)
     .eq('difficulty_id', difficultyId)
+    .not('leaderboard_summary', 'is', null)
     .order('created_at', { ascending: false })
     .limit(params.limit ?? PUBLIC_PARSE_LIMIT_PER_DUNGEON)
 
   if (error) return { rows: [], error: error.message }
-  return { rows: (data ?? []) as PublicMeterParseRow[], error: null }
+  return { rows: feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[]), error: null }
 }
 
 async function finalizeScopeParses(
@@ -218,16 +215,9 @@ async function finalizeScopeParses(
   cacheKey: string,
   onUpdated?: (rows: PublicMeterParseRow[]) => void,
 ): Promise<PublicMeterParseRow[]> {
-  if (!eligible.length) {
-    setCachedScopeParses(cacheKey, eligible)
-    onUpdated?.(eligible)
-    return eligible
-  }
+  setCachedScopeParses(cacheKey, eligible)
   onUpdated?.(eligible)
-  const resolved = await resolveMeterParseRowPayloads(eligible)
-  setCachedScopeParses(cacheKey, resolved)
-  onUpdated?.(resolved)
-  return resolved
+  return eligible
 }
 
 async function refreshScopeParses(
@@ -289,7 +279,7 @@ async function refreshGlobalRecentPublicParses(
   }
 
   const { data, error } = await supabase
-    .from('meter_parses')
+    .from(METER_PARSES_PUBLIC_TABLE)
     .select(FEED_PARSE_SELECT)
     .eq('parse_kind', 'dungeon_party')
     .gte('difficulty_id', 2)
@@ -527,141 +517,78 @@ function writeCachedRoleCounts(value: Record<MeterRoleBucket, number>): void {
 }
 
 /** Unique player keys present in precomputed leaderboard entries (all-time). */
-export async function fetchTotalMeterTamersParsed(): Promise<{ total: number; error: string | null }> {
-  const cached = readCachedMeterTamerCount()
-  if (cached != null) return { total: cached, error: null }
+export async function fetchMeterSiteStats(): Promise<{
+  totalParses: number
+  uniqueTamers: number
+  roleCounts: Record<MeterRoleBucket, number>
+  error: string | null
+}> {
+  const emptyRoleCounts = METER_ROLE_BUCKETS.reduce(
+    (acc, role) => ({ ...acc, [role]: 0 }),
+    {} as Record<MeterRoleBucket, number>,
+  )
 
-  const supabase = getMeterAnonSupabase()
-  if (!supabase) return { total: 0, error: 'Supabase is not configured.' }
-
-  const keys = new Set<string>()
-  let offset = 0
-
-  while (offset < METER_TAMER_SCAN_MAX_ROWS) {
-    const to = offset + METER_TAMER_SCAN_PAGE_SIZE - 1
-    const { data, error } = await supabase
-      .from('meter_leaderboard_entries')
-      .select('player_key, created_at')
-      .order('created_at', { ascending: false })
-      .range(offset, to)
-
-    if (error) return { total: 0, error: error.message }
-    const rows = (data ?? []) as Array<{ player_key?: string | null }>
-    if (!rows.length) break
-
-    for (const row of rows) {
-      const key = row.player_key?.trim().toLowerCase()
-      if (key) keys.add(key)
+  const cachedTamers = readCachedMeterTamerCount()
+  const cachedParses = readCachedNumber(METER_PARSE_COUNT_CACHE_KEY)
+  const cachedRoles = readCachedRoleCounts()
+  if (cachedTamers != null && cachedParses != null && cachedRoles) {
+    return {
+      totalParses: cachedParses,
+      uniqueTamers: cachedTamers,
+      roleCounts: cachedRoles,
+      error: null,
     }
-
-    if (rows.length < METER_TAMER_SCAN_PAGE_SIZE) break
-    offset += METER_TAMER_SCAN_PAGE_SIZE
   }
 
-  const total = keys.size
-  writeCachedMeterTamerCount(total)
-  return { total, error: null }
-}
-
-/** All stored dungeon-party parses count. */
-export async function fetchTotalMeterParsesStored(): Promise<{ total: number; error: string | null }> {
-  const cached = readCachedNumber(METER_PARSE_COUNT_CACHE_KEY)
-  if (cached != null) return { total: cached, error: null }
-
   const supabase = getMeterAnonSupabase()
-  if (!supabase) return { total: 0, error: 'Supabase is not configured.' }
-  const { count, error } = await supabase
-    .from('meter_parses')
-    .select('id', { count: 'exact', head: true })
-    .eq('parse_kind', 'dungeon_party')
-  if (error) return { total: 0, error: error.message }
-  const total = Math.max(0, count ?? 0)
-  writeCachedNumber(METER_PARSE_COUNT_CACHE_KEY, total)
-  return { total, error: null }
+  if (!supabase) {
+    return { totalParses: 0, uniqueTamers: 0, roleCounts: emptyRoleCounts, error: 'Supabase is not configured.' }
+  }
+
+  const { data, error } = await supabase.rpc('get_meter_site_stats')
+  if (error) {
+    return { totalParses: 0, uniqueTamers: 0, roleCounts: emptyRoleCounts, error: error.message }
+  }
+
+  const raw = (data ?? {}) as {
+    total_parses?: number
+    unique_tamers?: number
+    role_counts?: Record<string, number>
+  }
+  const totalParses = Math.max(0, Math.floor(Number(raw.total_parses) || 0))
+  const uniqueTamers = Math.max(0, Math.floor(Number(raw.unique_tamers) || 0))
+  const roleCounts = { ...emptyRoleCounts }
+  for (const role of METER_ROLE_BUCKETS) {
+    const n = raw.role_counts?.[role]
+    roleCounts[role] = Number.isFinite(n) ? Math.max(0, Math.floor(n!)) : 0
+  }
+
+  writeCachedMeterTamerCount(uniqueTamers)
+  writeCachedNumber(METER_PARSE_COUNT_CACHE_KEY, totalParses)
+  writeCachedRoleCounts(roleCounts)
+
+  return { totalParses, uniqueTamers, roleCounts, error: null }
 }
 
-/** All-time role entry counts from precomputed leaderboard rows. */
+/** @deprecated Prefer fetchMeterSiteStats — kept for callers migrating gradually. */
+export async function fetchTotalMeterTamersParsed(): Promise<{ total: number; error: string | null }> {
+  const res = await fetchMeterSiteStats()
+  return { total: res.uniqueTamers, error: res.error }
+}
+
+/** @deprecated Prefer fetchMeterSiteStats */
+export async function fetchTotalMeterParsesStored(): Promise<{ total: number; error: string | null }> {
+  const res = await fetchMeterSiteStats()
+  return { total: res.totalParses, error: res.error }
+}
+
+/** @deprecated Prefer fetchMeterSiteStats */
 export async function fetchTotalMeterRoleCounts(): Promise<{
   counts: Record<MeterRoleBucket, number>
   error: string | null
 }> {
-  const cached = readCachedRoleCounts()
-  if (cached) return { counts: cached, error: null }
-
-  const supabase = getMeterAnonSupabase()
-  if (!supabase) {
-    return {
-      counts: METER_ROLE_BUCKETS.reduce(
-        (acc, role) => ({ ...acc, [role]: 0 }),
-        {} as Record<MeterRoleBucket, number>,
-      ),
-      error: 'Supabase is not configured.',
-    }
-  }
-
-  const uniqueByRole = METER_ROLE_BUCKETS.reduce(
-    (acc, role) => ({ ...acc, [role]: new Set<string>() }),
-    {} as Record<MeterRoleBucket, Set<string>>,
-  )
-
-  let offset = 0
-  while (offset < METER_TAMER_SCAN_MAX_ROWS) {
-    const to = offset + METER_TAMER_SCAN_PAGE_SIZE - 1
-    const { data, error } = await supabase
-      .from('meter_leaderboard_entries')
-      .select('role_bucket, player_key, created_at')
-      .order('created_at', { ascending: false })
-      .range(offset, to)
-    if (error) {
-      return {
-        counts: METER_ROLE_BUCKETS.reduce(
-          (acc, role) => ({ ...acc, [role]: 0 }),
-          {} as Record<MeterRoleBucket, number>,
-        ),
-        error: error.message,
-      }
-    }
-    const rows = (data ?? []) as Array<{ role_bucket?: string | null; player_key?: string | null }>
-    if (!rows.length) break
-
-    for (const row of rows) {
-      const role = row.role_bucket?.trim() as MeterRoleBucket | undefined
-      const key = row.player_key?.trim().toLowerCase()
-      if (!role || !key) continue
-      if (!METER_ROLE_BUCKETS.includes(role)) continue
-      uniqueByRole[role].add(key)
-    }
-
-    if (rows.length < METER_TAMER_SCAN_PAGE_SIZE) break
-    offset += METER_TAMER_SCAN_PAGE_SIZE
-  }
-
-  const counts = {} as Record<MeterRoleBucket, number>
-  for (const role of METER_ROLE_BUCKETS) counts[role] = uniqueByRole[role].size
-  writeCachedRoleCounts(counts)
-  return { counts, error: null }
-}
-
-export async function fetchParsesForCoUploadFilter(
-  parseIds: string[],
-): Promise<PublicMeterParseRow[]> {
-  const supabase = getMeterAnonSupabase()
-  if (!supabase || !parseIds.length) return []
-
-  const unique = [...new Set(parseIds.map((id) => id.trim()).filter(Boolean))]
-  const out: PublicMeterParseRow[] = []
-
-  for (let offset = 0; offset < unique.length; offset += PARSE_IDS_BATCH_SIZE) {
-    const chunk = unique.slice(offset, offset + PARSE_IDS_BATCH_SIZE)
-    const { data, error } = await supabase
-      .from('meter_parses')
-      .select(CO_UPLOAD_FILTER_SELECT)
-      .in('id', chunk)
-    if (error || !data?.length) continue
-    out.push(...(data as PublicMeterParseRow[]))
-  }
-
-  return out
+  const res = await fetchMeterSiteStats()
+  return { counts: res.roleCounts, error: res.error }
 }
 
 export type PlayerLeaderboardEntryRow = {
