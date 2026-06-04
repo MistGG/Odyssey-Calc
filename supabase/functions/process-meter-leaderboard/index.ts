@@ -187,19 +187,12 @@ function memberDps(
   return dur > 0 ? damage / dur : 0
 }
 
-/** Highest-damage digimon in the run; ignores end-of-run swap (`currentDigimonId`) when multiple forms fought. */
+/** Digimon with the highest damage this run (any role, including same-role end-of-run swaps). */
 function memberPrimaryDigimon(member: StoredMember) {
   const digimons = memberDigimons(member)
-  const current = member.currentDigimonId?.trim() || ''
-  const pool =
-    digimons.length > 1 && current
-      ? digimons.filter((d) => (d.digimonId?.trim() || '') !== current)
-      : digimons
-  const candidates = pool.length > 0 ? pool : digimons
-
-  let best = candidates[0]
+  let best = digimons[0]
   let bestDamage = -1
-  for (const dg of candidates) {
+  for (const dg of digimons) {
     const damage = Math.max(0, Number(dg.totalDamage) || 0)
     if (damage > bestDamage) {
       bestDamage = damage

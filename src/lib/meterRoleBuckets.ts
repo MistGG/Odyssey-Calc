@@ -162,18 +162,10 @@ export function playerDisplayName(member: MeterPartyMemberStored): string {
 
 function pickLeaderboardDigimon(
   digimons: ReturnType<typeof memberDigimonBreakdowns>,
-  currentDigimonId: string | null | undefined,
 ): (typeof digimons)[number] | null {
-  const current = currentDigimonId?.trim() || ''
-  const pool =
-    digimons.length > 1 && current
-      ? digimons.filter((d) => d.digimonId.trim() !== current)
-      : digimons
-  const candidates = pool.length > 0 ? pool : digimons
-
   let best: (typeof digimons)[number] | null = null
   let bestDamage = -1
-  for (const dg of candidates) {
+  for (const dg of digimons) {
     const damage = Math.max(0, dg.totalDamage)
     if (damage > bestDamage) {
       bestDamage = damage
@@ -183,7 +175,7 @@ function pickLeaderboardDigimon(
   return best
 }
 
-/** Digimon used for leaderboard role + label (most damage; ignores end-of-run swap). */
+/** Digimon used for leaderboard role + label (highest damage this run). */
 export function memberTopDigimonUsed(member: MeterPartyMemberStored): {
   digimonId: string
   digimonName: string
@@ -191,7 +183,7 @@ export function memberTopDigimonUsed(member: MeterPartyMemberStored): {
   portraitUrl?: string
 } | null {
   const digimons = memberDigimonBreakdowns(member)
-  const best = pickLeaderboardDigimon(digimons, member.currentDigimonId)
+  const best = pickLeaderboardDigimon(digimons)
   if (best) {
     return {
       digimonId: best.digimonId,
