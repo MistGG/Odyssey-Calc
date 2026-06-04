@@ -29,6 +29,7 @@ scripts/*
 !scripts/invalidate-short-meter-uploads.mjs
 !scripts/invalidate-meter-parses.mjs
 !scripts/wipe-tier-change-history.mjs
+!scripts/pull-supabase-api-logs.mjs
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
@@ -39,6 +40,8 @@ compare-*.mjs
 # Backend / Supabase (not published with the static site; run migrations via CLI locally)
 supabase/*
 !supabase/config.toml
+!supabase/migrations/
+!supabase/migrations/*.sql
 !supabase/functions/
 !supabase/functions/process-meter-leaderboard/
 
