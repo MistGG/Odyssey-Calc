@@ -70,7 +70,7 @@ import {
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
-import { publishTierListLiveSnapshot, publishTierRecomputeRun } from '../lib/tierListLive'
+import { fetchPublishedTierListSnapshot } from '../lib/tierListPublished'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
@@ -280,8 +280,7 @@ export function TierListPage() {
   const [building, setBuilding] = useState(false)
   const [, setStatus] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [autoSyncCheckedAt, setAutoSyncCheckedAt] = useState<string | null>(null)
-  const [awaitingPublishedSnapshot, setAwaitingPublishedSnapshot] = useState(false)
+  const [publishedSnapshotAt, setPublishedSnapshotAt] = useState<string | null>(null)
   /** Empty = show all. Otherwise OR-filter by listed values (multi-select). */
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([])
@@ -368,39 +367,29 @@ export function TierListPage() {
       setInitializing(true)
       setError(null)
       const existing = loadTierListCache()
-      if (supabase) {
-        try {
-          const remoteRes = await Promise.race([
-            supabase
-              .from('tier_list_live')
-              .select('cache, updated_at')
-              .eq('singleton', true)
-              .maybeSingle(),
-            new Promise<{ data: null; error: null }>((resolve) => {
-              window.setTimeout(() => resolve({ data: null, error: null }), 15_000)
-            }),
-          ])
-          const remoteRow = remoteRes.data
-          const remoteErr = remoteRes.error
-          if (!remoteErr && remoteRow && isTierListCacheShape(remoteRow.cache)) {
-            const remoteCache = remoteRow.cache as TierListCache
-            const remoteAt = new Date(remoteRow.updated_at ?? 0).getTime()
-            const localAt = new Date(existing?.lastCheckedAt ?? 0).getTime()
-            const localEntryCount = Object.keys(existing?.entries ?? {}).length
-            const remoteEntryCount = Object.keys(remoteCache.entries ?? {}).length
-            if (!existing || remoteAt > localAt || remoteEntryCount > localEntryCount) {
-              saveTierListCache(remoteCache)
-              if (!cancelled) {
-                setCache(remoteCache)
-                setStatus('Loaded latest published tier snapshot.')
-                setInitializing(false)
-              }
-              return
+      try {
+        const published = await fetchPublishedTierListSnapshot()
+        const remoteRow = published.snapshot
+        if (!published.error && remoteRow && isTierListCacheShape(remoteRow.cache)) {
+          const remoteCache = remoteRow.cache as TierListCache
+          const remoteAt = new Date(remoteRow.updated_at ?? 0).getTime()
+          const localAt = new Date(existing?.lastCheckedAt ?? 0).getTime()
+          const localEntryCount = Object.keys(existing?.entries ?? {}).length
+          const remoteEntryCount = Object.keys(remoteCache.entries ?? {}).length
+          if (!existing || remoteAt > localAt || remoteEntryCount > localEntryCount) {
+            saveTierListCache(remoteCache)
+            if (!cancelled) {
+              setCache(remoteCache)
+              setPublishedSnapshotAt(remoteRow.updated_at)
+              setStatus('Loaded latest published tier snapshot.')
+              setInitializing(false)
             }
+            return
           }
-        } catch {
-          /* best effort */
+          if (!cancelled) setPublishedSnapshotAt(remoteRow.updated_at)
         }
+      } catch {
+        /* best effort */
       }
       if (existing) {
         if (!cancelled) {
@@ -421,7 +410,7 @@ export function TierListPage() {
         if (!cancelled) {
           setListMeta(meta)
           setCache(created)
-          setStatus('Tier cache initialized. Automatic sync will keep it current.')
+          setStatus('Tier cache initialized. Run the Tier list rebuild workflow to publish updates.')
         }
       } catch (e: unknown) {
         if (!cancelled) {
@@ -481,71 +470,6 @@ export function TierListPage() {
       cancelled = true
     }
   }, [cache, listMeta])
-
-  useEffect(() => {
-    if (!supabase || workerForceRefresh || initializing) return
-    const sb = supabase
-    let cancelled = false
-
-    async function pollPublishedSnapshot() {
-      const [liveRes, stateRes] = await Promise.all([
-        sb
-          .from('tier_list_live')
-          .select('cache, updated_at')
-          .eq('singleton', true)
-          .maybeSingle(),
-        sb
-          .from('tier_sync_state')
-          .select('updated_at, total_count')
-          .eq('singleton', true)
-          .maybeSingle(),
-      ])
-      if (cancelled) return
-
-      const live = liveRes.data
-      if (liveRes.error || !live) {
-        setAwaitingPublishedSnapshot(false)
-        return
-      }
-
-      const snapshotAt = new Date(live.updated_at ?? 0).getTime()
-      const syncAt = new Date(stateRes.data?.updated_at ?? 0).getTime()
-      if (stateRes.data?.updated_at) setAutoSyncCheckedAt(stateRes.data.updated_at)
-
-      const localAt = new Date(cache?.lastCheckedAt ?? 0).getTime()
-      const localEntryCount = Object.keys(cache?.entries ?? {}).length
-      const remoteEntryCount = isTierListCacheShape(live.cache)
-        ? Object.keys((live.cache as TierListCache).entries ?? {}).length
-        : 0
-
-      if (
-        isTierListCacheShape(live.cache) &&
-        remoteEntryCount > 0 &&
-        (snapshotAt > localAt || remoteEntryCount > localEntryCount)
-      ) {
-        const remoteCache = live.cache as TierListCache
-        saveTierListCache(remoteCache)
-        setCache(remoteCache)
-        setAwaitingPublishedSnapshot(false)
-        return
-      }
-
-      const remoteTotal = Number(stateRes.data?.total_count) || 0
-      const snapshotBehindSync =
-        Number.isFinite(syncAt) && syncAt > snapshotAt && remoteTotal > 0
-      const localLooksPartial =
-        remoteTotal > 0 &&
-        (localEntryCount < remoteTotal || (cache?.total ?? 0) < remoteTotal)
-      setAwaitingPublishedSnapshot(snapshotBehindSync || localLooksPartial)
-    }
-
-    void pollPublishedSnapshot()
-    const interval = window.setInterval(() => void pollPublishedSnapshot(), 15_000)
-    return () => {
-      cancelled = true
-      window.clearInterval(interval)
-    }
-  }, [supabase, cache, initializing, workerForceRefresh])
 
   useEffect(() => {
     if (!workerForceRefresh || !supabase || !authReady || !user || !cache || initializing || building) {
@@ -934,13 +858,6 @@ export function TierListPage() {
 
       if (working.queue.length === 0) {
         setStatus('Tier list refresh complete. All Digimon were recalculated.')
-        if (supabase) {
-          const publishRes = await publishTierListLiveSnapshot(supabase, working)
-          if (!publishRes.ok) {
-            console.error('[tier-list] publish tier_list_live failed:', publishRes.error)
-            setError(publishRes.error ?? 'Failed to publish tier list snapshot.')
-          }
-        }
         if (refreshedIds.size > 0) {
           const nextSummary = buildTierListUpdateSummary(
             'force',
@@ -989,12 +906,6 @@ export function TierListPage() {
             summary: nextSummary,
           }
           appendTierChangeHistory(historyRow)
-          if (supabase) {
-            const runRes = await publishTierRecomputeRun(supabase, historyRow)
-            if (!runRes.ok) {
-              console.error('[tier-list] publish tier_recompute_runs failed:', runRes.error)
-            }
-          }
         }
       }
     } catch (e: unknown) {
@@ -1453,12 +1364,12 @@ export function TierListPage() {
                 Last checked: {cache?.lastCheckedAt ? new Date(cache.lastCheckedAt).toLocaleString() : 'Never'}
               </span>
             )}
-            {autoSyncCheckedAt ? (
+            {publishedSnapshotAt ? (
               <span
                 className="tier-shell-meta muted"
-                title={`Latest Supabase sync: ${new Date(autoSyncCheckedAt).toLocaleString()}`}
+                title={`Published snapshot: ${new Date(publishedSnapshotAt).toLocaleString()}`}
               >
-                Auto sync: {new Date(autoSyncCheckedAt).toLocaleString()}
+                Published: {new Date(publishedSnapshotAt).toLocaleString()}
               </span>
             ) : null}
           </div>
@@ -1476,12 +1387,6 @@ export function TierListPage() {
               {progressNumerator}/{progressDenominator || '…'}
             </strong>{' '}
             ({progress.toFixed(0)}%)
-          </p>
-        ) : null}
-        {!initializing && !building && awaitingPublishedSnapshot ? (
-          <p className="tier-server-rebuild-banner muted" role="status">
-            A new tier list is being prepared. Showing the previous snapshot until the server publish
-            finishes.
           </p>
         ) : null}
       </div>

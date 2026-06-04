@@ -172,7 +172,7 @@ export function MeterPlayerProfilePage() {
 
   const backTo = nav?.fromMeter?.dungeonId
     ? {
-        pathname: '/meter/leaderboard',
+        pathname: '/meter',
         state: {
           dungeonId: nav.fromMeter.dungeonId,
           difficultyId: nav.fromMeter.difficultyId,

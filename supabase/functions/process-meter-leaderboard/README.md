@@ -2,6 +2,10 @@
 
 Supabase Edge Function: writes `meter_leaderboard_entries` from dungeon party parses.
 
+Hall of Fame gold rows are maintained automatically via DB triggers on `meter_leaderboard_entries` (`meter_hof_gold_entries`). On `--force` reprocess, the function also calls `rebuild_meter_hof_gold_for_scope` after deleting old rows.
+
+Apply migration `20260604150000_meter_hof_gold_materialized.sql` (and earlier meter RPC migrations) with `supabase db push` before deploying this function.
+
 ## Deploy
 
 **Dashboard:** Edge Functions → `process-meter-leaderboard` → replace code with `index.ts` → Deploy.

@@ -1,12 +1,5 @@
-import { fetchScopeEligibleParses, getMeterAnonSupabase } from './meterDataSource'
-import {
-  buildEntriesFromParseSummaries,
-  fetchScopeParseSummaries,
-  mergeSummaryEntriesIntoHistory,
-} from './meterLeaderboardSummary'
-import { collapseCoUploadedParseRows } from './meterCoUploadMerge'
+import { getMeterAnonSupabase } from './meterDataSource'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
-import { buildLeaderboardHistoryFromPublicParses } from './meterParsePartyHistory'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
 import { dpsToPercentile } from './meterParseScoreColor'
 import type { PlayerRankEntry } from './meterPublicStats'
@@ -15,17 +8,9 @@ import {
   meterHofScopeKey,
   setCachedScopeHallOfFame,
 } from './meterHallOfFameCache'
-import {
-  fetchDigimonRoleMap,
-  METER_ROLE_BUCKETS,
-  METER_ROLE_BUCKET_LABELS,
-  type MeterRoleBucket,
-} from './meterRoleBuckets'
+import { METER_ROLE_BUCKETS, METER_ROLE_BUCKET_LABELS, type MeterRoleBucket } from './meterRoleBuckets'
 import { difficultySelectOptions, dungeonSelectOptions } from './wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
-
-const HOF_SCAN_PAGE_SIZE = 1000
-const HOF_SCAN_MAX_ROWS = 10_000
 
 export type MeterHallOfFameEntry = PlayerRankEntry & {
   roleBucket: MeterRoleBucket
@@ -36,40 +21,8 @@ export type MeterHallOfFameEntry = PlayerRankEntry & {
   currentPercentile: number
 }
 
-type LeaderboardEntryRow = {
-  parse_id: string
-  created_at: string
-  role_bucket: string
-  player_key: string
-  display_name: string
-  dps: number
-  digimon_id: string
-  digimon_name: string
-  icon_id: string | null
-  portrait_url: string | null
-}
-
 function isRoleBucket(value: string): value is MeterRoleBucket {
   return (METER_ROLE_BUCKETS as readonly string[]).includes(value)
-}
-
-function mapRow(row: LeaderboardEntryRow): Omit<MeterHallOfFameEntry, 'currentPercentile'> | null {
-  if (!isRoleBucket(row.role_bucket)) return null
-  const dps = Number(row.dps) || 0
-  if (dps <= 0) return null
-  return {
-    roleBucket: row.role_bucket,
-    roleLabel: METER_ROLE_BUCKET_LABELS[row.role_bucket],
-    parseId: row.parse_id,
-    achievedAt: row.created_at,
-    playerKey: row.player_key,
-    displayName: row.display_name || row.player_key,
-    dps,
-    digimonId: row.digimon_id ?? '',
-    digimonName: row.digimon_name ?? '',
-    iconId: row.icon_id,
-    portraitUrl: row.portrait_url ?? undefined,
-  }
 }
 
 function entryKey(entry: Pick<MeterHallOfFameEntry, 'parseId' | 'playerKey' | 'achievedAt' | 'roleBucket'>) {
@@ -316,23 +269,6 @@ export async function fetchScopeHallOfFameGoldEntries(
   ])
 
   if (rpcRes.error) {
-    if (/could not find the function|schema cache/i.test(rpcRes.error.message)) {
-      const legacy = await fetchScopeLeaderboardEntryHistory(id, difficultyId)
-      if (legacy.error) return { entries: [], error: legacy.error }
-      const poolByRole =
-        pre.stats?.sortedDpsByBucket ??
-        (legacy.rows.length ? sortedDpsPoolsFromHistory(legacy.rows) : {
-          melee: [],
-          ranged: [],
-          caster: [],
-          hybrid: [],
-          tank: [],
-          healer: [],
-        })
-      const entries = goldParsesFromLeaderboardHistory(legacy.rows, poolByRole)
-      setCachedScopeHallOfFame(cacheKey, entries)
-      return { entries, error: null }
-    }
     return { entries: [], error: rpcRes.error.message }
   }
 
@@ -360,100 +296,6 @@ export async function fetchScopeHallOfFameGoldEntries(
 
   setCachedScopeHallOfFame(cacheKey, entries)
   return { entries, error: null }
-}
-
-export async function fetchScopeLeaderboardEntryHistory(
-  dungeonId: string,
-  difficultyId: number,
-): Promise<{ rows: Omit<MeterHallOfFameEntry, 'currentPercentile'>[]; error: string | null }> {
-  const supabase = getMeterAnonSupabase()
-  if (!supabase) return { rows: [], error: 'Supabase is not configured.' }
-
-  const id = dungeonId.trim()
-  if (!id || difficultyId < 2) return { rows: [], error: 'Select a dungeon and difficulty.' }
-
-  const collected: Omit<MeterHallOfFameEntry, 'currentPercentile'>[] = []
-  let offset = 0
-
-  while (offset < HOF_SCAN_MAX_ROWS) {
-    const to = offset + HOF_SCAN_PAGE_SIZE - 1
-    const { data, error } = await supabase
-      .from('meter_leaderboard_entries')
-      .select(
-        'parse_id, created_at, role_bucket, player_key, display_name, dps, digimon_id, digimon_name, icon_id, portrait_url',
-      )
-      .eq('dungeon_id', id)
-      .eq('difficulty_id', difficultyId)
-      .order('created_at', { ascending: true })
-      .range(offset, to)
-
-    if (error) return { rows: [], error: error.message }
-    const page = (data ?? []) as LeaderboardEntryRow[]
-    if (!page.length) break
-
-    for (const row of page) {
-      const mapped = mapRow(row)
-      if (mapped) collected.push(mapped)
-    }
-
-    if (page.length < HOF_SCAN_PAGE_SIZE) break
-    offset += HOF_SCAN_PAGE_SIZE
-  }
-
-  const forNames: PlayerRankEntry[] = collected.map((e) => ({
-    playerKey: e.playerKey,
-    displayName: e.displayName,
-    dps: e.dps,
-    digimonId: e.digimonId,
-    digimonName: e.digimonName,
-    iconId: e.iconId,
-    portraitUrl: e.portraitUrl,
-  }))
-  const resolved = await applyOfficialNamesToPlayerRankEntries(forNames).catch(() => forNames)
-
-  let rows = collected.map((entry, i) => ({
-    ...entry,
-    displayName: resolved[i]!.displayName,
-    digimonName: resolved[i]!.digimonName,
-    iconId: resolved[i]!.iconId,
-    portraitUrl: resolved[i]!.portraitUrl,
-  }))
-
-  try {
-    if (!rows.length) {
-      const [summaries, roleMap] = await Promise.all([
-        fetchScopeParseSummaries(id, difficultyId),
-        fetchDigimonRoleMap(),
-      ])
-      const supplemental = buildEntriesFromParseSummaries(summaries, roleMap)
-      rows = mergeSummaryEntriesIntoHistory(rows, supplemental)
-    }
-  } catch {
-    /* keep table history only */
-  }
-
-  if (!rows.length) {
-    try {
-      const [parseRes, roleMap] = await Promise.all([
-        fetchScopeEligibleParses({ dungeonId: id, difficultyId, limit: 120 }),
-        fetchDigimonRoleMap(),
-      ])
-      if (!parseRes.error && parseRes.rows.length) {
-        const collapsed = collapseCoUploadedParseRows(parseRes.rows)
-        const fromParses = buildLeaderboardHistoryFromPublicParses(
-          collapsed,
-          roleMap,
-          id,
-          difficultyId,
-        )
-        rows = mergeSummaryEntriesIntoHistory(rows, fromParses)
-      }
-    } catch {
-      /* keep prior rows */
-    }
-  }
-
-  return { rows, error: null }
 }
 
 export type HallOfFameInductee = MeterHallOfFameEntry & { induction: number }
@@ -523,67 +365,86 @@ async function fetchPlayerMeterScopes(
       .filter((row): row is { dungeonId: string; difficultyId: number; lastAt: number } => row != null)
   }
 
-  if (error && !/could not find the function|schema cache/i.test(error.message)) {
-    return []
-  }
-
-  const scopeLastAt = new Map<string, { dungeonId: string; difficultyId: number; lastAt: number }>()
-  let offset = 0
-
-  while (offset < HOF_SCAN_MAX_ROWS) {
-    const to = offset + HOF_SCAN_PAGE_SIZE - 1
-    const { data, error } = await supabase
-      .from('meter_leaderboard_entries')
-      .select('dungeon_id, difficulty_id, created_at')
-      .eq('player_key', key)
-      .gte('difficulty_id', 2)
-      .order('created_at', { ascending: false })
-      .range(offset, to)
-
-    if (error || !data?.length) break
-
-    for (const row of data as Array<{
-      dungeon_id?: string | null
-      difficulty_id?: number | null
-      created_at?: string
-    }>) {
-      const dungeonId = row.dungeon_id?.trim() ?? ''
-      const difficultyId = row.difficulty_id ?? 0
-      if (!dungeonId || difficultyId < 2) continue
-      const at = new Date(row.created_at ?? 0).getTime()
-      const scopeKey = `${dungeonId}:${difficultyId}`
-      const prev = scopeLastAt.get(scopeKey)
-      if (!prev || at > prev.lastAt) {
-        scopeLastAt.set(scopeKey, { dungeonId, difficultyId, lastAt: at })
-      }
-    }
-
-    if (data.length < HOF_SCAN_PAGE_SIZE) break
-    offset += HOF_SCAN_PAGE_SIZE
-  }
-
-  return [...scopeLastAt.values()].sort((a, b) => b.lastAt - a.lastAt).slice(0, limit)
+  return []
 }
 
 const HOF_SCOPE_BATCH = 4
 
-export type FetchPlayerHallOfFameOptions = {
-  /** Cap dungeon scopes scanned (grant checks use a small limit). */
-  maxScopes?: number
-  /** Stop after first matching induction (faster eligibility checks). */
-  stopAfterFirst?: boolean
+type PlayerHofGoldRpcRow = HofGoldRpcRow & {
+  dungeon_id?: string | null
+  difficulty_id?: number | null
 }
 
-/** All Hall of Fame record-break entries for one tamer (across dungeons). */
-export async function fetchPlayerHallOfFameEntries(
+type ScopeRef = { dungeonId: string; difficultyId: number }
+
+function scopeRefKey(scope: ScopeRef): string {
+  return meterHofScopeKey(scope.dungeonId, scope.difficultyId)
+}
+
+function groupRowsByScope(
+  rows: Array<Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef>,
+): Map<string, Array<Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef>> {
+  const byScope = new Map<string, Array<Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef>>()
+  for (const row of rows) {
+    const key = scopeRefKey(row)
+    const list = byScope.get(key) ?? []
+    list.push(row)
+    byScope.set(key, list)
+  }
+  return byScope
+}
+
+async function loadPoolByScopeKeys(
+  scopes: ScopeRef[],
+): Promise<Map<string, Record<MeterRoleBucket, number[]>>> {
+  const poolByScope = new Map<string, Record<MeterRoleBucket, number[]>>()
+  await Promise.all(
+    scopes.map(async (scope) => {
+      const key = scopeRefKey(scope)
+      const pre = await fetchPrecomputedMeterLeaderboard({
+        dungeonId: scope.dungeonId,
+        difficultyId: scope.difficultyId,
+      })
+      poolByScope.set(
+        key,
+        pre.stats?.sortedDpsByBucket ??
+          ({
+            melee: [],
+            ranged: [],
+            caster: [],
+            hybrid: [],
+            tank: [],
+            healer: [],
+          } as Record<MeterRoleBucket, number[]>),
+      )
+    }),
+  )
+  return poolByScope
+}
+
+function profileEntriesFromGoldScope(
+  scopeEntries: MeterHallOfFameEntry[],
+  scope: ScopeRef,
+  wikiDungeons: WikiDungeonListItem[],
+  playerKey: string,
+): ProfileHallOfFameEntry[] {
+  const labels = resolveScopeLabels(scope.dungeonId, scope.difficultyId, wikiDungeons)
+  return withInductionRanks(scopeEntries)
+    .filter((e) => e.playerKey.trim().toLowerCase() === playerKey)
+    .map((e) => ({
+      ...e,
+      dungeonId: scope.dungeonId,
+      difficultyId: scope.difficultyId,
+      ...labels,
+    }))
+}
+
+async function fetchPlayerHallOfFameByScopeBatches(
   playerKey: string,
   wikiDungeons: WikiDungeonListItem[],
   options?: FetchPlayerHallOfFameOptions,
 ): Promise<{ entries: ProfileHallOfFameEntry[]; error: string | null }> {
-  const key = playerKey.trim().toLowerCase()
-  if (!key) return { entries: [], error: null }
-
-  let scopes = await fetchPlayerMeterScopes(key, options?.maxScopes ?? 24)
+  let scopes = await fetchPlayerMeterScopes(playerKey, options?.maxScopes ?? 24)
   if (!scopes.length) return { entries: [], error: null }
 
   const maxScopes = options?.maxScopes
@@ -598,16 +459,8 @@ export async function fetchPlayerHallOfFameEntries(
         const goldRes = await fetchScopeHallOfFameGoldEntries(scope.dungeonId, scope.difficultyId)
         if (goldRes.error) return { entries: [] as ProfileHallOfFameEntry[], error: goldRes.error }
 
-        const labels = resolveScopeLabels(scope.dungeonId, scope.difficultyId, wikiDungeons)
         return {
-          entries: withInductionRanks(goldRes.entries)
-            .filter((e) => e.playerKey.trim().toLowerCase() === key)
-            .map((e) => ({
-              ...e,
-              dungeonId: scope.dungeonId,
-              difficultyId: scope.difficultyId,
-              ...labels,
-            })),
+          entries: profileEntriesFromGoldScope(goldRes.entries, scope, wikiDungeons, playerKey),
           error: null as string | null,
         }
       }),
@@ -619,6 +472,88 @@ export async function fetchPlayerHallOfFameEntries(
       if (options?.stopAfterFirst && all.length > 0) {
         return { entries: all, error: null }
       }
+    }
+  }
+
+  all.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())
+  return { entries: all, error: null }
+}
+
+export type FetchPlayerHallOfFameOptions = {
+  /** Cap dungeon scopes scanned (grant checks use a small limit). */
+  maxScopes?: number
+  /** Stop after first matching induction (faster eligibility checks). */
+  stopAfterFirst?: boolean
+}
+
+function mapPlayerHofGoldRpcRow(
+  row: PlayerHofGoldRpcRow,
+): (Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef) | null {
+  const base = mapHofGoldRpcRow(row)
+  if (!base) return null
+  const dungeonId = row.dungeon_id?.trim() ?? ''
+  const difficultyId = row.difficulty_id ?? 0
+  if (!dungeonId || difficultyId < 2) return null
+  return { ...base, dungeonId, difficultyId }
+}
+
+/** All Hall of Fame record-break entries for one tamer (across dungeons). */
+export async function fetchPlayerHallOfFameEntries(
+  playerKey: string,
+  wikiDungeons: WikiDungeonListItem[],
+  options?: FetchPlayerHallOfFameOptions,
+): Promise<{ entries: ProfileHallOfFameEntry[]; error: string | null }> {
+  const key = playerKey.trim().toLowerCase()
+  if (!key) return { entries: [], error: null }
+
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
+
+  const scopeLimit = options?.maxScopes ?? 24
+  const rpcRes = await supabase.rpc('get_meter_player_hof_gold_breaks', {
+    p_player_key: key,
+    p_scope_limit: scopeLimit,
+  })
+
+  if (rpcRes.error) {
+    if (/could not find the function|schema cache/i.test(rpcRes.error.message)) {
+      return fetchPlayerHallOfFameByScopeBatches(key, wikiDungeons, options)
+    }
+    return { entries: [], error: rpcRes.error.message }
+  }
+
+  let rows = ((rpcRes.data ?? []) as PlayerHofGoldRpcRow[])
+    .map((row) => mapPlayerHofGoldRpcRow(row))
+    .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef => row != null)
+  const scopeByParse = rows.map((row) => ({ dungeonId: row.dungeonId, difficultyId: row.difficultyId }))
+  const named = await resolveHofGoldNames(rows)
+  rows = named.map((entry, i) => ({
+    ...entry,
+    dungeonId: scopeByParse[i]!.dungeonId,
+    difficultyId: scopeByParse[i]!.difficultyId,
+  }))
+
+  if (!rows.length) return { entries: [], error: null }
+
+  const uniqueScopes = [...new Map(rows.map((r) => [scopeRefKey(r), r])).values()].map((r) => ({
+    dungeonId: r.dungeonId,
+    difficultyId: r.difficultyId,
+  }))
+  const poolByScope = await loadPoolByScopeKeys(uniqueScopes)
+
+  const all: ProfileHallOfFameEntry[] = []
+  for (const [, scopeRows] of groupRowsByScope(rows)) {
+    const scope = scopeRows[0]!
+    const poolKey = scopeRefKey(scope)
+    const poolByRole =
+      poolByScope.get(poolKey) ?? sortedDpsPoolsFromHistory(scopeRows)
+    const scopeEntries: MeterHallOfFameEntry[] = scopeRows.map((entry) => ({
+      ...entry,
+      currentPercentile: dpsToPercentile(entry.dps, poolByRole[entry.roleBucket]),
+    }))
+    all.push(...profileEntriesFromGoldScope(scopeEntries, scope, wikiDungeons, key))
+    if (options?.stopAfterFirst && all.length > 0) {
+      return { entries: all, error: null }
     }
   }
 

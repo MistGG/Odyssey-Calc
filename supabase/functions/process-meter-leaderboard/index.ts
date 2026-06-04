@@ -416,6 +416,10 @@ async function processParse(
   const force = options.force === true
   if (force) {
     await supabase.from('meter_leaderboard_entries').delete().eq('parse_id', row.id)
+    await supabase.rpc('rebuild_meter_hof_gold_for_scope', {
+      p_dungeon_id: dungeonId,
+      p_difficulty_id: difficultyId,
+    })
   }
 
   const { data: existingRows, error: existingError } = await supabase

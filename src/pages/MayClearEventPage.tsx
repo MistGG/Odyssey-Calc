@@ -93,7 +93,7 @@ export function MayClearEventPage() {
         <div className="event-hero__actions">
           <Link
             className="event-cta event-cta--primary"
-            to="/meter/leaderboard"
+            to="/meter"
             state={mayClearEventMeterNavState(activeDungeon?.dungeonId)}
           >
             Visit Meter page
@@ -192,7 +192,7 @@ export function MayClearEventPage() {
             <strong>dungeon party</strong> parse to the cloud.
           </li>
           <li>
-            Leaderboards on <Link to="/meter/leaderboard">Meter</Link> rank players by role (Melee, Ranged, Caster,
+            Leaderboards on <Link to="/meter">Meter</Link> rank players by role (Melee, Ranged, Caster,
             Hybrid, Tank, Healer) for that dungeon and difficulty.
           </li>
           <li>

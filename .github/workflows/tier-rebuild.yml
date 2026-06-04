@@ -1,0 +1,65 @@
+name: Tier list rebuild
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_recompute:
+        description: Force a full tier list rebuild (same as ?forceRefresh=1)
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install worker dependencies
+        run: npm install --no-save playwright
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Rebuild tier list and write static snapshot files
+        env:
+          # Scheduled runs always force a full rebuild; manual runs use the input (default on).
+          TIER_WORKER_FORCE: ${{ github.event_name == 'schedule' && '1' || (inputs.force_recompute && '1' || '0') }}
+          TIER_WORKER_TIMEOUT_MS: '3600000'
+          TIER_WORKER_EMAIL: ${{ secrets.TIER_WORKER_EMAIL }}
+          TIER_WORKER_PASSWORD: ${{ secrets.TIER_WORKER_PASSWORD }}
+          TIER_WORKER_SITE_ORIGIN: ${{ secrets.TIER_WORKER_SITE_ORIGIN }}
+        run: |
+          if [ -z "$TIER_WORKER_EMAIL" ]; then
+            echo "Missing secret: TIER_WORKER_EMAIL"
+            exit 1
+          fi
+          if [ -z "$TIER_WORKER_PASSWORD" ]; then
+            echo "Missing secret: TIER_WORKER_PASSWORD"
+            exit 1
+          fi
+
+          node scripts/tier-worker-refresh.mjs
+
+      - name: Commit published tier snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/tier-list-live.json public/data/tier-change-history.json
+          if git diff --staged --quiet; then
+            echo "No tier snapshot changes to commit."
+            exit 0
+          fi
+          git commit -m "chore(tier-list): refresh published snapshot"
+          git push
