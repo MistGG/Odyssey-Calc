@@ -236,7 +236,7 @@ function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): b
   return false
 }
 
-const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 60
+const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 30
 
 function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)

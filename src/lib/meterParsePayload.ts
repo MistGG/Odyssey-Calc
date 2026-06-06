@@ -200,7 +200,7 @@ function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
 }
 
 /** Minimum fight length for a ranked dungeon clear (shorter uploads are partial or death-spike snapshots). */
-export const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 60
+export const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 30
 
 function memberRawFlags(member: MeterPartyMemberStored): Record<string, unknown> {
   return member as Record<string, unknown>
