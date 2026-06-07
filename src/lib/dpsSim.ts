@@ -1,6 +1,6 @@
 import type { WikiSkill } from '../types/wikiApi'
 import { attributeAdvantageSkillDamageMultiplier } from './attributeAdvantage'
-import { trueViceDamageFractionsForSkillHit, readGearState } from './gearStats'
+import { trueViceDamageFractionsForSkillHit, readGearState, aggregateAccessoryCombatBonuses, emptyAccessoryCombatBonuses, type AccessoryCombatBonuses } from './gearStats'
 import { wikiSkillHitCoefficient, skillIsSupportOnly } from './skillDamage'
 import {
   DIGIMON_ROLE_SKILL_SIM_LEVEL,
@@ -494,6 +494,8 @@ type SimCtx = {
   targetEnemyAttribute: string
   /** When true, apply saved True Vice rolls from {@link readGearState}. */
   applyGearTrueVice: boolean
+  /** Ring / necklace / earring rolls when {@link applyGearAccessories} is true. */
+  gearAccessoryBonuses: AccessoryCombatBonuses
   forceAutoCrit: boolean
   perfectAtClone: boolean
   autoAttackAnimationCancel: boolean
@@ -768,12 +770,15 @@ function buildBuffContributionsForDamage(
   canCrit: boolean,
 ): BuffContribution[] {
   const out: BuffContribution[] = []
-  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const gear = ctx.gearAccessoryBonuses
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0) + gear.attackPct
   const intSkillPct = includeSkillPct ? wikiIntSkillDamagePctInRotationSim(ctx.wikiInt) : 0
-  const activeSkillPct = m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) + intSkillPct
+  const activeSkillPct =
+    m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) + intSkillPct + gear.skillPct
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const activeCritDamagePct =
+    m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0) + gear.critDamagePct
   const critChance = ctx.forceAutoCrit && canCrit
     ? 1
     : Math.max(0, Math.min(1, critRateToChance(ctx.baseCritRateStat) + activeCritRatePct / 100))
@@ -799,6 +804,9 @@ function buildBuffContributionsForDamage(
       if (b.attackPct > BUFF_SPLIT_EPS) {
         detailLines.push(`${b.skillName}: +${b.attackPct.toFixed(2)}% attack`)
       }
+    }
+    if (gear.attackPct > BUFF_SPLIT_EPS) {
+      detailLines.push(`Gear accessories: +${gear.attackPct.toFixed(2)}% attack`)
     }
     out.push({ key: 'atk', label: 'ATK', valuePct: activeAttackPct, detailLines })
   }
@@ -834,7 +842,21 @@ function buildBuffContributionsForDamage(
         detailLines.push(`${b.skillName}: +${b.skillDamagePct.toFixed(2)}% skill damage`)
       }
     }
+    if (gear.skillPct > BUFF_SPLIT_EPS) {
+      detailLines.push(`Gear accessories: +${gear.skillPct.toFixed(2)}% skill damage`)
+    }
     out.push({ key: 'skill', label: 'Skill', valuePct: activeSkillPct, detailLines })
+  }
+
+  if (includeSkillPct && gear.skillFlat > BUFF_SPLIT_EPS) {
+    out.push({
+      key: 'skillFlat',
+      label: 'Skill flat',
+      valuePct: 0,
+      detailLines: [
+        `Gear skill (flat): +${gear.skillFlat.toFixed(0)} added to the wiki coefficient after skill damage % (unaffected by skill % buffs).`,
+      ],
+    })
   }
 
   if (flatPct > BUFF_SPLIT_EPS) {
@@ -967,15 +989,18 @@ type DamageSkillHitSnapshot = {
 
 function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSkill): DamageSkillHitSnapshot {
   const usedLevel = ctx.skillLevel(skill)
-  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const gear = ctx.gearAccessoryBonuses
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0) + gear.attackPct
   const activeSkillPct =
     m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) +
-    wikiIntSkillDamagePctInRotationSim(ctx.wikiInt)
+    wikiIntSkillDamagePctInRotationSim(ctx.wikiInt) +
+    gear.skillPct
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const activeCritDamagePct =
+    m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0) + gear.critDamagePct
 
-  const baseSkillDamage = skillDamagePerCast(skill, usedLevel, ctx.targets)
+  const wikiSkillCoeff = skillDamagePerCast(skill, usedLevel, ctx.targets)
   const cloneMult = ctx.perfectAtClone ? 1.43 : 1
   const tv = ctx.applyGearTrueVice
     ? trueViceDamageFractionsForSkillHit(
@@ -989,8 +1014,8 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
   const preSkillBuffMult =
     1 + (cloneMult - 1) + tv.element + tvAttrOnWiki
   const skillPctMult = 1 + activeSkillPct / 100
-  /** Wiki coefficient × clone/TV × skill damage %; ATK term is separate (no skill-damage % on AT). */
-  const baseSkillTerm = baseSkillDamage * preSkillBuffMult * skillPctMult
+  /** Wiki coefficient × clone/TV × skill damage %; gear skill flat is added after (unaffected by skill %). */
+  const baseSkillTerm = wikiSkillCoeff * preSkillBuffMult * skillPctMult + gear.skillFlat
 
   const atkBuffed = Math.max(0, ctx.baseAttack + activeFlatAtk) * (1 + activeAttackPct / 100)
   const critCapable = skillCanCrit(skill)
@@ -1003,11 +1028,11 @@ function computeDamageSkillHitSnapshot(ctx: SimCtx, m: SimMutable, skill: WikiSk
   const dmg = rawSkillHit * ctx.attributeAdvantageSkillMult
 
   const baselineAtkTerm = Math.max(0, ctx.baseAttack) * targetHits
-  const baselineDmg = baseSkillDamage + baselineAtkTerm
+  const baselineDmg = wikiSkillCoeff + baselineAtkTerm
   const totalBuffPct = baselineDmg > 0 ? Math.max(0, ((dmg - baselineDmg) / baselineDmg) * 100) : 0
   const breakdown: RotationDamageBreakdownSkill = {
     kind: 'skill',
-    wikiCoefficientTotal: baseSkillDamage,
+    wikiCoefficientTotal: wikiSkillCoeff,
     preSkillBuffMult,
     skillPctMult,
     baseSkillTerm,
@@ -1051,10 +1076,12 @@ function naturalAutoCritChance(baseCritRateStat: number, activeCritRatePctFromBu
  */
 function computeAutoHit(ctx: SimCtx, m: SimMutable, purpose: 'damage' | 'planning'): AutoHitSnapshot {
   const step = autoIntervalFor(ctx, m)
-  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const gear = ctx.gearAccessoryBonuses
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0) + gear.attackPct
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const activeCritRatePct = m.activeBuffs.reduce((sum, b) => sum + b.critRatePct, 0)
-  const activeCritDamagePct = m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0)
+  const activeCritDamagePct =
+    m.activeBuffs.reduce((sum, b) => sum + b.critDamagePct, 0) + gear.critDamagePct
   const naturalP = naturalAutoCritChance(ctx.baseCritRateStat, activeCritRatePct)
   const critChance = ctx.forceAutoCrit && purpose === 'damage' ? 1 : naturalP
   const critMult = expectedCritMultiplier(critChance, activeCritDamagePct)
@@ -1193,13 +1220,20 @@ function castDamageSkill(
   cancelledFromAuto: boolean = false,
 ) {
   const castTime = effectiveCastTime(skill.cast_time_sec)
-  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0)
+  const gear = ctx.gearAccessoryBonuses
+  const activeAttackPct = m.activeBuffs.reduce((sum, b) => sum + b.attackPct, 0) + gear.attackPct
   const activeSkillPct =
     m.activeBuffs.reduce((sum, b) => sum + b.skillDamagePct, 0) +
-    wikiIntSkillDamagePctInRotationSim(ctx.wikiInt)
+    wikiIntSkillDamagePctInRotationSim(ctx.wikiInt) +
+    gear.skillPct
   const activeFlatAtk = m.activeBuffs.reduce((sum, b) => sum + b.flatAttack, 0)
   const hit = computeDamageSkillHitSnapshot(ctx, m, skill)
   const dmg = hit.dmg
+  const gearAccessoriesActive =
+    gear.attackPct > 0 ||
+    gear.skillPct > 0 ||
+    gear.skillFlat > 0 ||
+    gear.critDamagePct > 0
 
   m.totalDamage += dmg
   m.damageCastCount += 1
@@ -1219,7 +1253,9 @@ function castDamageSkill(
       buffedBy: m.activeBuffs.map((b) => b.skillName),
       totalBuffPct: hit.totalBuffPct,
       buffContributions:
-        m.activeBuffs.length > 0 || (SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT && ctx.wikiInt > 0)
+        m.activeBuffs.length > 0 ||
+        gearAccessoriesActive ||
+        (SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT && ctx.wikiInt > 0)
           ? buildBuffContributionsForDamage(ctx, m, true, hit.critCapable)
           : undefined,
       damageBreakdown: hit.breakdown,
@@ -1853,6 +1889,8 @@ export type RotationSimOptions = {
    * enable this only when you want scoring to include your rolls.
    */
   applySavedGearTrueVice?: boolean
+  /** Apply ring / necklace / earring stats from saved gear (Lab). */
+  applySavedGearAccessories?: boolean
 }
 
 type RotationSimCoreOpts = {
@@ -1871,6 +1909,7 @@ type RotationSimCoreOpts = {
   attackerAttribute: string
   targetEnemyAttribute: string
   applyGearTrueVice: boolean
+  applyGearAccessories: boolean
   useCustomRotation: boolean
   customRotationSkillIds: string[]
   manualSupportOnly: boolean
@@ -2211,6 +2250,9 @@ function runRotationSim(
 
   const buffs = estimateSupportDpsBuffs(supportMerged, profileLevels, baseAttack, baseCritRateStat)
   const baseAutoIntervalSec = attackSpeed > 0 ? Math.max(0.35, attackSpeed / 1000) : 1.5
+  const gearAccessoryBonuses = core.applyGearAccessories
+    ? aggregateAccessoryCombatBonuses(readGearState())
+    : emptyAccessoryCombatBonuses()
 
   const ctx: SimCtx = {
     damaging,
@@ -2225,6 +2267,7 @@ function runRotationSim(
     attackerAttribute: core.attackerAttribute,
     targetEnemyAttribute: core.targetEnemyAttribute,
     applyGearTrueVice: core.applyGearTrueVice,
+    gearAccessoryBonuses,
     forceAutoCrit: core.forceAutoCrit,
     perfectAtClone: core.perfectAtClone,
     autoAttackAnimationCancel: core.autoAttackAnimationCancel,
@@ -2559,6 +2602,7 @@ function buildRotationSimCore(
     attackerAttribute: (options?.attackerAttribute ?? '').trim(),
     targetEnemyAttribute: targetAttr,
     applyGearTrueVice: options?.applySavedGearTrueVice === true,
+    applyGearAccessories: options?.applySavedGearAccessories === true,
     useCustomRotation: Array.isArray(options?.customRotation),
     customRotationSkillIds: (options?.customRotation ?? []).map((row) => row.skillId),
     manualSupportOnly: options?.manualSupportOnly === true,

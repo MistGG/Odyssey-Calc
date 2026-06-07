@@ -3,23 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <title>Odyssey Calc</title>
-  <script>
-    (function () {
-      var path = location.pathname || '';
-      var m = path.match(/\/share\/meter-player\/([^/]+?)(?:\.html)?\/?$/i);
-      if (!m) return;
-      var key = decodeURIComponent(m[1]);
-      var base = path.indexOf('/Odyssey-Calc/') === 0 ? '/Odyssey-Calc' : '';
-      var htmlPath = base + '/share/meter-player/' + encodeURIComponent(key) + '.html';
-      if (!path.endsWith('.html')) {
-        location.replace(location.origin + htmlPath + location.search);
-        return;
-      }
-      location.replace(location.origin + base + '/#/meter/player/' + encodeURIComponent(key) + location.search);
-    })();
-  </script>
+  <script src="/hash-router-path-redirect.js"></script>
 </head>
 <body>
   <p>Redirecting…</p>
+  <script>
+    // GitHub Pages 404: if redirect did not run (unknown path), go home.
+    setTimeout(function () {
+      if (!location.hash || location.hash === '#') {
+        location.replace(location.origin + '/')
+      }
+    }, 120)
+  </script>
 </body>
 </html>

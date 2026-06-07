@@ -56,8 +56,11 @@ import { EditableNumberInput } from '../components/EditableNumberInput'
 import {
   GEAR_STORAGE_KEY,
   getGearAttackContribution,
-  getGearStatBonuses,
+  resolveSealStatBonuses,
+  getGearEquipmentCombatBonuses,
+  aggregateAccessoryCombatBonuses,
   readGearState,
+  type WikiCombatBaseForSeals,
   trueViceDamageFractionsForSkillHit,
 } from '../lib/gearStats'
 import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
@@ -604,7 +607,23 @@ export function DpsLabPage() {
     setTimelineIconsExpanded(false)
   }, [sim])
   const gearAttack = useMemo(() => getGearAttackContribution(), [gearStorageRevision])
-  const sealBonuses = useMemo(() => getGearStatBonuses(), [gearStorageRevision])
+  const equipmentBonuses = useMemo(() => getGearEquipmentCombatBonuses(readGearState()), [gearStorageRevision])
+  const accessoryBonuses = useMemo(() => aggregateAccessoryCombatBonuses(readGearState()), [gearStorageRevision])
+  const wikiBaseForSeals = useMemo<WikiCombatBaseForSeals>(
+    () => ({
+      hp: Math.max(0, Math.floor(data?.stats?.hp ?? 0)),
+      attack: Math.max(0, Math.floor(data?.attack ?? data?.stats?.attack ?? 0)),
+      defense: Math.max(0, Math.floor(data?.stats?.defense ?? 0)),
+      crit_rate: Math.max(0, Math.floor(data?.stats?.crit_rate ?? 0)),
+      block_rate: Math.max(0, Math.floor(data?.stats?.block_rate ?? 0)),
+      evasion: Math.max(0, Math.floor(data?.stats?.evasion ?? 0)),
+    }),
+    [data],
+  )
+  const sealBonuses = useMemo(
+    () => resolveSealStatBonuses(readGearState().seals, wikiBaseForSeals),
+    [gearStorageRevision, wikiBaseForSeals],
+  )
 
   useEffect(() => {
     if (durationFromUrl != null) setDurationSec(durationFromUrl)
@@ -974,6 +993,7 @@ export function DpsLabPage() {
               attackerElement: data.element ?? '',
               targetEnemyAttribute: targetEnemyAttribute.trim() || undefined,
               applySavedGearTrueVice: true,
+              applySavedGearAccessories: true,
             },
           )
           if (!cancelled) setSim(result)
@@ -1097,19 +1117,19 @@ export function DpsLabPage() {
   )
   const gearBonusByCombatKey = useMemo<Record<keyof CombatStatsState, number>>(
     () => ({
-      hp: 0,
-      ds: 0,
+      hp: equipmentBonuses.hp,
+      ds: equipmentBonuses.ds,
       attack: gearAttack.totalAttack,
-      defense: 0,
+      defense: equipmentBonuses.defense,
       crit_rate: 0,
       atk_speed: 0,
-      evasion: 0,
-      hit_rate: 0,
-      block_rate: 0,
+      evasion: equipmentBonuses.evasion + accessoryBonuses.evasionPct,
+      hit_rate: accessoryBonuses.hitRatePct,
+      block_rate: accessoryBonuses.blockPct,
       dex: 0,
       int: 0,
     }),
-    [gearAttack.totalAttack],
+    [gearAttack.totalAttack, equipmentBonuses, accessoryBonuses],
   )
   const perfectCloneAttackPreview = useMemo(
     () => ({
@@ -2622,16 +2642,54 @@ export function DpsLabPage() {
                   Sustained DPS is total damage ÷ window (skills + autos). Auto DPS is only the damage from auto
                   hits in that same window.
                 </p>
-                {gearAttack.totalAttack > 0 && (
+                {(gearAttack.totalAttack > 0 ||
+                  accessoryBonuses.attackPct > 0 ||
+                  accessoryBonuses.skillPct > 0 ||
+                  accessoryBonuses.skillFlat > 0) && (
                   <p className="muted lab-sim-summary-note">
-                    Gear ATK applied: +{gearAttack.totalAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                    {gearAttack.ringAttack > 0
-                      ? ` (ring +${gearAttack.ringAttack.toLocaleString()}`
-                      : ' ('}
-                    {gearAttack.leftWeightedAttack > 0
-                      ? `${gearAttack.ringAttack > 0 ? ', ' : ''}left +${gearAttack.leftWeightedAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })} @ 60%`
-                      : ''}
-                    ).
+                    {gearAttack.totalAttack > 0 ? (
+                      <>
+                        Gear ATK applied: +{gearAttack.totalAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                        {' ('}
+                        {[
+                          gearAttack.leftWeightedAttack > 0
+                            ? `left +${gearAttack.leftWeightedAttack.toLocaleString(undefined, { maximumFractionDigits: 1 })} @ 60%`
+                            : null,
+                          gearAttack.gogglesAllStatAttack > 0
+                            ? `goggles +${gearAttack.gogglesAllStatAttack.toLocaleString()} @ 100%`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                        ).
+                      </>
+                    ) : null}
+                    {accessoryBonuses.attackPct > 0 ||
+                    accessoryBonuses.skillPct > 0 ||
+                    accessoryBonuses.skillFlat > 0 ||
+                    accessoryBonuses.critDamagePct > 0 ? (
+                      <>
+                        {gearAttack.totalAttack > 0 ? ' ' : ''}
+                        Accessory rolls:{' '}
+                        {[
+                          accessoryBonuses.attackPct > 0
+                            ? `+${accessoryBonuses.attackPct}% ATK`
+                            : null,
+                          accessoryBonuses.skillPct > 0
+                            ? `+${accessoryBonuses.skillPct}% skill`
+                            : null,
+                          accessoryBonuses.skillFlat > 0
+                            ? `+${accessoryBonuses.skillFlat} skill flat`
+                            : null,
+                          accessoryBonuses.critDamagePct > 0
+                            ? `+${accessoryBonuses.critDamagePct}% crit dmg`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                        .
+                      </>
+                    ) : null}
                   </p>
                 )}
               </section>
