@@ -1,4 +1,5 @@
 import { digimonPortraitUrl } from './digimonImage'
+import { reattributePayloadMembersFromSkills } from './meterDigimonSkillResolve'
 import {
   isDungeonPartyParsePayload,
   type MeterParsePayloadDungeonPartyStored,
@@ -30,6 +31,14 @@ function collectDigimonIdsFromPayload(payload: MeterParsePayloadDungeonPartyStor
     }
   }
   return [...ids]
+}
+
+async function preparePayloadDigimonAttribution(
+  payload: MeterParsePayloadDungeonPartyStored,
+): Promise<MeterParsePayloadDungeonPartyStored> {
+  const next = structuredClone(payload)
+  await reattributePayloadMembersFromSkills(next)
+  return next
 }
 
 /** Resolve official names from the bulk wiki catalog (no per-id API calls). */
@@ -104,31 +113,43 @@ export async function resolveDungeonPartyPayloadDigimonNames(
   payload: unknown,
 ): Promise<unknown> {
   if (!isDungeonPartyParsePayload(payload)) return payload
-  if (!parsePayloadNeedsDigimonWikiResolution(payload)) return payload
-  const ids = collectDigimonIdsFromPayload(payload)
-  if (!ids.length) return payload
+  const attributed = await preparePayloadDigimonAttribution(payload)
+  if (!parsePayloadNeedsDigimonWikiResolution(attributed)) return attributed
+  const ids = collectDigimonIdsFromPayload(attributed)
+  if (!ids.length) return attributed
   const officialById = await fetchOfficialDigimonInfoByIds(ids)
-  if (!officialById.size) return payload
-  return applyWikiDigimonNamesToPayload(payload, officialById)
+  if (!officialById.size) return attributed
+  return applyWikiDigimonNamesToPayload(attributed, officialById)
 }
 
 export async function resolveMeterParseRowPayloads<T extends { payload: unknown }>(
   rows: T[],
 ): Promise<T[]> {
-  const needs = rows.filter((r) => parsePayloadNeedsDigimonWikiResolution(r.payload))
-  if (!needs.length) return rows
+  const dungeonRows = rows.filter((r) => isDungeonPartyParsePayload(r.payload))
+  if (!dungeonRows.length) return rows
 
+  const attributedRows = await Promise.all(
+    rows.map(async (row) => {
+      if (!isDungeonPartyParsePayload(row.payload)) return row
+      return {
+        ...row,
+        payload: await preparePayloadDigimonAttribution(row.payload),
+      }
+    }),
+  )
+
+  const needsWiki = attributedRows.filter((r) => parsePayloadNeedsDigimonWikiResolution(r.payload))
   const idSet = new Set<string>()
-  for (const row of needs) {
+  for (const row of needsWiki) {
     if (!isDungeonPartyParsePayload(row.payload)) continue
     for (const id of collectDigimonIdsFromPayload(row.payload)) idSet.add(id)
   }
-  const officialById = await fetchOfficialDigimonInfoByIds([...idSet])
-  if (!officialById.size) return rows
 
-  return rows.map((row) => {
-    if (!parsePayloadNeedsDigimonWikiResolution(row.payload)) return row
+  const officialById = idSet.size ? await fetchOfficialDigimonInfoByIds([...idSet]) : new Map()
+
+  return attributedRows.map((row) => {
     if (!isDungeonPartyParsePayload(row.payload)) return row
+    if (!parsePayloadNeedsDigimonWikiResolution(row.payload) || !officialById.size) return row
     return {
       ...row,
       payload: applyWikiDigimonNamesToPayload(row.payload, officialById),
