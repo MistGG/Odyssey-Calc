@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-06-12T15:10:25.292Z",
+  "updated_at": "2026-06-12T20:24:04.751Z",
   "runs": [
     {
-      "id": "2026-06-12T15:10:21.306Z-74u6cf",
-      "finishedAt": "2026-06-12T15:10:21.306Z",
+      "id": "2026-06-12T20:23:58.218Z-t310aq",
+      "finishedAt": "2026-06-12T20:23:58.218Z",
       "mode": "force",
-      "refreshedCount": 437,
-      "apiCount": 0,
-      "tierCount": 437,
+      "refreshedCount": 438,
+      "apiCount": 8,
+      "tierCount": 432,
       "sampleDigimon": [
         {
           "id": "d1hndr0k",
@@ -70,22 +70,214 @@
           "cause": "tier"
         }
       ],
-      "apiDiffById": {},
-      "apiDiffs": [],
+      "apiDiffById": {
+        "d55iyrw": [
+          "Role: \"Support\" -> \"Caster\"",
+          "HP: 28990 -> 23400",
+          "Attack: 4797 -> 7085",
+          "Stats.ds: 60840 -> 54750",
+          "Stats.defense: 702 -> 585",
+          "Stats.crit_rate: 4097 -> 3770",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3028 -> 3100"
+        ],
+        "d17kebi5": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "HP: 11180 -> 11560",
+          "Attack: 5882 -> 3888",
+          "Stats.ds: 13097 -> 30330",
+          "Stats.defense: 292 -> 341",
+          "Stats.crit_rate: 1510 -> 1160",
+          "Stats.atk_speed: 1800 -> 2000",
+          "Stats.evasion: 2721 -> 2447"
+        ],
+        "d1myywqm": [
+          "Role: \"Hybrid\" -> \"Caster\"",
+          "HP: 24960 -> 18027",
+          "Attack: 6019 -> 5994",
+          "Stats.ds: 33596 -> 44492",
+          "Stats.defense: 858 -> 621",
+          "Stats.crit_rate: 1846 -> 2182",
+          "Stats.atk_speed: 1700 -> 2000",
+          "Stats.evasion: 3972 -> 4390"
+        ],
+        "d4w6oll": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "HP: 19877 -> 24570",
+          "Attack: 10514 -> 7270",
+          "Stats.ds: 20360 -> 55650",
+          "Stats.defense: 509 -> 614",
+          "Stats.crit_rate: 3784 -> 4335",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3329 -> 3565"
+        ],
+        "d153jub0": [
+          "Skill Ambush Crunch cast_time: 0 -> 2.6",
+          "Skill Crash Charge cast_time: 0 -> 3.3",
+          "Skill Predator's Dive cast_time: 0 -> 2.6",
+          "Skill Ambush Laceration cast_time: 0 -> 3.3"
+        ],
+        "d1eru6rh": [
+          "Skill Kouga Tsuiba radius: 0 -> 1000"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d55iyrw",
+          "name": "Jijimon",
+          "lines": [
+            "Role: \"Support\" -> \"Caster\"",
+            "HP: 28990 -> 23400",
+            "Attack: 4797 -> 7085",
+            "Stats.ds: 60840 -> 54750",
+            "Stats.defense: 702 -> 585",
+            "Stats.crit_rate: 4097 -> 3770",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3028 -> 3100"
+          ]
+        },
+        {
+          "id": "d17kebi5",
+          "name": "Meicoomon",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "HP: 11180 -> 11560",
+            "Attack: 5882 -> 3888",
+            "Stats.ds: 13097 -> 30330",
+            "Stats.defense: 292 -> 341",
+            "Stats.crit_rate: 1510 -> 1160",
+            "Stats.atk_speed: 1800 -> 2000",
+            "Stats.evasion: 2721 -> 2447"
+          ]
+        },
+        {
+          "id": "d1myywqm",
+          "name": "Meicrackmon: Vicious Mode",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Caster\"",
+            "HP: 24960 -> 18027",
+            "Attack: 6019 -> 5994",
+            "Stats.ds: 33596 -> 44492",
+            "Stats.defense: 858 -> 621",
+            "Stats.crit_rate: 1846 -> 2182",
+            "Stats.atk_speed: 1700 -> 2000",
+            "Stats.evasion: 3972 -> 4390"
+          ]
+        },
+        {
+          "id": "d4w6oll",
+          "name": "Raguelmon",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "HP: 19877 -> 24570",
+            "Attack: 10514 -> 7270",
+            "Stats.ds: 20360 -> 55650",
+            "Stats.defense: 509 -> 614",
+            "Stats.crit_rate: 3784 -> 4335",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3329 -> 3565"
+          ]
+        },
+        {
+          "id": "d153jub0",
+          "name": "RaptorDramon",
+          "lines": [
+            "Skill Ambush Crunch cast_time: 0 -> 2.6",
+            "Skill Crash Charge cast_time: 0 -> 3.3",
+            "Skill Predator's Dive cast_time: 0 -> 2.6",
+            "Skill Ambush Laceration cast_time: 0 -> 3.3"
+          ]
+        },
+        {
+          "id": "d1eru6rh",
+          "name": "Slayerdramon",
+          "lines": [
+            "Skill Kouga Tsuiba radius: 0 -> 1000"
+          ]
+        }
+      ],
       "summary": {
-        "finishedAt": "2026-06-12T15:10:21.306Z",
+        "finishedAt": "2026-06-12T20:23:58.218Z",
         "mode": "force",
-        "refreshedCount": 437,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
+        "refreshedCount": 438,
+        "dpsUp": [
+          {
+            "id": "d4w6oll",
+            "name": "Raguelmon",
+            "role": "Caster",
+            "before": 21124.503015702245,
+            "after": 33644.99999285835,
+            "delta": 12520.496977156105
+          },
+          {
+            "id": "d55iyrw",
+            "name": "Jijimon",
+            "role": "Caster",
+            "before": 10310.757048666665,
+            "after": 21079.322005941867,
+            "delta": 10768.564957275203
+          },
+          {
+            "id": "d1myywqm",
+            "name": "Meicrackmon: Vicious Mode",
+            "role": "Caster",
+            "before": 10258.90207544866,
+            "after": 13884.613104102978,
+            "delta": 3625.7110286543193
+          },
+          {
+            "id": "d17kebi5",
+            "name": "Meicoomon",
+            "role": "Caster",
+            "before": 10992.375494791131,
+            "after": 13742.00246153846,
+            "delta": 2749.626966747328
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d153jub0",
+            "name": "RaptorDramon",
+            "role": "Melee DPS",
+            "before": 12086.832777266678,
+            "after": 6132.938802221484,
+            "delta": -5953.893975045194
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d1b204a4",
+            "name": "Baalmon",
+            "role": "Caster",
+            "after": 0
+          },
+          {
+            "id": "d13da2bb",
+            "name": "Sleipmon",
+            "role": "Caster",
+            "after": 62244.83822132443
+          }
+        ],
         "tankUp": [],
         "tankDown": [],
         "tankNew": [],
         "healerUp": [],
         "healerDown": [],
         "healerNew": [],
-        "statusChanges": []
+        "statusChanges": [
+          {
+            "id": "d1b204a4",
+            "name": "Baalmon",
+            "role": "Caster",
+            "to": "incomplete"
+          },
+          {
+            "id": "d13da2bb",
+            "name": "Sleipmon",
+            "role": "Caster",
+            "to": "complete"
+          }
+        ]
       }
     }
   ]
