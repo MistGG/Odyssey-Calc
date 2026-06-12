@@ -1,27 +1,29 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import { fetchPlayerHallOfFameEntries } from './meterHallOfFame'
 import { normalizeRoutePlayerKey } from './meterPlayerProfile'
 import { fetchStoredConfirmedPlayerKey } from './meterPointGrants'
+import { loadWikiDungeonsForMeter } from './wikiDungeons'
 
-const HOF_SCOPE_LIMIT = 48
+/** Matches `get_meter_player_scopes` RPC cap (50). */
+const HOF_SCOPE_LIMIT = 50
 
 /** Demo record count for shop / theme previews. */
 export const HOF_PREVIEW_DEMO_RECORD_COUNT = 7
 
+/** Induction count — same rules as the profile page (excludes self-record improvements). */
 export async function fetchMeterPlayerHofRecordCount(
-  client: SupabaseClient,
+  _client: SupabaseClient,
   playerKey: string,
 ): Promise<{ count: number; error: string | null }> {
   const key = playerKey.trim().toLowerCase()
   if (!key) return { count: 0, error: null }
 
-  const { data, error } = await client.rpc('get_meter_player_hof_gold_breaks', {
-    p_player_key: key,
-    p_scope_limit: HOF_SCOPE_LIMIT,
+  const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
+  const { entries, error } = await fetchPlayerHallOfFameEntries(key, dungeons, {
+    maxScopes: HOF_SCOPE_LIMIT,
   })
-
-  if (error) return { count: 0, error: error.message }
-  return { count: (data ?? []).length, error: null }
+  return { count: entries.length, error }
 }
 
 export async function resolveMeterPlayerKeyForHof(

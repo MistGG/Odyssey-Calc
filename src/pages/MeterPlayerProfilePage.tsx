@@ -76,7 +76,7 @@ export function MeterPlayerProfilePage() {
 
       const [leaderboardRes, hofRes] = await Promise.all([
         fetchPlayerMeterLeaderboardEntries(playerKey),
-        fetchPlayerHallOfFameEntries(playerKey, dungeons, { maxScopes: 12 }),
+        fetchPlayerHallOfFameEntries(playerKey, dungeons, { maxScopes: 50 }),
       ])
       if (cancelled) return
 
