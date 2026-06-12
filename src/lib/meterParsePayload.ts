@@ -199,8 +199,9 @@ function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)
 }
 
-/** Minimum fight length for a ranked dungeon clear (shorter uploads are partial or death-spike snapshots). */
-export const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 30
+/** Member active only briefly while the rest of the party ran much longer (late join / attribution spike). */
+const MEMBER_SPIKE_MAX_ACTIVE_SEC = 3
+const MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC = 5
 
 function memberRawFlags(member: MeterPartyMemberStored): Record<string, unknown> {
   return member as Record<string, unknown>
@@ -219,9 +220,16 @@ export function isMemberLeaderboardEligible(
   if (raw.died === true || raw.isDead === true || raw.deathBeforeClear === true) return false
 
   if (payload != null && members?.length) {
+    const dungeon = dungeonFromPayload(payload)
+    if (dungeon?.leaderboardEligible === true) return true
+
     const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
     const memberDur = Math.max(member.durationSec, 0)
-    if (sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC && memberDur > 0 && memberDur < 3) {
+    if (
+      memberDur > 0 &&
+      memberDur < MEMBER_SPIKE_MAX_ACTIVE_SEC &&
+      sessionDur > memberDur + MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC
+    ) {
       return false
     }
   }
@@ -229,34 +237,24 @@ export function isMemberLeaderboardEligible(
 }
 
 /**
- * Companion ≤0.1.52 could auto-upload after the first objective batch (partial `bossTargets`, ~0–7s timer).
- * Excluded from leaderboards; still visible in My Parses as unranked.
+ * Legacy partial clears (pre–dungeon_complete companions): first objective batch only.
+ * Modern companions set `leaderboardEligible` from authoritative `dungeon_complete`.
  */
 export function isPartialDungeonClearParse(
   payload: unknown,
-  rowDurationSec = 0,
+  _rowDurationSec = 0,
   _appVersion?: string | null,
 ): boolean {
   if (!isDungeonPartyParsePayload(payload)) return false
   const dungeon = payload.dungeon
-  const markedClear =
-    dungeon.runOutcome === 'clear' || dungeon.leaderboardEligible === true
-  if (!markedClear) return false
 
-  const members = partyMembersFromPayload(payload)
-  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
+  if (dungeon.leaderboardEligible === true) return false
+  if (dungeon.leaderboardEligible === false) return false
+
+  if (dungeon.runOutcome !== 'clear') return false
+
   const bosses = dungeon.bossTargets ?? []
   const hasFinalBoss = bosses.some((b) => bossTargetLooksLikeFinalDungeonBoss(b))
-
-  // Never trust companion `leaderboardEligible` on very short timers (death-spike / partial snapshots).
-  if (sessionDur > 0 && sessionDur < MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
-    return true
-  }
-
-  if (dungeon.leaderboardEligible === true && sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
-    return false
-  }
-
   if (bosses.length >= 2 && !hasFinalBoss) return true
 
   return false
@@ -366,8 +364,6 @@ export function isExcludedFromLeaderboardParseRow(row: {
     if (summary.eligible === true) return false
   }
 
-  const dur = row.duration_sec ?? 0
-  if (dur > 0 && dur < MIN_LEADERBOARD_DUNGEON_SESSION_SEC) return true
   return false
 }
 

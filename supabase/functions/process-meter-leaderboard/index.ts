@@ -238,43 +238,42 @@ function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): b
   return false
 }
 
-const MIN_LEADERBOARD_DUNGEON_SESSION_SEC = 30
+const MEMBER_SPIKE_MAX_ACTIVE_SEC = 3
+const MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC = 5
 
 function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)
 }
 
-function isPartialDungeonClear(
-  payload: DungeonPayload,
-  rowDurationSec: number,
-  _appVersion?: string | null,
-): boolean {
+function isPartialDungeonClear(payload: DungeonPayload, _rowDurationSec: number): boolean {
   const dungeon = payload.dungeon
   if (!dungeon) return false
-  const markedClear = dungeon.runOutcome === 'clear' || dungeon.leaderboardEligible === true
-  if (!markedClear) return false
-  const members = payload.members ?? []
-  const sessionDur = sessionDuration(payload, rowDurationSec, members)
+  if (dungeon.leaderboardEligible === true) return false
+  if (dungeon.leaderboardEligible === false) return false
+  if (dungeon.runOutcome !== 'clear') return false
   const bosses = Array.isArray(dungeon.bossTargets)
     ? dungeon.bossTargets.filter((b): b is string => typeof b === 'string')
     : []
   const hasFinalBoss = bosses.some((b) => bossTargetLooksLikeFinalDungeonBoss(b))
-  if (sessionDur > 0 && sessionDur < MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
-    return true
-  }
-  if (dungeon.leaderboardEligible === true && sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC) {
-    return false
-  }
   if (bosses.length >= 2 && !hasFinalBoss) return true
   return false
 }
 
-function isMemberLeaderboardEligible(member: StoredMember, sessionDur: number): boolean {
+function isMemberLeaderboardEligible(
+  member: StoredMember,
+  sessionDur: number,
+  dungeonLeaderboardEligible?: boolean,
+): boolean {
   const raw = member as Record<string, unknown>
   if (raw.leaderboardEligible === false) return false
   if (raw.died === true || raw.isDead === true || raw.deathBeforeClear === true) return false
+  if (dungeonLeaderboardEligible === true) return true
   const memberDur = Math.max(Number(member.durationSec) || 0, 0)
-  if (sessionDur >= MIN_LEADERBOARD_DUNGEON_SESSION_SEC && memberDur > 0 && memberDur < 3) {
+  if (
+    memberDur > 0 &&
+    memberDur < MEMBER_SPIKE_MAX_ACTIVE_SEC &&
+    sessionDur > memberDur + MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC
+  ) {
     return false
   }
   return true
@@ -366,20 +365,20 @@ async function resolveRoleBucket(
 function buildSummaryFromPayload(
   payload: DungeonPayload,
   rowDurationSec: number,
-  appVersion?: string | null,
 ): LeaderboardSummary | null {
   if (payload.kind !== 'dungeon_party' || !Array.isArray(payload.members)) return null
   if (!isLeaderboardEligiblePayload(payload)) return { version: 1, eligible: false, members: [] }
-  if (isPartialDungeonClear(payload, rowDurationSec, appVersion)) {
+  if (isPartialDungeonClear(payload, rowDurationSec)) {
     return { version: 1, eligible: false, members: [] }
   }
   const members = payload.members
   if (isBrokenPartyParse(payload, members)) return { version: 1, eligible: false, members: [] }
 
   const sessionDur = sessionDuration(payload, rowDurationSec, members)
+  const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
   const out: SummaryMember[] = []
   for (const member of members) {
-    if (!isMemberLeaderboardEligible(member, sessionDur)) continue
+    if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
     const primary = memberPrimaryDigimon(member)
     const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members)
     out.push({
@@ -467,14 +466,13 @@ async function processParse(
     await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
   }
 
-  const appVersion = row.app_version ?? null
-  if (isPartialDungeonClear(payload, Number(row.duration_sec) || 0, appVersion)) {
+  if (isPartialDungeonClear(payload, Number(row.duration_sec) || 0)) {
     return { inserted: 0, skipped: 'partial dungeon clear' }
   }
 
   let summary = row.leaderboard_summary
   if (!summary?.members?.length) {
-    summary = buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, appVersion)
+    summary = buildSummaryFromPayload(payload, Number(row.duration_sec) || 0)
   }
 
   const wikiCatalog = await loadWikiRoleCatalog()
@@ -518,8 +516,9 @@ async function processParse(
   const entries: Array<Record<string, unknown>> = []
 
   const sessionDur = sessionDuration(payload, Number(row.duration_sec) || 0, members)
+  const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
   for (const member of memberList) {
-    if (!isMemberLeaderboardEligible(member, sessionDur)) continue
+    if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
     const playerKey = normalizePlayerKey(member)
     if (!playerKey || existingPlayerKeys.has(playerKey)) continue
     const sm = summaryByKey.get(playerKey)
