@@ -188,30 +188,37 @@ export function aggregatePublicMeterStats(
 
       if (!primaryDigimonId) continue
       const memberDur = Math.max(member.durationSec, sessionDur, 1e-6)
-      for (const dg of memberDigimonBreakdowns(member)) {
-        if (dg.digimonId !== primaryDigimonId) continue
-        const dBucket = digimonIdToBucket(dg.digimonId, digimonRoleById)
-        if (!dBucket) continue
-        const dDps = dg.totalDamage / memberDur
-        const existing = digimonAvg[dBucket].get(dg.digimonId)
-        if (!existing) {
-          digimonAvg[dBucket].set(dg.digimonId, {
-            digimonId: dg.digimonId,
-            digimonName: dg.digimonName,
-            iconId: dg.iconId,
-            portraitUrl: dg.portraitUrl,
-            dpsSum: dDps,
-            dpsBestMax: dDps,
-            sampleCount: 1,
-          })
-        } else {
-          existing.dpsSum += dDps
-          existing.dpsBestMax = Math.max(existing.dpsBestMax, dDps)
-          existing.sampleCount += 1
-          if (dg.digimonName.trim()) existing.digimonName = dg.digimonName
-          if (dg.iconId) existing.iconId = dg.iconId
-          if (dg.portraitUrl) existing.portraitUrl = dg.portraitUrl
-        }
+      const primaryRows = memberDigimonBreakdowns(member).filter(
+        (dg) => dg.digimonId.trim() === primaryDigimonId.trim(),
+      )
+      if (!primaryRows.length) continue
+      const primaryDamage = primaryRows.reduce((sum, dg) => sum + Math.max(0, dg.totalDamage), 0)
+      const topRow =
+        primaryRows.reduce<(typeof primaryRows)[number] | null>((best, dg) => {
+          if (!best || dg.totalDamage > best.totalDamage) return dg
+          return best
+        }, null) ?? primaryRows[0]!
+      const dBucket = digimonIdToBucket(primaryDigimonId, digimonRoleById)
+      if (!dBucket) continue
+      const dDps = primaryDamage / memberDur
+      const existing = digimonAvg[dBucket].get(primaryDigimonId)
+      if (!existing) {
+        digimonAvg[dBucket].set(primaryDigimonId, {
+          digimonId: primaryDigimonId,
+          digimonName: topRow.digimonName,
+          iconId: topRow.iconId,
+          portraitUrl: topRow.portraitUrl,
+          dpsSum: dDps,
+          dpsBestMax: dDps,
+          sampleCount: 1,
+        })
+      } else {
+        existing.dpsSum += dDps
+        existing.dpsBestMax = Math.max(existing.dpsBestMax, dDps)
+        existing.sampleCount += 1
+        if (topRow.digimonName.trim()) existing.digimonName = topRow.digimonName
+        if (topRow.iconId) existing.iconId = topRow.iconId
+        if (topRow.portraitUrl) existing.portraitUrl = topRow.portraitUrl
       }
     }
   }

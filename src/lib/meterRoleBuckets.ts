@@ -111,10 +111,11 @@ export function memberPrimaryDigimonId(member: MeterPartyMemberStored): string |
 export function memberLeaderboardDamage(member: MeterPartyMemberStored): number {
   const digimons = memberDigimonBreakdowns(member)
   if (digimons.length <= 1) return memberDamageTotal(member)
+  const totals = digimonIdDamageTotals(digimons)
+  if (totals.size <= 1) return memberDamageTotal(member)
   const top = memberTopDigimonUsed(member)
   if (!top) return memberDamageTotal(member)
-  const row = digimons.find((d) => d.digimonId === top.digimonId)
-  const dmg = Math.max(0, row?.totalDamage ?? 0)
+  const dmg = Math.max(0, totals.get(top.digimonId.trim()) ?? 0)
   return dmg > 0 ? dmg : memberDamageTotal(member)
 }
 
@@ -160,19 +161,42 @@ export function playerDisplayName(member: MeterPartyMemberStored): string {
 
 }
 
+function digimonIdDamageTotals(
+  digimons: ReturnType<typeof memberDigimonBreakdowns>,
+): Map<string, number> {
+  const totals = new Map<string, number>()
+  for (const dg of digimons) {
+    const id = dg.digimonId.trim()
+    if (!id) continue
+    totals.set(id, (totals.get(id) ?? 0) + Math.max(0, dg.totalDamage))
+  }
+  return totals
+}
+
 function pickLeaderboardDigimon(
   digimons: ReturnType<typeof memberDigimonBreakdowns>,
 ): (typeof digimons)[number] | null {
-  let best: (typeof digimons)[number] | null = null
+  const totals = digimonIdDamageTotals(digimons)
+  let bestId: string | null = null
   let bestDamage = -1
-  for (const dg of digimons) {
-    const damage = Math.max(0, dg.totalDamage)
+  for (const [id, damage] of totals) {
     if (damage > bestDamage) {
       bestDamage = damage
-      best = dg
+      bestId = id
     }
   }
-  return best
+  if (!bestId) return null
+  let bestRow: (typeof digimons)[number] | null = null
+  let bestRowDamage = -1
+  for (const dg of digimons) {
+    if (dg.digimonId.trim() !== bestId) continue
+    const damage = Math.max(0, dg.totalDamage)
+    if (damage > bestRowDamage) {
+      bestRowDamage = damage
+      bestRow = dg
+    }
+  }
+  return bestRow
 }
 
 /** Digimon used for leaderboard role + label (highest damage this run). */
