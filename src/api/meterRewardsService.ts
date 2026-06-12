@@ -1,14 +1,35 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import {
+  fetchMeterPlayerHofRecordCount,
+  resolveMeterPlayerKeyForHof,
+  userQualifiesForHallOfFameTheme,
+} from '../lib/meterHallOfFameTheme'
 import { getMeterPartyBarTheme } from '../lib/meterPartyBarThemes'
 import { meterThemeShopPriceForTheme } from '../lib/meterThemeShop'
 import type { MeterPartyBarThemeId } from '../lib/meterPartyBarThemes'
 import { isGrantOnlyMeterThemeId, isShopPurchasableMeterThemeId } from '../lib/meterThemeGrants'
 import {
   clearEquippedMeterPartyBarThemeId,
+  HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
   writeEquippedMeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
+
+async function upsertEquippedTheme(
+  supabase: SupabaseClient,
+  themeId: MeterPartyBarThemeId,
+): Promise<void> {
+  writeEquippedMeterPartyBarThemeId(themeId)
+  const { data: auth } = await supabase.auth.getUser()
+  if (auth.user?.id) {
+    await supabase.from('meter_reward_accounts').upsert({
+      user_id: auth.user.id,
+      equipped_theme_id: themeId,
+      updated_at: new Date().toISOString(),
+    })
+  }
+}
 
 export async function purchaseMeterTheme(
   supabase: SupabaseClient,
@@ -36,14 +57,28 @@ export async function purchaseMeterTheme(
 export async function equipMeterTheme(
   supabase: SupabaseClient,
   themeId: MeterPartyBarThemeId,
-  options?: { mistDevIliadBypass?: boolean },
+  options?: { mistDevIliadBypass?: boolean; profileDisplayName?: string | null },
 ): Promise<{ ok: boolean; error: string | null }> {
   const { data, error } = await supabase.rpc('meter_equip_theme', { p_theme_id: themeId })
   if (error) return { ok: false, error: error.message }
   if (data?.error === 'not_owned') {
     if (options?.mistDevIliadBypass && themeId === MIST_DEV_REWARD_THEME_ID) {
-      writeEquippedMeterPartyBarThemeId(themeId)
+      await upsertEquippedTheme(supabase, themeId)
       return { ok: true, error: null }
+    }
+    if (themeId === HALL_OF_FAME_THEME_ID) {
+      const playerKey = await resolveMeterPlayerKeyForHof(
+        supabase,
+        options?.profileDisplayName ?? null,
+      )
+      if (playerKey) {
+        const { count } = await fetchMeterPlayerHofRecordCount(supabase, playerKey)
+        if (userQualifiesForHallOfFameTheme(count)) {
+          await upsertEquippedTheme(supabase, themeId)
+          return { ok: true, error: null }
+        }
+      }
+      return { ok: false, error: 'Earn a Hall of Fame record break to unlock this theme.' }
     }
     if (isGrantOnlyMeterThemeId(themeId)) {
       return { ok: false, error: 'You have not earned this theme yet.' }

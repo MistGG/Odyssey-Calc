@@ -1,4 +1,5 @@
 import {
+  isHallOfFameMeterTheme,
   meterPartyBarThemeStyle,
   meterThemePreviewDigimonLine,
   shouldShowMeterThemeBadge,
@@ -37,11 +38,18 @@ type MeterThemePreviewProps = {
 
   className?: string
 
+  hofRecordCount?: number
+
 }
 
 
 
-export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePreviewProps) {
+export function MeterThemePreview({
+  theme,
+  rows,
+  className = '',
+  hofRecordCount = 0,
+}: MeterThemePreviewProps) {
 
   return (
 
@@ -78,7 +86,13 @@ export function MeterThemePreview({ theme, rows, className = '' }: MeterThemePre
           >
 
             {themed ? (
-              <MeterPartyThemedBar theme={theme} sharePct={sharePct} />
+              <MeterPartyThemedBar
+                theme={theme}
+                sharePct={sharePct}
+                hofRecordCount={
+                  isHallOfFameMeterTheme(theme) ? Math.max(hofRecordCount, 1) : hofRecordCount
+                }
+              />
             ) : (
               <MeterPartyPlainBar sharePct={sharePct} rowKey={rowKey} />
             )}

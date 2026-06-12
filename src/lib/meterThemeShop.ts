@@ -2,6 +2,7 @@ import type { MeterShopSubcategoryId } from './meterShopCategories'
 import { isShopPurchasableMeterThemeId } from './meterThemeGrants'
 import {
   getMeterPartyBarTheme,
+  HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
   OLYMPOS_XII_COMMON_SHOP_THEMES,
   OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
@@ -21,6 +22,10 @@ export const METER_THEME_SHOP_TIER_LABEL = 'Common'
 export const METER_THEME_SHOP_RARE_TIER_LABEL = 'Rare'
 
 export const METER_THEME_UNIQUE_TIER_LABEL = 'Unique'
+
+export const METER_THEME_HOF_TIER_LABEL = 'Hall of Fame'
+
+export type MeterRewardTheme = MeterPartyBarTheme & { hofRecordCount?: number }
 
 export type MeterThemeShopTierId = 'common' | 'rare'
 
@@ -100,6 +105,7 @@ const REWARDS_THEME_BAR_ORDER = new Map(
 
 function meterRewardsThemeSortKey(theme: MeterPartyBarTheme): [tier: number, barIndex: number] {
   if (theme.id === MIST_DEV_REWARD_THEME_ID) return [0, 0]
+  if (theme.id === HALL_OF_FAME_THEME_ID) return [0, 1]
   if (theme.variant === 'legendary') {
     return [1, REWARDS_THEME_BAR_ORDER.get(theme.barStyleId) ?? 99]
   }

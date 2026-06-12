@@ -10,12 +10,14 @@ import { buildThemePreviewRows, MeterThemePreview } from '../components/MeterThe
 import { useMeterRewards } from '../hooks/useMeterRewards'
 import {
   getMeterPartyBarTheme,
+  HALL_OF_FAME_THEME_ID,
   meterThemeRewardsCardTitle,
   MIST_DEV_REWARD_THEME_ID,
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
 import {
   meterThemeShopTierLabelForTheme,
+  METER_THEME_HOF_TIER_LABEL,
   METER_THEME_UNIQUE_TIER_LABEL,
   previewDigimonForTheme,
 } from '../lib/meterThemeShop'
@@ -39,6 +41,7 @@ export function MeterMyRewardsPage() {
   const { supabase, user, authReady, profileDisplayName } = useAuth()
   const rewards = useMeterRewards(supabase, profileDisplayName, Boolean(user))
   const catalog = useMeterRewardsCatalog(
+    supabase,
     rewards.loading,
     rewards.ownedThemeIds,
     profileDisplayName,
@@ -69,6 +72,7 @@ export function MeterMyRewardsPage() {
     setActionError(null)
     const res = await equipMeterTheme(supabase, themeId, {
       mistDevIliadBypass: rewards.mistShopDev && themeId === MIST_DEV_REWARD_THEME_ID,
+      profileDisplayName,
     })
     setBusyThemeId(null)
     if (!res.ok) {
@@ -165,23 +169,27 @@ export function MeterMyRewardsPage() {
             const equipped = rewards.equippedThemeId === theme.id
             const confirming = confirmEquipId === theme.id
             const isUniqueTheme = theme.id === MIST_DEV_REWARD_THEME_ID
+            const isHofTheme = theme.id === HALL_OF_FAME_THEME_ID
             const isRareTheme = theme.variant === 'rare'
             const isLegendaryTheme = theme.variant === 'legendary'
+            const hofRecordCount = theme.hofRecordCount ?? catalog.hofRecordCount
             return (
               <li
                 key={theme.id}
-                className={`meter-shop-card${isUniqueTheme ? ' meter-shop-card--unique' : ''}${isRareTheme ? ' meter-shop-card--rare' : ''}${isLegendaryTheme ? ' meter-shop-card--legendary' : ''}`}
+                className={`meter-shop-card${isUniqueTheme ? ' meter-shop-card--unique' : ''}${isHofTheme ? ' meter-shop-card--hof' : ''}${isRareTheme ? ' meter-shop-card--rare' : ''}${isLegendaryTheme ? ' meter-shop-card--legendary' : ''}`}
               >
                 <div className="meter-shop-card-head">
                   <span
-                    className={`meter-shop-tier${isUniqueTheme ? ' meter-shop-tier--unique' : ''}${isRareTheme ? ' meter-shop-tier--rare' : ''}${isLegendaryTheme ? ' meter-shop-tier--legendary' : ''}`}
+                    className={`meter-shop-tier${isUniqueTheme ? ' meter-shop-tier--unique' : ''}${isHofTheme ? ' meter-shop-tier--hof' : ''}${isRareTheme ? ' meter-shop-tier--rare' : ''}${isLegendaryTheme ? ' meter-shop-tier--legendary' : ''}`}
                   >
                     {isUniqueTheme
                       ? METER_THEME_UNIQUE_TIER_LABEL
-                      : meterThemeShopTierLabelForTheme(theme)}
+                      : isHofTheme
+                        ? METER_THEME_HOF_TIER_LABEL
+                        : meterThemeShopTierLabelForTheme(theme)}
                   </span>
                   <h3 className="meter-shop-card-title">
-                    {meterThemeRewardsCardTitle(theme)}
+                    {meterThemeRewardsCardTitle(theme, hofRecordCount)}
                     {equipped ? (
                       <span className="meter-shop-equipped-badge">Equipped</span>
                     ) : null}
@@ -195,6 +203,7 @@ export function MeterMyRewardsPage() {
                     previewDigimonForTheme(theme.id, 1),
                   )}
                   className="meter-shop-card-preview"
+                  hofRecordCount={hofRecordCount}
                 />
                 <div className="meter-shop-card-actions">
                   {equipped ? (
