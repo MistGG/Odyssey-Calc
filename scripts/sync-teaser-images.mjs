@@ -56,6 +56,10 @@ async function download(url) {
 
 const remote = process.argv[2]?.trim() || readDefaultUrl()
 const id = imgurId(remote)
+if (!process.argv[2]?.trim()) {
+  console.log(`Using FORUM_TEASER_IMAGE_URL: ${remote}`)
+  console.log('If the forum changed teasers, update src/lib/forumTeaserImage.ts first.')
+}
 if (!id) {
   console.error('Not an Imgur URL:', remote)
   process.exit(1)
