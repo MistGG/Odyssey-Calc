@@ -6,7 +6,12 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react'
-import { FORUM_TEASER_IMAGE_URL, readCachedTeaserBlob, syncForumTeaserImage } from '../lib/forumTeaserImage'
+import {
+  fetchLiveForumTeaserUrls,
+  FORUM_TEASER_IMAGE_URL,
+  readCachedTeaserBlob,
+  syncForumTeaserImage,
+} from '../lib/forumTeaserImage'
 import {
   bundledTeaserImageUrls,
   imgurIdFromUrl,
@@ -340,15 +345,8 @@ export function useTeaserReducedMotion(): boolean {
   return reducedMotion
 }
 
-function defaultForumTeaserSrc(): string {
-  const id = imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
-  if (id) return bundledTeaserImageUrls(id)[0]
-  return FORUM_TEASER_IMAGE_URL
-}
-
 export function useTeaserImageSrc(fixedImageUrl?: string) {
-  const initialSrc = fixedImageUrl ?? defaultForumTeaserSrc()
-  const [imgSrc, setImgSrc] = useState(initialSrc)
+  const [imgSrc, setImgSrc] = useState(fixedImageUrl ?? FORUM_TEASER_IMAGE_URL)
   const blobUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -381,9 +379,12 @@ export function useTeaserImageSrc(fixedImageUrl?: string) {
 
   const refreshTeaserImage = useCallback(async () => {
     if (fixedImageUrl) return
+    const live = await fetchLiveForumTeaserUrls()
+    setImgSrc(live.imageUrl)
     await applyBlobToSrc()
     const changed = await syncForumTeaserImage()
     if (changed) await applyBlobToSrc()
+    else setImgSrc(live.imageUrl)
   }, [applyBlobToSrc, fixedImageUrl])
 
   const onImgError = useCallback(() => {

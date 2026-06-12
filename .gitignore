@@ -18,6 +18,8 @@ dist-ssr
 # One-off / dev scripts (build only needs sync-teaser-images.mjs)
 scripts/*
 !scripts/sync-teaser-images.mjs
+!scripts/sync-forum-teaser.mjs
+!scripts/lib/
 !scripts/generate-guidebook-share.mjs
 !scripts/generate-event-share.mjs
 !scripts/backfill-meter-leaderboard.mjs

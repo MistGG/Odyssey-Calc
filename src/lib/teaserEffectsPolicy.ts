@@ -17,7 +17,7 @@ import {
  * 1. Add the *previous* id to `TEASER_ARCHIVE_ENTRIES` with `fullEffects: true` if it had the saved stack.
  * 2. Update `FORUM_TEASER_IMAGE_URL` to the new image.
  * 3. Leave {@link GRAY_FOG_TEASER_IMGUR_ID} as `''` until the new art is tuned (live stays plain).
- * 4. Run `npm run sync:teasers` and commit `public/teasers/`.
+ * 4. GHA `teaser-sync.yml` auto-syncs; or run `npm run sync:forum-teaser` locally.
  * 5. After tuning, set `GRAY_FOG_TEASER_IMGUR_ID` to that id to enable the full stack on live.
  *
  * **Teasers archive** uses `fullEffects` per row (not the live URL).

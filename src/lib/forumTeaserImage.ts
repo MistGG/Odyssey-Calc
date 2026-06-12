@@ -3,6 +3,7 @@ import {
   imgurIdFromUrl,
   imgurTeaserRemoteUrl,
 } from './teaserImageStorage'
+import { bundledUrlsFromManifest, fetchTeaserManifest } from './teaserManifest'
 
 /**
  * Official forum “News” teaser image (Digital Odyssey Proboards announcement box).
@@ -35,11 +36,11 @@ function isValidTeaserImageBytes(buf: ArrayBuffer): boolean {
 }
 
 async function fetchTeaserImageBytes(): Promise<{ buf: ArrayBuffer; res: Response } | null> {
-  const id = imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
-  const sources = [
-    ...(id ? bundledTeaserImageUrls(id) : []),
-    FORUM_TEASER_IMAGE_URL,
-  ]
+  const { manifest } = await fetchTeaserManifest()
+  const id = manifest?.teaser.imgurId ?? imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
+  const sources = manifest
+    ? bundledUrlsFromManifest(manifest)
+    : [...(id ? bundledTeaserImageUrls(id) : []), FORUM_TEASER_IMAGE_URL]
   for (const url of sources) {
     try {
       const res = await fetch(url, { mode: 'cors', cache: 'no-store' })
@@ -146,33 +147,12 @@ async function putTeaserResponse(res: Response, body: ArrayBuffer): Promise<void
  */
 export async function syncForumTeaserImage(): Promise<boolean> {
   const meta = readMeta()
-  let remoteLastModified: string | null = null
-  let remoteEtag: string | null = null
+  const { manifest } = await fetchTeaserManifest()
+  const manifestStamp = manifest
+    ? `${manifest.teaser.imgurId}\u0000${manifest.updated_at}`
+    : null
 
-  try {
-    const head = await fetch(FORUM_TEASER_IMAGE_URL, {
-      method: 'HEAD',
-      mode: 'cors',
-      cache: 'no-store',
-    })
-    if (head.ok) {
-      remoteLastModified = head.headers.get('last-modified')
-      remoteEtag = head.headers.get('etag')
-    }
-  } catch {
-    /* HEAD unsupported or blocked — fall through to GET */
-  }
-
-  const etagMatches =
-    remoteEtag == null || meta == null || meta.etag == null || remoteEtag === meta.etag
-  const unchangedByHeaders =
-    meta != null &&
-    Boolean(meta.lastModified) &&
-    remoteLastModified != null &&
-    remoteLastModified === meta.lastModified &&
-    etagMatches
-
-  if (unchangedByHeaders) {
+  if (manifestStamp && meta?.lastModified === manifestStamp) {
     const existing = await readCachedTeaserBlob()
     if (existing && existing.size > 0) return false
   }
@@ -183,20 +163,9 @@ export async function syncForumTeaserImage(): Promise<boolean> {
     const { buf, res } = fetched
     if (buf.byteLength === 0) return false
 
-    const lm = res.headers.get('last-modified') ?? remoteLastModified
-    const etag = res.headers.get('etag') ?? remoteEtag
-    const nextMeta: ForumTeaserImageMeta = { lastModified: lm, etag }
-
-    const etagMatchesLocal = etag == null || meta == null || meta.etag == null || etag === meta.etag
-    const sameAsStored =
-      meta != null &&
-      Boolean(meta.lastModified) &&
-      lm != null &&
-      meta.lastModified === lm &&
-      etagMatchesLocal
-    if (sameAsStored) {
-      const existing = await readCachedTeaserBlob()
-      if (existing && existing.size > 0) return false
+    const nextMeta: ForumTeaserImageMeta = {
+      lastModified: manifestStamp,
+      etag: manifest?.teaser.imgurId ?? null,
     }
 
     await putTeaserResponse(res, buf)
@@ -204,6 +173,26 @@ export async function syncForumTeaserImage(): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+/** Live teaser URLs from the published manifest (fallback: hardcoded constants). */
+export async function fetchLiveForumTeaserUrls(): Promise<{
+  imageUrl: string
+  readMoreUrl: string
+}> {
+  const { manifest } = await fetchTeaserManifest()
+  if (manifest) {
+    const bundled = bundledUrlsFromManifest(manifest)
+    return {
+      imageUrl: bundled[0] ?? manifest.teaser.imageRemoteUrl,
+      readMoreUrl: manifest.teaser.readMoreUrl,
+    }
+  }
+  const id = imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
+  return {
+    imageUrl: id ? bundledTeaserImageUrls(id)[0] : FORUM_TEASER_IMAGE_URL,
+    readMoreUrl: FORUM_TEASER_THREAD_URL,
   }
 }
 
