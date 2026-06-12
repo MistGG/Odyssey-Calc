@@ -148,12 +148,10 @@ export function dedupeCoalescedPartyUploads(rows: HofRow[]): HofRow[] {
 
 /**
  * Hall of Fame entry = this parse strictly beat the prior role record for the dungeon+difficulty.
- * Ties at the same DPS do not add another row (they are still 100% parses on the leaderboard, but one induction per record break).
+ * Ties at the same DPS do not add another row. Beating your own standing record in the same role
+ * does not add another induction — only taking the record from someone else (or the first break) counts.
  */
-export function goldParsesFromLeaderboardHistory(
-  rows: HofRow[],
-  currentPoolByRole: Record<MeterRoleBucket, number[]>,
-): MeterHallOfFameEntry[] {
+export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
   const sorted = dedupeCoalescedPartyUploads(rows)
   const runningMax: Record<MeterRoleBucket, number> = {
     melee: 0,
@@ -163,27 +161,46 @@ export function goldParsesFromLeaderboardHistory(
     tank: 0,
     healer: 0,
   }
-  const gold: MeterHallOfFameEntry[] = []
+  const recordHolder: Record<MeterRoleBucket, string | null> = {
+    melee: null,
+    ranged: null,
+    caster: null,
+    hybrid: null,
+    tank: null,
+    healer: null,
+  }
+  const gold: HofRow[] = []
   const seen = new Set<string>()
 
   for (const entry of sorted) {
     const max = runningMax[entry.roleBucket]
     if (entry.dps <= max) continue
 
+    const playerKey = entry.playerKey.trim().toLowerCase()
+    const holder = recordHolder[entry.roleBucket]
+    if (holder && holder === playerKey) continue
+
     const key = entryKey(entry)
     if (seen.has(key)) continue
     seen.add(key)
 
-    const pool = currentPoolByRole[entry.roleBucket]
-    gold.push({
-      ...entry,
-      currentPercentile: dpsToPercentile(entry.dps, pool),
-    })
+    gold.push(entry)
     runningMax[entry.roleBucket] = entry.dps
+    recordHolder[entry.roleBucket] = playerKey
   }
 
   gold.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())
   return gold
+}
+
+export function goldParsesFromLeaderboardHistory(
+  rows: HofRow[],
+  currentPoolByRole: Record<MeterRoleBucket, number[]>,
+): MeterHallOfFameEntry[] {
+  return filterGoldRecordBreaks(rows).map((entry) => ({
+    ...entry,
+    currentPercentile: dpsToPercentile(entry.dps, currentPoolByRole[entry.roleBucket]),
+  }))
 }
 
 type HofGoldRpcRow = {
@@ -273,9 +290,11 @@ export async function fetchScopeHallOfFameGoldEntries(
   }
 
   const rpcRows = (rpcRes.data ?? []) as HofGoldRpcRow[]
-  let rows = rpcRows
-    .map((row) => mapHofGoldRpcRow(row))
-    .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> => row != null)
+  let rows = filterGoldRecordBreaks(
+    rpcRows
+      .map((row) => mapHofGoldRpcRow(row))
+      .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> => row != null),
+  )
   rows = await resolveHofGoldNames(rows)
 
   const poolByRole: Record<MeterRoleBucket, number[]> =
@@ -370,57 +389,7 @@ async function fetchPlayerMeterScopes(
 
 const HOF_SCOPE_BATCH = 4
 
-type PlayerHofGoldRpcRow = HofGoldRpcRow & {
-  dungeon_id?: string | null
-  difficulty_id?: number | null
-}
-
 type ScopeRef = { dungeonId: string; difficultyId: number }
-
-function scopeRefKey(scope: ScopeRef): string {
-  return meterHofScopeKey(scope.dungeonId, scope.difficultyId)
-}
-
-function groupRowsByScope(
-  rows: Array<Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef>,
-): Map<string, Array<Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef>> {
-  const byScope = new Map<string, Array<Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef>>()
-  for (const row of rows) {
-    const key = scopeRefKey(row)
-    const list = byScope.get(key) ?? []
-    list.push(row)
-    byScope.set(key, list)
-  }
-  return byScope
-}
-
-async function loadPoolByScopeKeys(
-  scopes: ScopeRef[],
-): Promise<Map<string, Record<MeterRoleBucket, number[]>>> {
-  const poolByScope = new Map<string, Record<MeterRoleBucket, number[]>>()
-  await Promise.all(
-    scopes.map(async (scope) => {
-      const key = scopeRefKey(scope)
-      const pre = await fetchPrecomputedMeterLeaderboard({
-        dungeonId: scope.dungeonId,
-        difficultyId: scope.difficultyId,
-      })
-      poolByScope.set(
-        key,
-        pre.stats?.sortedDpsByBucket ??
-          ({
-            melee: [],
-            ranged: [],
-            caster: [],
-            hybrid: [],
-            tank: [],
-            healer: [],
-          } as Record<MeterRoleBucket, number[]>),
-      )
-    }),
-  )
-  return poolByScope
-}
 
 function profileEntriesFromGoldScope(
   scopeEntries: MeterHallOfFameEntry[],
@@ -486,17 +455,6 @@ export type FetchPlayerHallOfFameOptions = {
   stopAfterFirst?: boolean
 }
 
-function mapPlayerHofGoldRpcRow(
-  row: PlayerHofGoldRpcRow,
-): (Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef) | null {
-  const base = mapHofGoldRpcRow(row)
-  if (!base) return null
-  const dungeonId = row.dungeon_id?.trim() ?? ''
-  const difficultyId = row.difficulty_id ?? 0
-  if (!dungeonId || difficultyId < 2) return null
-  return { ...base, dungeonId, difficultyId }
-}
-
 /** All Hall of Fame record-break entries for one tamer (across dungeons). */
 export async function fetchPlayerHallOfFameEntries(
   playerKey: string,
@@ -506,57 +464,7 @@ export async function fetchPlayerHallOfFameEntries(
   const key = playerKey.trim().toLowerCase()
   if (!key) return { entries: [], error: null }
 
-  const supabase = getMeterAnonSupabase()
-  if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
-
-  const scopeLimit = options?.maxScopes ?? 24
-  const rpcRes = await supabase.rpc('get_meter_player_hof_gold_breaks', {
-    p_player_key: key,
-    p_scope_limit: scopeLimit,
-  })
-
-  if (rpcRes.error) {
-    if (/could not find the function|schema cache/i.test(rpcRes.error.message)) {
-      return fetchPlayerHallOfFameByScopeBatches(key, wikiDungeons, options)
-    }
-    return { entries: [], error: rpcRes.error.message }
-  }
-
-  let rows = ((rpcRes.data ?? []) as PlayerHofGoldRpcRow[])
-    .map((row) => mapPlayerHofGoldRpcRow(row))
-    .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> & ScopeRef => row != null)
-  const scopeByParse = rows.map((row) => ({ dungeonId: row.dungeonId, difficultyId: row.difficultyId }))
-  const named = await resolveHofGoldNames(rows)
-  rows = named.map((entry, i) => ({
-    ...entry,
-    dungeonId: scopeByParse[i]!.dungeonId,
-    difficultyId: scopeByParse[i]!.difficultyId,
-  }))
-
-  if (!rows.length) return { entries: [], error: null }
-
-  const uniqueScopes = [...new Map(rows.map((r) => [scopeRefKey(r), r])).values()].map((r) => ({
-    dungeonId: r.dungeonId,
-    difficultyId: r.difficultyId,
-  }))
-  const poolByScope = await loadPoolByScopeKeys(uniqueScopes)
-
-  const all: ProfileHallOfFameEntry[] = []
-  for (const [, scopeRows] of groupRowsByScope(rows)) {
-    const scope = scopeRows[0]!
-    const poolKey = scopeRefKey(scope)
-    const poolByRole =
-      poolByScope.get(poolKey) ?? sortedDpsPoolsFromHistory(scopeRows)
-    const scopeEntries: MeterHallOfFameEntry[] = scopeRows.map((entry) => ({
-      ...entry,
-      currentPercentile: dpsToPercentile(entry.dps, poolByRole[entry.roleBucket]),
-    }))
-    all.push(...profileEntriesFromGoldScope(scopeEntries, scope, wikiDungeons, key))
-    if (options?.stopAfterFirst && all.length > 0) {
-      return { entries: all, error: null }
-    }
-  }
-
-  all.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())
-  return { entries: all, error: null }
+  // Scope batches use fetchScopeHallOfFameGoldEntries, which applies filterGoldRecordBreaks
+  // so self-record improvements in the same role do not inflate induction counts.
+  return fetchPlayerHallOfFameByScopeBatches(key, wikiDungeons, options)
 }

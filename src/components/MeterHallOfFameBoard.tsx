@@ -125,7 +125,7 @@ export function MeterHallOfFameBoard({
                     ) : (
                       <span className="meter-hof-podium__portrait meter-hof-podium__portrait--empty" aria-hidden />
                     )}
-                    <span className="meter-hof-podium__name" style={{ color: GOLD }}>
+                    <span className="meter-hof-podium__name" style={{ color: GOLD }} title={e.displayName}>
                       {e.displayName}
                     </span>
                   </Link>
