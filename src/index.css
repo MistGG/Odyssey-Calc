@@ -10540,14 +10540,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .meter-parses-meter-chrome .meter-party-hof-count-fx__arch,
-  .meter-parses-meter-chrome .meter-party-hof-sparkle {
-    animation: none !important;
-    opacity: 0.75;
-  }
-}
-
 .meter-parses-meter-chrome .meter-party-bar-fill-stack--iliad {
   min-height: 36px;
 }
@@ -10745,16 +10737,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     transparent 38%,
     rgba(6, 20, 28, 0.12) 100%
   );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .meter-parses-meter-chrome .meter-party-iliad-scene-stream,
-  .meter-parses-meter-chrome .meter-party-iliad-wash-track,
-  .meter-parses-meter-chrome .meter-party-iliad-fx--celestial,
-  .meter-parses-meter-chrome .meter-party-iliad-fx--stars,
-  .meter-parses-meter-chrome .meter-party-iliad-fx--divine {
-    animation: none !important;
-  }
 }
 
 .meter-parses-meter-chrome .meter-party-bar-theme--apollomon {
@@ -13041,118 +13023,6 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
 
 .meter-parses-meter-chrome .meter-party-member--legendary-olympus .meter-party-theme-badge {
   box-shadow: 0 0 8px color-mix(in srgb, var(--mb-accent, #ffd700) 45%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .meter-parses-meter-chrome .meter-party-bar-theme--legendary::before,
-  .meter-parses-meter-chrome .meter-party-bar-theme--legendary::after,
-  .meter-parses-meter-chrome .meter-party-apollo-heavenly-glow {
-    animation: none !important;
-    opacity: 0.75;
-    transform: scale(1);
-  }
-
-  .meter-parses-meter-chrome .meter-party-bacchus-bubble {
-    animation: none !important;
-    bottom: 50%;
-    opacity: 0.5;
-  }
-
-  .meter-parses-meter-chrome .meter-party-ceresmon-spore {
-    animation: none !important;
-    opacity: 0.45;
-    transform: translate(-50%, -50%) scale(1);
-  }
-
-  .meter-parses-meter-chrome .meter-party-dianamon-snow::before {
-    animation: none !important;
-    opacity: 0.3;
-  }
-
-  .meter-parses-meter-chrome .meter-party-dianamon-snowflake {
-    animation: none !important;
-    top: 52%;
-    opacity: 0.35;
-    transform: translateX(-6px);
-  }
-
-  .meter-parses-meter-chrome .meter-party-dianamon-moon {
-    animation: none !important;
-    opacity: 0.7;
-  }
-
-  .meter-parses-meter-chrome .meter-party-junomon-sparkle {
-    animation: none !important;
-    opacity: 0.55;
-    transform: translate(-50%, -50%) scale(1) rotate(20deg);
-  }
-
-  .meter-parses-meter-chrome .meter-party-jupiter-flash,
-  .meter-parses-meter-chrome .meter-party-jupiter-crackle {
-    animation: none !important;
-    opacity: 0;
-  }
-
-  .meter-parses-meter-chrome .meter-party-marsmon-flame {
-    animation: none !important;
-    bottom: 50%;
-    opacity: 0.45;
-  }
-
-  .meter-parses-meter-chrome .meter-party-marsmon-flame::before,
-  .meter-parses-meter-chrome .meter-party-marsmon-flame::after {
-    animation: none !important;
-  }
-
-  .meter-parses-meter-chrome .meter-party-mercury-sheen::before,
-  .meter-parses-meter-chrome .meter-party-mercury-glint {
-    animation: none !important;
-    opacity: 0.35;
-  }
-
-  .meter-parses-meter-chrome .meter-party-minerva-slab,
-  .meter-parses-meter-chrome .meter-party-minerva-rift,
-  .meter-parses-meter-chrome .meter-party-minerva-sword {
-    animation: none !important;
-  }
-
-  .meter-parses-meter-chrome .meter-party-minerva-rift {
-    opacity: 0.5;
-    height: 3px;
-  }
-
-  .meter-parses-meter-chrome .meter-party-neptune-wave-track {
-    animation: none !important;
-    transform: translateX(-25%);
-  }
-
-  .meter-parses-meter-chrome .meter-party-venus-heart {
-    animation: none !important;
-    opacity: 0.5;
-    transform: translate(-50%, -50%) rotate(var(--venus-heart-tilt, -45deg)) scale(1);
-  }
-
-  .meter-parses-meter-chrome .meter-party-vulcan-hammer,
-  .meter-parses-meter-chrome .meter-party-vulcan-bar-flash,
-  .meter-parses-meter-chrome .meter-party-vulcan-bar-spark,
-  .meter-parses-meter-chrome
-    .meter-party-bar-fill-stack--vulcanusmon-legendary
-    .meter-party-bar-theme--vulcanusmon {
-    animation: none !important;
-  }
-
-  .meter-parses-meter-chrome .meter-party-vulcan-hammer {
-    transform: translateX(8px) rotate(-4deg);
-    opacity: 0.55;
-  }
-
-  .meter-parses-meter-chrome .meter-party-vulcan-bar-flash {
-    opacity: 0.25;
-  }
-
-  .meter-parses-meter-chrome .meter-party-vulcan-bar-spark {
-    opacity: 0.35;
-  }
 }
 
 .meter-parses-meter-chrome .meter-party-member--rare-olympus .meter-party-theme-badge {
