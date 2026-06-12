@@ -7,6 +7,7 @@
     "dev": "vite",
     "generate:guidebook-share": "node scripts/generate-guidebook-share.mjs",
     "generate:event-share": "node scripts/generate-event-share.mjs",
+    "sync:teasers": "node scripts/sync-teaser-images.mjs",
     "process:olympus-overlays": "node scripts/process-olympus-overlays.mjs",
     "process:iliad-overlay": "node scripts/process-iliad-overlay.mjs",
     "build": "npm run generate:guidebook-share && npm run generate:event-share && tsc -b && vite build",

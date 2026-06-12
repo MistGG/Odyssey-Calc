@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { FORUM_TEASER_IMAGE_URL, readCachedTeaserBlob, syncForumTeaserImage } from '../lib/forumTeaserImage'
 import {
-  bundledTeaserImageUrl,
+  bundledTeaserImageUrls,
   imgurIdFromUrl,
 } from '../lib/teaserImageStorage'
 import { TEASER_MECHANO_APPROACH } from './teaserMechanoApproachConfig'
@@ -340,8 +340,14 @@ export function useTeaserReducedMotion(): boolean {
   return reducedMotion
 }
 
+function defaultForumTeaserSrc(): string {
+  const id = imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
+  if (id) return bundledTeaserImageUrls(id)[0]
+  return FORUM_TEASER_IMAGE_URL
+}
+
 export function useTeaserImageSrc(fixedImageUrl?: string) {
-  const initialSrc = fixedImageUrl ?? FORUM_TEASER_IMAGE_URL
+  const initialSrc = fixedImageUrl ?? defaultForumTeaserSrc()
   const [imgSrc, setImgSrc] = useState(initialSrc)
   const blobUrlRef = useRef<string | null>(null)
 
@@ -385,11 +391,15 @@ export function useTeaserImageSrc(fixedImageUrl?: string) {
     const remoteUrl = fixedImageUrl ?? FORUM_TEASER_IMAGE_URL
     const id = imgurIdFromUrl(remoteUrl)
     if (id) {
-      setImgSrc(bundledTeaserImageUrl(id))
-      return
+      const bundled = bundledTeaserImageUrls(id)
+      const next = bundled.find((url) => url !== imgSrc) ?? bundled[0]
+      if (next) {
+        setImgSrc(next)
+        return
+      }
     }
     setImgSrc(remoteUrl)
-  }, [disposeBlobUrl, fixedImageUrl])
+  }, [disposeBlobUrl, fixedImageUrl, imgSrc])
 
   useEffect(() => {
     if (fixedImageUrl) return

@@ -1,4 +1,8 @@
-import { imgurIdFromUrl, imgurTeaserRemoteUrl } from './teaserImageStorage'
+import {
+  bundledTeaserImageUrls,
+  imgurIdFromUrl,
+  imgurTeaserRemoteUrl,
+} from './teaserImageStorage'
 
 /**
  * Official forum “News” teaser image (Digital Odyssey Proboards announcement box).
@@ -17,6 +21,38 @@ const CACHE_NAME = 'odyssey-calc-forum-teaser-v1'
 const META_KEY = 'odysseyCalc.forumTeaserImageMeta.v1'
 /** localStorage: identity of the teaser TV intro already shown site-wide (once per new image). */
 const POPUP_SEEN_IDENTITY_KEY = 'odysseyCalc.forumTeaserPopupSeenIdentity.v1'
+
+function isValidTeaserImageBytes(buf: ArrayBuffer): boolean {
+  if (buf.byteLength < 10_000) return false
+  const view = new Uint8Array(buf, 0, Math.min(buf.byteLength, 512))
+  const head = new TextDecoder().decode(view).toLowerCase()
+  if (head.includes('viewable in your region') || head.includes('<html') || head.includes('<!doctype')) {
+    return false
+  }
+  const isPng = view[0] === 0x89 && view[1] === 0x50 && view[2] === 0x4e && view[3] === 0x47
+  const isJpeg = view[0] === 0xff && view[1] === 0xd8
+  return isPng || isJpeg
+}
+
+async function fetchTeaserImageBytes(): Promise<{ buf: ArrayBuffer; res: Response } | null> {
+  const id = imgurIdFromUrl(FORUM_TEASER_IMAGE_URL)
+  const sources = [
+    ...(id ? bundledTeaserImageUrls(id) : []),
+    FORUM_TEASER_IMAGE_URL,
+  ]
+  for (const url of sources) {
+    try {
+      const res = await fetch(url, { mode: 'cors', cache: 'no-store' })
+      if (!res.ok) continue
+      const buf = await res.arrayBuffer()
+      if (!isValidTeaserImageBytes(buf)) continue
+      return { buf, res }
+    } catch {
+      /* try next */
+    }
+  }
+  return null
+}
 
 export type ForumTeaserImageMeta = {
   /** HTTP Last-Modified when the PNG was last stored (Imgur exposes this cross-origin). */
@@ -142,12 +178,9 @@ export async function syncForumTeaserImage(): Promise<boolean> {
   }
 
   try {
-    const res = await fetch(FORUM_TEASER_IMAGE_URL, {
-      mode: 'cors',
-      cache: 'no-store',
-    })
-    if (!res.ok) return false
-    const buf = await res.arrayBuffer()
+    const fetched = await fetchTeaserImageBytes()
+    if (!fetched) return false
+    const { buf, res } = fetched
     if (buf.byteLength === 0) return false
 
     const lm = res.headers.get('last-modified') ?? remoteLastModified
