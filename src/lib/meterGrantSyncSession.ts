@@ -1,5 +1,5 @@
 const GRANT_SYNC_SESSION_KEY = 'odyssey-meter-grant-sync-v1'
-const GRANT_SYNC_TTL_MS = 60 * 60 * 1000
+const GRANT_SYNC_TTL_MS = 5 * 60 * 1000
 
 export function shouldRunMeterGrantSync(): boolean {
   if (typeof sessionStorage === 'undefined') return true

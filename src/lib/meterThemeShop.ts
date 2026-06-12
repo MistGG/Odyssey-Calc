@@ -65,7 +65,7 @@ export const METER_THEME_PREVIEW_DIGIMON_POOL = [
 
 export const METER_POINT_EARN_RULES = [
   { label: 'First Hard clear (per dungeon, once)', points: 2 },
-  { label: 'Daily Hard clear (first each day)', points: 1 },
+  { label: 'Daily Normal or Hard clear (first each UTC day)', points: 1 },
   { label: 'Parse score 90+ (per dungeon, once)', points: 3 },
   { label: 'Parse score 99+ (per dungeon, once)', points: 4 },
   { label: 'Parse score 100 (per dungeon, once)', points: 10 },

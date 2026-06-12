@@ -10,6 +10,7 @@ import { memberDpsInParse, METER_ROLE_BUCKETS } from './meterRoleBuckets'
 import type { PublicMeterParseRow } from './meterPublicStats'
 import { selfTamerFromMember } from './meterPlayerProfile'
 
+export const NORMAL_DIFFICULTY_ID = 2
 export const HARD_DIFFICULTY_ID = 3
 
 export type MeterPointGrant = {
@@ -17,12 +18,17 @@ export type MeterPointGrant = {
   points: number
 }
 
+export type ComputeMeterPointGrantsOptions = {
+  /** Backfill only: award `daily:YYYY-MM-DD` for every UTC day with an eligible parse. */
+  includeHistoricalDaily?: boolean
+}
+
 function utcDateKey(iso: string): string {
   const d = new Date(iso)
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 }
 
-function todayUtcKey(): string {
+export function todayUtcKey(): string {
   return utcDateKey(new Date().toISOString())
 }
 
@@ -41,38 +47,66 @@ function normalizeTamerKey(raw: string): string {
   return raw.trim().toLowerCase()
 }
 
-function resolveSelfPlayerKey(
+function parseDifficultyId(row: PublicMeterParseRow): number | null {
+  const dungeon = dungeonFromPayload(row.payload)
+  const id = row.difficulty_id ?? dungeon?.difficultyId
+  return typeof id === 'number' && Number.isFinite(id) ? id : null
+}
+
+function isNormalOrHardDifficulty(difficultyId: number | null): boolean {
+  return difficultyId === NORMAL_DIFFICULTY_ID || difficultyId === HARD_DIFFICULTY_ID
+}
+
+function selfFromPayloadRow(row: PublicMeterParseRow): string | null {
+  if (!row.payload) return null
+  for (const member of partyMembersFromPayload(row.payload)) {
+    const self = selfTamerFromMember(member)
+    if (self) return self.playerKey
+  }
+  return null
+}
+
+/** Resolve the uploader's tamer key from payloads, stored account key, or summary membership. */
+export function resolveSelfPlayerKey(
   myParses: PublicMeterParseRow[],
   confirmedPlayerKey?: string | null,
 ): string | null {
   for (const row of myParses) {
-    if (!row.payload) continue
-    for (const member of partyMembersFromPayload(row.payload)) {
-      const self = selfTamerFromMember(member)
-      if (self) return self.playerKey
-    }
+    const fromPayload = selfFromPayloadRow(row)
+    if (fromPayload) return fromPayload
   }
-  const key = confirmedPlayerKey?.trim()
-  return key ? normalizeTamerKey(key) : null
+
+  const stored = confirmedPlayerKey?.trim()
+  if (stored) return normalizeTamerKey(stored)
+
+  return null
 }
 
-function isEligibleHardParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): boolean {
-  const dungeon = dungeonFromPayload(row.payload)
-  const difficultyId = row.difficulty_id ?? dungeon?.difficultyId
-  if (difficultyId !== HARD_DIFFICULTY_ID) return false
-
+function rowHasSelfParticipation(
+  row: PublicMeterParseRow,
+  selfPlayerKey: string | null,
+): boolean {
   if (row.payload && isLeaderboardEligibleDungeonParsePayload(row.payload)) {
     const members = partyMembersFromPayload(row.payload)
-    if (members.length === 0) return false
-    return members.some((m) => m.isSelf)
+    if (members.some((m) => m.isSelf)) return true
   }
 
+  if (!selfPlayerKey) return false
   const summary = summaryFromRow(row)
-  if (summary?.eligible === false) return false
-  if (summary?.eligible !== true || !selfPlayerKey) return false
+  if (summary?.eligible !== true) return false
   return (summary.members ?? []).some(
     (m) => normalizeTamerKey(m.playerKey ?? '') === selfPlayerKey && (Number(m.dps) || 0) > 0,
   )
+}
+
+function isEligibleDailyParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): boolean {
+  if (!isNormalOrHardDifficulty(parseDifficultyId(row))) return false
+  return rowHasSelfParticipation(row, selfPlayerKey ?? null)
+}
+
+function isEligibleHardParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): boolean {
+  if (parseDifficultyId(row) !== HARD_DIFFICULTY_ID) return false
+  return rowHasSelfParticipation(row, selfPlayerKey ?? null)
 }
 
 function selfDpsInParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): number {
@@ -84,15 +118,15 @@ function selfDpsInParse(row: PublicMeterParseRow, selfPlayerKey?: string | null)
       const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
       if (dps > best) best = dps
     }
-    return best
+    if (best > 0) return best
   }
 
+  const key = selfPlayerKey ?? selfFromPayloadRow(row)
   const summary = summaryFromRow(row)
-  if (!summary?.members?.length || !selfPlayerKey) return 0
+  if (!summary?.members?.length || !key) return 0
   let best = 0
   for (const member of summary.members) {
-    const key = normalizeTamerKey(member.playerKey ?? '')
-    if (key !== selfPlayerKey) continue
+    if (normalizeTamerKey(member.playerKey ?? '') !== key) continue
     best = Math.max(best, Number(member.dps) || 0)
   }
   return best
@@ -131,11 +165,12 @@ export function bestParseScoreForHardDungeonWithPool(
   selfPlayerKey?: string | null,
 ): number {
   const did = dungeonId.trim()
+  const selfKey = selfPlayerKey ?? resolveSelfPlayerKey(myParses, null)
   let myBest = 0
   for (const row of myParses) {
     const d = row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
-    if (d !== did || !isEligibleHardParse(row, selfPlayerKey)) continue
-    myBest = Math.max(myBest, selfDpsInParse(row, selfPlayerKey))
+    if (d !== did || !isEligibleHardParse(row, selfKey)) continue
+    myBest = Math.max(myBest, selfDpsInParse(row, selfKey))
   }
   if (myBest <= 0) return 0
   return dpsToPercentile(myBest, pool)
@@ -146,19 +181,21 @@ export function bestParseScoreForHardDungeon(
   myParses: PublicMeterParseRow[],
   publicRows: PublicMeterParseRow[],
   dungeonId: string,
+  selfPlayerKey?: string | null,
 ): number {
   const did = dungeonId.trim()
+  const selfKey = selfPlayerKey ?? resolveSelfPlayerKey(myParses, null)
   let myBest = 0
   for (const row of myParses) {
     const d = row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
-    if (d !== did || !isEligibleHardParse(row)) continue
-    myBest = Math.max(myBest, selfDpsInParse(row))
+    if (d !== did || !isEligibleHardParse(row, selfKey)) continue
+    myBest = Math.max(myBest, selfDpsInParse(row, selfKey))
   }
   if (myBest <= 0) return 0
   const pool = poolDpsValues(
     publicRows.filter((r) => {
       const d = r.dungeon_id?.trim() || dungeonFromPayload(r.payload)?.dungeonId?.trim() || ''
-      return d === did && (r.difficulty_id ?? dungeonFromPayload(r.payload)?.difficultyId) === HARD_DIFFICULTY_ID
+      return d === did && parseDifficultyId(r) === HARD_DIFFICULTY_ID
     }),
   )
   return dpsToPercentile(myBest, pool)
@@ -169,23 +206,30 @@ export function computeMeterPointGrants(
   publicRowsByDungeon: Map<string, PublicMeterParseRow[]>,
   hardDungeonPools?: Map<string, number[]>,
   confirmedPlayerKey?: string | null,
+  options?: ComputeMeterPointGrantsOptions,
 ): MeterPointGrant[] {
   const grants: MeterPointGrant[] = []
   const firstClearDungeons = new Set<string>()
-  let dailyGranted = false
+  const dailyDates = new Set<string>()
+  let dailyGrantedToday = false
   const today = todayUtcKey()
   const selfPlayerKey = resolveSelfPlayerKey(myParses, confirmedPlayerKey)
 
   for (const row of myParses) {
-    if (!isEligibleHardParse(row, selfPlayerKey)) continue
     const dungeonId =
       row.dungeon_id?.trim() || dungeonFromPayload(row.payload)?.dungeonId?.trim() || ''
-    if (!dungeonId) continue
 
-    if (!dailyGranted && utcDateKey(row.created_at) === today) {
-      grants.push({ grantKey: `daily:${today}`, points: 1 })
-      dailyGranted = true
+    if (isEligibleDailyParse(row, selfPlayerKey)) {
+      const day = utcDateKey(row.created_at)
+      if (options?.includeHistoricalDaily) {
+        dailyDates.add(day)
+      } else if (!dailyGrantedToday && day === today) {
+        grants.push({ grantKey: `daily:${today}`, points: 1 })
+        dailyGrantedToday = true
+      }
     }
+
+    if (!dungeonId || !isEligibleHardParse(row, selfPlayerKey)) continue
 
     if (!firstClearDungeons.has(dungeonId)) {
       firstClearDungeons.add(dungeonId)
@@ -193,12 +237,17 @@ export function computeMeterPointGrants(
     }
   }
 
-  // Score tiers: one grant key per dungeon (not per role). DB unique (user_id, grant_key) prevents re-award.
+  if (options?.includeHistoricalDaily) {
+    for (const day of dailyDates) {
+      grants.push({ grantKey: `daily:${day}`, points: 1 })
+    }
+  }
+
   for (const dungeonId of firstClearDungeons) {
     const pool = hardDungeonPools?.get(dungeonId) ?? poolDpsValues(publicRowsByDungeon.get(dungeonId) ?? [])
     const score = hardDungeonPools?.has(dungeonId)
       ? bestParseScoreForHardDungeonWithPool(myParses, pool, dungeonId, selfPlayerKey)
-      : bestParseScoreForHardDungeon(myParses, publicRowsByDungeon.get(dungeonId) ?? [], dungeonId)
+      : bestParseScoreForHardDungeon(myParses, publicRowsByDungeon.get(dungeonId) ?? [], dungeonId, selfPlayerKey)
     if (score >= 90) grants.push({ grantKey: `score90:${dungeonId}`, points: 3 })
     if (score >= 99) grants.push({ grantKey: `score99:${dungeonId}`, points: 4 })
     if (score >= 100) grants.push({ grantKey: `score100:${dungeonId}`, points: 10 })
@@ -209,12 +258,49 @@ export function computeMeterPointGrants(
 
 export function hasConfirmedTamerFromParses(myParses: PublicMeterParseRow[]): boolean {
   for (const row of myParses) {
-    const members = partyMembersFromPayload(row.payload)
-    for (const member of members) {
-      if (selfTamerFromMember(member)) return true
-    }
+    if (selfFromPayloadRow(row)) return true
   }
   return false
+}
+
+export function confirmedPlayerKeyFromParses(myParses: PublicMeterParseRow[]): string | null {
+  return resolveSelfPlayerKey(myParses, null)
+}
+
+export async function fetchStoredConfirmedPlayerKey(
+  supabase: SupabaseClient,
+): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) return null
+
+  const { data, error } = await supabase
+    .from('meter_reward_accounts')
+    .select('confirmed_player_key')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) return null
+  const key = data?.confirmed_player_key
+  return typeof key === 'string' && key.trim() ? normalizeTamerKey(key) : null
+}
+
+export async function persistConfirmedPlayerKey(
+  supabase: SupabaseClient,
+  playerKey: string | null,
+): Promise<void> {
+  const key = playerKey?.trim()
+  if (!key) return
+
+  const { data: auth } = await supabase.auth.getUser()
+  const userId = auth.user?.id
+  if (!userId) return
+
+  await supabase.from('meter_reward_accounts').upsert({
+    user_id: userId,
+    confirmed_player_key: normalizeTamerKey(key),
+    updated_at: new Date().toISOString(),
+  })
 }
 
 export async function syncMeterPointGrants(
@@ -226,6 +312,29 @@ export async function syncMeterPointGrants(
   if (error) return { balance: 0, error: error.message }
   const balance = typeof data?.balance === 'number' ? data.balance : Number(data?.balance ?? 0)
   return { balance, error: null }
+}
+
+/** Service-role backfill: insert grants without auth.uid() RPC. */
+export async function insertMeterPointGrantsForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  grants: MeterPointGrant[],
+): Promise<{ inserted: number; error: string | null }> {
+  if (!grants.length) return { inserted: 0, error: null }
+
+  const rows = grants.map((g) => ({
+    user_id: userId,
+    grant_key: g.grantKey,
+    points: g.points,
+  }))
+
+  const { data, error } = await supabase
+    .from('meter_point_grants')
+    .upsert(rows, { onConflict: 'user_id,grant_key', ignoreDuplicates: true })
+    .select('grant_key')
+
+  if (error) return { inserted: 0, error: error.message }
+  return { inserted: data?.length ?? 0, error: null }
 }
 
 export async function fetchMeterGrantKeys(supabase: SupabaseClient): Promise<Set<string>> {
@@ -265,7 +374,10 @@ export async function fetchMeterRewardsState(supabase: SupabaseClient): Promise<
   const [balRes, purchasesRes, accountRes, dailyRes] = await Promise.all([
     supabase.rpc('meter_wallet_balance', { p_user_id: userId }),
     supabase.from('meter_theme_purchases').select('theme_id'),
-    supabase.from('meter_reward_accounts').select('equipped_theme_id').maybeSingle(),
+    supabase
+      .from('meter_reward_accounts')
+      .select('equipped_theme_id, confirmed_player_key')
+      .maybeSingle(),
     supabase
       .from('meter_point_grants')
       .select('grant_key')

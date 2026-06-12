@@ -148,11 +148,11 @@ export function MeterThemeShopEarnPanels({
           Daily
         </h3>
         <p className="meter-parses-muted meter-shop-earn-panel-note">
-          First eligible Hard clear each UTC day.
+          First eligible Normal or Hard clear each UTC day.
         </p>
         <div className="meter-shop-daily-card">
           <div className="meter-shop-daily-card-row">
-            <span>Hard clear today</span>
+            <span>Normal or Hard clear today</span>
             <span className="meter-shop-earn-pts">+1 pt</span>
           </div>
           <div className="meter-shop-daily-card-status">
@@ -166,7 +166,7 @@ export function MeterThemeShopEarnPanels({
           <p className="meter-parses-muted meter-shop-earn-panel-foot">
             {dailyGranted
               ? 'Points for today are already in your wallet.'
-              : 'Clear any Hard dungeon with a valid self parse to earn today’s point.'}
+              : 'Clear any Normal or Hard dungeon with a valid self parse to earn today’s point.'}
           </p>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { syncPointGrantsAfterUpload } from './pointGrants.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,6 +74,7 @@ type DungeonPayload = {
 
 type ParseRow = {
   id: string
+  user_id?: string | null
   created_at: string
   duration_sec: number
   dungeon_id: string | null
@@ -593,7 +595,21 @@ async function processParse(
 
   await supabase.from('meter_parses').update({ leaderboard_summary: filledSummary }).eq('id', row.id)
 
-  return { inserted: entries.length, skipped: null }
+  let grantsInserted = 0
+  const userId = row.user_id?.trim()
+  if (userId) {
+    try {
+      const grantResult = await syncPointGrantsAfterUpload(supabase, userId, {
+        ...row,
+        leaderboard_summary: filledSummary,
+      })
+      grantsInserted = grantResult.inserted
+    } catch {
+      /* non-fatal — shop visit can still sync grants */
+    }
+  }
+
+  return { inserted: entries.length, skipped: null, grants_inserted: grantsInserted }
 }
 
 async function fetchBackfillStatus(supabase: ReturnType<typeof createClient>) {
@@ -662,7 +678,7 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from('meter_parses')
       .select(
-        'id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
+        'id, user_id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
       )
       .in('id', ids)
 
@@ -710,7 +726,7 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase
     .from('meter_parses')
     .select(
-      'id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
+      'id, user_id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
     )
     .eq('id', parseId)
     .maybeSingle()

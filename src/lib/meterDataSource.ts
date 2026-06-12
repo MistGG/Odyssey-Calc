@@ -112,6 +112,7 @@ const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
 const MY_METER_PARSES_LIMIT = 150
 const MY_METER_PARSE_LIST_SELECT =
   'id, created_at, duration_sec, app_version, total_damage, hit_count, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
+const MY_METER_PARSE_GRANT_SELECT = `${MY_METER_PARSE_LIST_SELECT}, payload`
 const MY_METER_PARSE_PAYLOAD_SELECT = 'id, payload'
 const METER_TAMER_COUNT_CACHE_KEY = 'odyssey-meter-total-tamers-v1'
 /** Site-wide stats scans are expensive; refresh at most once per day per browser. */
@@ -843,6 +844,34 @@ export async function fetchMyMeterParses(
   })
 
   return myMeterParsesInflight
+}
+
+/** Signed-in user's uploads with payloads — for meter point grant sync only. */
+export async function fetchMyMeterParsesForGrants(
+  supabase: SupabaseClient | null,
+): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
+  if (!supabase) {
+    return { rows: [], error: null }
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+  const userId = authData.user?.id
+  if (authError || !userId) {
+    return { rows: [], error: null }
+  }
+
+  const { data, error } = await supabase
+    .from('meter_parses')
+    .select(`${MY_METER_PARSE_GRANT_SELECT}, user_id`)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(MY_METER_PARSES_LIMIT)
+
+  if (error) return { rows: [], error: error.message }
+
+  const owned = rowsOwnedByUser((data ?? []) as MeterParseRowDb[], userId)
+  const rows = await resolveMeterParseRowPayloads(owned as PublicMeterParseRow[])
+  return { rows, error: null }
 }
 
 /** Fetch one owned parse payload for replay (lazy load on expand). */

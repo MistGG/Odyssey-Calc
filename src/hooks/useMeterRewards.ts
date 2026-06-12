@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { fetchMyMeterParses } from '../lib/meterDataSource'
+import { fetchMyMeterParsesForGrants } from '../lib/meterDataSource'
 import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
 import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
 import {
@@ -11,9 +11,12 @@ import {
 } from '../lib/meterPointEarnProgress'
 import {
   computeMeterPointGrants,
+  confirmedPlayerKeyFromParses,
   fetchMeterGrantKeys,
   fetchMeterRewardsState,
+  fetchStoredConfirmedPlayerKey,
   hasConfirmedTamerFromParses,
+  persistConfirmedPlayerKey,
   poolDpsValuesFromPrecomputed,
   syncMeterPointGrants,
 } from '../lib/meterPointGrants'
@@ -140,7 +143,10 @@ export function useMeterRewards(
         await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
       }
 
-      const myRes = await fetchMyMeterParses(supabase)
+      const [myRes, storedPlayerKey] = await Promise.all([
+        fetchMyMeterParsesForGrants(supabase),
+        fetchStoredConfirmedPlayerKey(supabase),
+      ])
       if (gen !== syncGenRef.current) return
       if (myRes.error) {
         setError(myRes.error)
@@ -155,7 +161,12 @@ export function useMeterRewards(
         identity?.confirmedFromUpload ? identity.displayName?.trim() || null : null
       if (parsedTamerName) writeCachedConfirmedTamer(parsedTamerName)
       const tamerName = parsedTamerName ?? cachedTamer
-      const confirmed = confirmedFromParses || Boolean(cachedTamer)
+      const confirmedPlayerKey =
+        confirmedPlayerKeyFromParses(myRes.rows) ?? storedPlayerKey ?? (tamerName ? normalizeRoutePlayerKey(tamerName) : null)
+      if (confirmedPlayerKey) {
+        void persistConfirmedPlayerKey(supabase, confirmedPlayerKey)
+      }
+      const confirmed = confirmedFromParses || Boolean(cachedTamer) || Boolean(storedPlayerKey)
       setIdentityConfirmed(confirmed)
       setConfirmedTamerName(tamerName)
       setShowIdentityNotice(!confirmed)
@@ -196,7 +207,7 @@ export function useMeterRewards(
         myRes.rows,
         new Map(),
         hardDungeonPools,
-        tamerName ? normalizeRoutePlayerKey(tamerName) : null,
+        confirmedPlayerKey,
       )
       const syncRes = await syncMeterPointGrants(supabase, grants)
       if (gen !== syncGenRef.current) return
