@@ -57,7 +57,7 @@ function patchSummary(summary) {
   return {
     ...base,
     eligible: false,
-    invalidateReason: `session_under_${MIN_SESSION_SEC}s_v2`,
+    invalidateReason: `meter_reset_or_short_session_v3`,
   }
 }
 

@@ -39,6 +39,7 @@ type LeaderboardSummary = {
   eligible?: boolean
   sessionDurationSec?: number
   members?: SummaryMember[]
+  invalidateReason?: string
 }
 
 type StoredMember = {
@@ -260,6 +261,8 @@ function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): b
 
 const MEMBER_SPIKE_MAX_ACTIVE_SEC = 3
 const MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC = 5
+/** Ranked dungeon clears shorter than this are rejected (reset-mid-run tail damage, etc.). */
+const MIN_LEADERBOARD_SESSION_SEC = 30
 
 function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)
@@ -395,6 +398,15 @@ function buildSummaryFromPayload(
   if (isBrokenPartyParse(payload, members)) return { version: 1, eligible: false, members: [] }
 
   const sessionDur = sessionDuration(payload, rowDurationSec, members)
+  if (sessionDur < MIN_LEADERBOARD_SESSION_SEC) {
+    return {
+      version: 1,
+      eligible: false,
+      sessionDurationSec: sessionDur,
+      members: [],
+      invalidateReason: `session_under_${MIN_LEADERBOARD_SESSION_SEC}s_v3`,
+    }
+  }
   const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
   const out: SummaryMember[] = []
   for (const member of members) {
