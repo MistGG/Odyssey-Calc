@@ -1,5 +1,10 @@
 import { fetchDigimonPage } from '../api/digimonService'
 
+import {
+  partyDigimonIdsFromMembers,
+  reconcileMemberDigimonBreakdownFromSkills,
+} from './meterSkillDigimonAttribution'
+
 import { normalizeWikiRole } from './digimonRoleSkills'
 
 import {
@@ -260,12 +265,19 @@ function pickLeaderboardDigimon(
 export function memberTopDigimonUsed(
   member: MeterPartyMemberStored,
   digimonRoleById?: Map<string, string>,
+  partyMembers?: MeterPartyMemberStored[],
 ): {
   digimonId: string
   digimonName: string
   iconId: string | null
   portraitUrl?: string
 } | null {
+  if (partyMembers?.length) {
+    reconcileMemberDigimonBreakdownFromSkills(
+      member,
+      partyDigimonIdsFromMembers(partyMembers),
+    )
+  }
   const digimons = memberDigimonBreakdowns(member)
   const best = pickLeaderboardDigimon(digimons, digimonRoleById)
   if (best) {

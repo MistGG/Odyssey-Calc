@@ -58,6 +58,7 @@ type StoredMember = {
     iconId?: string | null
     portraitUrl?: string
     totalDamage?: number
+    skills?: Array<{ skillKey?: string; skill?: string; damage?: number; hits?: number }>
   }>
 }
 
@@ -194,6 +195,70 @@ function memberDamageTotal(member: StoredMember): number {
   return Math.round(Math.max(0, Number(member.totalDamage) || 0))
 }
 
+const JUSTIMON_SKILL_KEYS = new Set(['s17n1tnq', 'sxpj32p', 'sjf3ii7', 's1d4eddt'])
+const JUSTIMON_SKILL_NAME = /^(accel arm|final justice|justice kick|justice impact field|agent alpha)$/i
+
+function isJustimonSkill(skillKey: string, skillName: string): boolean {
+  const key = skillKey.trim().toLowerCase()
+  if (JUSTIMON_SKILL_KEYS.has(key)) return true
+  return JUSTIMON_SKILL_NAME.test(skillName.trim())
+}
+
+/** Justimon skills logged under another digimon id (e.g. Toy Agumon roster slot). */
+function reconcileJustimonMisattribution(member: StoredMember): void {
+  const digimons = member.digimons
+  if (!digimons?.length) return
+
+  let justimonSkillDmg = 0
+  for (const dg of digimons) {
+    for (const s of dg.skills ?? []) {
+      if (isJustimonSkill(String(s.skillKey ?? ''), String(s.skill ?? ''))) {
+        justimonSkillDmg += Math.max(0, Number(s.damage) || 0)
+      }
+    }
+  }
+  if (justimonSkillDmg <= 0) return
+
+  const justimonId = 'djwfsba'
+  const storedJustimonDmg = digimons
+    .filter((d) => (d.digimonId?.trim() ?? '') === justimonId)
+    .reduce((s, d) => s + Math.max(0, Number(d.totalDamage) || 0), 0)
+  if (justimonSkillDmg <= storedJustimonDmg + 1000) return
+
+  const justimonSkills = digimons.flatMap((d) =>
+    (d.skills ?? []).filter((s) =>
+      isJustimonSkill(String(s.skillKey ?? ''), String(s.skill ?? '')),
+    ),
+  )
+  const autoSkills = digimons.flatMap((d) =>
+    (d.skills ?? []).filter((s) => /auto attack|\(basic\)/i.test(String(s.skill ?? ''))),
+  )
+  const justimonTotal =
+    justimonSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0) +
+    autoSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0)
+
+  const otherRows = digimons.filter((d) => {
+    const id = d.digimonId?.trim() ?? ''
+    if (id === justimonId) return false
+    const remSkills = (d.skills ?? []).filter(
+      (s) => !isJustimonSkill(String(s.skillKey ?? ''), String(s.skill ?? '')),
+    )
+    return remSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0) > 0
+  })
+
+  member.digimons = [
+    {
+      digimonId: justimonId,
+      digimonName: 'Justimon',
+      iconId: digimons.find((d) => d.digimonId?.trim() === justimonId)?.iconId ?? null,
+      portraitUrl: digimons.find((d) => d.digimonId?.trim() === justimonId)?.portraitUrl,
+      totalDamage: Math.round(justimonTotal),
+      skills: [...justimonSkills, ...autoSkills],
+    },
+    ...otherRows,
+  ].filter((d) => Math.max(0, Number(d.totalDamage) || 0) > 0)
+}
+
 function sessionDuration(payload: DungeonPayload, rowDurationSec: number, members: StoredMember[]): number {
   const fromPayload = Number(payload.sessionDurationSec)
   if (Number.isFinite(fromPayload) && fromPayload > 0) return fromPayload
@@ -218,6 +283,7 @@ function memberPrimaryDigimon(
   member: StoredMember,
   wikiCatalog?: Map<string, RoleBucket | null>,
 ) {
+  reconcileJustimonMisattribution(member)
   const digimons = memberDigimons(member)
   const totals = new Map<string, number>()
   const rowsById = new Map<string, (typeof digimons)[number]>()
