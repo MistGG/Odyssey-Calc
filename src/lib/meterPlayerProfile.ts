@@ -337,11 +337,11 @@ export function buildPlayerBestParses(
       if (normalizePlayerKey(member) !== playerKey) continue
       const bucket = memberRoleBucket(member, digimonRoleById)
       if (!bucket) continue
-      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
+      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members, digimonRoleById)
       const scopeKey = `${dungeonId}:${difficultyId}:${bucket}`
       const prev = best.get(scopeKey)
       if (!prev || dps > prev.dps) {
-        const topDg = memberTopDigimonUsed(member)
+        const topDg = memberTopDigimonUsed(member, digimonRoleById)
         best.set(scopeKey, {
           dungeonId,
           dungeonName,

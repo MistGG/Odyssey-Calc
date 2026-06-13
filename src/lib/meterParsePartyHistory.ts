@@ -38,9 +38,9 @@ export function buildLeaderboardHistoryFromPublicParses(
       if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue
       const roleBucket = memberRoleBucket(member, digimonRoleById)
       if (!roleBucket) continue
-      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
+      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members, digimonRoleById)
       if (dps <= 0) continue
-      const topDg = memberTopDigimonUsed(member)
+      const topDg = memberTopDigimonUsed(member, digimonRoleById)
       out.push({
         roleBucket,
         roleLabel: METER_ROLE_BUCKET_LABELS[roleBucket],

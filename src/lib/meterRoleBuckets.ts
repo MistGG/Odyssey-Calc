@@ -92,6 +92,31 @@ export function digimonIdToBucket(
 
 
 
+const DPS_ROLE_BUCKETS: MeterRoleBucket[] = ['melee', 'ranged', 'caster', 'hybrid']
+
+export function isDpsRoleBucket(bucket: MeterRoleBucket | null | undefined): boolean {
+  return bucket != null && DPS_ROLE_BUCKETS.includes(bucket)
+}
+
+function memberHasDpsAndNonDpsDamage(
+  totals: Map<string, number>,
+  digimonRoleById: Map<string, string>,
+): boolean {
+  let hasDps = false
+  let hasNonDps = false
+  for (const [id, damage] of totals) {
+    if (damage <= 0) continue
+    const bucket = digimonIdToBucket(id, digimonRoleById)
+    if (!bucket) continue
+    if (isDpsRoleBucket(bucket)) hasDps = true
+    else hasNonDps = true
+    if (hasDps && hasNonDps) return true
+  }
+  return false
+}
+
+
+
 /** Fallback when parse context is unavailable. */
 export function memberDps(member: MeterPartyMemberStored): number {
   const damage = memberDamageTotal(member)
@@ -102,18 +127,27 @@ export function memberDps(member: MeterPartyMemberStored): number {
 
 
 /** Digimon that dealt the most damage this run (ignores end-of-run swap / evolution active slot). */
-export function memberPrimaryDigimonId(member: MeterPartyMemberStored): string | null {
-  const top = memberTopDigimonUsed(member)
+export function memberPrimaryDigimonId(
+  member: MeterPartyMemberStored,
+  digimonRoleById?: Map<string, string>,
+): string | null {
+  const top = memberTopDigimonUsed(member, digimonRoleById)
   return top?.digimonId?.trim() || member.currentDigimonId?.trim() || null
 }
 
 /** Damage credited to the leaderboard-attributed digimon (not end-of-run swap). */
-export function memberLeaderboardDamage(member: MeterPartyMemberStored): number {
+export function memberLeaderboardDamage(
+  member: MeterPartyMemberStored,
+  digimonRoleById?: Map<string, string>,
+): number {
   const digimons = memberDigimonBreakdowns(member)
   if (digimons.length <= 1) return memberDamageTotal(member)
   const totals = digimonIdDamageTotals(digimons)
   if (totals.size <= 1) return memberDamageTotal(member)
-  const top = memberTopDigimonUsed(member)
+  if (digimonRoleById && memberHasDpsAndNonDpsDamage(totals, digimonRoleById)) {
+    return memberDamageTotal(member)
+  }
+  const top = memberTopDigimonUsed(member, digimonRoleById)
   if (!top) return memberDamageTotal(member)
   const dmg = Math.max(0, totals.get(top.digimonId.trim()) ?? 0)
   return dmg > 0 ? dmg : memberDamageTotal(member)
@@ -125,9 +159,10 @@ export function memberDpsInParse(
   payload: unknown,
   rowDurationSec: number,
   members: MeterPartyMemberStored[],
+  digimonRoleById?: Map<string, string>,
 ): number {
   if (isBrokenMeterPartyParse(payload, members)) return 0
-  const damage = memberLeaderboardDamage(member)
+  const damage = memberLeaderboardDamage(member, digimonRoleById)
   const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
   const dur = Math.max(sessionDur, member.durationSec, 1e-6)
   return dur > 0 ? damage / dur : 0
@@ -138,7 +173,7 @@ export function memberRoleBucket(
   member: MeterPartyMemberStored,
   digimonRoleById: Map<string, string>,
 ): MeterRoleBucket | null {
-  const bestId = memberPrimaryDigimonId(member)
+  const bestId = memberPrimaryDigimonId(member, digimonRoleById)
   if (!bestId) return null
   return digimonIdToBucket(bestId, digimonRoleById)
 }
@@ -173,19 +208,10 @@ function digimonIdDamageTotals(
   return totals
 }
 
-function pickLeaderboardDigimon(
+function pickLeaderboardDigimonRow(
   digimons: ReturnType<typeof memberDigimonBreakdowns>,
+  bestId: string,
 ): (typeof digimons)[number] | null {
-  const totals = digimonIdDamageTotals(digimons)
-  let bestId: string | null = null
-  let bestDamage = -1
-  for (const [id, damage] of totals) {
-    if (damage > bestDamage) {
-      bestDamage = damage
-      bestId = id
-    }
-  }
-  if (!bestId) return null
   let bestRow: (typeof digimons)[number] | null = null
   let bestRowDamage = -1
   for (const dg of digimons) {
@@ -199,15 +225,49 @@ function pickLeaderboardDigimon(
   return bestRow
 }
 
+function pickLeaderboardDigimon(
+  digimons: ReturnType<typeof memberDigimonBreakdowns>,
+  digimonRoleById?: Map<string, string>,
+): (typeof digimons)[number] | null {
+  const totals = digimonIdDamageTotals(digimons)
+
+  if (digimonRoleById && memberHasDpsAndNonDpsDamage(totals, digimonRoleById)) {
+    let bestDpsId: string | null = null
+    let bestDpsDamage = -1
+    for (const [id, damage] of totals) {
+      if (!isDpsRoleBucket(digimonIdToBucket(id, digimonRoleById))) continue
+      if (damage > bestDpsDamage) {
+        bestDpsDamage = damage
+        bestDpsId = id
+      }
+    }
+    if (bestDpsId) return pickLeaderboardDigimonRow(digimons, bestDpsId)
+  }
+
+  let bestId: string | null = null
+  let bestDamage = -1
+  for (const [id, damage] of totals) {
+    if (damage > bestDamage) {
+      bestDamage = damage
+      bestId = id
+    }
+  }
+  if (!bestId) return null
+  return pickLeaderboardDigimonRow(digimons, bestId)
+}
+
 /** Digimon used for leaderboard role + label (highest damage this run). */
-export function memberTopDigimonUsed(member: MeterPartyMemberStored): {
+export function memberTopDigimonUsed(
+  member: MeterPartyMemberStored,
+  digimonRoleById?: Map<string, string>,
+): {
   digimonId: string
   digimonName: string
   iconId: string | null
   portraitUrl?: string
 } | null {
   const digimons = memberDigimonBreakdowns(member)
-  const best = pickLeaderboardDigimon(digimons)
+  const best = pickLeaderboardDigimon(digimons, digimonRoleById)
   if (best) {
     return {
       digimonId: best.digimonId,

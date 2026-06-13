@@ -87,7 +87,7 @@ export function buildMeterActivityFeedItems(
     const feedMembers: MeterActivityFeedMember[] = []
 
     for (const member of members) {
-      const topDigimon = memberTopDigimonUsed(member)
+      const topDigimon = memberTopDigimonUsed(member, digimonRoleById)
       const digimonId = topDigimon?.digimonId ?? member.currentDigimonId?.trim() ?? ''
       const roleBucket = memberRoleBucket(member, digimonRoleById)
       const tamerName =
@@ -99,7 +99,7 @@ export function buildMeterActivityFeedItems(
         tamerName,
         roleBucket: roleBucket ?? 'melee',
         roleLabel: roleBucket ? METER_ROLE_BUCKET_LABELS[roleBucket] : '—',
-        dps: memberDpsInParse(member, row.payload, durationSec, members),
+        dps: memberDpsInParse(member, row.payload, durationSec, members, digimonRoleById),
         digimonId,
         digimonName: topDigimon?.digimonName ?? member.currentDigimonName?.trim() ?? 'Unknown',
         iconId: topDigimon?.iconId ?? member.portraitIconId ?? null,

@@ -111,6 +111,29 @@ function wikiRoleToBucket(role: string | null | undefined): RoleBucket | null {
   return null
 }
 
+const DPS_ROLE_BUCKETS: RoleBucket[] = ['melee', 'ranged', 'caster', 'hybrid']
+
+function isDpsRoleBucket(bucket: RoleBucket | null | undefined): boolean {
+  return bucket != null && DPS_ROLE_BUCKETS.includes(bucket)
+}
+
+function memberHasDpsAndNonDpsDamage(
+  totals: Map<string, number>,
+  wikiCatalog: Map<string, RoleBucket | null>,
+): boolean {
+  let hasDps = false
+  let hasNonDps = false
+  for (const [id, damage] of totals) {
+    if (damage <= 0) continue
+    const bucket = wikiCatalog.get(id) ?? null
+    if (!bucket) continue
+    if (isDpsRoleBucket(bucket)) hasDps = true
+    else hasNonDps = true
+    if (hasDps && hasNonDps) return true
+  }
+  return false
+}
+
 function normalizePlayerKey(member: StoredMember): string {
   const raw = member.tamerName?.trim() || member.displayLabel?.trim() || ''
   return raw.toLowerCase()
@@ -191,7 +214,10 @@ function memberDps(
 }
 
 /** Digimon with the highest damage this run (any role, including same-role end-of-run swaps). */
-function memberPrimaryDigimon(member: StoredMember) {
+function memberPrimaryDigimon(
+  member: StoredMember,
+  wikiCatalog?: Map<string, RoleBucket | null>,
+) {
   const digimons = memberDigimons(member)
   const totals = new Map<string, number>()
   const rowsById = new Map<string, (typeof digimons)[number]>()
@@ -203,6 +229,20 @@ function memberPrimaryDigimon(member: StoredMember) {
     const prev = rowsById.get(id)
     if (!prev || damage > Math.max(0, Number(prev.totalDamage) || 0)) rowsById.set(id, dg)
   }
+
+  if (wikiCatalog && memberHasDpsAndNonDpsDamage(totals, wikiCatalog)) {
+    let bestDpsId: string | null = null
+    let bestDpsDamage = -1
+    for (const [id, damage] of totals) {
+      if (!isDpsRoleBucket(wikiCatalog.get(id) ?? null)) continue
+      if (damage > bestDpsDamage) {
+        bestDpsDamage = damage
+        bestDpsId = id
+      }
+    }
+    if (bestDpsId) return rowsById.get(bestDpsId)
+  }
+
   let bestId: string | null = null
   let bestDamage = -1
   for (const [id, damage] of totals) {
@@ -214,7 +254,10 @@ function memberPrimaryDigimon(member: StoredMember) {
   return bestId ? rowsById.get(bestId) : undefined
 }
 
-function primaryDigimonDamage(member: StoredMember): number {
+function primaryDigimonDamage(
+  member: StoredMember,
+  wikiCatalog?: Map<string, RoleBucket | null>,
+): number {
   const digimons = memberDigimons(member)
   if (digimons.length <= 1) return memberDamageTotal(member)
   const totals = new Map<string, number>()
@@ -224,7 +267,10 @@ function primaryDigimonDamage(member: StoredMember): number {
     totals.set(id, (totals.get(id) ?? 0) + Math.max(0, Number(dg.totalDamage) || 0))
   }
   if (totals.size <= 1) return memberDamageTotal(member)
-  const primary = memberPrimaryDigimon(member)
+  if (wikiCatalog && memberHasDpsAndNonDpsDamage(totals, wikiCatalog)) {
+    return memberDamageTotal(member)
+  }
+  const primary = memberPrimaryDigimon(member, wikiCatalog)
   if (!primary) return memberDamageTotal(member)
   const dmg = Math.max(0, totals.get(primary.digimonId?.trim() ?? '') ?? 0)
   return dmg > 0 ? dmg : memberDamageTotal(member)
@@ -235,10 +281,11 @@ function memberDpsForLeaderboard(
   payload: DungeonPayload,
   rowDurationSec: number,
   members: StoredMember[],
+  wikiCatalog?: Map<string, RoleBucket | null>,
 ): number {
   const digimons = memberDigimons(member)
   const damage =
-    digimons.length > 1 ? primaryDigimonDamage(member) : memberDamageTotal(member)
+    digimons.length > 1 ? primaryDigimonDamage(member, wikiCatalog) : memberDamageTotal(member)
   const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
@@ -367,7 +414,7 @@ async function resolveRoleBucket(
   roleCache: Map<string, RoleBucket | null>,
   wikiCatalog: Map<string, RoleBucket | null>,
 ): Promise<RoleBucket | null> {
-  const primary = memberPrimaryDigimon(member)
+  const primary = memberPrimaryDigimon(member, wikiCatalog)
   const digimonId = primary?.digimonId?.trim() || ''
   if (!digimonId) return null
 
@@ -385,10 +432,11 @@ async function resolveRoleBucket(
   return bucket
 }
 
-function buildSummaryFromPayload(
+async function buildSummaryFromPayload(
   payload: DungeonPayload,
   rowDurationSec: number,
-): LeaderboardSummary | null {
+  wikiCatalog: Map<string, RoleBucket | null>,
+): Promise<LeaderboardSummary | null> {
   if (payload.kind !== 'dungeon_party' || !Array.isArray(payload.members)) return null
   if (!isLeaderboardEligiblePayload(payload)) return { version: 1, eligible: false, members: [] }
   if (isPartialDungeonClear(payload, rowDurationSec)) {
@@ -411,16 +459,18 @@ function buildSummaryFromPayload(
   const out: SummaryMember[] = []
   for (const member of members) {
     if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
-    const primary = memberPrimaryDigimon(member)
-    const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members)
+    const primary = memberPrimaryDigimon(member, wikiCatalog)
+    const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
+    const digimonId = primary?.digimonId?.trim() || ''
     out.push({
       playerKey: normalizePlayerKey(member),
       displayName: member.tamerName?.trim() || member.displayLabel?.trim() || '',
       dps,
-      digimonId: primary?.digimonId?.trim() || '',
+      digimonId,
       digimonName: primary?.digimonName?.trim() || '',
       iconId: primary?.iconId?.trim() || null,
       portraitUrl: primary?.portraitUrl,
+      roleBucket: digimonId ? (wikiCatalog.get(digimonId) ?? null) : null,
     })
   }
   return {
@@ -503,11 +553,11 @@ async function processParse(
   }
 
   let summary = row.leaderboard_summary
+  const wikiCatalog = await loadWikiRoleCatalog()
   if (!summary?.members?.length) {
-    summary = buildSummaryFromPayload(payload, Number(row.duration_sec) || 0)
+    summary = await buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, wikiCatalog)
   }
 
-  const wikiCatalog = await loadWikiRoleCatalog()
   if (!summary?.eligible) return { inserted: 0, skipped: 'not leaderboard eligible' }
 
   if (members.length && isBrokenPartyParse(payload, members)) {
@@ -557,7 +607,7 @@ async function processParse(
     const roleBucket = await resolveRoleBucket(member, sm, roleCache, wikiCatalog)
     if (!roleBucket) continue
 
-    const primary = memberPrimaryDigimon(member)
+    const primary = memberPrimaryDigimon(member, wikiCatalog)
     const digimonId = primary?.digimonId?.trim() || ''
     let officialName: string | null = null
     if (digimonId) {
@@ -573,7 +623,13 @@ async function processParse(
       }
     }
 
-    const dps = memberDpsForLeaderboard(member, payload, Number(row.duration_sec) || 0, memberList)
+    const dps = memberDpsForLeaderboard(
+      member,
+      payload,
+      Number(row.duration_sec) || 0,
+      memberList,
+      wikiCatalog,
+    )
     if (!(dps > 0)) continue
 
     entries.push({
@@ -616,7 +672,9 @@ async function processParse(
       const key = (sm.playerKey ?? '').trim().toLowerCase()
       const member = memberList.find((m) => normalizePlayerKey(m) === key)
       const digimonId =
-        sm.digimonId?.trim() || (member ? memberPrimaryDigimon(member)?.digimonId?.trim() : '') || ''
+        sm.digimonId?.trim() ||
+        (member ? memberPrimaryDigimon(member, wikiCatalog)?.digimonId?.trim() : '') ||
+        ''
       return {
         ...sm,
         roleBucket: sm.roleBucket ?? roleCache.get(digimonId) ?? wikiCatalog.get(digimonId) ?? null,

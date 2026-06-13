@@ -169,12 +169,12 @@ export function aggregatePublicMeterStats(
       if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue
       const bucket = memberRoleBucket(member, digimonRoleById)
       if (!bucket) continue
-      const primaryDigimonId = memberPrimaryDigimonId(member)
-      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
+      const primaryDigimonId = memberPrimaryDigimonId(member, digimonRoleById)
+      const dps = memberDpsInParse(member, row.payload, row.duration_sec, members, digimonRoleById)
       const pKey = normalizePlayerKey(member)
       const prev = playerBest[bucket].get(pKey)
       if (!prev || dps > prev.dps) {
-        const topDg = memberTopDigimonUsed(member)
+        const topDg = memberTopDigimonUsed(member, digimonRoleById)
         playerBest[bucket].set(pKey, {
           playerKey: pKey,
           displayName: playerDisplayName(member),
@@ -312,7 +312,13 @@ export function memberNameColor(
   const bucket = memberRoleBucket(member, digimonRoleById)
   if (!bucket) return undefined
   const dps = parseContext
-    ? memberDpsInParse(member, parseContext.payload, parseContext.rowDurationSec, parseContext.members)
+    ? memberDpsInParse(
+        member,
+        parseContext.payload,
+        parseContext.rowDurationSec,
+        parseContext.members,
+        digimonRoleById,
+      )
     : memberDps(member)
   const pct = dpsToPercentile(dps, aggregates.sortedDpsByBucket[bucket] ?? [])
   return parseScoreColor(pct)

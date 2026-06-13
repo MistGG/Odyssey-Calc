@@ -76,7 +76,7 @@ export function pickMayClearParticipationWinners(
       const bucket = memberRoleBucket(member, digimonRoleById)
       if (!bucket) continue
       const pKey = normalizePlayerKey(member)
-      const topDg = memberTopDigimonUsed(member)
+      const topDg = memberTopDigimonUsed(member, digimonRoleById)
       const entry: PlayerRankEntry = {
         playerKey: pKey,
         displayName: playerDisplayName(member),
