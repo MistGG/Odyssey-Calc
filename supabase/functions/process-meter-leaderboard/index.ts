@@ -237,14 +237,21 @@ function reconcileJustimonMisattribution(member: StoredMember): void {
     justimonSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0) +
     autoSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0)
 
-  const otherRows = digimons.filter((d) => {
+  const otherRows: NonNullable<StoredMember['digimons']> = []
+  for (const d of digimons) {
     const id = d.digimonId?.trim() ?? ''
-    if (id === justimonId) return false
+    if (id === justimonId) continue
     const remSkills = (d.skills ?? []).filter(
       (s) => !isJustimonSkill(String(s.skillKey ?? ''), String(s.skill ?? '')),
     )
-    return remSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0) > 0
-  })
+    const remDmg = remSkills.reduce((s, sk) => s + Math.max(0, Number(sk.damage) || 0), 0)
+    if (remDmg <= 0) continue
+    otherRows.push({
+      ...d,
+      skills: remSkills,
+      totalDamage: Math.round(remDmg),
+    })
+  }
 
   member.digimons = [
     {
@@ -349,6 +356,7 @@ function memberDpsForLeaderboard(
   members: StoredMember[],
   wikiCatalog?: Map<string, RoleBucket | null>,
 ): number {
+  reconcileJustimonMisattribution(member)
   const digimons = memberDigimons(member)
   const damage =
     digimons.length > 1 ? primaryDigimonDamage(member, wikiCatalog) : memberDamageTotal(member)
