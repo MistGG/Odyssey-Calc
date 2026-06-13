@@ -383,7 +383,7 @@ function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): b
 const MEMBER_SPIKE_MAX_ACTIVE_SEC = 3
 const MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC = 5
 /** Ranked dungeon clears shorter than this are rejected (reset-mid-run tail damage, etc.). */
-const MIN_LEADERBOARD_SESSION_SEC = 30
+const MIN_LEADERBOARD_SESSION_SEC = 10
 
 function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)

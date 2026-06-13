@@ -1,5 +1,5 @@
 /**
- * Remove ranked dungeon uploads shorter than the leaderboard minimum (30s).
+ * Remove ranked dungeon uploads shorter than the leaderboard minimum (10s).
  *
  *   node scripts/invalidate-short-meter-uploads.mjs --dry-run
  *   node scripts/invalidate-short-meter-uploads.mjs
@@ -9,7 +9,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { meterSupabaseEnv } from './load-env-local.mjs'
 
-const MIN_SESSION_SEC = 30
+const MIN_SESSION_SEC = 10
 const { url, key } = meterSupabaseEnv()
 const dryRun = process.argv.includes('--dry-run')
 
