@@ -158,7 +158,7 @@ export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGui
   {
     slug: 'corrupted-necklace',
     craftLabel: 'corrupted necklace',
-    dataTitle: 'Necklace Data: Corrupted Seadragon',
+    dataTitle: 'Necklace Data: Cursed Puppet',
     gearLabel: 'necklace',
     materials: GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
     rolls: [
@@ -187,7 +187,7 @@ export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGui
   {
     slug: 'corrupted-earring',
     craftLabel: 'corrupted earring',
-    dataTitle: 'Earring Data: Corrupted Seadragon',
+    dataTitle: 'Earring Data: Fullmetal Tyrant',
     gearLabel: 'earring',
     materials: GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
     rolls: [

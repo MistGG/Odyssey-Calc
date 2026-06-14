@@ -196,7 +196,7 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'Corrupted gear',
     zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
-    summary: 'Craft a corrupted ring using Dark DigiCore materials, then roll Corrupted Seadragon stats.',
+    summary: 'Craft a corrupted ring using Dark DigiCore materials.',
     tasks: [
       { kind: 'farm', text: 'Farm DarkDigicore and Energized Dark DigiCore' },
       { kind: 'craft', text: 'Craft corrupted ring at the Blacksmith in Olympus' },
@@ -208,7 +208,7 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'Corrupted gear',
     zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
-    summary: 'Craft a corrupted necklace using Dark DigiCore materials, then roll corrupted stat targets.',
+    summary: 'Craft a corrupted necklace using Dark DigiCore materials.',
     tasks: [
       { kind: 'farm', text: 'Farm DarkDigicore and Energized Dark DigiCore' },
       { kind: 'craft', text: 'Craft corrupted necklace at the Blacksmith in Olympus' },
@@ -220,7 +220,7 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'Corrupted gear',
     zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
-    summary: 'Craft a corrupted earring using Dark DigiCore materials, then roll corrupted stat targets.',
+    summary: 'Craft a corrupted earring using Dark DigiCore materials.',
     tasks: [
       { kind: 'farm', text: 'Farm DarkDigicore and Energized Dark DigiCore' },
       { kind: 'craft', text: 'Craft corrupted earring at the Blacksmith in Olympus' },
