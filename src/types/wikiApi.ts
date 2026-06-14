@@ -154,6 +154,9 @@ export type WikiQuestObjective = {
 export type WikiQuestReward = {
   type: string
   value: number | string
+  quantity?: number
+  item_name?: string
+  item_icon_id?: string
 }
 
 export type WikiQuestRequirement = {

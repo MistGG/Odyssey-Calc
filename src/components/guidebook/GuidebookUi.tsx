@@ -51,6 +51,8 @@ export function GuidebookNotes({
 export type GuidebookGearStatRoll = {
   label: string
   stats: string
+  hint?: string
+  tone?: 'dps' | 'tank'
 }
 
 function parseGuidebookStatRollItems(stats: string): string[] {
@@ -69,10 +71,12 @@ function GuidebookStatRollPanel({
   title,
   stats,
   tone,
+  hint,
 }: {
   title: string
   stats: string
   tone?: 'dps' | 'tank'
+  hint?: string
 }) {
   const items = parseGuidebookStatRollItems(stats)
   const toneClass = tone ? ` guidebook-stat-roll-panel--${tone}` : ''
@@ -83,6 +87,7 @@ function GuidebookStatRollPanel({
       aria-label={`${title} stat targets`}
     >
       <h5 className="guidebook-stat-roll-panel__title">{title}</h5>
+      {hint ? <p className="guidebook-stat-roll-panel__hint muted">{hint}</p> : null}
       <ul className="guidebook-stat-roll-panel__list">
         {items.map((item, index) => (
           <li key={`${item}-${index}`}>{item}</li>
@@ -102,23 +107,35 @@ export function GuidebookGearStatRollPanels({
   ariaLabel: string
   sectionTitle?: string
 }) {
-  const dpsHealer = rolls[0]
-  const tank = rolls[1]
+  const useLegacyTwoPanel =
+    rolls.length === 2 &&
+    rolls[0]?.label === 'Recommended all-around' &&
+    rolls[1]?.label === 'Tank specific' &&
+    !rolls[0]?.hint &&
+    !rolls[1]?.hint
 
   return (
     <section className="guidebook-stat-recommendations" aria-label={ariaLabel}>
       <header className="guidebook-stat-recommendations__header">
         <h4 className="guidebook-stat-recommendations__title">{sectionTitle}</h4>
       </header>
-      <div className="guidebook-stat-roll-panels">
-        {dpsHealer && tank ? (
+      <div
+        className={`guidebook-stat-roll-panels${rolls.length > 2 ? ' guidebook-stat-roll-panels--multi' : ''}`}
+      >
+        {useLegacyTwoPanel ? (
           <>
-            <GuidebookStatRollPanel title="DPS/Healer" stats={dpsHealer.stats} tone="dps" />
-            <GuidebookStatRollPanel title="Tank" stats={tank.stats} tone="tank" />
+            <GuidebookStatRollPanel title="DPS/Healer" stats={rolls[0]!.stats} tone="dps" />
+            <GuidebookStatRollPanel title="Tank" stats={rolls[1]!.stats} tone="tank" />
           </>
         ) : (
           rolls.map((roll) => (
-            <GuidebookStatRollPanel key={roll.label} title={roll.label} stats={roll.stats} />
+            <GuidebookStatRollPanel
+              key={roll.label}
+              title={roll.label}
+              stats={roll.stats}
+              tone={roll.tone}
+              hint={roll.hint}
+            />
           ))
         )}
       </div>

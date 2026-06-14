@@ -48,37 +48,35 @@ function BoardSpace({
   const progressIndex = guidebookProgressionProgressIndex(step.id)
 
   return (
-    <li>
-      <button
-        type="button"
-        className={`guidebook-board__space guidebook-board__space--${step.zoneTone} guidebook-board__space--${status}${isViewing ? ' is-viewing' : ''}`}
-        onClick={onSelect}
-        aria-current={isViewing ? 'step' : undefined}
-      >
-        {step.informativeOnly ? (
-          <span className="guidebook-board__space-no guidebook-board__space-no--info" aria-label="Informative">
-            <Info className="guidebook-board__space-no-icon" size={14} strokeWidth={2.25} aria-hidden />
-          </span>
-        ) : (
-          <span className="guidebook-board__space-no" aria-hidden>
-            {progressIndex + 1}
-          </span>
-        )}
-        <span className="guidebook-board__space-body">
-          <span className="guidebook-board__space-zone">{step.zone}</span>
-          <span className="guidebook-board__space-title">{step.title}</span>
+    <button
+      type="button"
+      className={`guidebook-board__space guidebook-board__space--${step.zoneTone} guidebook-board__space--${status}${isViewing ? ' is-viewing' : ''}`}
+      onClick={onSelect}
+      aria-current={isViewing ? 'step' : undefined}
+    >
+      {step.informativeOnly ? (
+        <span className="guidebook-board__space-no guidebook-board__space-no--info" aria-label="Informative">
+          <Info className="guidebook-board__space-no-icon" size={14} strokeWidth={2.25} aria-hidden />
         </span>
-        {status === 'complete' ? (
-          <span className="guidebook-board__space-mark" aria-label="Completed">
-            ✓
-          </span>
-        ) : status === 'current' ? (
-          <span className="guidebook-board__space-mark guidebook-board__space-mark--you" aria-hidden>
-            ★
-          </span>
-        ) : null}
-      </button>
-    </li>
+      ) : (
+        <span className="guidebook-board__space-no" aria-hidden>
+          {progressIndex + 1}
+        </span>
+      )}
+      <span className="guidebook-board__space-body">
+        <span className="guidebook-board__space-zone">{step.zone}</span>
+        <span className="guidebook-board__space-title">{step.title}</span>
+      </span>
+      {status === 'complete' ? (
+        <span className="guidebook-board__space-mark" aria-label="Completed">
+          ✓
+        </span>
+      ) : status === 'current' ? (
+        <span className="guidebook-board__space-mark guidebook-board__space-mark--you" aria-hidden>
+          ★
+        </span>
+      ) : null}
+    </button>
   )
 }
 

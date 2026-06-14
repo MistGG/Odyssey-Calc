@@ -56,7 +56,23 @@ import {
   type GuidebookRaidSourceDungeonCard,
 } from '../../lib/guidebookItemPanel'
 import {
+  guidebookSealCategories,
+  guidebookSealDungeonEntryFromRow,
+  guidebookSealSourcesForItem,
+  sortSealDungeonsByLevel,
+  type GuidebookSealCategory,
+  type GuidebookSealDungeonEntry,
+} from '../../lib/guidebookSeals'
+import {
+  guidebookDarkMastersTokenDungeonEntryFromRow,
+  guidebookDarkMastersTokenSources,
+  sortDarkMastersTokenDungeonsByLevel,
+} from '../../lib/guidebookDarkMastersToken'
+import {
   GUIDEBOOK_AGUMON_CLASSIC_ID,
+  GUIDEBOOK_DARK_MASTERS_TOKEN_DARK_DIGICORE_COST,
+  GUIDEBOOK_DARK_MASTERS_TOKEN_ENERGIZED_DIGICORE_COST,
+  GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID,
   GUIDEBOOK_DARK_ROAR_DUNGEON_ID,
   GUIDEBOOK_UNDYING_EXP_DUNGEON_ID,
   GUIDEBOOK_HIKARI_SEES_ODAIBA_QUEST_ID,
@@ -77,6 +93,11 @@ import {
   GUIDEBOOK_EARLY_NECKLACE_ROLLS,
   GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER,
   GUIDEBOOK_CLONE_RECOMMENDATIONS,
+  GUIDEBOOK_DARK_DIGICORE_ITEM_ID,
+  GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID,
+  GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT,
+  GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT,
+  GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID,
   guidebookCorruptedGearGuide,
   type GuidebookCorruptedCraftMaterial,
   type GuidebookCorruptedGearGuide,
@@ -108,16 +129,34 @@ function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
+function decodeWikiText(text: string): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+}
+
 function formatQuestReward(reward: WikiQuestReward) {
   const n = typeof reward.value === 'number' ? reward.value : Number(reward.value)
   if (reward.type === 'Bits' || reward.type === 'EXP') {
     return `${reward.type} ${formatInt(Number.isFinite(n) ? n : 0)}`
   }
+  if (reward.type === 'Item' && reward.item_name?.trim()) {
+    const qty = reward.quantity ?? 1
+    return `${formatInt(qty)} ${reward.item_name.trim()}`
+  }
   return `${reward.type} ${reward.value}`
 }
 
+function formatQuestObjectiveTarget(objective: WikiQuestObjective): string {
+  return decodeWikiText(objective.target)
+}
+
 function parseNpcNameParts(name: string) {
-  const match = name.match(/^([^<]+)(?:\s*<([^>]+)>\s*)?$/)
+  const decoded = decodeWikiText(name)
+  const match = decoded.match(/^([^<]+)(?:\s*<([^>]+)>\s*)?$/)
   return {
     primary: match?.[1]?.trim() ?? name,
     location: match?.[2]?.trim() ?? null,
@@ -444,11 +483,11 @@ function GuidebookQuestProfilePopover({
       <h3 className="guidebook-quest-popover-card__title">{quest.title_text}</h3>
 
       {quest.body_text ? (
-        <p className="guidebook-quest-popover-card__body">{quest.body_text}</p>
+        <p className="guidebook-quest-popover-card__body">{decodeWikiText(quest.body_text)}</p>
       ) : null}
 
       {quest.simple_text && !quest.body_text ? (
-        <p className="guidebook-quest-popover-card__simple">{quest.simple_text}</p>
+        <p className="guidebook-quest-popover-card__simple">{decodeWikiText(quest.simple_text)}</p>
       ) : null}
 
       {quest.npc_start_id && quest.npc_start ? (
@@ -485,6 +524,9 @@ function GuidebookQuestProfilePopover({
               <li key={`${obj.target_id ?? obj.target}-${i}`}>
                 <span className="guidebook-quest-popover-card__list-kind">{obj.type}</span>
                 <span className="guidebook-quest-popover-card__list-text">
+                  {obj.quantity != null && obj.quantity > 0 ? (
+                    <span className="guidebook-quest-popover-card__list-qty">{formatInt(obj.quantity)}× </span>
+                  ) : null}
                   {isNpcObjective(obj) && obj.target_id ? (
                     <GuidebookNpcHoverLink
                       npcId={obj.target_id}
@@ -492,7 +534,7 @@ function GuidebookQuestProfilePopover({
                       {...npcLinkProps}
                     />
                   ) : (
-                    obj.target
+                    formatQuestObjectiveTarget(obj)
                   )}
                 </span>
               </li>
@@ -506,7 +548,26 @@ function GuidebookQuestProfilePopover({
           <h4 className="guidebook-quest-popover-card__label">Rewards</h4>
           <ul className="guidebook-quest-popover-card__rewards">
             {quest.rewards.map((reward, i) => (
-              <li key={`${reward.type}-${i}`}>{formatQuestReward(reward)}</li>
+              <li key={`${reward.type}-${i}`}>
+                {reward.type === 'Item' && reward.item_name?.trim() ? (
+                  <span className="guidebook-quest-popover-card__reward-item">
+                    {reward.item_icon_id ? (
+                      <img
+                        className="guidebook-quest-popover-card__reward-icon"
+                        src={wikiItemIconUrl(reward.item_icon_id)}
+                        alt=""
+                        width={20}
+                        height={20}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : null}
+                    <span>{formatQuestReward(reward)}</span>
+                  </span>
+                ) : (
+                  formatQuestReward(reward)
+                )}
+              </li>
             ))}
           </ul>
         </section>
@@ -1271,12 +1332,14 @@ function GuidebookDungeonPanelCard({
   difficulty,
   badgeLabel,
   highlightLoot,
+  showLocationImage = true,
 }: {
   dungeonId: string
   nameFallback: string
   difficulty: string
   badgeLabel?: string
   highlightLoot?: GuidebookRaidSourceDungeonCard['highlightLoot']
+  showLocationImage?: boolean
 }) {
   const { ref, visible } = useWhenVisible<HTMLElement>()
   const media = GUIDEBOOK_DUNGEON_MEDIA[dungeonId]
@@ -1339,7 +1402,7 @@ function GuidebookDungeonPanelCard({
 
   return (
     <article ref={ref} className="guidebook-uncap-dungeon-card">
-      {media ? <GuidebookDungeonLocationSlot media={media} /> : null}
+      {showLocationImage && media ? <GuidebookDungeonLocationSlot media={media} /> : null}
 
       <div className="guidebook-uncap-dungeon-card__title-block">
         {badgeLabel ? <span className="guidebook-uncap-dungeon-card__uncap">{badgeLabel}</span> : null}
@@ -1434,6 +1497,7 @@ export function GuidebookDungeonPanel({
   cards,
   layout = 'pair',
   ariaLabel = 'Dungeons',
+  showLocationImage = true,
 }: {
   cards: {
     dungeonId: string
@@ -1445,6 +1509,7 @@ export function GuidebookDungeonPanel({
   }[]
   layout?: 'pair' | 'single'
   ariaLabel?: string
+  showLocationImage?: boolean
 }) {
   const sortedCards = useMemo(() => sortGuidebookDungeonCards(cards), [cards])
 
@@ -1454,7 +1519,11 @@ export function GuidebookDungeonPanel({
       aria-label={ariaLabel}
     >
       {sortedCards.map((card) => (
-        <GuidebookDungeonPanelCard key={`${card.dungeonId}-${card.difficulty}`} {...card} />
+        <GuidebookDungeonPanelCard
+          key={`${card.dungeonId}-${card.difficulty}`}
+          {...card}
+          showLocationImage={showLocationImage}
+        />
       ))}
     </div>
   )
@@ -2196,6 +2265,136 @@ function GuidebookCorruptedGearRollNotes({
   return <GuidebookGearStatRollPanels rolls={rolls} ariaLabel={ariaLabel} />
 }
 
+function GuidebookCorruptedAlternativeSources() {
+  const { ref, visible } = useWhenVisible<HTMLDivElement>()
+  const sourceRows = useMemo(() => guidebookDarkMastersTokenSources(), [])
+  const [dungeons, setDungeons] = useState<ReturnType<typeof sortDarkMastersTokenDungeonsByLevel> | null>(
+    null,
+  )
+  const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!visible || !sourceRows.length) return
+    let cancelled = false
+    setLoading(true)
+    setLoadError(null)
+
+    void (async () => {
+      const entries = []
+      for (const row of sourceRows) {
+        let detail = getGuidebookDungeonDetailCached(row.dungeonId)
+        if (!detail) {
+          try {
+            detail = await loadGuidebookDungeonDetail(row.dungeonId)
+          } catch {
+            detail = null
+          }
+        }
+        entries.push(guidebookDarkMastersTokenDungeonEntryFromRow(row, detail))
+      }
+      if (cancelled) return
+      setDungeons(sortDarkMastersTokenDungeonsByLevel(entries))
+      setLoading(false)
+    })().catch(() => {
+      if (!cancelled) {
+        setLoadError('Could not load dungeon details.')
+        setLoading(false)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [visible, sourceRows])
+
+  return (
+    <section ref={ref} className="guidebook-corrupted-alt" aria-label="Alternative material sources">
+      <h4 className="guidebook-corrupted-alt__title">Alternative material sources</h4>
+      <p className="guidebook-corrupted-alt__lead muted">
+        If direct dungeon drops are slow, farm materials through the weekly quest or Dark Masters
+        Token pity instead.
+      </p>
+
+      <div className="guidebook-corrupted-alt__blocks">
+        <article className="guidebook-corrupted-alt__block" aria-label="Weekly quest">
+          <h5 className="guidebook-corrupted-alt__block-title">Weekly quest</h5>
+          <GuideProse>
+            <p>
+              <GuidebookQuestHoverLink
+                questId={GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID}
+                labelFallback="[Weekly] Preparing for the Apocalypse"
+              />{' '}
+              rewards {GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT}{' '}
+              <GuidebookItemHoverLink
+                itemId={GUIDEBOOK_DARK_DIGICORE_ITEM_ID}
+                labelFallback="Dark DigiCore"
+              />{' '}
+              and {GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT}{' '}
+              <GuidebookItemHoverLink
+                itemId={GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID}
+                labelFallback="Energized Dark DigiCore"
+              />{' '}
+              per week.
+            </p>
+          </GuideProse>
+        </article>
+
+        <article className="guidebook-corrupted-alt__block" aria-label="Dark Masters Token">
+          <h5 className="guidebook-corrupted-alt__block-title">Dark Masters Token</h5>
+          <GuideProse>
+            <p>
+              <GuidebookItemHoverLink
+                itemId={GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID}
+                labelFallback="Dark Masters Token"
+              />{' '}
+              is pity currency from the dungeons below. Trade with Zudomon in Olympus:{' '}
+              {GUIDEBOOK_DARK_MASTERS_TOKEN_DARK_DIGICORE_COST} tokens for one{' '}
+              <GuidebookItemHoverLink
+                itemId={GUIDEBOOK_DARK_DIGICORE_ITEM_ID}
+                labelFallback="Dark DigiCore"
+              />
+              , or {GUIDEBOOK_DARK_MASTERS_TOKEN_ENERGIZED_DIGICORE_COST} tokens for one{' '}
+              <GuidebookItemHoverLink
+                itemId={GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID}
+                labelFallback="Energized Dark DigiCore"
+              />
+              .
+            </p>
+          </GuideProse>
+          {visible && loading ? (
+            <p className="guidebook-corrupted-alt__status muted">Loading dungeons…</p>
+          ) : null}
+          {visible && loadError ? <p className="guidebook-error">{loadError}</p> : null}
+          {visible && !loading && !loadError && dungeons?.length ? (
+            <ul className="guidebook-corrupted-alt__dungeon-list">
+              {dungeons.map((dungeon) => (
+                <li
+                  key={`${dungeon.dungeonId}-${dungeon.difficulty}`}
+                  className="guidebook-corrupted-alt__dungeon-row"
+                >
+                  <span className="guidebook-corrupted-alt__dungeon-level">
+                    {dungeon.bossLevel != null ? `Lv. ${dungeon.bossLevel}` : '—'}
+                  </span>
+                  <span className="guidebook-corrupted-alt__dungeon-name">{dungeon.dungeonName}</span>
+                  <span
+                    className={`guidebook-dungeon-diff guidebook-dungeon-diff--${dungeon.difficultySlug} guidebook-corrupted-alt__dungeon-diff`}
+                  >
+                    {dungeon.difficulty}
+                  </span>
+                  <span className="guidebook-corrupted-alt__dungeon-token muted">
+                    ×{dungeon.tokenCount} token{dungeon.tokenCount === 1 ? '' : 's'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </article>
+      </div>
+    </section>
+  )
+}
+
 function GuidebookCorruptedCraftSection({ guide }: { guide: GuidebookCorruptedGearGuide }) {
   const [materialA, materialB] = guide.materials
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
@@ -2282,6 +2481,7 @@ function GuidebookCorruptedGearDetail({ guide }: { guide: GuidebookCorruptedGear
     <div className="guidebook-ring-track guidebook-ring-track--corrupted">
       <p className="guidebook-corrupted-disclaimer muted">{GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER}</p>
       <GuidebookCorruptedCraftSection guide={guide} />
+      <GuidebookCorruptedAlternativeSources />
       <GuidebookCorruptedGearDataSection guide={guide} />
     </div>
   )
@@ -2433,6 +2633,122 @@ export function GuideGearGoggles() {
   )
 }
 
-export function GuideMidGameFarmingDigimon() {
-  return <GuidebookComingSoon />
+export function GuidebookSeals() {
+  const categories = useMemo(() => guidebookSealCategories(), [])
+
+  return (
+    <div className="guidebook-seals">
+      <GuideProse>
+        <p>Early game seals are available from the following dungeons:</p>
+      </GuideProse>
+
+      <div className="guidebook-seals-stats">
+        {categories.map((category) => (
+          <GuidebookSealStatSection key={category.itemId} category={category} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function GuidebookSealStatSection({ category }: { category: GuidebookSealCategory }) {
+  const sourceRows = useMemo(
+    () => guidebookSealSourcesForItem(category.itemId),
+    [category.itemId],
+  )
+  const [open, setOpen] = useState(false)
+  const [dungeons, setDungeons] = useState<GuidebookSealDungeonEntry[] | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open || dungeons || !sourceRows.length) return
+    let cancelled = false
+    setLoading(true)
+    setLoadError(null)
+
+    void (async () => {
+      const entries: GuidebookSealDungeonEntry[] = []
+      for (const row of sourceRows) {
+        let detail = getGuidebookDungeonDetailCached(row.dungeonId)
+        if (!detail) {
+          try {
+            detail = await loadGuidebookDungeonDetail(row.dungeonId)
+          } catch {
+            detail = null
+          }
+        }
+        entries.push(guidebookSealDungeonEntryFromRow(row, detail))
+      }
+      if (cancelled) return
+      setDungeons(sortSealDungeonsByLevel(entries))
+      setLoading(false)
+    })().catch(() => {
+      if (!cancelled) {
+        setLoadError('Could not load dungeon levels.')
+        setLoading(false)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, sourceRows, dungeons])
+
+  const dungeonLabel = `${sourceRows.length} dungeon${sourceRows.length === 1 ? '' : 's'}`
+
+  return (
+    <details
+      className="guidebook-seals-stat"
+      aria-label={`${category.itemName} sources`}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="guidebook-seals-stat__summary">
+        <img
+          className="guidebook-seals-stat__icon"
+          src={wikiItemIconUrl(category.iconId)}
+          alt=""
+          width={36}
+          height={36}
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="guidebook-seals-stat__titles">
+          <span className="guidebook-seals-stat__box">{category.itemName}</span>
+          <span className="guidebook-seals-stat__stat muted">
+            {category.label} ({category.boxTag})
+          </span>
+        </div>
+        <span className="guidebook-seals-stat__badge">{dungeonLabel}</span>
+      </summary>
+
+      <div className="guidebook-seals-stat__panel">
+        {!sourceRows.length ? (
+          <p className="guidebook-seals-stat__empty muted">
+            No dungeon sources are listed for this seal box yet.
+          </p>
+        ) : loading ? (
+          <p className="guidebook-seals-stat__empty muted">Loading dungeon levels…</p>
+        ) : loadError ? (
+          <p className="guidebook-seals-stat__empty guidebook-error">{loadError}</p>
+        ) : dungeons?.length ? (
+          <ul className="guidebook-seals-dungeon-list">
+            {dungeons.map((dungeon) => (
+              <li key={`${dungeon.dungeonId}-${dungeon.difficulty}`} className="guidebook-seals-dungeon-list__row">
+                <span className="guidebook-seals-dungeon-list__level">
+                  {dungeon.bossLevel != null ? `Lv. ${dungeon.bossLevel}` : '—'}
+                </span>
+                <span className="guidebook-seals-dungeon-list__name">{dungeon.dungeonName}</span>
+                <span
+                  className={`guidebook-dungeon-diff guidebook-dungeon-diff--${dungeon.difficultySlug} guidebook-seals-dungeon-list__diff`}
+                >
+                  {dungeon.difficulty}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </details>
+  )
 }

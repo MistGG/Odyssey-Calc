@@ -17978,11 +17978,141 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   margin-top: 0;
 }
 
+.guidebook-ring-track--corrupted .guidebook-ring-entry {
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(56, 189, 248, 0.16);
+}
+
 .guidebook-corrupted-disclaimer {
   margin: 0 0 0.85rem;
   font-size: 0.82rem;
   line-height: 1.45;
   font-style: italic;
+}
+
+.guidebook-corrupted-alt {
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(56, 189, 248, 0.16);
+}
+
+.guidebook-corrupted-alt__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e0f2fe;
+  letter-spacing: 0.01em;
+}
+
+.guidebook-corrupted-alt__lead {
+  margin: 0.4rem 0 0.9rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.guidebook-corrupted-alt__blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.guidebook-corrupted-alt__block {
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.75rem 0.85rem;
+}
+
+.guidebook-corrupted-alt__block-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #bae6fd;
+}
+
+.guidebook-corrupted-alt__block .guidebook-prose {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.guidebook-corrupted-alt__block .guidebook-prose p {
+  margin: 0;
+}
+
+.guidebook-corrupted-alt__status {
+  margin: 0.55rem 0 0;
+  font-size: 0.82rem;
+}
+
+.guidebook-corrupted-alt__dungeon-list {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  overflow: hidden;
+}
+
+.guidebook-corrupted-alt__dungeon-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr auto auto;
+  gap: 0.45rem 0.65rem;
+  align-items: center;
+  padding: 0.42rem 0.6rem;
+  font-size: 0.84rem;
+}
+
+.guidebook-corrupted-alt__dungeon-row:nth-child(odd) {
+  background: rgba(2, 6, 23, 0.35);
+}
+
+.guidebook-corrupted-alt__dungeon-level {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.guidebook-corrupted-alt__dungeon-name {
+  font-weight: 600;
+  color: #e2e8f0;
+  min-width: 0;
+}
+
+.guidebook-corrupted-alt__dungeon-diff {
+  justify-self: end;
+}
+
+.guidebook-corrupted-alt__dungeon-token {
+  justify-self: end;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .guidebook-corrupted-alt__dungeon-row {
+    grid-template-columns: 3.25rem 1fr;
+    grid-template-areas:
+      'level name'
+      'diff token';
+  }
+
+  .guidebook-corrupted-alt__dungeon-level {
+    grid-area: level;
+  }
+
+  .guidebook-corrupted-alt__dungeon-name {
+    grid-area: name;
+  }
+
+  .guidebook-corrupted-alt__dungeon-diff {
+    grid-area: diff;
+    justify-self: start;
+  }
+
+  .guidebook-corrupted-alt__dungeon-token {
+    grid-area: token;
+  }
 }
 
 .guidebook-notes__collect {
@@ -18165,6 +18295,12 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   color: #e2e8f0;
 }
 
+.guidebook-stat-roll-panel__hint {
+  margin: -0.2rem 0 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .guidebook-stat-roll-panel--dps .guidebook-stat-roll-panel__title {
   color: #a5f3fc;
 }
@@ -18210,6 +18346,16 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
 
 .guidebook-stat-roll-panel__list li + li {
   margin-top: 0.38rem;
+}
+
+.guidebook-stat-roll-panels--multi {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 960px) {
+  .guidebook-stat-roll-panels--multi {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -18767,6 +18913,25 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   color: #a5f3fc;
   background: rgba(34, 211, 238, 0.12);
   border: 1px solid rgba(34, 211, 238, 0.28);
+}
+
+.guidebook-quest-popover-card__reward-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.guidebook-quest-popover-card__reward-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.guidebook-quest-popover-card__list-qty {
+  font-weight: 700;
+  color: #94a3b8;
 }
 
 .guidebook-quest-popover-card__req {
@@ -22525,3 +22690,145 @@ a.guidebook-monster-panel__loot-btn:hover {
   }
 
 }
+
+/* Guidebook — Digimon Seal Boxes by stat */
+.guidebook-seals {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.guidebook-seals-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.guidebook-seals-stat {
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  overflow: hidden;
+}
+
+.guidebook-seals-stat__summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.guidebook-seals-stat__summary::-webkit-details-marker {
+  display: none;
+}
+
+.guidebook-seals-stat__summary::after {
+  content: '';
+  flex-shrink: 0;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid rgba(148, 163, 184, 0.85);
+  border-bottom: 2px solid rgba(148, 163, 184, 0.85);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.guidebook-seals-stat[open] > .guidebook-seals-stat__summary::after {
+  transform: rotate(45deg);
+  margin-top: -0.15rem;
+}
+
+.guidebook-seals-stat__icon {
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guidebook-seals-stat__titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.guidebook-seals-stat__box {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.guidebook-seals-stat__stat {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.guidebook-seals-stat__badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-right: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  color: rgba(148, 163, 184, 0.95);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.guidebook-seals-stat__panel {
+  padding: 0 0.65rem 0.55rem;
+}
+
+.guidebook-seals-stat__empty {
+  margin: 0;
+  padding: 0.15rem 0 0.35rem;
+  font-size: 0.82rem;
+}
+
+.guidebook-seals-dungeon-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.guidebook-seals-dungeon-list__row {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.35rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.guidebook-seals-dungeon-list__row:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.guidebook-seals-dungeon-list__level {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.95);
+  font-size: 0.78rem;
+}
+
+.guidebook-seals-dungeon-list__name {
+  min-width: 0;
+  font-weight: 600;
+  color: rgba(230, 242, 255, 0.92);
+}
+
+.guidebook-seals-dungeon-list__diff {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.35rem;
+}
+

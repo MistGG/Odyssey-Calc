@@ -80,17 +80,6 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     ],
   },
   {
-    id: 'mid-farming-digimon',
-    title: 'Farming a partner',
-    zone: 'Mid game',
-    zoneTone: 'metro',
-    summary: 'Build a second (or third) digimon for new roles or content.',
-    tasks: [
-      { kind: 'tip', text: 'Plan which role or element you need before investing materials.' },
-      { kind: 'farm', text: 'Use Dark Roar and relevant dungeons while power is still catching up.' },
-    ],
-  },
-  {
     id: 'mid-raids',
     title: 'Raids',
     zone: 'General Content',
@@ -109,9 +98,9 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'General Content',
     zoneTone: 'raid',
     informativeOnly: true,
-    summary: 'Seal systems and rewards. Guide in progress. Always available alongside your main progression.',
+    summary: 'Farm Digimon Seal Boxes from dungeons',
     tasks: [
-      { kind: 'tip', text: 'Detailed seal priorities will be added here.' },
+      { kind: 'farm', text: 'Run the dungeons listed under each seal stat for the box you need.' },
     ],
   },
   {

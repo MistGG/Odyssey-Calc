@@ -8,6 +8,8 @@
     "generate:guidebook-share": "node scripts/generate-guidebook-share.mjs",
     "generate:event-share": "node scripts/generate-event-share.mjs",
     "sync:teasers": "node scripts/sync-teaser-images.mjs",
+    "sync:guidebook-seals": "node scripts/sync-guidebook-seal-sources.mjs",
+    "sync:guidebook-dark-masters-token": "node scripts/sync-guidebook-dark-masters-token-sources.mjs",
     "sync:forum-teaser": "node scripts/sync-forum-teaser.mjs",
     "process:olympus-overlays": "node scripts/process-olympus-overlays.mjs",
     "process:iliad-overlay": "node scripts/process-iliad-overlay.mjs",

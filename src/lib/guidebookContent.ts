@@ -66,6 +66,22 @@ export const GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID = 'i8vp49b'
 
 export const GUIDEBOOK_CORRUPTED_RING_ENERGIZED_DIGICORE_COUNT = 15
 
+/** Dark Masters Token — pity currency from Dark Master dungeons. */
+export const GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID = 'itygv5a'
+
+/** Exchange at Zudomon in Olympus: tokens → Dark DigiCore. */
+export const GUIDEBOOK_DARK_MASTERS_TOKEN_DARK_DIGICORE_COST = 15
+
+/** Exchange at Zudomon in Olympus: tokens → Energized Dark DigiCore. */
+export const GUIDEBOOK_DARK_MASTERS_TOKEN_ENERGIZED_DIGICORE_COST = 7
+
+/** [Weekly] Preparing for the Apocalypse — corrupted craft material rewards. */
+export const GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID = 'q1wasddn'
+
+export const GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT = 15
+
+export const GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT = 7
+
 export type GuidebookCorruptedCraftMaterial = {
   itemId: string
   quantity: number
@@ -95,6 +111,8 @@ export const GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER =
 export type GuidebookCorruptedGearRollLine = {
   label: string
   stats: string
+  hint?: string
+  tone?: 'dps' | 'tank'
 }
 
 export type GuidebookCorruptedGearGuide = {
@@ -118,7 +136,7 @@ export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGui
     rolls: [
       {
         label: 'Recommended all-around',
-        stats: 'Basic Attribute (ATT) > Basic Attribute (ATT) > AT > AT',
+        stats: 'Basic Attribute (ATT) > Basic Attribute (ATT) > AT% > AT%',
       },
       {
         label: 'Tank specific',
@@ -151,12 +169,24 @@ export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGui
     materials: GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
     rolls: [
       {
-        label: 'Recommended all-around',
-        stats: 'Critical Damage > Critical Damage > AT% > AT%',
+        label: 'Skill Heavy Digimon',
+        hint:
+          'Such as Healers, Casters and Digimon that have significantly more skill weighting in their rotation.',
+        stats: 'Critical Damage, Critical Damage, SK%, SK%',
+        tone: 'dps',
       },
       {
-        label: 'Tank specific',
-        stats: 'HP, HP, DEF/Block, DEF/Block',
+        label: 'Auto Heavy Digimon',
+        hint:
+          'Such as Melee, Ranged and Digimon that have most of their damage weighting in auto attacks.',
+        stats: 'Critical Damage, Critical Damage, AT%, AT%',
+        tone: 'dps',
+      },
+      {
+        label: 'Tank',
+        stats:
+          'HP, HP, BL (Defense if your block seals can take you to near 100%), BL (Defense if your block seals can take you to near 100%)',
+        tone: 'tank',
       },
     ],
   },

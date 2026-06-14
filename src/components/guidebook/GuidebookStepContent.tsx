@@ -15,8 +15,8 @@ import {
   GuideGearKeyring,
   GuideGearNecklace,
   GuideGearRing,
-  GuideMidGameFarmingDigimon,
   GuidebookRaids,
+  GuidebookSeals,
 } from './GuidebookWidgets'
 
 export function GuidebookStepContent({ stepId }: { stepId: string }) {
@@ -27,12 +27,10 @@ export function GuidebookStepContent({ stepId }: { stepId: string }) {
       return <GuideEarlyGame5070 />
     case 'early-70-beyond':
       return <GuideEarlyGame70Beyond />
-    case 'mid-farming-digimon':
-      return <GuideMidGameFarmingDigimon />
     case 'mid-raids':
       return <GuidebookRaids />
     case 'mid-seals':
-      return <GuidebookComingSoon />
+      return <GuidebookSeals />
     case 'mid-clones':
       return <GuidebookClones />
     case 'mid-clothes':

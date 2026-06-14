@@ -1,0 +1,34 @@
+[
+  {
+    "dungeonId": "u1tl0czg",
+    "dungeonName": "Army of Steel",
+    "difficulty": "Normal",
+    "tokenCount": 2,
+    "iconId": "n1jgzsoi",
+    "itemName": "Dark Masters Token"
+  },
+  {
+    "dungeonId": "ua7pn2x",
+    "dungeonName": "Evil Plushie",
+    "difficulty": "Normal",
+    "tokenCount": 1,
+    "iconId": "n1jgzsoi",
+    "itemName": "Dark Masters Token"
+  },
+  {
+    "dungeonId": "u7ieoqy",
+    "dungeonName": "Fullmetal Tyrant",
+    "difficulty": "Normal",
+    "tokenCount": 1,
+    "iconId": "n1jgzsoi",
+    "itemName": "Dark Masters Token"
+  },
+  {
+    "dungeonId": "u1evhxxo",
+    "dungeonName": "Twins of Destruction",
+    "difficulty": "Normal",
+    "tokenCount": 1,
+    "iconId": "n1jgzsoi",
+    "itemName": "Dark Masters Token"
+  }
+]
