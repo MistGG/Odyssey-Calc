@@ -214,8 +214,8 @@ export function MeterHallOfFamePage() {
 
   const leaderboardHref =
     dungeonId && difficultyId != null
-      ? `/meter?dungeon=${encodeURIComponent(dungeonId)}&difficulty=${difficultyId}`
-      : '/meter'
+      ? `/meter/leaderboard?dungeon=${encodeURIComponent(dungeonId)}&difficulty=${difficultyId}`
+      : '/meter/leaderboard'
 
   return (
     <div className="meter-parses-page meter-public-page meter-hof-page">

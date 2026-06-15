@@ -2,7 +2,7 @@ import type { PublicMeterParseRow } from './meterPublicStats'
 
 /** Full parse payloads are large; avoid re-fetching from PostgREST too often. */
 const TTL_MS = 60 * 60 * 1000
-const SESSION_KEY = 'odyssey-meter-parse-cache-v1'
+const SESSION_KEY = 'odyssey-meter-parse-cache-v2'
 const MAX_PERSISTED_SCOPES = 24
 
 type CacheEntry = {

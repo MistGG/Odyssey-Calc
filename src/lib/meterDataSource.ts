@@ -218,7 +218,12 @@ export async function fetchScopeParsesRaw(
     .limit(params.limit ?? PUBLIC_PARSE_LIMIT_PER_DUNGEON)
 
   if (error) return { rows: [], error: error.message }
-  return { rows: feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[]), error: null }
+  return {
+    rows: await resolveMeterParseRowPayloads(
+      feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[]),
+    ),
+    error: null,
+  }
 }
 
 async function finalizeScopeParses(
@@ -299,7 +304,9 @@ async function refreshGlobalRecentPublicParses(
     .limit(limit)
 
   if (error) return { rows: [], error: error.message }
-  const rows = feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[])
+  const rows = await resolveMeterParseRowPayloads(
+    feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[]),
+  )
   onUpdated?.(rows)
   setCachedGlobalRecentParses(rows)
   onUpdated?.(rows)
@@ -366,6 +373,8 @@ function feedRowsFromSummaryQuery(rows: FeedSummaryRow[]): PublicMeterParseRow[]
       }
     })
 
+    const needsWikiLookup = members.some((m) => m.currentDigimonId?.trim() || m.digimons?.some((d) => d.digimonId?.trim()))
+
     out.push({
       id: row.id,
       created_at: row.created_at,
@@ -383,7 +392,7 @@ function feedRowsFromSummaryQuery(rows: FeedSummaryRow[]): PublicMeterParseRow[]
         kind: 'dungeon_party',
         capturedAtMs: new Date(row.created_at).getTime(),
         sessionDurationSec: durationSec,
-        digimonNamesRequireWikiLookup: false,
+        digimonNamesRequireWikiLookup: needsWikiLookup,
         dungeon: {
           dungeonId: row.dungeon_id?.trim() ?? '',
           dungeonName: row.dungeon_name,

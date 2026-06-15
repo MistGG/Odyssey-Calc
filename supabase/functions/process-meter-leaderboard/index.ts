@@ -670,6 +670,10 @@ async function processParse(
   const roleCache = new Map<string, RoleBucket | null>()
   const nameCache = new Map<string, string | null>()
   const entries: Array<Record<string, unknown>> = []
+  const enrichedByPlayerKey = new Map<
+    string,
+    { digimonName: string; iconId: string | null; portraitUrl: string | null }
+  >()
 
   const sessionDur = sessionDuration(payload, Number(row.duration_sec) || 0, members)
   const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
@@ -724,6 +728,11 @@ async function processParse(
       icon_id: sm?.iconId?.trim() || primary?.iconId?.trim() || null,
       portrait_url: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
     })
+    enrichedByPlayerKey.set(playerKey, {
+      digimonName: officialName || sm?.digimonName?.trim() || primary?.digimonName?.trim() || '',
+      iconId: sm?.iconId?.trim() || primary?.iconId?.trim() || null,
+      portraitUrl: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
+    })
   }
 
   if (!entries.length) {
@@ -749,8 +758,13 @@ async function processParse(
         sm.digimonId?.trim() ||
         (member ? memberPrimaryDigimon(member, wikiCatalog)?.digimonId?.trim() : '') ||
         ''
+      const enriched = enrichedByPlayerKey.get(key)
       return {
         ...sm,
+        digimonId: digimonId || sm.digimonId,
+        digimonName: enriched?.digimonName || sm.digimonName,
+        iconId: enriched?.iconId ?? sm.iconId ?? null,
+        portraitUrl: enriched?.portraitUrl || sm.portraitUrl,
         roleBucket: sm.roleBucket ?? roleCache.get(digimonId) ?? wikiCatalog.get(digimonId) ?? null,
       }
     }),

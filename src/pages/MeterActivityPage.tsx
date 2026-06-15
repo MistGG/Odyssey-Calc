@@ -47,12 +47,6 @@ type MeterActivitySummary = {
     difficultyLabel: string
     clears: number
   }>
-  topScopes: Array<{
-    key: string
-    dungeonName: string
-    difficultyLabel: string
-    clears: number
-  }>
 }
 
 export function MeterActivityPage() {
@@ -160,15 +154,6 @@ export function MeterActivityPage() {
         }))
         .sort((a, b) => b.clears - a.clears)
         .slice(0, 10),
-      topScopes: [...scopeCounts.entries()]
-        .map(([key, value]) => ({
-          key,
-          dungeonName: value.dungeonName,
-          difficultyLabel: value.difficultyLabel,
-          clears: value.clears,
-        }))
-        .sort((a, b) => b.clears - a.clears)
-        .slice(0, 6),
     }
   }, [feedItems])
 
@@ -250,7 +235,7 @@ export function MeterActivityPage() {
           </article>
 
           <article className="meter-activity-panel">
-            <h2 className="meter-activity-panel__title">Activity by dungeon + difficulty</h2>
+            <h2 className="meter-activity-panel__title">Recent clears</h2>
             {summary.scopeActivity.length ? (
               <ul className="meter-activity-bars">
                 {summary.scopeActivity.map((scope) => {
@@ -273,27 +258,6 @@ export function MeterActivityPage() {
                   )
                 })}
               </ul>
-            ) : (
-              <p className="meter-parses-muted">Waiting for uploads…</p>
-            )}
-          </article>
-
-          <article className="meter-activity-panel">
-            <h2 className="meter-activity-panel__title">Recent clears</h2>
-            {summary.topScopes.length ? (
-              <ol className="meter-activity-top-scopes">
-                {summary.topScopes.map((scope) => (
-                  <li key={scope.key} className="meter-activity-top-scopes__row">
-                    <span className="meter-activity-scope-label">
-                      <span className="meter-activity-scope-label__name">{scope.dungeonName}</span>
-                      {scope.difficultyLabel ? (
-                        <span className="meter-activity-scope-label__tag">{scope.difficultyLabel}</span>
-                      ) : null}
-                    </span>
-                    <span className="meter-activity-top-scopes__value">{scope.clears}</span>
-                  </li>
-                ))}
-              </ol>
             ) : (
               <p className="meter-parses-muted">Waiting for uploads…</p>
             )}

@@ -11,6 +11,7 @@ import { MeterShopLayout } from './components/MeterShopLayout'
 import { MeterThemeShopBarThemesPage } from './pages/MeterThemeShopBarThemesPage'
 import { MeterPlayerProfilePage } from './pages/MeterPlayerProfilePage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
+import { MeterActivityPage } from './pages/MeterActivityPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
 import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
@@ -33,7 +34,7 @@ export default function App() {
           <Route path="gear" element={<GearPage />} />
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
-          <Route path="meter" element={<MeterPublicPage />} />
+          <Route path="meter" element={<MeterActivityPage />} />
           <Route path="meter/leaderboard" element={<MeterPublicPage />} />
           <Route path="meter/activity" element={<Navigate to="/meter" replace />} />
           <Route path="meter/hall-of-fame" element={<MeterHallOfFamePage />} />
