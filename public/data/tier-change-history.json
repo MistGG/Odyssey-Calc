@@ -1,13 +1,13 @@
 {
-  "updated_at": "2026-06-15T21:07:25.717Z",
+  "updated_at": "2026-06-16T00:26:38.586Z",
   "runs": [
     {
-      "id": "2026-06-15T21:07:21.668Z-mtkowo",
-      "finishedAt": "2026-06-15T21:07:21.668Z",
+      "id": "2026-06-16T00:26:31.481Z-wry4l1",
+      "finishedAt": "2026-06-16T00:26:31.481Z",
       "mode": "force",
-      "refreshedCount": 438,
-      "apiCount": 0,
-      "tierCount": 438,
+      "refreshedCount": 439,
+      "apiCount": 8,
+      "tierCount": 433,
       "sampleDigimon": [
         {
           "id": "d1hndr0k",
@@ -70,22 +70,220 @@
           "cause": "tier"
         }
       ],
-      "apiDiffById": {},
-      "apiDiffs": [],
+      "apiDiffById": {
+        "d1m5hyp7": [
+          "HP: 19825 -> 23154",
+          "Attack: 7584 -> 7150",
+          "Stats.ds: 49890 -> 55637",
+          "Stats.defense: 503 -> 637",
+          "Stats.crit_rate: 4777 -> 4343",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3975 -> 3263",
+          "Stats.hit_rate: 540 -> 1153"
+        ],
+        "d55iyrw": [
+          "Skill Hang on Death base_dmg: 4595 -> 3253",
+          "Skill Hang on Death scaling: 443 -> 293",
+          "Skill Hang on Death cast_time: 1.8 -> 2.5",
+          "Skill Hang on Death cooldown: 4.3 -> 3",
+          "Skill Hang on Death ds_cost: 78 -> 700",
+          "Skill Hang on Death buff name: \"Sage's Wrath\" -> \"Hang on Death\"",
+          "Skill Hang on Death buff description: \"Aged power gnaws at the target, dealing damage over time.\" -> \"Accelerates the target's internal time, aging them and dealing damage over time.\"",
+          "Skill Guide Stick base_dmg: 10770 -> 12274"
+        ],
+        "djwfsba": [
+          "Rank: 5 -> 6"
+        ],
+        "d1ol71ie": [
+          "Rank: 5 -> 6"
+        ],
+        "d1numzqk": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "HP: 20280 -> 24742",
+          "Attack: 10258 -> 7124",
+          "Stats.ds: 20360 -> 55700",
+          "Stats.defense: 534 -> 669",
+          "Stats.crit_rate: 3801 -> 4290",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3336 -> 3140"
+        ],
+        "d4w6oll": [
+          "HP: 24570 -> 24195",
+          "Attack: 7270 -> 7169",
+          "Stats.ds: 55650 -> 55770",
+          "Stats.defense: 614 -> 634",
+          "Stats.crit_rate: 4335 -> 4446",
+          "Stats.evasion: 3565 -> 3470",
+          "Stats.hit_rate: 1150 -> 1165",
+          "Stats.int: 1207 -> 1390"
+        ],
+        "d13da2bb": [
+          "Skill Muspellsheimr base_dmg: 10500 -> 2872",
+          "Skill Muspellsheimr scaling: 630 -> 259",
+          "Skill Muspellsheimr ds_cost: 188 -> 700",
+          "Skill Rapid Shot base_dmg: 26800 -> 12284",
+          "Skill Rapid Shot scaling: 1610 -> 922",
+          "Skill Rapid Shot cooldown: 5.5 -> 5",
+          "Skill Rapid Shot ds_cost: 273 -> 1100",
+          "Skill Odin's Breath base_dmg: 20400 -> 15138"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1m5hyp7",
+          "name": "Demon",
+          "lines": [
+            "HP: 19825 -> 23154",
+            "Attack: 7584 -> 7150",
+            "Stats.ds: 49890 -> 55637",
+            "Stats.defense: 503 -> 637",
+            "Stats.crit_rate: 4777 -> 4343",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3975 -> 3263",
+            "Stats.hit_rate: 540 -> 1153"
+          ]
+        },
+        {
+          "id": "d55iyrw",
+          "name": "Jijimon",
+          "lines": [
+            "Skill Hang on Death base_dmg: 4595 -> 3253",
+            "Skill Hang on Death scaling: 443 -> 293",
+            "Skill Hang on Death cast_time: 1.8 -> 2.5",
+            "Skill Hang on Death cooldown: 4.3 -> 3",
+            "Skill Hang on Death ds_cost: 78 -> 700",
+            "Skill Hang on Death buff name: \"Sage's Wrath\" -> \"Hang on Death\"",
+            "Skill Hang on Death buff description: \"Aged power gnaws at the target, dealing damage over time.\" -> \"Accelerates the target's internal time, aging them and dealing damage over time.\"",
+            "Skill Guide Stick base_dmg: 10770 -> 12274"
+          ]
+        },
+        {
+          "id": "djwfsba",
+          "name": "Justimon",
+          "lines": [
+            "Rank: 5 -> 6"
+          ]
+        },
+        {
+          "id": "d1ol71ie",
+          "name": "Justimon",
+          "lines": [
+            "Rank: 5 -> 6"
+          ]
+        },
+        {
+          "id": "d1numzqk",
+          "name": "Plesiomon",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "HP: 20280 -> 24742",
+            "Attack: 10258 -> 7124",
+            "Stats.ds: 20360 -> 55700",
+            "Stats.defense: 534 -> 669",
+            "Stats.crit_rate: 3801 -> 4290",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3336 -> 3140"
+          ]
+        },
+        {
+          "id": "d4w6oll",
+          "name": "Raguelmon",
+          "lines": [
+            "HP: 24570 -> 24195",
+            "Attack: 7270 -> 7169",
+            "Stats.ds: 55650 -> 55770",
+            "Stats.defense: 614 -> 634",
+            "Stats.crit_rate: 4335 -> 4446",
+            "Stats.evasion: 3565 -> 3470",
+            "Stats.hit_rate: 1150 -> 1165",
+            "Stats.int: 1207 -> 1390"
+          ]
+        },
+        {
+          "id": "d13da2bb",
+          "name": "Sleipmon",
+          "lines": [
+            "Skill Muspellsheimr base_dmg: 10500 -> 2872",
+            "Skill Muspellsheimr scaling: 630 -> 259",
+            "Skill Muspellsheimr ds_cost: 188 -> 700",
+            "Skill Rapid Shot base_dmg: 26800 -> 12284",
+            "Skill Rapid Shot scaling: 1610 -> 922",
+            "Skill Rapid Shot cooldown: 5.5 -> 5",
+            "Skill Rapid Shot ds_cost: 273 -> 1100",
+            "Skill Odin's Breath base_dmg: 20400 -> 15138"
+          ]
+        }
+      ],
       "summary": {
-        "finishedAt": "2026-06-15T21:07:21.668Z",
+        "finishedAt": "2026-06-16T00:26:31.481Z",
         "mode": "force",
-        "refreshedCount": 438,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
+        "refreshedCount": 439,
+        "dpsUp": [
+          {
+            "id": "d1numzqk",
+            "name": "Plesiomon",
+            "role": "Caster",
+            "before": 26426.008020131125,
+            "after": 51386.27795302567,
+            "delta": 24960.269932894542
+          },
+          {
+            "id": "d55iyrw",
+            "name": "Jijimon",
+            "role": "Caster",
+            "before": 21079.322005941867,
+            "after": 41374.70988333337,
+            "delta": 20295.387877391506
+          },
+          {
+            "id": "d4w6oll",
+            "name": "Raguelmon",
+            "role": "Caster",
+            "before": 33644.99999285835,
+            "after": 49211.18618944343,
+            "delta": 15566.186196585084
+          },
+          {
+            "id": "d1m5hyp7",
+            "name": "Demon",
+            "role": "Caster",
+            "before": 37559.24185358,
+            "after": 40922.56082292137,
+            "delta": 3363.318969341366
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d13da2bb",
+            "name": "Sleipmon",
+            "role": "Caster",
+            "before": 62244.83822132443,
+            "after": 46409.0683906392,
+            "delta": -15835.769830685233
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "dn2dc8s",
+            "name": "Zhuqiaomon",
+            "role": "Caster",
+            "after": 47771.85639389906
+          }
+        ],
         "tankUp": [],
         "tankDown": [],
         "tankNew": [],
         "healerUp": [],
         "healerDown": [],
         "healerNew": [],
-        "statusChanges": []
+        "statusChanges": [
+          {
+            "id": "dn2dc8s",
+            "name": "Zhuqiaomon",
+            "role": "Caster",
+            "to": "complete"
+          }
+        ]
       }
     }
   ]
