@@ -148,8 +148,8 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'digimon-role-caster-ravage',
           'Magia Code: Ravage',
           35,
-          10,
-          'Increases Skill Damage by 100%.',
+          15,
+          'Increases Skill Damage by 100%. Shares Magia Code: Omega cooldown (10% self + INT).',
         ),
         roleSkill(
           'digimon-role-caster-dispell',
@@ -177,7 +177,7 @@ export function digimonRoleWikiSkills(roleNorm: string, hybridStance: HybridStan
           'Magia Code: Omega',
           35,
           15,
-          'Increases Skill Damage by 70%. Increases maximum DS by 20000. While active, other skills used after activation get 33% cooldown reduction on their new cooldown only; skills already on cooldown are unchanged. Wiki INT reduces only Magia Code: Omega’s own cooldown (100 INT = 1% CDR).',
+          'Increases Skill Damage by 70%. Increases maximum DS by 20000. Applies 10% cooldown reduction to its own cooldown. While active, other skills used after activation get 10% cooldown reduction on their new cooldown only; skills already on cooldown are unchanged. Wiki base INT reduces only Magia Code: Omega’s own cooldown (100 INT = 1% CDR); for casters, INT cooldown reduction applies only through this skill. Wiki INT/DEX are base API stats and may differ from in-game values.',
         ),
       ]
     case 'hybrid':

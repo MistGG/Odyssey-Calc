@@ -1,5 +1,6 @@
 import type { WikiDigimonDetail } from '../types/wikiApi'
 import { wikiIntSkillDamageMultiplier } from './dpsSim'
+import { tierListEffectiveInt, wikiBaseIntFromStats } from './wikiIntScaling'
 import {
   buildSupportSkillEffects,
   effectLabelIsAttackSpeed,
@@ -117,7 +118,7 @@ export type HealerTierScoreBreakdown = {
 export function computeHealerTierScore(detail: WikiDigimonDetail): HealerTierScoreBreakdown {
   const stats = detail.stats
   const hp = Math.max(1, stats?.hp ?? detail.hp ?? 1)
-  const intStat = Math.max(0, stats?.int ?? 0)
+  const intStat = tierListEffectiveInt(wikiBaseIntFromStats(stats))
   /** 100 wiki INT → +1% healing amplification (same ratio as skill damage % in DPS sim). */
   const healAmpMult = wikiIntSkillDamageMultiplier(intStat)
 

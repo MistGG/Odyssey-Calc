@@ -17,6 +17,10 @@ import {
   effectLabelIsAttackSpeed,
   parseSupportEffectsFromSkill,
 } from './supportEffects'
+import {
+  DIGIMON_INT_LEVEL_CAP,
+  WIKI_INT_GAIN_PER_DIGIMON_LEVEL,
+} from './wikiIntScaling'
 
 /** One line in a timeline buff tooltip (how that +% was derived). */
 export type BuffContribution = {
@@ -84,6 +88,8 @@ export type RotationEvent = {
   cancelledBySkillName?: string
   /** True when this damage event is the skill cast used to cancel the preceding auto attack. */
   cancelledFromAuto?: boolean
+  /** Support casts: effective cooldown applied after this cast (seconds). */
+  cooldownSecAfterCast?: number
 }
 
 export type RotationResult = {
@@ -149,12 +155,12 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 67
+export const TIER_DPS_SIM_REVISION = 72
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
- * Optional INT CDR on **Magia Code: Omega’s own** cooldown: `×(1 − INT/10000)` when
- * {@link SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION} is true.
+ * For casters, wiki INT cooldown reduction applies **only** to Magia Code: Omega’s own cooldown
+ * (`×(1 − INT/10000)` per cast). Wiki INT/DEX are **base** API values and may differ from in-game stats.
  */
 export const WIKI_INT_PER_PERCENT_POINTS = 100
 
@@ -168,20 +174,16 @@ export function wikiIntSkillDamageMultiplier(wikiInt: number): number {
   return 1 + wikiIntSkillDamagePctPoints(wikiInt) / 100
 }
 
-/**
- * When false, wiki INT does **not** add skill damage % in {@link simulateRotation} (current in-game mismatch).
- * Set true to restore INT→skill dmg %.
- */
-export const SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT = false
+/** Wiki INT → +1% skill damage per 100 INT (always applied in rotation sim). */
+export const SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT = true
 
 /**
- * When false, wiki INT does **not** shorten Magia Code: Omega’s **own** cooldown (`×(1 − INT/10000)`).
- * Omega’s 33% buff CDR for **other** skills while the buff is active is unchanged.
+ * Wiki INT → +1% Magia Code: Omega own cooldown per 100 INT (always applied; casters only).
+ * Wiki INT/DEX are base API stats and may differ from in-game.
  */
-export const SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION = false
+export const SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION = true
 
 function wikiIntSkillDamagePctInRotationSim(wikiInt: number): number {
-  if (!SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT) return 0
   return wikiIntSkillDamagePctPoints(wikiInt)
 }
 
@@ -317,7 +319,18 @@ const CAST_ROLE_ANIM_CANCEL_STUB_IDS = new Set<string>([
 ])
 
 const MAGIA_OMEGA_SKILL_ID = 'digimon-role-caster-omega'
-const MAGIA_OMEGA_CDR = 0.33
+const MAGIA_RAVAGE_SKILL_ID = 'digimon-role-caster-ravage'
+const MAGIA_OMEGA_CDR = 0.1
+
+/** Magia Code: Omega and Ravage share the same effective cooldown: base × (1 − 10%) × (1 − wiki INT CDR). */
+export function magiaOmegaEffectiveCooldownSec(baseCooldownSec: number, wikiInt: number): number {
+  const base = Math.max(0, baseCooldownSec)
+  let cd = base * (1 - MAGIA_OMEGA_CDR)
+  if (wikiInt > 0) {
+    cd *= 1 - Math.max(0, wikiInt) / 10000
+  }
+  return cd
+}
 
 /** Parsed support lines that identify pure-utility buffs (still profiled, but not auto-rotated). */
 function effectIsWeaveUtility(e: { label: string }): boolean {
@@ -363,6 +376,10 @@ function supportProfiles(
     let critDamagePct = 0
     let atkSpeedPct = 0
     const cooldownReductionPct = cooldownReductionFractionFromEffects(effects)
+    let resolvedCooldownReductionPct = cooldownReductionPct
+    if (s.id === MAGIA_OMEGA_SKILL_ID && resolvedCooldownReductionPct <= 1e-9) {
+      resolvedCooldownReductionPct = MAGIA_OMEGA_CDR
+    }
     for (const e of effects) {
       const label = e.label.toLowerCase()
       if (e.unit === '%' && /(\bskill damage\b|\bskill dmg\b)/.test(label)) {
@@ -408,7 +425,7 @@ function supportProfiles(
       critRatePct,
       critDamagePct,
       atkSpeedPct,
-      cooldownReductionPct,
+      cooldownReductionPct: resolvedCooldownReductionPct,
       rotationEligible: hasOffense || s.id === MAGIA_OMEGA_SKILL_ID,
     })
   }
@@ -506,8 +523,10 @@ type SimCtx = {
   animCancelOverlapSec: number
   /** Auto-attack interval from wiki atk_speed stat only (no temporary buffs). */
   baseAutoIntervalSec: number
-  /** Wiki combat INT; skill dmg % only if {@link SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT}; Omega INT CDR only if {@link SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION}. */
+  /** Wiki combat INT; skill dmg % and Magia Omega/Ravage CD. */
   wikiInt: number
+  /** Caster role: no auto attacks — idle time jumps to the next skill ready. */
+  skipAutoAttacks: boolean
   skillLevel: (skill: WikiSkill) => number
 }
 
@@ -571,21 +590,33 @@ function applySnapshotCooldownReductionOnBuffStart(
   for (const p of ctx.supportBuffs) markSkill(p.skill.id)
 }
 
+function magiaRavageBuffActiveAt(m: SimMutable, atSec: number): boolean {
+  return m.activeBuffs.some((b) => b.skillId === MAGIA_RAVAGE_SKILL_ID && b.untilSec > atSec + 1e-9)
+}
+
 /**
  * Support cast gate: skill off cooldown and (for non-Omega) buff not already active.
- * Omega may be recast before its buff expires; treat like refresh — ready on CD only.
+ * Magia Code: Omega and Ravage are always paired — Omega only when Ravage can follow;
+ * Ravage only while Omega’s buff is active.
  */
 function supportSkillRotationReady(m: SimMutable, skillId: string): boolean {
   const ready = (m.readyAt.get(skillId) ?? 0) <= m.t
   if (!ready) return false
-  if (skillId === MAGIA_OMEGA_SKILL_ID) return true
+  if (skillId === MAGIA_RAVAGE_SKILL_ID) {
+    if (magiaRavageBuffActiveAt(m, m.t)) return false
+    return omegaBuffActiveAt(m, m.t)
+  }
+  if (skillId === MAGIA_OMEGA_SKILL_ID) {
+    const ravageReady = (m.readyAt.get(MAGIA_RAVAGE_SKILL_ID) ?? 0) <= m.t
+    if (!ravageReady || magiaRavageBuffActiveAt(m, m.t)) return false
+    return true
+  }
   return !m.activeBuffs.some((b) => b.skillId === skillId && b.untilSec > m.t)
 }
 
 /**
  * Cooldown duration for a cast starting at `castStartT`.
- * Wiki INT CDR: **Magia Code: Omega’s own** cooldown only, when {@link SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION}.
- * Other skills: optional 33% Omega buff CDR while Omega buff is active.
+ * Magia Code: Omega and Ravage share the same CD (10% self + INT). Other skills: 10% Omega buff CDR while active.
  */
 function effectiveCooldownSecAfterCast(
   m: SimMutable,
@@ -595,9 +626,8 @@ function effectiveCooldownSecAfterCast(
   wikiInt: number,
 ): number {
   const base = Math.max(0, baseCooldownSec)
-  if (skillId === MAGIA_OMEGA_SKILL_ID) {
-    if (!SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION) return base
-    return base * (1 - Math.max(0, wikiInt) / 10000)
+  if (skillId === MAGIA_OMEGA_SKILL_ID || skillId === MAGIA_RAVAGE_SKILL_ID) {
+    return magiaOmegaEffectiveCooldownSec(base, wikiInt)
   }
   let cd = base
   if (omegaBuffActiveAt(m, castStartT)) {
@@ -685,6 +715,29 @@ function canBeginAutoSwingNow(m: SimMutable): boolean {
   return m.t >= m.nextAutoSwingNotBeforeSec - 1e-9
 }
 
+/** Wait for the next skill CD (casters skip auto filler). */
+function idleUntilNextReady(
+  ctx: SimCtx,
+  m: SimMutable,
+  readySkills: WikiSkill[],
+  wall: number,
+  recordEvents: boolean,
+): void {
+  const nextReady = nextSkillReadyAfter(m, readySkills, wall)
+  if (ctx.skipAutoAttacks) {
+    m.t = Math.max(m.t, Math.min(nextReady, wall))
+    purgeExpiredBuffs(m, m.t)
+    return
+  }
+  while (m.t < wall - 1e-9) {
+    const step = autoIntervalFor(ctx, m)
+    if (m.t + step > nextReady + 1e-9) break
+    performAutoAttack(ctx, m, recordEvents)
+  }
+  m.t = Math.max(m.t, Math.min(nextReady, wall))
+  purgeExpiredBuffs(m, m.t)
+}
+
 /**
  * When a damage skill is selected by the planner/greedy step: non-cancel mode uses auto vs skill DPCT when the
  * swing is in the fast band; cancel mode additionally allows auto→skill cancel only when swing is **slow**
@@ -700,6 +753,10 @@ function resolveDamageSkillVsAutoAnimCancel(
   /** Custom rotation: always cast the sequence damage step (do not weave autos instead). */
   honorSequenceStep = false,
 ): void {
+  if (ctx.skipAutoAttacks) {
+    castDamageSkill(ctx, m, skill, recordEvents, cancelledFromAuto)
+    return
+  }
   if (!honorSequenceStep && inHighAttackSpeedAutoPhase(ctx, m)) {
     performAutoAttack(ctx, m, recordEvents)
     return
@@ -812,27 +869,17 @@ function buildBuffContributionsForDamage(
   }
 
   if (includeSkillPct && activeSkillPct > BUFF_SPLIT_EPS) {
+    const intSkillPct = wikiIntSkillDamagePctInRotationSim(ctx.wikiInt)
     const detailLines: string[] = [
-      SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT
-        ? `Total skill damage % (buffs + wiki INT): +${activeSkillPct.toFixed(2)}%.`
-        : `Total skill damage % (buffs only): +${activeSkillPct.toFixed(2)}%.`,
+      `Total skill damage % (buffs + INT): +${activeSkillPct.toFixed(2)}%.`,
       ...(intSkillPct > BUFF_SPLIT_EPS
         ? [
-            `Wiki INT ${ctx.wikiInt}: +${intSkillPct.toFixed(2)}% (${WIKI_INT_PER_PERCENT_POINTS} INT = +1%), added like buff skill damage %.`,
+            `INT ${ctx.wikiInt}: +${intSkillPct.toFixed(2)}% skill damage (${WIKI_INT_PER_PERCENT_POINTS} INT = +1%). Includes +${WIKI_INT_GAIN_PER_DIGIMON_LEVEL}/level from wiki base (cap L${DIGIMON_INT_LEVEL_CAP}).`,
           ]
         : []),
-      ...(!SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT && ctx.wikiInt > 0
+      ...(ctx.supportBuffs.some((p) => p.skill.id === MAGIA_OMEGA_SKILL_ID) && ctx.wikiInt > 0
         ? [
-            `Wiki INT skill damage % is off in sim (\`SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT\`)${
-              SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION ? '' : '; Omega INT CDR is off (`SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION`)'
-            }.`,
-          ]
-        : []),
-      ...(SIM_INCLUDE_WIKI_INT_SKILL_DAMAGE_PCT &&
-      !SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION &&
-      ctx.wikiInt > 0
-        ? [
-            'Omega INT cooldown reduction is off in sim (`SIM_INCLUDE_WIKI_INT_OMEGA_COOLDOWN_REDUCTION`).',
+            `Caster INT cooldown: Magia Code: Omega only — ${ctx.wikiInt} INT → ${magiaOmegaEffectiveCooldownSec(35, ctx.wikiInt).toFixed(2)}s CD (35s base, −10% self, −${(ctx.wikiInt / 100).toFixed(2)}% from INT).`,
           ]
         : []),
       'Skill damage % applies only to the wiki coefficient (after level row): (wiki coefficient × clone/TV bonuses) × (1 + skill damage% ÷ 100). ATK term is added unchanged. Clone L15 = ×1.43 as additive +0.43 on the wiki coefficient.',
@@ -1117,6 +1164,7 @@ function computeAutoHit(ctx: SimCtx, m: SimMutable, purpose: 'damage' | 'plannin
 }
 
 function performAutoAttack(ctx: SimCtx, m: SimMutable, recordEvents: boolean) {
+  if (ctx.skipAutoAttacks) return
   if (m.t < m.nextAutoSwingNotBeforeSec - 1e-9) {
     m.t = m.nextAutoSwingNotBeforeSec
     purgeExpiredBuffs(m, m.t)
@@ -1169,6 +1217,10 @@ function performAutoIntoSkillCancel(
   skill: WikiSkill,
   recordEvents: boolean,
 ) {
+  if (ctx.skipAutoAttacks) {
+    castDamageSkill(ctx, m, skill, recordEvents, false)
+    return
+  }
   if (!canBeginAutoSwingNow(m)) {
     castDamageSkill(ctx, m, skill, recordEvents, false)
     return
@@ -1305,6 +1357,13 @@ function castSupportProfile(
 ) {
   const castTime = supportCastTimeSec(chosen.skill)
   m.casts += 1
+  const cdSec = effectiveCooldownSecAfterCast(
+    m,
+    chosen.skill.id,
+    chosen.skill.cooldown_sec || 0,
+    m.t,
+    ctx.wikiInt,
+  )
   if (recordEvents) {
     m.events.push({
       atSec: m.t,
@@ -1318,15 +1377,9 @@ function castSupportProfile(
       totalBuffPct: 0,
       cumulativeDamage: m.totalDamage,
       cancelledFromAuto,
+      cooldownSecAfterCast: cdSec,
     })
   }
-  const cdSec = effectiveCooldownSecAfterCast(
-    m,
-    chosen.skill.id,
-    chosen.skill.cooldown_sec || 0,
-    m.t,
-    ctx.wikiInt,
-  )
   m.readyAt.set(chosen.skill.id, m.t + cdSec)
   const startAt = m.t + castTime
   if (isHybridStanceSkillId(chosen.skill.id)) {
@@ -1366,6 +1419,10 @@ function performAutoIntoSupportCancel(
   chosen: SupportBuffProfile,
   recordEvents: boolean,
 ) {
+  if (ctx.skipAutoAttacks) {
+    castSupportProfile(ctx, m, chosen, recordEvents, false)
+    return
+  }
   if (!canBeginAutoSwingNow(m)) {
     castSupportProfile(ctx, m, chosen, recordEvents, false)
     return
@@ -1490,10 +1547,8 @@ function castGreedySupportStep(
   })
   if (availableSupport.length === 0) return false
   const nukeSoonGs = nukeReadyOrWithinSec(m, ctx, NUKE_SOON_SUPPORT_SORT_SEC)
-  availableSupport.sort(
-    (a, b) =>
-      supportBuffPriorityScoreForPlanner(b, ctx.baseAttack, nukeSoonGs) -
-      supportBuffPriorityScoreForPlanner(a, ctx.baseAttack, nukeSoonGs),
+  availableSupport.sort((a, b) =>
+    compareSupportProfilesForPlanner(a, b, ctx.baseAttack, nukeSoonGs),
   )
   if (
     availableSupport.length >= 2 &&
@@ -1563,17 +1618,22 @@ function runGreedyUntilWall(
       m.t < damageBan.until
     ) {
       const holdEnd = Math.min(damageBan.until, wall)
-      while (m.t < wall - 1e-9) {
-        const step = autoIntervalFor(ctx, m)
-        if (m.t + step > holdEnd + 1e-9) break
-        performAutoAttack(ctx, m, recordEvents)
+      if (ctx.skipAutoAttacks) {
+        m.t = Math.min(Math.max(m.t, holdEnd), wall)
+        purgeExpiredBuffs(m, m.t)
+      } else {
+        while (m.t < wall - 1e-9) {
+          const step = autoIntervalFor(ctx, m)
+          if (m.t + step > holdEnd + 1e-9) break
+          performAutoAttack(ctx, m, recordEvents)
+        }
+        m.t = Math.min(Math.max(m.t, holdEnd), wall)
       }
-      m.t = Math.min(Math.max(m.t, holdEnd), wall)
       continue
     }
 
     if (available.length === 0) {
-      if (ctx.autoAttackAnimationCancel) {
+      if (!ctx.skipAutoAttacks && ctx.autoAttackAnimationCancel) {
         const soon = soonReadyDamageWithinCancelWindow(ctx, m, damageBan)
         const snapGate = computeAutoHit(ctx, m, 'planning')
         if (soon && !autoWeaveRateComparableToSkillDpct(snapGate.step)) {
@@ -1581,18 +1641,13 @@ function runGreedyUntilWall(
           continue
         }
       }
-      const nextReady = nextSkillReadyAfter(
+      idleUntilNextReady(
+        ctx,
         m,
         [...ctx.damaging, ...ctx.supportBuffs.map((p) => p.skill)],
         wall,
+        recordEvents,
       )
-
-      while (m.t < wall - 1e-9) {
-        const step = autoIntervalFor(ctx, m)
-        if (m.t + step > nextReady + 1e-9) break
-        performAutoAttack(ctx, m, recordEvents)
-      }
-      m.t = Math.max(m.t, Math.min(nextReady, wall))
       continue
     }
 
@@ -1674,6 +1729,27 @@ function nukeReadyOrWithinSec(m: SimMutable, ctx: SimCtx, withinSec: number): bo
  * Same as {@link supportBuffPriorityScore} plus a burst-alignment bias: when a nuke window is near,
  * buffs that contribute skill damage % rank higher so “hold for Barrage” matches human openers.
  */
+function supportMagiaSortRank(skillId: string): number {
+  if (skillId === MAGIA_OMEGA_SKILL_ID) return 0
+  if (skillId === MAGIA_RAVAGE_SKILL_ID) return 1
+  return 2
+}
+
+function compareSupportProfilesForPlanner(
+  a: SupportBuffProfile,
+  b: SupportBuffProfile,
+  baseAttack: number,
+  nukeSoon: boolean,
+): number {
+  const ma = supportMagiaSortRank(a.skill.id)
+  const mb = supportMagiaSortRank(b.skill.id)
+  if (ma < 2 && mb < 2 && ma !== mb) return ma - mb
+  return (
+    supportBuffPriorityScoreForPlanner(b, baseAttack, nukeSoon) -
+    supportBuffPriorityScoreForPlanner(a, baseAttack, nukeSoon)
+  )
+}
+
 function supportBuffPriorityScoreForPlanner(
   p: SupportBuffProfile,
   baseAttack: number,
@@ -1724,7 +1800,10 @@ function enumerateDamageChoices(
     out.push({ kind: 'skill', skill: available[i] })
   }
   const interval = autoIntervalFor(ctx, _m)
-  if (ctx.autoAttackAnimationCancel || autoWeaveRateComparableToSkillDpct(interval)) {
+  if (
+    !ctx.skipAutoAttacks &&
+    (ctx.autoAttackAnimationCancel || autoWeaveRateComparableToSkillDpct(interval))
+  ) {
     out.push({ kind: 'auto' })
   }
   if (!ctx.autoAttackAnimationCancel && primary) {
@@ -1836,7 +1915,7 @@ function beamDamageDecision(
 }
 
 export type RotationSimOptions = {
-  /** Wiki combat INT (skill dmg % & Omega INT CDR are gated by sim flags). */
+  /** Wiki base INT (API stat; may differ from in-game). Skill dmg % & non-Omega INT CDR are gated by sim flags. */
   wikiInt?: number
   /** Wiki Digimon role; enables Digimon role skills in the sim (not tamer skills). */
   role?: string | null
@@ -1957,6 +2036,7 @@ function tryCustomFillerAction(
   for (const id of order) {
     if (m.t >= cap - 1e-9) return false
     if (id === 'auto-attack') {
+      if (ctx.skipAutoAttacks) continue
       const step = autoIntervalFor(ctx, m)
       if (m.t + step > cap + 1e-9) continue
       performAutoAttack(ctx, m, recordEvents)
@@ -1977,6 +2057,7 @@ function tryCustomFillerAction(
     if (readyAt > m.t + 1e-9) {
       const snapGate = computeAutoHit(ctx, m, 'planning')
       if (
+        !ctx.skipAutoAttacks &&
         ctx.autoAttackAnimationCancel &&
         !autoWeaveRateComparableToSkillDpct(snapGate.step) &&
         readyAt - m.t <= animCancelSkillReadyMaxDt(ctx) + 1e-9
@@ -2020,6 +2101,11 @@ function advanceCustomRotationDeadline(
       )
     ) {
       continue
+    }
+    if (ctx.skipAutoAttacks) {
+      m.t = cap
+      purgeExpiredBuffs(m, m.t)
+      return
     }
     const step = autoIntervalFor(ctx, m)
     if (m.t + step > cap + 1e-9) {
@@ -2118,7 +2204,7 @@ function runCustomRotationSequence(
 
     const chosenId = usableIds[seqIdx]
     if (chosenId === 'auto-attack') {
-      performAutoAttack(ctx, m, true)
+      if (!ctx.skipAutoAttacks) performAutoAttack(ctx, m, true)
       bumpSeq()
       continue
     }
@@ -2160,6 +2246,7 @@ function runCustomRotationSequence(
       const dt = readyAt - m.t
       const snapGate = computeAutoHit(ctx, m, 'planning')
       if (
+        !ctx.skipAutoAttacks &&
         ctx.autoAttackAnimationCancel &&
         !autoWeaveRateComparableToSkillDpct(snapGate.step) &&
         dt <= animCancelSkillReadyMaxDt(ctx) + 1e-9 &&
@@ -2274,6 +2361,7 @@ function runRotationSim(
     animCancelOverlapSec: core.animCancelOverlapSec,
     baseAutoIntervalSec,
     wikiInt: core.wikiInt,
+    skipAutoAttacks: core.roleNorm === 'caster',
     skillLevel,
   }
 
@@ -2337,10 +2425,8 @@ function runRotationSim(
 
     if (availableSupport.length > 0) {
       const nukeSoonMain = nukeReadyOrWithinSec(m, ctx, NUKE_SOON_SUPPORT_SORT_SEC)
-      availableSupport.sort(
-        (a, b) =>
-          supportBuffPriorityScoreForPlanner(b, baseAttack, nukeSoonMain) -
-          supportBuffPriorityScoreForPlanner(a, baseAttack, nukeSoonMain),
+      availableSupport.sort((a, b) =>
+        compareSupportProfilesForPlanner(a, b, baseAttack, nukeSoonMain),
       )
       if (
         availableSupport.length >= 2 &&
@@ -2414,17 +2500,22 @@ function runRotationSim(
       m.t < damageHold.until
     ) {
       const holdEnd = Math.min(damageHold.until, durationSec)
-      while (m.t < durationSec - 1e-9) {
-        const step = autoIntervalFor(ctx, m)
-        if (m.t + step > holdEnd + 1e-9) break
-        performAutoAttack(ctx, m, true)
+      if (ctx.skipAutoAttacks) {
+        m.t = Math.min(Math.max(m.t, holdEnd), durationSec)
+        purgeExpiredBuffs(m, m.t)
+      } else {
+        while (m.t < durationSec - 1e-9) {
+          const step = autoIntervalFor(ctx, m)
+          if (m.t + step > holdEnd + 1e-9) break
+          performAutoAttack(ctx, m, true)
+        }
+        m.t = Math.min(Math.max(m.t, holdEnd), durationSec)
       }
-      m.t = Math.min(Math.max(m.t, holdEnd), durationSec)
       continue
     }
 
     if (available.length === 0) {
-      if (ctx.autoAttackAnimationCancel) {
+      if (!ctx.skipAutoAttacks && ctx.autoAttackAnimationCancel) {
         const soon = soonReadyDamageWithinCancelWindow(ctx, m, damageHold)
         const snapGate = computeAutoHit(ctx, m, 'planning')
         if (soon && !autoWeaveRateComparableToSkillDpct(snapGate.step)) {
@@ -2432,18 +2523,13 @@ function runRotationSim(
           continue
         }
       }
-      const nextReady = nextSkillReadyAfter(
+      idleUntilNextReady(
+        ctx,
         m,
         [...damaging, ...supportBuffs.map((p) => p.skill)],
         durationSec,
+        true,
       )
-
-      while (m.t < durationSec - 1e-9) {
-        const step = autoIntervalFor(ctx, m)
-        if (m.t + step > nextReady + 1e-9) break
-        performAutoAttack(ctx, m, true)
-      }
-      m.t = Math.max(m.t, nextReady)
       continue
     }
 
@@ -2469,7 +2555,17 @@ function runRotationSim(
       continue
     }
     if (decision.tag === 'auto') {
-      performAutoAttack(ctx, m, true)
+      if (ctx.skipAutoAttacks) {
+        idleUntilNextReady(
+          ctx,
+          m,
+          [...damaging, ...supportBuffs.map((p) => p.skill)],
+          durationSec,
+          true,
+        )
+      } else {
+        performAutoAttack(ctx, m, true)
+      }
       continue
     }
     applyDamageChoice(ctx, m, { kind: 'skill', skill: decision.skill }, true)

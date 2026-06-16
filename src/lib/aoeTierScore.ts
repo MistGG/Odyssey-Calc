@@ -1,5 +1,6 @@
 import type { WikiDigimonDetail, WikiSkill } from '../types/wikiApi'
 import { wikiIntSkillDamageMultiplier } from './dpsSim'
+import { tierListEffectiveInt, wikiBaseIntFromStats } from './wikiIntScaling'
 import { wikiSkillHitCoefficient, skillIsSupportOnly } from './skillDamage'
 import { tierListSkillLevel } from './tierScoreParsing'
 
@@ -74,7 +75,7 @@ type MainAoePick = {
 
 /** Damaging wiki AoE with highest per-cast damage at tier-list level; tie-break higher DPS (dmg ÷ period). */
 function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick | null {
-  const intDmgMult = wikiIntSkillDamageMultiplier(Math.max(0, detail.stats?.int ?? 0))
+  const intDmgMult = wikiIntSkillDamageMultiplier(tierListEffectiveInt(wikiBaseIntFromStats(detail.stats)))
   let best: MainAoePick | null = null
   let bestDmg = -Infinity
   for (const s of detail.skills ?? []) {
@@ -115,7 +116,7 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
   farming: number
   radius: number
 } {
-  const intDmgMult = wikiIntSkillDamageMultiplier(Math.max(0, detail.stats?.int ?? 0))
+  const intDmgMult = wikiIntSkillDamageMultiplier(tierListEffectiveInt(wikiBaseIntFromStats(detail.stats)))
   let farmCooldownRaw = 0
   let farmDamageRaw = 0
   let farmRadiusRaw = 0

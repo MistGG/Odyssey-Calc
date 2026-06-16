@@ -1,4 +1,5 @@
 import type { RotationSimOptions } from './dpsSim'
+import { tierListEffectiveInt, wikiBaseIntFromStats } from './wikiIntScaling'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 
 export type ComparableRotationConfig = {
@@ -63,7 +64,7 @@ export function buildComparableRotationConfig(
     options: {
       role: detail.role,
       hybridStance: 'melee',
-      wikiInt: floorStat(detail.stats?.int ?? 0),
+      wikiInt: tierListEffectiveInt(wikiBaseIntFromStats(detail.stats)),
       forceAutoCrit: options?.forceAutoCrit === true,
       perfectAtClone,
       autoAttackAnimationCancel: options?.autoAttackAnimationCancel === true,

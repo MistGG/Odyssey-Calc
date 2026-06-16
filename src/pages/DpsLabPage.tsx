@@ -65,6 +65,12 @@ import {
 } from '../lib/gearStats'
 import { digimonRoleWikiSkills, normalizeWikiRole, type HybridStance } from '../lib/digimonRoleSkills'
 import { SKILL_LEVEL_CAP, skillIsSupportOnly } from '../lib/skillDamage'
+import {
+  clampDigimonIntLevel,
+  DIGIMON_INT_LEVEL_CAP,
+  effectiveIntAtDigimonLevel,
+  wikiBaseIntFromStats,
+} from '../lib/wikiIntScaling'
 import type { RotationDamageBreakdown, RotationEvent } from '../lib/dpsSim'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
 import { DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS } from '../lib/wikiListFacetOptions'
@@ -523,6 +529,9 @@ export function DpsLabPage() {
   const params = useMemo(() => new URLSearchParams(search), [search])
   const digimonId = params.get('digimonId')?.trim() ?? ''
   const initialLevel = Math.max(1, Math.min(SKILL_LEVEL_CAP, toInt(params.get('level'), 25)))
+  const initialDigimonLevel = clampDigimonIntLevel(
+    toInt(params.get('digimonLevel'), DIGIMON_INT_LEVEL_CAP),
+  )
   const durationFromUrl = useMemo(() => {
     const raw = new URLSearchParams(search).get('duration')
     if (raw == null || raw.trim() === '') return null
@@ -542,6 +551,8 @@ export function DpsLabPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [globalLevel, setGlobalLevel] = useState(initialLevel)
+  const [digimonLevel, setDigimonLevel] = useState(initialDigimonLevel)
+  const wikiBaseIntRef = useRef(0)
   const [skillLevels, setSkillLevels] = useState<Record<string, number>>({})
   const [targets, setTargets] = useState(() => targetsFromUrl ?? 1)
   const [durationSec, setDurationSec] = useState(() =>
@@ -645,6 +656,10 @@ export function DpsLabPage() {
   }, [initialLevel])
 
   useEffect(() => {
+    setDigimonLevel(initialDigimonLevel)
+  }, [initialDigimonLevel])
+
+  useEffect(() => {
     setHybridStance(parseHybridStance(new URLSearchParams(search).get('hybrid')))
   }, [search])
 
@@ -675,6 +690,7 @@ export function DpsLabPage() {
       setCombatStats(null)
       return
     }
+    wikiBaseIntRef.current = wikiBaseIntFromStats(data.stats)
     setCombatStats({
       hp: Math.max(0, Math.floor(data.stats.hp ?? 0)) + sealBonuses.hp,
       ds: Math.max(0, Math.floor(data.stats.ds ?? 0)) + sealBonuses.ds,
@@ -686,9 +702,9 @@ export function DpsLabPage() {
       hit_rate: Math.max(0, Math.floor(data.stats.hit_rate ?? 0)) + sealBonuses.hitRate,
       block_rate: Math.max(0, Math.floor(data.stats.block_rate ?? 0)) + sealBonuses.blockRate,
       dex: Math.max(0, Math.floor(data.stats.dex ?? 0)),
-      int: Math.max(0, Math.floor(data.stats.int ?? 0)),
+      int: effectiveIntAtDigimonLevel(wikiBaseIntRef.current, digimonLevel),
     })
-  }, [data, sealBonuses])
+  }, [data, sealBonuses, digimonLevel])
 
   useEffect(() => {
     if (!digimonId) {
@@ -1024,7 +1040,10 @@ export function DpsLabPage() {
     isHybridRole,
     hybridStance,
     simBaseAttack,
-    combatStats,
+    combatStats?.int,
+    digimonLevel,
+    combatStats?.atk_speed,
+    combatStats?.crit_rate,
     useAutoAnimCancel,
     animCancelReactionMs,
     forceAutoCrit,
@@ -1199,6 +1218,7 @@ export function DpsLabPage() {
     const next = new URLSearchParams()
     if (digimonId) next.set('digimonId', digimonId)
     next.set('level', String(globalLevel))
+    next.set('digimonLevel', String(digimonLevel))
     next.set('duration', String(clampRotationDurationSec(durationSec)))
     next.set('targets', String(Math.max(1, targets)))
     next.set('hybrid', hybridStance)
@@ -1221,6 +1241,7 @@ export function DpsLabPage() {
   }, [
     digimonId,
     globalLevel,
+    digimonLevel,
     durationSec,
     targets,
     hybridStance,
@@ -1651,6 +1672,17 @@ export function DpsLabPage() {
             <div className="lab-controls-bar">
               <p className="lab-controls-bar-title">Simulation</p>
               <div className="lab-controls-fields">
+                <label>
+                  Digimon level
+                  <EditableNumberInput
+                    min={1}
+                    max={DIGIMON_INT_LEVEL_CAP}
+                    integer
+                    emptyValue={DIGIMON_INT_LEVEL_CAP}
+                    value={digimonLevel}
+                    onCommit={(v) => setDigimonLevel(clampDigimonIntLevel(v))}
+                  />
+                </label>
                 <label>
                   Overall skill level
                   <EditableNumberInput
@@ -2887,7 +2919,15 @@ export function DpsLabPage() {
                               )}
                               <BuffBreakdownBadge e={e} />
                             </td>
-                            <td>{e.castTimeSec.toFixed(1)}s</td>
+                            <td>
+                              {e.castTimeSec.toFixed(1)}s
+                              {e.eventType === 'support' && e.cooldownSecAfterCast != null ? (
+                                <span className="lab-support-cd muted">
+                                  {' '}
+                                  → {e.cooldownSecAfterCast.toFixed(1)}s CD
+                                </span>
+                              ) : null}
+                            </td>
                             <td>{e.damage.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                             <td>
                               {e.cumulativeDamage.toLocaleString(undefined, {
