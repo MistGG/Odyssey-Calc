@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   rebuild:
@@ -41,13 +42,29 @@ jobs:
         run: node scripts/tier-worker-refresh.mjs
 
       - name: Commit published tier snapshots
+        id: commit_snapshots
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/data/tier-list-live.json public/data/tier-change-history.json
           if git diff --staged --quiet; then
             echo "No tier snapshot changes to commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit -m "chore(tier-list): refresh published snapshot"
           git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      # Bot pushes do not trigger other workflows; dispatch Pages deploy explicitly.
+      - name: Trigger GitHub Pages deploy
+        if: steps.commit_snapshots.outputs.pushed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-pages.yml',
+              ref: 'main',
+            })
