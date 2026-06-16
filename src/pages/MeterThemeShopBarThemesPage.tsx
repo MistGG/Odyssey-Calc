@@ -4,11 +4,16 @@ import { purchaseMeterTheme } from '../api/meterRewardsService'
 import { useAuth } from '../auth/useAuth'
 import { buildThemePreviewRows, MeterThemePreview } from '../components/MeterThemePreview'
 import type { useMeterRewards } from '../hooks/useMeterRewards'
-import { olympusThemeShopDigimonLine } from '../lib/meterPartyBarThemes'
+import {
+  isMagiaMeterShopTheme,
+  meterThemeRewardsCardTitle,
+  type MeterPartyBarThemeId,
+} from '../lib/meterPartyBarThemes'
 import {
   DEFAULT_METER_SHOP_PATH,
   meterShopCategoryById,
   meterShopSubcategoryByPath,
+  type MeterShopCategoryId,
 } from '../lib/meterShopCategories'
 import {
   meterThemeShopPriceForTheme,
@@ -16,30 +21,31 @@ import {
   previewDigimonForTheme,
   shopMeterPartyBarThemesForSubcategory,
 } from '../lib/meterThemeShop'
-import type { MeterPartyBarThemeId } from '../lib/meterPartyBarThemes'
 
 type ShopOutletContext = ReturnType<typeof useMeterRewards>
 
-const BAR_THEMES_CATEGORY_ID = 'bar-themes' as const
-
 export function MeterThemeShopBarThemesPage() {
-  const { subcategoryId } = useParams()
+  const { categoryId, subcategoryId } = useParams()
   const { supabase } = useAuth()
   const rewards = useOutletContext<ShopOutletContext>()
   const [busyThemeId, setBusyThemeId] = useState<string | null>(null)
   const [confirmThemeId, setConfirmThemeId] = useState<MeterPartyBarThemeId | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const category = meterShopCategoryById(BAR_THEMES_CATEGORY_ID)
-  const subcategory = subcategoryId
-    ? meterShopSubcategoryByPath(BAR_THEMES_CATEGORY_ID, subcategoryId)
-    : undefined
+  const category = meterShopCategoryById(categoryId ?? '')
+  const subcategory =
+    categoryId && subcategoryId
+      ? meterShopSubcategoryByPath(categoryId, subcategoryId)
+      : undefined
 
   if (!category?.available || !subcategory?.available) {
     return <Navigate to={DEFAULT_METER_SHOP_PATH} replace />
   }
 
-  const themes = shopMeterPartyBarThemesForSubcategory(subcategory.id)
+  const themes = shopMeterPartyBarThemesForSubcategory(
+    category.id as MeterShopCategoryId,
+    subcategory.id,
+  )
 
   async function onConfirmPurchase(themeId: MeterPartyBarThemeId) {
     if (!supabase) return
@@ -79,18 +85,19 @@ export function MeterThemeShopBarThemesPage() {
             const owned = rewards.ownedThemeIds.includes(theme.id)
             const canAfford = rewards.balance >= price
             const confirming = confirmThemeId === theme.id
+            const isMagia = isMagiaMeterShopTheme(theme)
             return (
               <li
                 key={theme.id}
-                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-card--legendary' : ''}`}
+                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-card--legendary' : ''}${isMagia ? ' meter-shop-card--magia' : ''}`}
               >
                 <div className="meter-shop-card-head">
                   <span
-                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-tier--legendary' : ''}`}
+                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-tier--legendary' : ''}${isMagia ? ' meter-shop-tier--magia' : ''}`}
                   >
                     {meterThemeShopTierLabelForTheme(theme)}
                   </span>
-                  <h3 className="meter-shop-card-title">{olympusThemeShopDigimonLine(theme)}</h3>
+                  <h3 className="meter-shop-card-title">{meterThemeRewardsCardTitle(theme)}</h3>
                 </div>
                 <MeterThemePreview
                   theme={theme}

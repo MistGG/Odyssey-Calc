@@ -3,6 +3,7 @@ import {
   meterPartyBarThemeStyle,
   HALL_OF_FAME_THEME_ID,
   hofOverlayVariantForTheme,
+  isMagiaMeterShopTheme,
   MAGIA_HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
   type MeterPartyBarTheme,
@@ -18,10 +19,14 @@ import { MeterMarsmonLegendaryFlames } from './MeterMarsmonLegendaryFlames'
 import { MeterMercurymonLegendaryReflection } from './MeterMercurymonLegendaryReflection'
 import { MeterMinervamonLegendaryGroundSplit } from './MeterMinervamonLegendaryGroundSplit'
 import { MeterNeptunemonLegendaryWaves } from './MeterNeptunemonLegendaryWaves'
+import { MeterPlesiomonLegendaryHydroBlast } from './MeterPlesiomonLegendaryHydroBlast'
+import { MeterRaguelmonLegendaryClawSlashes } from './MeterRaguelmonLegendaryClawSlashes'
+import { MeterZhuqiaomonLegendaryPhoenixFeathers } from './MeterZhuqiaomonLegendaryPhoenixFeathers'
 import { MeterVenusmonLegendaryHearts } from './MeterVenusmonLegendaryHearts'
 import { MeterVulcanusmonLegendaryForge } from './MeterVulcanusmonLegendaryForge'
 import { MeterHallOfFameBarOverlay } from './MeterHallOfFameBarOverlay'
 import { MeterIliadBarOverlay } from './MeterIliadBarOverlay'
+import { MeterMagiaBarDigimonOverlay } from './MeterMagiaBarDigimonOverlay'
 import { MeterOlympusBarDigimonOverlay } from './MeterOlympusBarDigimonOverlay'
 
 type MeterPartyThemedBarProps = {
@@ -110,7 +115,13 @@ export function MeterPartyThemedBar({
                             ? ' meter-party-bar-fill-stack--venusmon-legendary'
                             : styleId === 'vulcanusmon'
                               ? ' meter-party-bar-fill-stack--vulcanusmon-legendary'
-                              : ''
+                              : styleId === 'raguelmon'
+                                ? ' meter-party-bar-fill-stack--raguelmon-legendary'
+                                : styleId === 'plesiomon'
+                                  ? ' meter-party-bar-fill-stack--plesiomon-legendary'
+                                  : styleId === 'zhuqiaomon'
+                                    ? ' meter-party-bar-fill-stack--zhuqiaomon-legendary'
+                                    : ''
     const legendaryFx =
       styleId === 'apollomon' ? (
         <MeterApollomonLegendarySunrays />
@@ -136,7 +147,16 @@ export function MeterPartyThemedBar({
         <MeterVenusmonLegendaryHearts sharePct={widthPct} />
       ) : styleId === 'vulcanusmon' ? (
         <MeterVulcanusmonLegendaryForge />
+      ) : styleId === 'raguelmon' ? (
+        <MeterRaguelmonLegendaryClawSlashes />
+      ) : styleId === 'plesiomon' ? (
+        <MeterPlesiomonLegendaryHydroBlast />
+      ) : styleId === 'zhuqiaomon' ? (
+        <MeterZhuqiaomonLegendaryPhoenixFeathers />
       ) : null
+    const legendaryOverlayLayer = isMagiaMeterShopTheme(theme) ? 'magia' : 'olympus'
+    const LegendaryOverlay =
+      legendaryOverlayLayer === 'magia' ? MeterMagiaBarDigimonOverlay : MeterOlympusBarDigimonOverlay
     return (
       <div
         className={`meter-party-bar-fill-stack meter-party-bar-fill-stack--legendary${legendaryStackModifier}`}
@@ -145,19 +165,22 @@ export function MeterPartyThemedBar({
       >
         {bar}
         {legendaryFx}
-        <div className="meter-party-bar-olympus-layer">
-          <MeterOlympusBarDigimonOverlay theme={theme} />
+        <div className={`meter-party-bar-${legendaryOverlayLayer}-layer`}>
+          <LegendaryOverlay theme={theme} />
         </div>
       </div>
     )
   }
 
   if (isRare) {
+    const magiaLayer = isMagiaMeterShopTheme(theme) ? 'magia' : 'olympus'
+    const Overlay =
+      magiaLayer === 'magia' ? MeterMagiaBarDigimonOverlay : MeterOlympusBarDigimonOverlay
     return (
       <div className="meter-party-bar-fill-stack meter-party-bar-fill-stack--rare" style={fillWidth} aria-hidden>
         {bar}
-        <div className="meter-party-bar-olympus-layer">
-          <MeterOlympusBarDigimonOverlay theme={theme} />
+        <div className={`meter-party-bar-${magiaLayer}-layer`}>
+          <Overlay theme={theme} />
         </div>
       </div>
     )
@@ -184,8 +207,19 @@ export function MeterPartyPlainBar({ sharePct, rowKey }: { sharePct: number; row
 }
 
 export function meterPartyMemberRareClass(theme: MeterPartyBarTheme | null | undefined): string {
-  if (theme?.variant === 'rare') return ' meter-party-member--rare-olympus'
-  if (theme?.variant === 'legendary') return ' meter-party-member--legendary-olympus'
+  if (!theme) return ''
+  if (isMagiaMeterShopTheme(theme)) {
+    const style = theme.barStyleId
+    if (theme.variant === 'legendary') {
+      return ` meter-party-member--legendary-magia meter-party-member--legendary-magia-${style}`
+    }
+    if (theme.variant === 'rare') {
+      return ` meter-party-member--rare-magia meter-party-member--rare-magia-${style}`
+    }
+    return ''
+  }
+  if (theme.variant === 'rare') return ' meter-party-member--rare-olympus'
+  if (theme.variant === 'legendary') return ' meter-party-member--legendary-olympus'
   return ''
 }
 

@@ -1,10 +1,12 @@
-import type { MeterShopSubcategoryId } from './meterShopCategories'
+import type { MeterShopCategoryId, MeterShopSubcategoryId } from './meterShopCategories'
 import { isShopPurchasableMeterThemeId } from './meterThemeGrants'
 import {
   getMeterPartyBarTheme,
   HALL_OF_FAME_THEME_ID,
   MAGIA_HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
+  MAGIA_LEGENDARY_METER_PARTY_BAR_THEMES,
+  MAGIA_RARE_SHOP_THEMES,
   OLYMPOS_XII_COMMON_SHOP_THEMES,
   OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
   OLYMPOS_XII_LEGENDARY_METER_PARTY_BAR_THEMES,
@@ -87,12 +89,20 @@ export const SHOP_METER_PARTY_BAR_THEMES: MeterPartyBarTheme[] = [
   ...OLYMPOS_XII_COMMON_SHOP_THEMES,
   ...OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
   ...OLYMPOS_XII_LEGENDARY_METER_PARTY_BAR_THEMES,
+  ...MAGIA_RARE_SHOP_THEMES,
+  ...MAGIA_LEGENDARY_METER_PARTY_BAR_THEMES,
 ]
 
 /** Shop catalog for a bar-theme subcategory (e.g. Common). */
 export function shopMeterPartyBarThemesForSubcategory(
+  categoryId: MeterShopCategoryId,
   subcategoryId: MeterShopSubcategoryId,
 ): MeterPartyBarTheme[] {
+  if (categoryId === 'magia-bar-themes') {
+    if (subcategoryId === 'rare') return MAGIA_RARE_SHOP_THEMES
+    if (subcategoryId === 'legendary') return MAGIA_LEGENDARY_METER_PARTY_BAR_THEMES
+    return []
+  }
   if (subcategoryId === 'common') return OLYMPOS_XII_COMMON_SHOP_THEMES
   if (subcategoryId === 'rare') return OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES
   if (subcategoryId === 'legendary') return OLYMPOS_XII_LEGENDARY_METER_PARTY_BAR_THEMES
@@ -104,7 +114,10 @@ export function isShopThemeId(id: string): id is MeterPartyBarThemeId {
 }
 
 const REWARDS_THEME_BAR_ORDER = new Map(
-  OLYMPOS_XII_COMMON_SHOP_THEMES.map((theme, index) => [theme.barStyleId, index]),
+  [...OLYMPOS_XII_COMMON_SHOP_THEMES, ...MAGIA_RARE_SHOP_THEMES].map((theme, index) => [
+    theme.barStyleId,
+    index,
+  ]),
 )
 
 function meterRewardsThemeSortKey(theme: MeterPartyBarTheme): [tier: number, barIndex: number] {

@@ -13,6 +13,7 @@ import { MeterPlayerProfilePage } from './pages/MeterPlayerProfilePage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterActivityPage } from './pages/MeterActivityPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
+import { MeterMagiaThemePreviewPage } from './pages/MeterMagiaThemePreviewPage'
 import { MeterCycleThemePreviewPage } from './pages/MeterCycleThemePreviewPage'
 import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
@@ -45,9 +46,10 @@ export default function App() {
           <Route path="meter/my-parses" element={<MeterMyParsesPage />} />
           <Route path="meter/shop" element={<MeterShopLayout />}>
             <Route index element={<Navigate to="bar-themes/common" replace />} />
-            <Route path="bar-themes" element={<Navigate to="common" replace />} />
-            <Route path="bar-themes/:subcategoryId" element={<MeterThemeShopBarThemesPage />} />
+            <Route path=":categoryId" element={<Navigate to="common" replace />} />
+            <Route path=":categoryId/:subcategoryId" element={<MeterThemeShopBarThemesPage />} />
           </Route>
+          <Route path="meter/magia-theme-preview" element={<MeterMagiaThemePreviewPage />} />
           <Route path="meter/rewards" element={<MeterMyRewardsPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />

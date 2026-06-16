@@ -2,7 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { useMeterRewards } from '../hooks/useMeterRewards'
 import { METER_IDENTITY_PARSE_NOTICE } from '../lib/meterThemeShop'
-import { DEFAULT_METER_SHOP_PATH, METER_SHOP_CATEGORIES } from '../lib/meterShopCategories'
+import { METER_SHOP_CATEGORIES } from '../lib/meterShopCategories'
 import { MeterRewardsShopHubNav } from './MeterRewardsShopHubNav'
 import { MeterSubNav } from './MeterSubNav'
 import { MeterThemeShopEarnPanels } from './MeterThemeShopEarnPanels'
@@ -57,7 +57,7 @@ export function MeterShopLayout() {
               <li key={category.id} className="meter-shop-side-nav-group">
                 {category.available ? (
                   <NavLink
-                    to={DEFAULT_METER_SHOP_PATH}
+                    to={category.defaultPath}
                     className={({ isActive }) =>
                       `meter-shop-side-nav-link meter-shop-side-nav-link--parent${isActive ? ' meter-shop-side-nav-link--active' : ''}`
                     }
