@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   fetchPlayerHallOfFameByCycles,
   fetchPlayerHallOfFameEntries,
+  fetchPlayerHallOfFameForCycle,
   METER_HOF_PROFILE_SCOPE_LIMIT,
 } from './meterHallOfFame'
 import {
@@ -11,6 +12,8 @@ import {
 } from './meterLeaderboardCycles'
 import { normalizeRoutePlayerKey } from './meterPlayerProfile'
 import { fetchStoredConfirmedPlayerKey } from './meterPointGrants'
+import type { OlympusHofBreakForGrant } from './meterPointGrants'
+import type { WikiDungeonListItem } from '../types/wikiApi'
 import { loadWikiDungeonsForMeter } from './wikiDungeons'
 import {
   HALL_OF_FAME_THEME_ID,
@@ -88,6 +91,31 @@ export async function fetchMeterPlayerHofRecordCountsByCycle(
   const counts: Record<string, number> = {}
   for (const row of cycles) counts[row.cycle.id] = row.recordCount
   return { counts, error: null }
+}
+
+/** Olympus-cycle record breaks used for shop point grants (2 pts each). */
+export async function fetchOlympusHofBreaksForPointGrants(
+  playerKey: string,
+  wikiDungeons: WikiDungeonListItem[],
+): Promise<{ breaks: OlympusHofBreakForGrant[]; error: string | null }> {
+  const key = playerKey.trim().toLowerCase()
+  if (!key) return { breaks: [], error: null }
+
+  const cycle = getMeterLeaderboardCycle('olympus')
+  if (!cycle) return { breaks: [], error: null }
+
+  const { summary, error } = await fetchPlayerHallOfFameForCycle(key, wikiDungeons, cycle, {
+    maxScopes: METER_HOF_PROFILE_SCOPE_LIMIT,
+  })
+  if (error) return { breaks: [], error }
+
+  const breaks = summary.entries.map((entry) => ({
+    parseId: entry.parseId,
+    dungeonId: entry.dungeonId,
+    difficultyId: entry.difficultyId,
+    roleBucket: entry.roleBucket,
+  }))
+  return { breaks, error: null }
 }
 
 export async function resolveMeterPlayerKeyForHof(

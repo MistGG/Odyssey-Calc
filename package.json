@@ -20,6 +20,7 @@
     "backfill:meter-leaderboard": "node scripts/backfill-meter-leaderboard.mjs",
     "backfill:meter-parses": "node scripts/backfill-meter-leaderboard-parses.mjs",
     "backfill:meter-point-grants": "npx tsx scripts/backfill-meter-point-grants.ts",
+    "backfill:olympus-hof-point-grants": "npx tsx scripts/backfill-olympus-hof-point-grants.ts",
     "invalidate:dual-meter": "node scripts/invalidate-dual-meter-uploads.mjs",
     "invalidate:short-meter": "node scripts/invalidate-short-meter-uploads.mjs",
     "invalidate:meter-parses": "node scripts/invalidate-meter-parses.mjs",

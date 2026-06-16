@@ -8,10 +8,8 @@ import {
 import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
 
 import {
-  getCachedGlobalRecentParses,
   getCachedScopeParses,
   meterScopeKey,
-  setCachedGlobalRecentParses,
   setCachedScopeParses,
 } from './meterParseCache'
 import {
@@ -28,13 +26,6 @@ const METER_PARSES_PUBLIC_TABLE = 'meter_parses_public'
 
 const PUBLIC_PARSE_SELECT =
   'id, created_at, duration_sec, app_version, total_damage, hit_count, parse_kind, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
-
-const FEED_PARSE_SELECT =
-  'id, created_at, duration_sec, dungeon_id, dungeon_name, difficulty, difficulty_id, leaderboard_summary'
-
-
-
-/** Anon-only client (no session). Used for public leaderboard so signed-in users do not inherit broad SELECT RLS. */
 
 let meterAnonClient: SupabaseClient | null | undefined
 
@@ -106,8 +97,7 @@ function rowsOwnedByUser(rows: MeterParseRowDb[], userId: string): PublicMeterPa
 
 
 
-const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 150
-const GLOBAL_RECENT_PARSE_LIMIT = 80
+const PUBLIC_PARSE_LIMIT_PER_DUNGEON = 60
 const METER_PARSE_COUNT_CACHE_KEY = 'odyssey-meter-total-parses-v1'
 const MY_METER_PARSES_LIMIT = 150
 const MY_METER_PARSE_LIST_SELECT =
@@ -119,8 +109,6 @@ const METER_TAMER_COUNT_CACHE_KEY = 'odyssey-meter-total-tamers-v1'
 const METER_TAMER_COUNT_TTL_MS = 24 * 60 * 60 * 1000
 
 const scopeRefreshInflight = new Map<string, Promise<ScopeParsesResult>>()
-let globalRecentRefreshInflight: Promise<{ rows: PublicMeterParseRow[]; error: string | null }> | null =
-  null
 
 let myMeterParsesInflight: Promise<{ rows: PublicMeterParseRow[]; error: string | null }> | null = null
 let myMeterParsesInflightUserId: string | null = null
@@ -261,17 +249,6 @@ function refreshScopeParsesDeduped(
   return promise
 }
 
-function refreshGlobalRecentParsesDeduped(
-  limit: number,
-  onUpdated?: (rows: PublicMeterParseRow[]) => void,
-): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
-  if (globalRecentRefreshInflight) return globalRecentRefreshInflight
-  globalRecentRefreshInflight = refreshGlobalRecentPublicParses(limit, onUpdated).finally(() => {
-    globalRecentRefreshInflight = null
-  })
-  return globalRecentRefreshInflight
-}
-
 /** Public leaderboard for one dungeon + difficulty (anon role, not signed-in JWT). */
 export async function fetchPublicDungeonParses(
   params: FetchPublicDungeonParsesParams,
@@ -282,34 +259,6 @@ export async function fetchPublicDungeonParses(
   const db = await fetchScopeEligibleParses(params)
   if (db.error) return db
   const rows = await resolveMeterParseRowPayloads(db.rows)
-  return { rows, error: null }
-}
-
-async function refreshGlobalRecentPublicParses(
-  limit: number,
-  onUpdated?: (rows: PublicMeterParseRow[]) => void,
-): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
-  const supabase = getMeterAnonSupabase()
-  if (!supabase) {
-    return { rows: [], error: 'Supabase is not configured.' }
-  }
-
-  const { data, error } = await supabase
-    .from(METER_PARSES_PUBLIC_TABLE)
-    .select(FEED_PARSE_SELECT)
-    .eq('parse_kind', 'dungeon_party')
-    .gte('difficulty_id', 2)
-    .not('leaderboard_summary', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(limit)
-
-  if (error) return { rows: [], error: error.message }
-  const rows = await resolveMeterParseRowPayloads(
-    feedRowsFromSummaryQuery((data ?? []) as FeedSummaryRow[]),
-  )
-  onUpdated?.(rows)
-  setCachedGlobalRecentParses(rows)
-  onUpdated?.(rows)
   return { rows, error: null }
 }
 
@@ -410,13 +359,6 @@ function feedRowsFromSummaryQuery(rows: FeedSummaryRow[]): PublicMeterParseRow[]
   return out
 }
 
-/** Recent public party parses across all dungeons (profile fast tier). */
-export async function fetchGlobalRecentPublicParses(
-  limit = GLOBAL_RECENT_PARSE_LIMIT,
-): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
-  return refreshGlobalRecentPublicParses(limit)
-}
-
 /**
  * Cached public parses for one dungeon scope.
  * Returns session cache immediately when available, revalidates in the background,
@@ -435,18 +377,6 @@ export async function getPublicDungeonParsesCached(
   }
 
   return refreshScopeParsesDeduped(params, key, onUpdated)
-}
-
-export async function getGlobalRecentPublicParsesCached(
-  limit = GLOBAL_RECENT_PARSE_LIMIT,
-  onUpdated?: (rows: PublicMeterParseRow[]) => void,
-): Promise<{ rows: PublicMeterParseRow[]; error: string | null }> {
-  const cached = getCachedGlobalRecentParses()
-  if (cached) {
-    return { rows: cached.slice(0, limit), error: null }
-  }
-
-  return refreshGlobalRecentParsesDeduped(limit, onUpdated)
 }
 
 type MeterTamerCountCache = {

@@ -13,9 +13,19 @@ import { selfTamerFromMember } from './meterPlayerProfile'
 export const NORMAL_DIFFICULTY_ID = 2
 export const HARD_DIFFICULTY_ID = 3
 
+/** Shop points per Olympus-cycle Hall of Fame record break. */
+export const OLYMPUS_HOF_RECORD_BREAK_POINTS = 2
+
 export type MeterPointGrant = {
   grantKey: string
   points: number
+}
+
+export type OlympusHofBreakForGrant = {
+  parseId: string
+  dungeonId: string
+  difficultyId: number
+  roleBucket: string
 }
 
 export type ComputeMeterPointGrantsOptions = {
@@ -201,12 +211,36 @@ export function bestParseScoreForHardDungeon(
   return dpsToPercentile(myBest, pool)
 }
 
+export function olympusHofPointGrantKey(breakEntry: OlympusHofBreakForGrant): string {
+  const dungeonId = breakEntry.dungeonId.trim()
+  const roleBucket = breakEntry.roleBucket.trim().toLowerCase()
+  return `olympus_hof:${breakEntry.parseId}:${dungeonId}:${breakEntry.difficultyId}:${roleBucket}`
+}
+
+export function computeOlympusHofPointGrants(
+  breaks: OlympusHofBreakForGrant[],
+): MeterPointGrant[] {
+  const grants: MeterPointGrant[] = []
+  const seen = new Set<string>()
+  for (const breakEntry of breaks) {
+    if (!breakEntry.parseId.trim() || !breakEntry.dungeonId.trim() || !breakEntry.roleBucket.trim()) {
+      continue
+    }
+    const grantKey = olympusHofPointGrantKey(breakEntry)
+    if (seen.has(grantKey)) continue
+    seen.add(grantKey)
+    grants.push({ grantKey, points: OLYMPUS_HOF_RECORD_BREAK_POINTS })
+  }
+  return grants
+}
+
 export function computeMeterPointGrants(
   myParses: PublicMeterParseRow[],
   publicRowsByDungeon: Map<string, PublicMeterParseRow[]>,
   hardDungeonPools?: Map<string, number[]>,
   confirmedPlayerKey?: string | null,
   options?: ComputeMeterPointGrantsOptions,
+  olympusHofBreaks?: OlympusHofBreakForGrant[],
 ): MeterPointGrant[] {
   const grants: MeterPointGrant[] = []
   const firstClearDungeons = new Set<string>()
@@ -253,7 +287,7 @@ export function computeMeterPointGrants(
     if (score >= 100) grants.push({ grantKey: `score100:${dungeonId}`, points: 10 })
   }
 
-  return grants
+  return [...grants, ...computeOlympusHofPointGrants(olympusHofBreaks ?? [])]
 }
 
 export function hasConfirmedTamerFromParses(myParses: PublicMeterParseRow[]): boolean {

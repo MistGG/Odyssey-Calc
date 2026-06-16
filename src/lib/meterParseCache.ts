@@ -1,9 +1,9 @@
 import type { PublicMeterParseRow } from './meterPublicStats'
 
-/** Full parse payloads are large; avoid re-fetching from PostgREST too often. */
-const TTL_MS = 60 * 60 * 1000
-const SESSION_KEY = 'odyssey-meter-parse-cache-v2'
-const MAX_PERSISTED_SCOPES = 24
+/** Scope parse rows are large; avoid re-fetching from PostgREST too often. */
+const TTL_MS = 2 * 60 * 60 * 1000
+const SESSION_KEY = 'odyssey-meter-parse-cache-v3'
+const MAX_PERSISTED_SCOPES = 16
 
 type CacheEntry = {
   rows: PublicMeterParseRow[]
@@ -12,11 +12,9 @@ type CacheEntry = {
 
 type PersistedPayload = {
   scopes: Record<string, CacheEntry>
-  globalRecent: CacheEntry | null
 }
 
 const scopeMemory = new Map<string, CacheEntry>()
-let globalRecentMemory: CacheEntry | null = null
 let hydrated = false
 
 export function meterScopeKey(dungeonId: string, difficultyId: number): string {
@@ -37,7 +35,6 @@ function hydrateFromSession(): void {
     for (const [key, entry] of Object.entries(parsed.scopes ?? {})) {
       if (isFresh(entry)) scopeMemory.set(key, entry)
     }
-    if (isFresh(parsed.globalRecent)) globalRecentMemory = parsed.globalRecent
   } catch {
     /* ignore quota / corrupt */
   }
@@ -53,10 +50,7 @@ function persistToSession(): void {
       n += 1
       if (n >= MAX_PERSISTED_SCOPES) break
     }
-    const payload: PersistedPayload = {
-      scopes,
-      globalRecent: isFresh(globalRecentMemory) ? globalRecentMemory : null,
-    }
+    const payload: PersistedPayload = { scopes }
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload))
   } catch {
     /* quota */
@@ -68,11 +62,6 @@ export function isScopeParseCacheFresh(key: string): boolean {
   return isFresh(scopeMemory.get(key))
 }
 
-export function isGlobalRecentParseCacheFresh(): boolean {
-  hydrateFromSession()
-  return isFresh(globalRecentMemory)
-}
-
 export function getCachedScopeParses(key: string): PublicMeterParseRow[] | null {
   hydrateFromSession()
   const entry = scopeMemory.get(key)
@@ -81,15 +70,5 @@ export function getCachedScopeParses(key: string): PublicMeterParseRow[] | null 
 
 export function setCachedScopeParses(key: string, rows: PublicMeterParseRow[]): void {
   scopeMemory.set(key, { rows, fetchedAt: Date.now() })
-  persistToSession()
-}
-
-export function getCachedGlobalRecentParses(): PublicMeterParseRow[] | null {
-  hydrateFromSession()
-  return isFresh(globalRecentMemory) ? globalRecentMemory.rows : null
-}
-
-export function setCachedGlobalRecentParses(rows: PublicMeterParseRow[]): void {
-  globalRecentMemory = { rows, fetchedAt: Date.now() }
   persistToSession()
 }

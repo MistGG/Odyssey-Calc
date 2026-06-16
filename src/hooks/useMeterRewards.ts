@@ -20,6 +20,7 @@ import {
   poolDpsValuesFromPrecomputed,
   syncMeterPointGrants,
 } from '../lib/meterPointGrants'
+import { fetchOlympusHofBreaksForPointGrants } from '../lib/meterHallOfFameTheme'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
 import { resolveSignedInMeterIdentity, normalizeRoutePlayerKey } from '../lib/meterPlayerProfile'
@@ -203,11 +204,17 @@ export function useMeterRewards(
       setGrantKeys(keys)
       setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, new Map()))
 
+      const olympusHofBreaks = confirmedPlayerKey
+        ? (await fetchOlympusHofBreaksForPointGrants(confirmedPlayerKey, wikiDungeons)).breaks
+        : []
+
       const grants = computeMeterPointGrants(
         myRes.rows,
         new Map(),
         hardDungeonPools,
         confirmedPlayerKey,
+        undefined,
+        olympusHofBreaks,
       )
       const syncRes = await syncMeterPointGrants(supabase, grants)
       if (gen !== syncGenRef.current) return

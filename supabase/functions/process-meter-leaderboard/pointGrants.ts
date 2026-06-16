@@ -1,5 +1,6 @@
 /**
  * Keep in sync with digimon-hub/src/lib/meterPointGrants.ts (Deno copy for post-upload sync).
+ * Olympus HoF record-break grants are synced on the client / backfill script only.
  */
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 

@@ -1,7 +1,7 @@
 import type { MeterPublicAggregates } from './meterPublicStats'
 import { meterScopeKey } from './meterParseCache'
 
-const TTL_MS = 15 * 60 * 1000
+const TTL_MS = 60 * 60 * 1000
 
 type Entry = {
   stats: MeterPublicAggregates

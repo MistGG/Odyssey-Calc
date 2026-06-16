@@ -223,6 +223,11 @@ type HofGoldRpcRow = {
   portrait_url?: string | null
 }
 
+type PlayerHofGoldRpcRow = HofGoldRpcRow & {
+  dungeon_id?: string | null
+  difficulty_id?: number | null
+}
+
 function mapHofGoldRpcRow(row: HofGoldRpcRow): Omit<MeterHallOfFameEntry, 'currentPercentile'> | null {
   const role = row.role_bucket?.trim() ?? ''
   if (!isRoleBucket(role)) return null
@@ -419,6 +424,83 @@ export const METER_HOF_PROFILE_SCOPE_LIMIT = 24
 
 type ScopeRef = { dungeonId: string; difficultyId: number }
 
+type HofRowWithScope = Omit<MeterHallOfFameEntry, 'currentPercentile'> & {
+  dungeonId: string
+  difficultyId: number
+}
+
+function mapPlayerHofGoldRpcRow(row: PlayerHofGoldRpcRow): HofRowWithScope | null {
+  const base = mapHofGoldRpcRow(row)
+  if (!base) return null
+  const dungeonId = row.dungeon_id?.trim() ?? ''
+  const difficultyId = row.difficulty_id ?? 0
+  if (!dungeonId || difficultyId < 2) return null
+  return { ...base, dungeonId, difficultyId }
+}
+
+async function fetchPlayerHallOfFameFromPlayerRpc(
+  playerKey: string,
+  wikiDungeons: WikiDungeonListItem[],
+  options?: FetchPlayerHallOfFameOptions,
+): Promise<{ entries: ProfileHallOfFameEntry[]; error: string | null }> {
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
+
+  const key = playerKey.trim().toLowerCase()
+  if (!key) return { entries: [], error: null }
+
+  const { data, error } = await supabase.rpc('get_meter_player_hof_gold_breaks', {
+    p_player_key: key,
+    p_scope_limit: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
+    p_window_start: options?.windowStart ?? null,
+    p_window_end: options?.windowEnd ?? null,
+  })
+
+  if (error) {
+    if (/could not find the function|schema cache/i.test(error.message)) {
+      return fetchPlayerHallOfFameByScopeBatches(playerKey, wikiDungeons, options)
+    }
+    return { entries: [], error: error.message }
+  }
+
+  let goldRows = ((data ?? []) as PlayerHofGoldRpcRow[])
+    .map((row) => mapPlayerHofGoldRpcRow(row))
+    .filter((row): row is HofRowWithScope => row != null)
+
+  const scopeByEntryKey = new Map(goldRows.map((row) => [entryKey(row), row]))
+  goldRows = filterGoldRecordBreaks(goldRows)
+    .map((row) => scopeByEntryKey.get(entryKey(row)))
+    .filter((row): row is HofRowWithScope => row != null)
+
+  if (options?.stopAfterFirst && goldRows.length > 1) {
+    goldRows = goldRows.slice(0, 1)
+  }
+
+  const resolved = await resolveHofGoldNames(goldRows)
+  const pools = sortedDpsPoolsFromHistory(resolved)
+  const hofEntries: MeterHallOfFameEntry[] = resolved.map((entry) => ({
+    ...entry,
+    currentPercentile: dpsToPercentile(entry.dps, pools[entry.roleBucket]),
+  }))
+
+  const inducted = withInductionRanks(hofEntries)
+  const entries: ProfileHallOfFameEntry[] = inducted
+    .map((entry) => {
+      const scope = scopeByEntryKey.get(entryKey(entry))
+      if (!scope) return null
+      const labels = resolveScopeLabels(scope.dungeonId, scope.difficultyId, wikiDungeons)
+      return {
+        ...entry,
+        dungeonId: scope.dungeonId,
+        difficultyId: scope.difficultyId,
+        ...labels,
+      }
+    })
+    .filter((row): row is ProfileHallOfFameEntry => row != null)
+
+  return { entries, error: null }
+}
+
 function profileEntriesFromGoldScope(
   scopeEntries: MeterHallOfFameEntry[],
   scope: ScopeRef,
@@ -504,7 +586,7 @@ export async function fetchPlayerHallOfFameForCycle(
   options?: Pick<FetchPlayerHallOfFameOptions, 'maxScopes' | 'stopAfterFirst'>,
 ): Promise<{ summary: PlayerHallOfFameCycleSummary; error: string | null }> {
   const window = meterLeaderboardCycleWindow(cycle)
-  const res = await fetchPlayerHallOfFameByScopeBatches(playerKey, wikiDungeons, {
+  const res = await fetchPlayerHallOfFameFromPlayerRpc(playerKey, wikiDungeons, {
     maxScopes: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
     stopAfterFirst: options?.stopAfterFirst,
     leaderboardCycleId: cycle.id,
@@ -586,7 +668,6 @@ export async function fetchPlayerHallOfFameEntries(
   const key = playerKey.trim().toLowerCase()
   if (!key) return { entries: [], error: null }
 
-  // Scope batches use fetchScopeHallOfFameGoldEntries, which applies filterGoldRecordBreaks
-  // so self-record improvements in the same role do not inflate induction counts.
-  return fetchPlayerHallOfFameByScopeBatches(key, wikiDungeons, options)
+  // Single RPC per player+cycle (fallback: per-scope batches if migration not deployed).
+  return fetchPlayerHallOfFameFromPlayerRpc(playerKey, wikiDungeons, options)
 }

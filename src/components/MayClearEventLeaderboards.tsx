@@ -82,15 +82,17 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
         setPrecomputedStats(pre.stats)
         setLoading(false)
         setParsesRefreshing(false)
-        void fetchParticipationPlayersInWindow({
-          dungeonId,
-          difficultyId,
-          ...eventWindow,
-        }).then((poolRes) => {
-          if (cancelled) return
-          if (poolRes.error) setLoadError(poolRes.error)
-          setParticipationPool(poolRes.entries)
-        })
+        if (eventEnded) {
+          void fetchParticipationPlayersInWindow({
+            dungeonId,
+            difficultyId,
+            ...eventWindow,
+          }).then((poolRes) => {
+            if (cancelled) return
+            if (poolRes.error) setLoadError(poolRes.error)
+            setParticipationPool(poolRes.entries)
+          })
+        }
         void resolvePrecomputedLeaderboardNames(pre.stats).then((resolved) => {
           if (!cancelled) setPrecomputedStats(resolved)
         })

@@ -19,7 +19,7 @@ let backoffUntil = 0
 const queue: QueueTask<unknown>[] = []
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
+  return new Promise((resolve) => globalThis.setTimeout(resolve, ms))
 }
 
 function isRateLimitError(e: unknown): boolean {

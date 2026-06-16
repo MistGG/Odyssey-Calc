@@ -245,8 +245,8 @@ export function MeterHallOfFamePage() {
 
   const leaderboardHref =
     dungeonId && difficultyId != null
-      ? `/meter/leaderboard?dungeon=${encodeURIComponent(dungeonId)}&difficulty=${difficultyId}&cycle=${encodeURIComponent(leaderboardCycle.id)}`
-      : '/meter/leaderboard'
+      ? `/meter?dungeon=${encodeURIComponent(dungeonId)}&difficulty=${difficultyId}&cycle=${encodeURIComponent(leaderboardCycle.id)}`
+      : '/meter'
 
   const handleCycleChange = useCallback(
     (nextCycleId: string) => {
