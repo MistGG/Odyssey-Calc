@@ -37,20 +37,8 @@ jobs:
           # Scheduled runs always force a full rebuild; manual runs use the input (default on).
           TIER_WORKER_FORCE: ${{ github.event_name == 'schedule' && '1' || (inputs.force_recompute && '1' || '0') }}
           TIER_WORKER_TIMEOUT_MS: '3600000'
-          TIER_WORKER_EMAIL: ${{ secrets.TIER_WORKER_EMAIL }}
-          TIER_WORKER_PASSWORD: ${{ secrets.TIER_WORKER_PASSWORD }}
           TIER_WORKER_SITE_ORIGIN: ${{ secrets.TIER_WORKER_SITE_ORIGIN }}
-        run: |
-          if [ -z "$TIER_WORKER_EMAIL" ]; then
-            echo "Missing secret: TIER_WORKER_EMAIL"
-            exit 1
-          fi
-          if [ -z "$TIER_WORKER_PASSWORD" ]; then
-            echo "Missing secret: TIER_WORKER_PASSWORD"
-            exit 1
-          fi
-
-          node scripts/tier-worker-refresh.mjs
+        run: node scripts/tier-worker-refresh.mjs
 
       - name: Commit published tier snapshots
         run: |

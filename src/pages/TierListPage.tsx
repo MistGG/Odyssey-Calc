@@ -270,7 +270,7 @@ function isTierListCacheShape(value: unknown): value is TierListCache {
 }
 
 export function TierListPage() {
-  const { supabase, user, authReady } = useAuth()
+  const { supabase, authReady } = useAuth()
   const [searchParams] = useSearchParams()
   const workerForceRefresh = searchParams.get('forceRefresh') === '1'
   const workerForceRefreshStartedRef = useRef(false)
@@ -472,13 +472,14 @@ export function TierListPage() {
   }, [cache, listMeta])
 
   useEffect(() => {
-    if (!workerForceRefresh || !supabase || !authReady || !user || !cache || initializing || building) {
+    // GHA tier worker uses ?forceRefresh=1 without sign-in (wiki + sim only; Supabase is optional).
+    if (!workerForceRefresh || !authReady || !cache || initializing || building) {
       return
     }
     if (workerForceRefreshStartedRef.current) return
     workerForceRefreshStartedRef.current = true
     void updateTierList()
-  }, [workerForceRefresh, supabase, authReady, user, cache, initializing, building])
+  }, [workerForceRefresh, authReady, cache, initializing, building])
 
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {

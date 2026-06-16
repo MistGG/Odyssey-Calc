@@ -1,15 +1,11 @@
 /**
- * Headless worker: sign in to Odyssey Calc, run a tier list rebuild, export static JSON
- * for GitHub Pages (no Supabase tier_list_live / tier_sync writes).
+ * Headless worker: open Odyssey Calc tier list with ?forceRefresh=1, run a rebuild,
+ * export static JSON for GitHub Pages (no Supabase tier_list_live / tier_sync writes).
  *
- * Required env vars:
- * - TIER_WORKER_EMAIL
- * - TIER_WORKER_PASSWORD
+ * Sign-in is not required — rebuild uses the wiki API + in-browser sim. Supabase is only
+ * used for approved community rotations (best-effort; skipped when unavailable).
  *
- * Auth uses the live site's Supabase client (baked into the Pages build); this script
- * does not call Supabase REST or tier_list_live.
- *
- * Optional:
+ * Optional env vars:
  * - TIER_WORKER_SITE_ORIGIN (default: https://odyssey-calc.com)
  * - TIER_WORKER_TIMEOUT_MS (default: 3600000 / 60m)
  * - TIER_WORKER_FORCE=1 — append ?forceRefresh=1 so tier list always rebuilds
@@ -31,15 +27,7 @@ const siteOrigin = (process.env.TIER_WORKER_SITE_ORIGIN || 'https://odyssey-calc
 const timeoutMs = Math.max(Number(process.env.TIER_WORKER_TIMEOUT_MS) || 3_600_000, 60_000)
 const forceRefresh =
   process.env.TIER_WORKER_FORCE === '1' || process.env.TIER_WORKER_FORCE === 'true'
-const tierListReturnTo = forceRefresh ? '/tier-list?forceRefresh=1' : '/tier-list'
-
-const email = (process.env.TIER_WORKER_EMAIL || '').trim()
-const password = (process.env.TIER_WORKER_PASSWORD || '').trim()
-
-if (!email || !password) {
-  console.error('Missing TIER_WORKER_EMAIL or TIER_WORKER_PASSWORD.')
-  process.exit(1)
-}
+const tierListPath = forceRefresh ? '/tier-list?forceRefresh=1' : '/tier-list'
 
 function formatElapsed(ms) {
   const sec = Math.floor(ms / 1000)
@@ -164,12 +152,41 @@ function writePublishedFiles(cache, runs) {
   console.log('[tier-worker] wrote', tierHistoryOut, `(${runs.length} history runs)`)
 }
 
+function formatRestrictedResponse(status, url, bodyText) {
+  let detail = bodyText?.trim() || '(empty body)'
+  try {
+    const parsed = JSON.parse(bodyText)
+    if (parsed?.message) detail = parsed.message
+    else if (parsed?.error_description) detail = parsed.error_description
+    else if (parsed?.error) detail = parsed.error
+  } catch {
+    /* use raw text */
+  }
+  return `[tier-worker] HTTP ${status} from ${url}: ${detail}`
+}
+
 console.log('[tier-worker] site:', siteOrigin, forceRefresh ? '(force refresh)' : '')
 console.log('[tier-worker] publishing to static JSON (no Supabase tier tables)')
+console.log('[tier-worker] no sign-in required (wiki + in-browser sim)')
 
 const browser = await chromium.launch({ headless: true })
 const ctx = await browser.newContext()
 const page = await ctx.newPage()
+
+const restrictedResponses = []
+
+page.on('response', async (response) => {
+  const status = response.status()
+  if (status !== 402 && status !== 403) return
+  const url = response.url()
+  if (!url.includes('supabase.co') && !url.includes('workers.dev')) return
+  try {
+    const body = await response.text()
+    restrictedResponses.push(formatRestrictedResponse(status, url, body))
+  } catch {
+    restrictedResponses.push(formatRestrictedResponse(status, url, ''))
+  }
+})
 
 page.on('console', (msg) => {
   const type = msg.type()
@@ -182,23 +199,16 @@ page.on('pageerror', (err) => {
 })
 
 try {
-  const returnTo = encodeURIComponent(tierListReturnTo)
-  const authUrl = `${siteOrigin}/#/auth?returnTo=${returnTo}`
-  console.log('[tier-worker] signing in…')
-  await page.goto(authUrl, { waitUntil: 'domcontentloaded' })
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in to Odyssey Calc' }).click()
-
+  const tierUrl = `${siteOrigin}/#${tierListPath}`
+  console.log('[tier-worker] opening tier list…', tierUrl)
+  await page.goto(tierUrl, { waitUntil: 'domcontentloaded' })
   await page.waitForURL(/#\/tier-list/, { timeout: 120_000 })
-  if (forceRefresh && !page.url().includes('forceRefresh=1')) {
-    await page.goto(`${siteOrigin}/#${tierListReturnTo}`, { waitUntil: 'domcontentloaded' })
-  }
   console.log('[tier-worker] on tier list:', page.url())
 
   const start = Date.now()
   let lastLogAt = 0
   let done = false
+  let sawBuilding = false
 
   while (Date.now() - start < timeoutMs) {
     const workerState = await readPageWorkerState(page)
@@ -207,12 +217,21 @@ try {
       throw new Error(statusLine)
     }
 
+    if (workerState === 'building') {
+      sawBuilding = true
+    }
+
     if (workerState === 'ready') {
       const { cache, runs } = await readTierExports(page)
       if (isTierListCacheShape(cache) && Object.keys(cache.entries ?? {}).length > 0) {
         writePublishedFiles(cache, runs)
         done = true
         break
+      }
+      if (forceRefresh && !sawBuilding) {
+        throw new Error(
+          'Tier list never entered building state. Check that forceRefresh=1 is enabled in the deployed app.',
+        )
       }
     }
 
@@ -231,6 +250,13 @@ try {
     console.error('[tier-worker] final worker state:', workerState)
     if (statusLine) console.error('[tier-worker] final status:', statusLine)
     throw new Error('Timed out waiting for tier list rebuild to finish.')
+  }
+
+  if (restrictedResponses.length > 0) {
+    console.warn('[tier-worker] Some upstream APIs returned quota/auth errors (rebuild may omit community rotations):')
+    for (const line of restrictedResponses.slice(0, 5)) {
+      console.warn(line)
+    }
   }
 } finally {
   await ctx.close()
