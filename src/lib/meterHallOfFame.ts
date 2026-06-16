@@ -1,5 +1,5 @@
 import { getMeterAnonSupabase } from './meterDataSource'
-import { fetchParticipationPlayersInWindow, fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
+import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
 import {
   getDefaultMeterLeaderboardCycle,
   isMeterLeaderboardCycleLive,
@@ -269,7 +269,7 @@ async function resolveHofGoldNames(
   }))
 }
 
-/** Hall of Fame gold entries for one scope via server-side RPC (no full-table client scan). */
+/** Hall of Fame gold entries for one scope via server-side RPC (no participation row download). */
 export async function fetchScopeHallOfFameGoldEntries(
   dungeonId: string,
   difficultyId: number,
@@ -283,82 +283,29 @@ export async function fetchScopeHallOfFameGoldEntries(
   if (!id || difficultyId < 2) return { entries: [], error: 'Select a dungeon and difficulty.' }
 
   const cycleId = options?.leaderboardCycleId?.trim() || ''
-  const cacheKey = meterHofScopeKey(id, difficultyId, cycleId || undefined)
+  const windowStart = options?.windowStart ?? null
+  const useCycleWindow = Boolean(cycleId && windowStart)
+  const cacheKey = meterHofScopeKey(id, difficultyId, useCycleWindow ? cycleId : undefined)
   const cached = getCachedScopeHallOfFame(cacheKey)
   if (cached) return { entries: cached, error: null }
 
-  const windowStart = options?.windowStart ?? null
-  const useCycleWindow = Boolean(cycleId && windowStart)
-
-  if (useCycleWindow) {
-    const [poolRes, pre] = await Promise.all([
-      fetchParticipationPlayersInWindow({
-        dungeonId: id,
-        difficultyId,
-        windowStart: windowStart!,
-        windowEnd: options?.windowEnd ?? null,
-      }),
-      fetchPrecomputedMeterLeaderboard({
-        dungeonId: id,
-        difficultyId,
-        leaderboardCycleId: cycleId,
-        windowStart: windowStart!,
-        windowEnd: options?.windowEnd ?? null,
-      }),
-    ])
-
-    if (poolRes.error) return { entries: [], error: poolRes.error }
-
-    let rows: Omit<MeterHallOfFameEntry, 'currentPercentile'>[] = filterGoldRecordBreaks(
-      poolRes.entries.map((entry) => ({
-        roleBucket: entry.roleBucket,
-        roleLabel: METER_ROLE_BUCKET_LABELS[entry.roleBucket],
-        parseId: entry.parseId,
-        achievedAt: entry.achievedAt,
-        playerKey: entry.playerKey,
-        displayName: entry.displayName,
-        dps: entry.dps,
-        digimonId: entry.digimonId,
-        digimonName: entry.digimonName,
-        iconId: entry.iconId,
-        portraitUrl: entry.portraitUrl,
-      })),
-    )
-    rows = await resolveHofGoldNames(rows)
-
-    const poolByRole: Record<MeterRoleBucket, number[]> =
-      pre.stats?.sortedDpsByBucket ??
-      (rows.length ? sortedDpsPoolsFromHistory(rows) : {
-        melee: [],
-        ranged: [],
-        caster: [],
-        hybrid: [],
-        tank: [],
-        healer: [],
-      })
-
-    const entries: MeterHallOfFameEntry[] = rows.map((entry) => ({
-      ...entry,
-      currentPercentile: dpsToPercentile(entry.dps, poolByRole[entry.roleBucket]),
-    }))
-
-    setCachedScopeHallOfFame(cacheKey, entries)
-    return { entries, error: null }
-  }
-
   const supabase = getMeterAnonSupabase()
   if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
-
-  const legacyCacheKey = meterHofScopeKey(id, difficultyId)
-  const legacyCached = getCachedScopeHallOfFame(legacyCacheKey)
-  if (legacyCached) return { entries: legacyCached, error: null }
 
   const [rpcRes, pre] = await Promise.all([
     supabase.rpc('get_meter_hof_gold_breaks', {
       p_dungeon_id: id,
       p_difficulty_id: difficultyId,
+      p_window_start: useCycleWindow ? windowStart : null,
+      p_window_end: useCycleWindow ? (options?.windowEnd ?? null) : null,
     }),
-    fetchPrecomputedMeterLeaderboard({ dungeonId: id, difficultyId }),
+    fetchPrecomputedMeterLeaderboard({
+      dungeonId: id,
+      difficultyId,
+      leaderboardCycleId: useCycleWindow ? cycleId : undefined,
+      windowStart: useCycleWindow ? windowStart! : undefined,
+      windowEnd: useCycleWindow ? (options?.windowEnd ?? null) : undefined,
+    }),
   ])
 
   if (rpcRes.error) {
@@ -375,21 +322,23 @@ export async function fetchScopeHallOfFameGoldEntries(
 
   const poolByRole: Record<MeterRoleBucket, number[]> =
     pre.stats?.sortedDpsByBucket ??
-    (rows.length ? sortedDpsPoolsFromHistory(rows) : {
-      melee: [],
-      ranged: [],
-      caster: [],
-      hybrid: [],
-      tank: [],
-      healer: [],
-    })
+    (rows.length
+      ? sortedDpsPoolsFromHistory(rows)
+      : {
+          melee: [],
+          ranged: [],
+          caster: [],
+          hybrid: [],
+          tank: [],
+          healer: [],
+        })
 
   const entries: MeterHallOfFameEntry[] = rows.map((entry) => ({
     ...entry,
     currentPercentile: dpsToPercentile(entry.dps, poolByRole[entry.roleBucket]),
   }))
 
-  setCachedScopeHallOfFame(legacyCacheKey, entries)
+  setCachedScopeHallOfFame(cacheKey, entries)
   return { entries, error: null }
 }
 
@@ -464,6 +413,9 @@ async function fetchPlayerMeterScopes(
 }
 
 const HOF_SCOPE_BATCH = 4
+
+/** Default cap on dungeon scopes scanned for profile / theme HoF checks. */
+export const METER_HOF_PROFILE_SCOPE_LIMIT = 24
 
 type ScopeRef = { dungeonId: string; difficultyId: number }
 
@@ -544,38 +496,55 @@ export type PlayerHallOfFameCycleSummary = {
   entries: ProfileHallOfFameEntry[]
 }
 
+/** Per-cycle HoF inductions for one tamer (profile badges, season card). */
+export async function fetchPlayerHallOfFameForCycle(
+  playerKey: string,
+  wikiDungeons: WikiDungeonListItem[],
+  cycle: MeterLeaderboardCycle,
+  options?: Pick<FetchPlayerHallOfFameOptions, 'maxScopes' | 'stopAfterFirst'>,
+): Promise<{ summary: PlayerHallOfFameCycleSummary; error: string | null }> {
+  const window = meterLeaderboardCycleWindow(cycle)
+  const res = await fetchPlayerHallOfFameByScopeBatches(playerKey, wikiDungeons, {
+    maxScopes: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
+    stopAfterFirst: options?.stopAfterFirst,
+    leaderboardCycleId: cycle.id,
+    windowStart: window.windowStart,
+    windowEnd: window.windowEnd,
+  })
+  return {
+    summary: {
+      cycle,
+      recordCount: res.entries.length,
+      entries: res.entries,
+    },
+    error: res.error,
+  }
+}
+
 /** Per-cycle HoF inductions for profile badges and current-season record list. */
 export async function fetchPlayerHallOfFameByCycles(
   playerKey: string,
   wikiDungeons: WikiDungeonListItem[],
-  options?: { maxScopes?: number },
+  options?: { maxScopes?: number; stopAfterFirst?: boolean },
 ): Promise<{ cycles: PlayerHallOfFameCycleSummary[]; error: string | null }> {
   const key = playerKey.trim().toLowerCase()
   if (!key) return { cycles: [], error: null }
 
   const results = await Promise.all(
-    METER_LEADERBOARD_CYCLES.map(async (cycle) => {
-      const window = meterLeaderboardCycleWindow(cycle)
-      const res = await fetchPlayerHallOfFameByScopeBatches(key, wikiDungeons, {
-        maxScopes: options?.maxScopes ?? 24,
-        leaderboardCycleId: cycle.id,
-        windowStart: window.windowStart,
-        windowEnd: window.windowEnd,
-      })
-      return { cycle, res }
-    }),
+    METER_LEADERBOARD_CYCLES.map((cycle) =>
+      fetchPlayerHallOfFameForCycle(key, wikiDungeons, cycle, {
+        maxScopes: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
+        stopAfterFirst: options?.stopAfterFirst,
+      }),
+    ),
   )
 
-  for (const { res } of results) {
-    if (res.error) return { cycles: [], error: res.error }
+  for (const { error } of results) {
+    if (error) return { cycles: [], error }
   }
 
   return {
-    cycles: results.map(({ cycle, res }) => ({
-      cycle,
-      recordCount: res.entries.length,
-      entries: res.entries,
-    })),
+    cycles: results.map(({ summary }) => summary),
     error: null,
   }
 }

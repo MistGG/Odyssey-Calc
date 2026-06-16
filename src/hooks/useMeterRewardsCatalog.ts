@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { isMistMeterShopDev } from '../lib/meterDevShop'
 import {
   fetchMeterPlayerHofRecordCountsByCycle,
+  hofRecordCountForThemeId,
   resolveMeterPlayerKeyForHof,
   userQualifiesForHallOfFameTheme,
 } from '../lib/meterHallOfFameTheme'
@@ -16,6 +17,18 @@ import {
   meterRewardsThemesForUser,
   type MeterRewardTheme,
 } from '../lib/meterThemeShop'
+
+function withHofRecordCounts(
+  themes: MeterRewardTheme[],
+  hofRecordCounts: Record<string, number>,
+): MeterRewardTheme[] {
+  return themes.map((theme) => {
+    if (theme.id === HALL_OF_FAME_THEME_ID || theme.id === MAGIA_HALL_OF_FAME_THEME_ID) {
+      return { ...theme, hofRecordCount: hofRecordCountForThemeId(theme.id, hofRecordCounts) }
+    }
+    return theme
+  })
+}
 
 /** Owned themes for My Rewards — wallet state plus grant-only themes (Mist, Hall of Fame). */
 export function useMeterRewardsCatalog(
@@ -67,9 +80,9 @@ export function useMeterRewardsCatalog(
   }, [supabase, profileDisplayName])
 
   const rewardThemes = useMemo((): MeterRewardTheme[] => {
-    const themes: MeterRewardTheme[] = [...purchasedThemes]
     const olympusCount = hofRecordCounts.olympus ?? 0
     const magiaCount = hofRecordCounts.magia ?? 0
+    const themes: MeterRewardTheme[] = withHofRecordCounts([...purchasedThemes], hofRecordCounts)
 
     if (userQualifiesForHallOfFameTheme(olympusCount)) {
       const hof = getMeterPartyBarTheme(HALL_OF_FAME_THEME_ID)
@@ -83,10 +96,9 @@ export function useMeterRewardsCatalog(
         themes.push({ ...magia, hofRecordCount: magiaCount })
       }
     }
-    return themes
-  }, [purchasedThemes, hofRecordCounts])
 
-  const hofRecordCount = hofRecordCounts.magia ?? 0
+    return withHofRecordCounts(themes, hofRecordCounts)
+  }, [purchasedThemes, hofRecordCounts])
 
   const catalogLoading = walletLoading || hofLoading
 
@@ -94,7 +106,7 @@ export function useMeterRewardsCatalog(
     catalogLoading,
     skeletonCount: catalogLoading ? Math.max(1, rewardThemes.length || 1) : 0,
     rewardThemes,
-    hofRecordCount,
+    hofRecordCounts,
     catalogError,
     refresh: async () => {
       /* wallet refresh repopulates ownedThemeIds; HoF effect re-runs on profile change */

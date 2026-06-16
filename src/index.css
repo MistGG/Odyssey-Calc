@@ -15545,7 +15545,27 @@ a.meter-profile-hof-badge {
 }
 
 .meter-profile-past-seasons__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.meter-profile-past-seasons__toggle {
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.meter-profile-past-seasons__toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .meter-profile-past-seasons__stack {

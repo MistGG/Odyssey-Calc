@@ -25,7 +25,11 @@ import {
   sortPlayerBestParsesByParseScore,
 } from '../lib/meterPlayerProfile'
 import { dpsToPercentile, parseScoreColor } from '../lib/meterPublicStats'
-import { fetchPlayerHallOfFameByCycles, playerHallOfFameCycleSummariesForProfile, type ProfileHallOfFameEntry } from '../lib/meterHallOfFame'
+import {
+  fetchPlayerHallOfFameForCycle,
+  playerHallOfFameCycleSummariesForProfile,
+  type ProfileHallOfFameEntry,
+} from '../lib/meterHallOfFame'
 import {
   getDefaultMeterLeaderboardCycle,
   meterLeaderboardCycleShortLabel,
@@ -61,9 +65,6 @@ export function MeterPlayerProfilePage() {
     Awaited<ReturnType<typeof buildScopeLeaderboardDpsPoolsFromPrecomputed>>
   >(() => new Map())
   const [hofEntries, setHofEntries] = useState<ProfileHallOfFameEntry[]>([])
-  const [hofPastCycles, setHofPastCycles] = useState<
-    Awaited<ReturnType<typeof fetchPlayerHallOfFameByCycles>>['cycles']
-  >([])
   const [hofCurrentCycleId, setHofCurrentCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
   const [hofCurrentCycleShortLabel, setHofCurrentCycleShortLabel] = useState(() =>
     meterLeaderboardCycleShortLabel(getDefaultMeterLeaderboardCycle()),
@@ -84,7 +85,6 @@ export function MeterPlayerProfilePage() {
       setHofLoading(true)
       setHofError(null)
       setHofEntries([])
-      setHofPastCycles([])
       setHofCurrentCycleId(getDefaultMeterLeaderboardCycle().id)
       setHofCurrentCycleShortLabel(meterLeaderboardCycleShortLabel(getDefaultMeterLeaderboardCycle()))
       setHofCurrentSeasonCount(0)
@@ -93,9 +93,10 @@ export function MeterPlayerProfilePage() {
       if (cancelled) return
       setWikiDungeons(dungeons)
 
+      const liveCycle = getDefaultMeterLeaderboardCycle()
       const [leaderboardRes, hofRes] = await Promise.all([
         fetchPlayerMeterLeaderboardEntries(playerKey),
-        fetchPlayerHallOfFameByCycles(playerKey, dungeons, { maxScopes: 50 }),
+        fetchPlayerHallOfFameForCycle(playerKey, dungeons, liveCycle),
       ])
       if (cancelled) return
 
@@ -120,10 +121,9 @@ export function MeterPlayerProfilePage() {
 
       if (hofRes.error) setHofError(hofRes.error)
       else {
-        const profileHof = playerHallOfFameCycleSummariesForProfile(hofRes.cycles)
+        const profileHof = playerHallOfFameCycleSummariesForProfile([hofRes.summary])
         setHofEntries(profileHof.currentCycleEntries)
         setHofCurrentSeasonCount(profileHof.currentCycleRecordCount)
-        setHofPastCycles(profileHof.pastCycles)
         if (profileHof.currentCycle) {
           setHofCurrentCycleId(profileHof.currentCycle.cycle.id)
           setHofCurrentCycleShortLabel(meterLeaderboardCycleShortLabel(profileHof.currentCycle.cycle))
@@ -312,7 +312,7 @@ export function MeterPlayerProfilePage() {
         cycleId={hofCurrentCycleId}
       />
 
-      <MeterPlayerPastSeasonsPanel pastCycles={hofPastCycles} loading={hofLoading} />
+      <MeterPlayerPastSeasonsPanel playerKey={playerKey} wikiDungeons={wikiDungeons} />
 
       <MeterPlayerSharePanel
         playerKey={playerKey}

@@ -15,6 +15,7 @@ import {
   MIST_DEV_REWARD_THEME_ID,
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
+import { hofRecordCountForThemeId } from '../lib/meterHallOfFameTheme'
 import {
   meterThemeShopTierLabelForTheme,
   METER_THEME_UNIQUE_TIER_LABEL,
@@ -171,7 +172,9 @@ export function MeterMyRewardsPage() {
             const isHofTheme = isHallOfFameMeterTheme(theme)
             const isRareTheme = theme.variant === 'rare'
             const isLegendaryTheme = theme.variant === 'legendary'
-            const hofRecordCount = theme.hofRecordCount ?? catalog.hofRecordCount
+            const hofRecordCount = isHofTheme
+              ? hofRecordCountForThemeId(theme.id, catalog.hofRecordCounts)
+              : 0
             return (
               <li
                 key={theme.id}

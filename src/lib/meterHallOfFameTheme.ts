@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   fetchPlayerHallOfFameByCycles,
   fetchPlayerHallOfFameEntries,
+  METER_HOF_PROFILE_SCOPE_LIMIT,
 } from './meterHallOfFame'
 import {
   getMeterLeaderboardCycle,
@@ -17,9 +18,6 @@ import {
   type MeterPartyBarThemeId,
 } from './meterPartyBarThemes'
 
-/** Matches `get_meter_player_scopes` RPC cap (50). */
-const HOF_SCOPE_LIMIT = 50
-
 /** Demo record count for shop / theme previews. */
 export const HOF_PREVIEW_DEMO_RECORD_COUNT = 7
 
@@ -27,6 +25,16 @@ function hofThemeCycleId(themeId: MeterPartyBarThemeId): string | null {
   if (themeId === HALL_OF_FAME_THEME_ID) return 'olympus'
   if (themeId === MAGIA_HALL_OF_FAME_THEME_ID) return 'magia'
   return null
+}
+
+/** Break count for a HoF reward theme card (Olympus vs Magia cycle). */
+export function hofRecordCountForThemeId(
+  themeId: MeterPartyBarThemeId,
+  counts: Record<string, number>,
+): number {
+  const cycleId = hofThemeCycleId(themeId)
+  if (!cycleId) return 0
+  return counts[cycleId] ?? 0
 }
 
 /** Induction count for a cycle — same rules as the profile page (excludes self-record improvements). */
@@ -45,7 +53,8 @@ export async function fetchMeterPlayerHofRecordCount(
   const window = meterLeaderboardCycleWindow(cycle)
   const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
   const { entries, error } = await fetchPlayerHallOfFameEntries(key, dungeons, {
-    maxScopes: HOF_SCOPE_LIMIT,
+    maxScopes: METER_HOF_PROFILE_SCOPE_LIMIT,
+    stopAfterFirst: true,
     leaderboardCycleId: cycle.id,
     windowStart: window.windowStart,
     windowEnd: window.windowEnd,
@@ -72,7 +81,7 @@ export async function fetchMeterPlayerHofRecordCountsByCycle(
 
   const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
   const { cycles, error } = await fetchPlayerHallOfFameByCycles(key, dungeons, {
-    maxScopes: HOF_SCOPE_LIMIT,
+    maxScopes: METER_HOF_PROFILE_SCOPE_LIMIT,
   })
   if (error) return { counts: {}, error }
 

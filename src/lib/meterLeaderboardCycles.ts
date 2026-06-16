@@ -24,8 +24,8 @@ export type MeterLeaderboardCycle = {
  */
 export const MAGIA_CYCLE_START_UTC = '2026-06-16T00:30:00.000Z'
 
-/** Parses before Magia cutover — no practical lower bound (label shows April 20 for display). */
-export const OLYMPUS_CYCLE_START_UTC = '1970-01-01T00:00:00.000Z'
+/** April 20, 2026 00:00 Arizona (America/Phoenix, UTC−7) — Olympus cycle start. */
+export const OLYMPUS_CYCLE_START_UTC = '2026-04-20T07:00:00.000Z'
 
 export const METER_LEADERBOARD_CYCLES: MeterLeaderboardCycle[] = [
   {
