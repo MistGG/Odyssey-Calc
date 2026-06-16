@@ -39,8 +39,11 @@ function parseSnapshot(raw: unknown): MeterProfileShareSnapshot | null {
       favorite && typeof favorite === 'object' && typeof (favorite as { digimonName?: string }).digimonName === 'string'
         ? (favorite as MeterProfileShareSnapshot['favoriteDigimon'])
         : null,
-    hallOfFameRecordCount:
+      hallOfFameRecordCount:
       typeof o.hallOfFameRecordCount === 'number' ? Math.max(0, o.hallOfFameRecordCount) : 0,
+    cycleShortLabel: typeof o.cycleShortLabel === 'string' ? o.cycleShortLabel : undefined,
+    hofBadgeVariant:
+      o.hofBadgeVariant === 'magia' || o.hofBadgeVariant === 'olympus' ? o.hofBadgeVariant : undefined,
     shareCacheKey:
       typeof o.shareCacheKey === 'string' && o.shareCacheKey.trim() ? o.shareCacheKey.trim() : undefined,
   }

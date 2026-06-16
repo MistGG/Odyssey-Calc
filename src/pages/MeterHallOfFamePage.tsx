@@ -8,6 +8,13 @@ import {
   type MeterHallOfFameEntry,
 } from '../lib/meterHallOfFame'
 import { fetchRecentMeterParseSelection } from '../lib/meterDataSource'
+import {
+  getDefaultMeterLeaderboardCycle,
+  getMeterLeaderboardCycle,
+  isMeterLeaderboardCycleLive,
+  METER_LEADERBOARD_CYCLES,
+  meterLeaderboardCycleWindow,
+} from '../lib/meterLeaderboardCycles'
 import { METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
 import {
   dungeonSelectOptions,
@@ -25,10 +32,13 @@ export function MeterHallOfFamePage() {
   const queryDungeonId = searchParams.get('dungeon')?.trim() || ''
   const queryDifficultyRaw = searchParams.get('difficulty')
   const queryDifficultyId = queryDifficultyRaw != null ? Number(queryDifficultyRaw) : null
+  const queryCycleId =
+    searchParams.get('cycle')?.trim() || searchParams.get('patch')?.trim() || ''
 
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
+  const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
   const [bootLoading, setBootLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -66,14 +76,31 @@ export function MeterHallOfFamePage() {
     [wikiDungeons, dungeonId],
   )
 
+  const leaderboardCycle = useMemo(
+    () => getMeterLeaderboardCycle(leaderboardCycleId) ?? getDefaultMeterLeaderboardCycle(),
+    [leaderboardCycleId],
+  )
+
+  const cycleWindow = useMemo(() => meterLeaderboardCycleWindow(leaderboardCycle), [leaderboardCycle])
+
+  useEffect(() => {
+    if (queryCycleId && getMeterLeaderboardCycle(queryCycleId)) {
+      setLeaderboardCycleId(queryCycleId)
+    }
+  }, [queryCycleId])
+
   const syncSearchParams = useCallback(
-    (nextDungeonId: string, nextDifficultyId: number) => {
+    (nextDungeonId: string, nextDifficultyId: number, nextCycleId = leaderboardCycleId) => {
       setSearchParams(
-        { dungeon: nextDungeonId, difficulty: String(nextDifficultyId) },
+        {
+          dungeon: nextDungeonId,
+          difficulty: String(nextDifficultyId),
+          cycle: nextCycleId,
+        },
         { replace: true },
       )
     },
-    [setSearchParams],
+    [leaderboardCycleId, setSearchParams],
   )
 
   const toggleDungeon = useCallback((id: string) => {
@@ -178,7 +205,11 @@ export function MeterHallOfFamePage() {
     setLoadError(null)
 
     void (async () => {
-      const goldRes = await fetchScopeHallOfFameGoldEntries(dungeonId, difficultyId)
+      const goldRes = await fetchScopeHallOfFameGoldEntries(dungeonId, difficultyId, {
+        leaderboardCycleId: leaderboardCycle.id,
+        windowStart: cycleWindow.windowStart,
+        windowEnd: cycleWindow.windowEnd,
+      })
       if (cancelled) return
       if (goldRes.error) {
         setLoadError(goldRes.error)
@@ -205,7 +236,7 @@ export function MeterHallOfFamePage() {
     return () => {
       cancelled = true
     }
-  }, [dungeonId, difficultyId])
+  }, [dungeonId, difficultyId, leaderboardCycle, cycleWindow.windowEnd, cycleWindow.windowStart])
 
   const dungeonName =
     dungeonOptions.find((d) => d.dungeonId === dungeonId)?.dungeonName ?? dungeonId
@@ -214,8 +245,20 @@ export function MeterHallOfFamePage() {
 
   const leaderboardHref =
     dungeonId && difficultyId != null
-      ? `/meter/leaderboard?dungeon=${encodeURIComponent(dungeonId)}&difficulty=${difficultyId}`
+      ? `/meter/leaderboard?dungeon=${encodeURIComponent(dungeonId)}&difficulty=${difficultyId}&cycle=${encodeURIComponent(leaderboardCycle.id)}`
       : '/meter/leaderboard'
+
+  const handleCycleChange = useCallback(
+    (nextCycleId: string) => {
+      setLeaderboardCycleId(nextCycleId)
+      if (dungeonId && difficultyId != null) {
+        syncSearchParams(dungeonId, difficultyId, nextCycleId)
+      } else {
+        setSearchParams({ cycle: nextCycleId }, { replace: true })
+      }
+    },
+    [dungeonId, difficultyId, setSearchParams, syncSearchParams],
+  )
 
   return (
     <div className="meter-parses-page meter-public-page meter-hof-page">
@@ -226,6 +269,30 @@ export function MeterHallOfFamePage() {
         </p>
         <MeterSubNav />
       </header>
+
+      <div className="meter-public-filters">
+        <label className="meter-public-filter">
+          <span className="meter-public-filter-label">Cycle</span>
+          <select
+            value={leaderboardCycle.id}
+            onChange={(e) => handleCycleChange(e.target.value)}
+            disabled={bootLoading}
+          >
+            {METER_LEADERBOARD_CYCLES.map((cycle) => (
+              <option key={cycle.id} value={cycle.id}>
+                {cycle.label}
+                {isMeterLeaderboardCycleLive(cycle) ? ' (live)' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {!isMeterLeaderboardCycleLive(leaderboardCycle) ? (
+        <p className="meter-public-cycle-note meter-parses-muted" role="status">
+          {leaderboardCycle.label}.
+        </p>
+      ) : null}
 
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
 

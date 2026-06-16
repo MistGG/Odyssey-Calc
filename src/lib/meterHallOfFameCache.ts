@@ -12,8 +12,8 @@ type CacheEntry = {
 const memory = new Map<string, CacheEntry>()
 let hydrated = false
 
-export function meterHofScopeKey(dungeonId: string, difficultyId: number): string {
-  return `${dungeonId.trim()}:${difficultyId}`
+export function meterHofScopeKey(dungeonId: string, difficultyId: number, cycleId?: string): string {
+  return `${dungeonId.trim()}:${difficultyId}:${cycleId?.trim() || 'all'}`
 }
 
 function isFresh(entry: CacheEntry | null | undefined): entry is CacheEntry {

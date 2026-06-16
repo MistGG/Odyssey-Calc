@@ -14,11 +14,16 @@ function isFresh(entry: Entry | undefined): entry is Entry {
   return entry != null && Date.now() - entry.fetchedAt < TTL_MS
 }
 
+function leaderboardCacheKey(dungeonId: string, difficultyId: number, leaderboardCycleId: string): string {
+  return `${meterScopeKey(dungeonId, difficultyId)}:${leaderboardCycleId.trim() || 'default'}`
+}
+
 export function getCachedLeaderboardStats(
   dungeonId: string,
   difficultyId: number,
+  leaderboardCycleId = 'default',
 ): MeterPublicAggregates | null {
-  const key = meterScopeKey(dungeonId, difficultyId)
+  const key = leaderboardCacheKey(dungeonId, difficultyId, leaderboardCycleId)
   const entry = memory.get(key)
   return isFresh(entry) ? entry.stats : null
 }
@@ -27,7 +32,8 @@ export function setCachedLeaderboardStats(
   dungeonId: string,
   difficultyId: number,
   stats: MeterPublicAggregates,
+  leaderboardCycleId = 'default',
 ): void {
-  const key = meterScopeKey(dungeonId, difficultyId)
+  const key = leaderboardCacheKey(dungeonId, difficultyId, leaderboardCycleId)
   memory.set(key, { stats, fetchedAt: Date.now() })
 }

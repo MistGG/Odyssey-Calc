@@ -1,21 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
 import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
-import {
-  fetchRecentMeterParseSelection,
-  fetchScopeEligibleParses,
-  loadDigimonRoleMapForMeter,
-} from '../lib/meterDataSource'
+import { fetchRecentMeterParseSelection } from '../lib/meterDataSource'
 import { getCachedLeaderboardStats } from '../lib/meterLeaderboardStatsCache'
-import {
-  aggregatePublicMeterStats,
-  type DigimonDpsSortMode,
-  type MeterPublicAggregates,
-  type PublicMeterParseRow,
-} from '../lib/meterPublicStats'
 import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
+import {
+  getDefaultMeterLeaderboardCycle,
+  getMeterLeaderboardCycle,
+  isMeterLeaderboardCycleLive,
+  METER_LEADERBOARD_CYCLES,
+  meterLeaderboardCycleWindow,
+} from '../lib/meterLeaderboardCycles'
+import type { DigimonDpsSortMode, MeterPublicAggregates } from '../lib/meterPublicStats'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
 import {
   dungeonSelectOptions,
@@ -25,8 +23,6 @@ import {
 
 /** Visible player rows per role (RPC may return more; keeps DOM light). */
 const LEADERBOARD_VISIBLE_PLAYERS = 40
-
-const LEGACY_PARSE_LIMIT = 120
 
 type MeterNavState = { dungeonId?: string; difficultyId?: number }
 
@@ -38,7 +34,8 @@ export function MeterPublicPage() {
   const queryDungeonId = searchParams.get('dungeon')?.trim() || ''
   const queryDifficultyRaw = searchParams.get('difficulty')
   const queryDifficultyId = queryDifficultyRaw != null ? Number(queryDifficultyRaw) : null
-  const [rows, setRows] = useState<PublicMeterParseRow[]>([])
+  const queryCycleId =
+    searchParams.get('cycle')?.trim() || searchParams.get('patch')?.trim() || ''
   const [precomputedStats, setPrecomputedStats] = useState<MeterPublicAggregates | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [bootLoading, setBootLoading] = useState(true)
@@ -46,10 +43,9 @@ export function MeterPublicPage() {
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
-  const [digimonRoleById, setDigimonRoleById] = useState<Map<string, string>>(() => new Map())
   const [digimonDpsSort, setDigimonDpsSort] = useState<DigimonDpsSortMode>('best')
+  const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
   const initialFiltersApplied = useRef(false)
-  const [, startTransition] = useTransition()
 
   const loadBoot = useCallback(async () => {
     setBootLoading(true)
@@ -57,9 +53,6 @@ export function MeterPublicPage() {
     const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
     setWikiDungeons(dungeons)
     setBootLoading(false)
-    void loadDigimonRoleMapForMeter()
-      .then(setDigimonRoleById)
-      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -72,6 +65,19 @@ export function MeterPublicPage() {
     () => difficultySelectOptions(wikiDungeons, dungeonId),
     [wikiDungeons, dungeonId],
   )
+
+  const leaderboardCycle = useMemo(
+    () => getMeterLeaderboardCycle(leaderboardCycleId) ?? getDefaultMeterLeaderboardCycle(),
+    [leaderboardCycleId],
+  )
+
+  const cycleWindow = useMemo(() => meterLeaderboardCycleWindow(leaderboardCycle), [leaderboardCycle])
+
+  useEffect(() => {
+    if (queryCycleId && getMeterLeaderboardCycle(queryCycleId)) {
+      setLeaderboardCycleId(queryCycleId)
+    }
+  }, [queryCycleId])
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
@@ -133,7 +139,6 @@ export function MeterPublicPage() {
 
   useEffect(() => {
     if (!dungeonId || difficultyId == null) {
-      setRows([])
       setPrecomputedStats(null)
       return
     }
@@ -142,48 +147,31 @@ export function MeterPublicPage() {
     setParsesRefreshing(true)
     setLoadError(null)
 
-    const cachedStats = getCachedLeaderboardStats(dungeonId, difficultyId)
+    const cachedStats = getCachedLeaderboardStats(dungeonId, difficultyId, leaderboardCycle.id)
     if (cachedStats) {
       setPrecomputedStats(cachedStats)
-      setRows([])
     }
 
     void (async () => {
-      const pre = await fetchPrecomputedMeterLeaderboard({ dungeonId, difficultyId })
-      if (cancelled) return
-      if (pre.error) setLoadError(pre.error)
-      if (pre.stats) {
-        setPrecomputedStats(pre.stats)
-        setRows([])
-        setParsesRefreshing(false)
-        return
-      }
-
-      const parseRes = await fetchScopeEligibleParses({
+      const pre = await fetchPrecomputedMeterLeaderboard({
         dungeonId,
         difficultyId,
-        limit: LEGACY_PARSE_LIMIT,
+        leaderboardCycleId: leaderboardCycle.id,
+        windowStart: cycleWindow.windowStart,
+        windowEnd: cycleWindow.windowEnd,
       })
       if (cancelled) return
-      if (parseRes.error) setLoadError(parseRes.error)
-      startTransition(() => {
-        setRows(parseRes.rows)
-        setPrecomputedStats(null)
-      })
+      if (pre.error) setLoadError(pre.error)
+      setPrecomputedStats(pre.stats)
       setParsesRefreshing(false)
     })()
 
     return () => {
       cancelled = true
     }
-  }, [dungeonId, difficultyId])
+  }, [dungeonId, difficultyId, leaderboardCycle, cycleWindow.windowEnd, cycleWindow.windowStart])
 
-  const legacyStats = useMemo(() => {
-    if (!dungeonId || difficultyId == null || !rows.length) return null
-    return aggregatePublicMeterStats(rows, digimonRoleById, dungeonId, difficultyId)
-  }, [rows, digimonRoleById, dungeonId, difficultyId])
-
-  const stats = precomputedStats ?? legacyStats
+  const stats = precomputedStats
 
   const digimonByBucket = useMemo(() => {
     if (!stats) return null
@@ -200,6 +188,21 @@ export function MeterPublicPage() {
       </header>
 
       <div className={`meter-public-filters${parsesRefreshing ? ' meter-public-filters--refreshing' : ''}`}>
+        <label className="meter-public-filter">
+          <span className="meter-public-filter-label">Cycle</span>
+          <select
+            value={leaderboardCycle.id}
+            onChange={(e) => setLeaderboardCycleId(e.target.value)}
+            disabled={bootLoading}
+          >
+            {METER_LEADERBOARD_CYCLES.map((cycle) => (
+              <option key={cycle.id} value={cycle.id}>
+                {cycle.label}
+                {isMeterLeaderboardCycleLive(cycle) ? ' (live)' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="meter-public-filter">
           <span className="meter-public-filter-label">Dungeon</span>
           <select
@@ -237,6 +240,16 @@ export function MeterPublicPage() {
           </span>
         ) : null}
       </div>
+
+      {!isMeterLeaderboardCycleLive(leaderboardCycle) ? (
+        <p className="meter-public-cycle-note meter-parses-muted" role="status">
+          {leaderboardCycle.label}. Rankings no longer update.
+        </p>
+      ) : leaderboardCycle.note ? (
+        <p className="meter-public-cycle-note meter-parses-muted" role="status">
+          {leaderboardCycle.note}
+        </p>
+      ) : null}
 
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
       {bootLoading && !dungeonOptions.length ? (

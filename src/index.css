@@ -10504,6 +10504,77 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   filter: drop-shadow(0 1px 0 rgba(255, 236, 179, 0.2)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.95));
 }
 
+/* Magia cycle HoF — same layout as gold Record Breaker, arcane purple/cyan palette */
+.meter-parses-meter-chrome .meter-party-member--magia-hall-of-fame {
+  background: linear-gradient(90deg, rgba(14, 8, 28, 0.9) 0%, rgba(24, 12, 44, 0.84) 100%);
+  box-shadow:
+    inset 3px 0 0 #a78bfa,
+    inset 0 0 0 1px rgba(167, 139, 250, 0.24),
+    0 0 14px rgba(91, 33, 182, 0.35);
+}
+
+.meter-parses-meter-chrome .meter-party-member-bar.meter-party-bar-theme--magia-hall-of-fame {
+  background:
+    repeating-linear-gradient(
+      125deg,
+      transparent 0,
+      transparent 7px,
+      rgba(167, 139, 250, 0.05) 7px,
+      rgba(167, 139, 250, 0.05) 8px
+    ),
+    linear-gradient(
+      92deg,
+      #120818 0%,
+      #1a0e32 22%,
+      #2e1065 48%,
+      #4c1d95 58%,
+      #2a1450 78%,
+      #120818 100%
+    );
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.14);
+}
+
+.meter-parses-meter-chrome .meter-party-hof-count-fx--magia .meter-party-hof-count-fx__arch {
+  filter: drop-shadow(0 0 4px rgba(167, 139, 250, 0.5));
+}
+
+.meter-parses-meter-chrome .meter-party-hof-sparkles--magia .meter-party-hof-sparkle-ray {
+  background: linear-gradient(
+    180deg,
+    rgba(233, 213, 255, 1) 0%,
+    rgba(196, 181, 253, 0.95) 45%,
+    rgba(124, 58, 237, 0.85) 100%
+  );
+}
+
+.meter-parses-meter-chrome .meter-party-hof-count-hero--magia .meter-party-hof-plaque {
+  background: linear-gradient(180deg, #3b0764 0%, #2e1065 38%, #1e1b4b 72%, #120818 100%);
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(233, 213, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.65),
+    0 1px 4px rgba(91, 33, 182, 0.45);
+}
+
+.meter-parses-meter-chrome .meter-party-hof-count-hero--magia .meter-party-hof-plaque__value {
+  color: #ddd6fe;
+  background: linear-gradient(
+    180deg,
+    #c4b5fd 0%,
+    #ddd6fe 22%,
+    #f5f3ff 46%,
+    #ffffff 50%,
+    #e9d5ff 54%,
+    #c4b5fd 72%,
+    #a78bfa 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35)) drop-shadow(0 0 8px rgba(196, 181, 253, 0.45));
+}
+
 @keyframes meter-hof-count-arch-shimmer {
   0%,
   100% {
@@ -15176,8 +15247,88 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   color: #cbd5e1;
 }
 
-.meter-profile-card__stats {
+.meter-profile-hof-badge__cycle {
+  font-size: 0.68rem;
+  line-height: 1.25;
+}
+
+.meter-profile-card__hof-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 0 0.5rem;
+}
+
+.meter-profile-hof-badge--static {
+  cursor: default;
+}
+
+a.meter-profile-hof-badge {
+  text-decoration: none;
+  color: inherit;
+}
+
+.meter-profile-hof-badge--magia {
+  border-color: rgba(167, 139, 250, 0.45);
+  background:
+    linear-gradient(135deg, rgba(167, 139, 250, 0.18) 0%, rgba(91, 33, 182, 0.1) 40%, rgba(0, 0, 0, 0.35) 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25) inset,
+    0 0 20px rgba(124, 58, 237, 0.16);
+}
+
+.meter-profile-hof-badge--magia:hover {
+  border-color: rgba(196, 181, 253, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25) inset,
+    0 0 28px rgba(124, 58, 237, 0.28);
+}
+
+.meter-profile-hof-badge--magia:focus-visible {
+  outline-color: #a78bfa;
+}
+
+.meter-profile-hof-badge--magia .meter-profile-hof-badge__crest-ring {
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.meter-profile-hof-badge--magia .meter-profile-hof-badge__crest-svg {
+  filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.5));
+}
+
+.meter-profile-hof-badge--magia .meter-profile-hof-badge__count {
+  color: #f5f3ff;
+  text-shadow: 0 0 12px rgba(196, 181, 253, 0.55);
+}
+
+.meter-profile-card__hof-medallion--magia {
+  border-color: #c4b5fd;
+  background: linear-gradient(145deg, #e9d5ff 0%, #a78bfa 45%, #6d28d9 100%);
+  color: #120818;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 0 14px rgba(124, 58, 237, 0.55);
+}
+
+.meter-profile-card__stats-wrap {
   grid-area: stats;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.meter-profile-card__stats-cycle {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.meter-profile-card__stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
@@ -15384,6 +15535,29 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   margin: 0;
 }
 
+.meter-profile-hof__empty {
+  margin: 0;
+  padding: 0.15rem 0 0.25rem;
+}
+
+.meter-profile-past-seasons {
+  margin-top: 1rem;
+}
+
+.meter-profile-past-seasons__head {
+  margin-bottom: 0.75rem;
+}
+
+.meter-profile-past-seasons__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.meter-profile-past-seasons__stack .meter-profile-hof-badge {
+  margin: 0;
+}
+
 .meter-profile-hof__list {
   list-style: none;
   margin: 0;
@@ -15553,6 +15727,15 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.meter-profile-bests-panel__eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
 }
 
 .meter-profile-bests-panel__head .meter-parses-section-title {
@@ -22830,5 +23013,35 @@ a.guidebook-monster-panel__loot-btn:hover {
 .guidebook-seals-dungeon-list__diff {
   font-size: 0.68rem;
   padding: 0.1rem 0.35rem;
+}
+
+.meter-public-cycle-note {
+  margin: 0 0 1rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.meter-cycle-theme-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.meter-cycle-theme-preview-card {
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(8, 12, 20, 0.55);
+}
+
+.meter-cycle-theme-preview-sub {
+  margin: -0.35rem 0 0.85rem;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 900px) {
+  .meter-cycle-theme-preview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 

@@ -13,6 +13,7 @@ import { MeterPlayerProfilePage } from './pages/MeterPlayerProfilePage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterActivityPage } from './pages/MeterActivityPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
+import { MeterCycleThemePreviewPage } from './pages/MeterCycleThemePreviewPage'
 import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
 import { CompanionPage } from './pages/CompanionPage'
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="meter/leaderboard" element={<MeterPublicPage />} />
           <Route path="meter/activity" element={<Navigate to="/meter" replace />} />
           <Route path="meter/hall-of-fame" element={<MeterHallOfFamePage />} />
+          <Route path="meter/cycle-theme-preview" element={<MeterCycleThemePreviewPage />} />
           <Route path="meter/search" element={<MeterTamerSearchPage />} />
           <Route path="meter/player/:playerKey" element={<MeterPlayerProfilePage />} />
           <Route path="meter/my-parses" element={<MeterMyParsesPage />} />

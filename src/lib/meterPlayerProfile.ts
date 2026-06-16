@@ -238,6 +238,25 @@ function resolveProfileScopeLabels(
   return { dungeonName, difficultyLabel }
 }
 
+/** Leaderboard rows whose upload time falls in a cycle window (inclusive start, exclusive end). */
+export function filterLeaderboardEntriesInCycleWindow(
+  entries: PlayerLeaderboardEntryRow[],
+  windowStart: string,
+  windowEnd: string | null,
+): PlayerLeaderboardEntryRow[] {
+  const startMs = new Date(windowStart).getTime()
+  const endMs = windowEnd ? new Date(windowEnd).getTime() : null
+  if (!Number.isFinite(startMs)) return entries
+
+  return entries.filter((entry) => {
+    const at = new Date(entry.createdAt).getTime()
+    if (!Number.isFinite(at)) return false
+    if (at < startMs) return false
+    if (endMs != null && Number.isFinite(endMs) && at >= endMs) return false
+    return true
+  })
+}
+
 /** Most frequently used digimon from precomputed leaderboard rows. */
 export function buildPlayerFavoriteDigimonFromLeaderboardEntries(
   entries: PlayerLeaderboardEntryRow[],
@@ -287,6 +306,11 @@ export function buildPlayerFavoriteDigimonFromLeaderboardEntries(
 
 export async function buildScopeLeaderboardDpsPoolsFromPrecomputed(
   bestEntries: PlayerBestParseEntry[],
+  cycle?: {
+    leaderboardCycleId: string
+    windowStart: string
+    windowEnd: string | null
+  },
 ): Promise<Map<string, Record<MeterRoleBucket, number[]>>> {
   const pools = new Map<string, Record<MeterRoleBucket, number[]>>()
   const scopes: Array<{ dungeonId: string; difficultyId: number }> = []
@@ -301,7 +325,12 @@ export async function buildScopeLeaderboardDpsPoolsFromPrecomputed(
 
   await mapPool(scopes, 4, async (scope) => {
     const scopeKey = `${scope.dungeonId}:${scope.difficultyId}`
-    const pre = await fetchPrecomputedMeterLeaderboard(scope)
+    const pre = await fetchPrecomputedMeterLeaderboard({
+      ...scope,
+      leaderboardCycleId: cycle?.leaderboardCycleId,
+      windowStart: cycle?.windowStart,
+      windowEnd: cycle?.windowEnd,
+    })
     if (pre.stats) pools.set(scopeKey, pre.stats.sortedDpsByBucket)
   })
 

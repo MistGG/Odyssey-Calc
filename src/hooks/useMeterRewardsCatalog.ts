@@ -3,11 +3,15 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { isMistMeterShopDev } from '../lib/meterDevShop'
 import {
-  fetchMeterPlayerHofRecordCount,
+  fetchMeterPlayerHofRecordCountsByCycle,
   resolveMeterPlayerKeyForHof,
   userQualifiesForHallOfFameTheme,
 } from '../lib/meterHallOfFameTheme'
-import { getMeterPartyBarTheme, HALL_OF_FAME_THEME_ID } from '../lib/meterPartyBarThemes'
+import {
+  getMeterPartyBarTheme,
+  HALL_OF_FAME_THEME_ID,
+  MAGIA_HALL_OF_FAME_THEME_ID,
+} from '../lib/meterPartyBarThemes'
 import {
   meterRewardsThemesForUser,
   type MeterRewardTheme,
@@ -23,7 +27,7 @@ export function useMeterRewardsCatalog(
 ) {
   const mistDev = isMistMeterShopDev(profileDisplayName, confirmedTamerName)
   const [hofLoading, setHofLoading] = useState(true)
-  const [hofRecordCount, setHofRecordCount] = useState(0)
+  const [hofRecordCounts, setHofRecordCounts] = useState<Record<string, number>>({})
   const [catalogError, setCatalogError] = useState<string | null>(null)
 
   const purchasedThemes = useMemo(
@@ -45,15 +49,15 @@ export function useMeterRewardsCatalog(
       const playerKey = await resolveMeterPlayerKeyForHof(supabase, profileDisplayName)
       if (cancelled) return
       if (!playerKey) {
-        setHofRecordCount(0)
+        setHofRecordCounts({})
         setHofLoading(false)
         return
       }
 
-      const { count, error } = await fetchMeterPlayerHofRecordCount(supabase, playerKey)
+      const { counts, error } = await fetchMeterPlayerHofRecordCountsByCycle(supabase, playerKey)
       if (cancelled) return
       if (error) setCatalogError(error)
-      setHofRecordCount(count)
+      setHofRecordCounts(counts)
       setHofLoading(false)
     })()
 
@@ -64,14 +68,25 @@ export function useMeterRewardsCatalog(
 
   const rewardThemes = useMemo((): MeterRewardTheme[] => {
     const themes: MeterRewardTheme[] = [...purchasedThemes]
-    if (userQualifiesForHallOfFameTheme(hofRecordCount)) {
+    const olympusCount = hofRecordCounts.olympus ?? 0
+    const magiaCount = hofRecordCounts.magia ?? 0
+
+    if (userQualifiesForHallOfFameTheme(olympusCount)) {
       const hof = getMeterPartyBarTheme(HALL_OF_FAME_THEME_ID)
       if (hof && !themes.some((t) => t.id === hof.id)) {
-        themes.push({ ...hof, hofRecordCount })
+        themes.push({ ...hof, hofRecordCount: olympusCount })
+      }
+    }
+    if (userQualifiesForHallOfFameTheme(magiaCount)) {
+      const magia = getMeterPartyBarTheme(MAGIA_HALL_OF_FAME_THEME_ID)
+      if (magia && !themes.some((t) => t.id === magia.id)) {
+        themes.push({ ...magia, hofRecordCount: magiaCount })
       }
     }
     return themes
-  }, [purchasedThemes, hofRecordCount])
+  }, [purchasedThemes, hofRecordCounts])
+
+  const hofRecordCount = hofRecordCounts.magia ?? 0
 
   const catalogLoading = walletLoading || hofLoading
 

@@ -7,6 +7,8 @@ import { proxiedWikiAssetUrl } from './wikiAssetProxy'
 
 export const METER_PROFILE_SHARE_BUCKET = 'meter-profile-shares'
 
+export type MeterProfileShareHofVariant = 'olympus' | 'magia'
+
 export type MeterProfileShareSnapshot = {
   displayName: string
   peakDps: number
@@ -15,6 +17,10 @@ export type MeterProfileShareSnapshot = {
   favoriteDigimon: PlayerFavoriteDigimon | null
   /** Hall of Fame record-break count (strict inductions). */
   hallOfFameRecordCount?: number
+  /** Short cycle label shown on stats / favorite (e.g. Magia Cycle). */
+  cycleShortLabel?: string
+  /** HoF badge art for the current season. */
+  hofBadgeVariant?: MeterProfileShareHofVariant
   /** Changes each generation so Discord treats the share URL as new (cache bust). */
   shareCacheKey?: string
 }
@@ -341,27 +347,49 @@ async function drawPortraitInRing(
 
 const HOF_GOLD = '#e5cc80'
 const HOF_GOLD_LIGHT = '#f0ddb0'
+const HOF_MAGIA = '#a78bfa'
+const HOF_MAGIA_LIGHT = '#ddd6fe'
+
+function shareHofVariant(snapshot: MeterProfileShareSnapshot): MeterProfileShareHofVariant {
+  if (snapshot.hofBadgeVariant === 'magia' || snapshot.hofBadgeVariant === 'olympus') {
+    return snapshot.hofBadgeVariant
+  }
+  return 'olympus'
+}
+
+function shareCycleShortLabel(snapshot: MeterProfileShareSnapshot): string {
+  const label = snapshot.cycleShortLabel?.trim()
+  if (label) return label
+  return shareHofVariant(snapshot) === 'magia' ? 'Magia Cycle' : 'Olympus Cycle'
+}
 
 function drawHallOfFameMedallion(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   count: number,
+  variant: MeterProfileShareHofVariant,
 ) {
   const r = 18
   ctx.save()
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
   const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
-  grad.addColorStop(0, '#fff3c4')
-  grad.addColorStop(0.45, HOF_GOLD)
-  grad.addColorStop(1, '#b8860b')
+  if (variant === 'magia') {
+    grad.addColorStop(0, '#e9d5ff')
+    grad.addColorStop(0.45, HOF_MAGIA)
+    grad.addColorStop(1, '#6d28d9')
+  } else {
+    grad.addColorStop(0, '#fff3c4')
+    grad.addColorStop(0.45, HOF_GOLD)
+    grad.addColorStop(1, '#b8860b')
+  }
   ctx.fillStyle = grad
   ctx.fill()
-  ctx.strokeStyle = HOF_GOLD_LIGHT
+  ctx.strokeStyle = variant === 'magia' ? HOF_MAGIA_LIGHT : HOF_GOLD_LIGHT
   ctx.lineWidth = 3
   ctx.stroke()
-  ctx.fillStyle = '#1a1204'
+  ctx.fillStyle = variant === 'magia' ? '#120818' : '#1a1204'
   ctx.font = '900 16px Segoe UI, system-ui, sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -369,7 +397,13 @@ function drawHallOfFameMedallion(
   ctx.restore()
 }
 
-function drawHallOfFameCrestIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+function drawHallOfFameCrestIcon(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  size: number,
+  variant: MeterProfileShareHofVariant,
+) {
   const s = size / 2
   ctx.save()
   ctx.translate(cx, cy)
@@ -383,17 +417,23 @@ function drawHallOfFameCrestIcon(ctx: CanvasRenderingContext2D, cx: number, cy: 
   }
   ctx.closePath()
   const grad = ctx.createLinearGradient(-s, -s, s, s)
-  grad.addColorStop(0, '#fff3c4')
-  grad.addColorStop(0.5, HOF_GOLD)
-  grad.addColorStop(1, '#b8860b')
+  if (variant === 'magia') {
+    grad.addColorStop(0, '#e9d5ff')
+    grad.addColorStop(0.5, HOF_MAGIA)
+    grad.addColorStop(1, '#6d28d9')
+  } else {
+    grad.addColorStop(0, '#fff3c4')
+    grad.addColorStop(0.5, HOF_GOLD)
+    grad.addColorStop(1, '#b8860b')
+  }
   ctx.fillStyle = grad
   ctx.fill()
-  ctx.strokeStyle = 'rgba(240, 221, 176, 0.5)'
+  ctx.strokeStyle = variant === 'magia' ? 'rgba(196, 181, 253, 0.5)' : 'rgba(240, 221, 176, 0.5)'
   ctx.lineWidth = 1.5
   ctx.stroke()
   ctx.beginPath()
   ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2)
-  ctx.fillStyle = HOF_GOLD
+  ctx.fillStyle = variant === 'magia' ? HOF_MAGIA_LIGHT : HOF_GOLD
   ctx.fill()
   ctx.restore()
 }
@@ -405,31 +445,42 @@ function drawHallOfFameBadge(
   w: number,
   h: number,
   recordCount: number,
+  variant: MeterProfileShareHofVariant,
 ) {
   roundRect(ctx, x, y, w, h, 10)
   const bg = ctx.createLinearGradient(x, y, x + w, y + h)
-  bg.addColorStop(0, 'rgba(229, 204, 128, 0.16)')
-  bg.addColorStop(0.4, 'rgba(184, 134, 11, 0.08)')
-  bg.addColorStop(1, 'rgba(0, 0, 0, 0.35)')
+  if (variant === 'magia') {
+    bg.addColorStop(0, 'rgba(167, 139, 250, 0.18)')
+    bg.addColorStop(0.4, 'rgba(91, 33, 182, 0.1)')
+    bg.addColorStop(1, 'rgba(0, 0, 0, 0.35)')
+  } else {
+    bg.addColorStop(0, 'rgba(229, 204, 128, 0.16)')
+    bg.addColorStop(0.4, 'rgba(184, 134, 11, 0.08)')
+    bg.addColorStop(1, 'rgba(0, 0, 0, 0.35)')
+  }
   ctx.fillStyle = bg
   ctx.fill()
-  ctx.strokeStyle = 'rgba(229, 204, 128, 0.45)'
+  ctx.strokeStyle = variant === 'magia' ? 'rgba(167, 139, 250, 0.45)' : 'rgba(229, 204, 128, 0.45)'
   ctx.lineWidth = 1.5
   ctx.stroke()
 
   const crestCx = x + 28
   const crestCy = y + h / 2
-  drawHallOfFameCrestIcon(ctx, crestCx, crestCy, 34)
+  drawHallOfFameCrestIcon(ctx, crestCx, crestCy, 34, variant)
 
   const textX = x + 54
+  const accent = variant === 'magia' ? HOF_MAGIA : HOF_GOLD
+  const accentLight = variant === 'magia' ? HOF_MAGIA_LIGHT : HOF_GOLD_LIGHT
+  const eyebrow = variant === 'magia' ? 'MAGIA CYCLE' : 'OLYMPUS CYCLE'
+
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
-  ctx.fillStyle = HOF_GOLD
+  ctx.fillStyle = accent
   ctx.font = '800 11px Segoe UI, system-ui, sans-serif'
-  ctx.fillText('HALL OF FAME', textX, y + 14)
+  ctx.fillText(eyebrow, textX, y + 14)
 
   const label = recordCount === 1 ? 'Record break' : 'Record breaks'
-  ctx.fillStyle = HOF_GOLD_LIGHT
+  ctx.fillStyle = accentLight
   ctx.font = '900 28px Segoe UI, system-ui, sans-serif'
   ctx.fillText(String(recordCount), textX, y + 30)
   const countW = ctx.measureText(String(recordCount)).width
@@ -555,10 +606,11 @@ export async function renderMeterProfileShareOgPng(
 
   const favH = 96
   const topBlockH = contentH - favH - 14
-  const statH = (topBlockH - statGap * 2) / 3
   const statY0 = innerTop
 
   const hofCount = Math.max(0, snapshot.hallOfFameRecordCount ?? 0)
+  const hofVariant = shareHofVariant(snapshot)
+  const cycleLabel = shareCycleShortLabel(snapshot)
 
   const fallbackInitial = snapshot.favoriteDigimon
     ? digimonInitial(snapshot.favoriteDigimon.digimonName)
@@ -574,7 +626,7 @@ export async function renderMeterProfileShareOgPng(
   )
 
   if (hofCount > 0) {
-    drawHallOfFameMedallion(ctx, heroCx + ringR * 0.62, heroCy + ringR * 0.62, hofCount)
+    drawHallOfFameMedallion(ctx, heroCx + ringR * 0.62, heroCy + ringR * 0.62, hofCount, hofVariant)
   }
 
   const nameY = innerTop + 6
@@ -591,17 +643,25 @@ export async function renderMeterProfileShareOgPng(
   if (hofCount > 0) {
     const badgeH = 68
     const badgeY = nameY + 22 + 44 + 10
-    drawHallOfFameBadge(ctx, mainX, badgeY, identityW, badgeH, hofCount)
+    drawHallOfFameBadge(ctx, mainX, badgeY, identityW, badgeH, hofCount, hofVariant)
   }
 
   const peakColor = options?.peakDpsColor ?? (snapshot.peakDps > 0 ? '#e2e8f0' : '#64748b')
 
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = '#94a3b8'
+  ctx.font = '700 11px Segoe UI, system-ui, sans-serif'
+  ctx.fillText(cycleLabel.toUpperCase(), statX, statY0 - 2)
+  const statsTop = statY0 + 14
+  const statHAdj = (topBlockH - 14 - statGap * 2) / 3
+
   drawProfileStatBox(
     ctx,
     statX,
-    statY0,
+    statsTop,
     statColW,
-    statH,
+    statHAdj,
     'Peak DPS',
     snapshot.peakDps > 0 ? formatInt(snapshot.peakDps) : '—',
     peakColor,
@@ -609,9 +669,9 @@ export async function renderMeterProfileShareOgPng(
   drawProfileStatBox(
     ctx,
     statX,
-    statY0 + statH + statGap,
+    statsTop + statHAdj + statGap,
     statColW,
-    statH,
+    statHAdj,
     'Best entries',
     String(snapshot.bestEntryCount),
     '#e2e8f0',
@@ -619,9 +679,9 @@ export async function renderMeterProfileShareOgPng(
   drawProfileStatBox(
     ctx,
     statX,
-    statY0 + (statH + statGap) * 2,
+    statsTop + (statHAdj + statGap) * 2,
     statColW,
-    statH,
+    statHAdj,
     'Dungeons',
     String(snapshot.dungeonCount),
     '#e2e8f0',
@@ -666,7 +726,7 @@ export async function renderMeterProfileShareOgPng(
 
     const parseLabel = `Top DPS in ${snapshot.favoriteDigimon.parseCount} parse${
       snapshot.favoriteDigimon.parseCount === 1 ? '' : 's'
-    }`
+    } · ${cycleLabel}`
     ctx.fillStyle = '#94a3b8'
     ctx.font = '500 16px Segoe UI, system-ui, sans-serif'
     ctx.fillText(parseLabel, textX, iconCy + 14)
@@ -713,13 +773,14 @@ export function buildMeterProfileShareHtml(options: {
   const { snapshot, sharePageUrl, ogImageUrl, appUrl } = options
   const title = `${snapshot.displayName} — Meter profile`
   const hofCount = Math.max(0, snapshot.hallOfFameRecordCount ?? 0)
+  const cycleLabel = shareCycleShortLabel(snapshot)
   const hofPart =
     hofCount > 0
-      ? ` · ${hofCount} Hall of Fame record break${hofCount === 1 ? '' : 's'}`
+      ? ` · ${hofCount} ${cycleLabel} record break${hofCount === 1 ? '' : 's'}`
       : ''
   const description = snapshot.favoriteDigimon
-    ? `Peak ${formatInt(snapshot.peakDps)} DPS${hofPart} · Favorite ${snapshot.favoriteDigimon.digimonName} — Odyssey Calc`
-    : `Peak ${formatInt(snapshot.peakDps)} DPS${hofPart} · ${snapshot.bestEntryCount} best parses — Odyssey Calc`
+    ? `Peak ${formatInt(snapshot.peakDps)} DPS (${cycleLabel})${hofPart} · Favorite ${snapshot.favoriteDigimon.digimonName} — Odyssey Calc`
+    : `Peak ${formatInt(snapshot.peakDps)} DPS (${cycleLabel})${hofPart} · ${snapshot.bestEntryCount} best parses — Odyssey Calc`
 
   return `<!DOCTYPE html>
 <html lang="en">

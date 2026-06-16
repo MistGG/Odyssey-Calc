@@ -21,6 +21,8 @@ export type PrecomputedLeaderboardParams = {
   limitPerRole?: number
   windowStart?: string | null
   windowEnd?: string | null
+  /** Cache/dedupe key per cycle (defaults to live). */
+  leaderboardCycleId?: string
 }
 
 type PlayerRow = {
@@ -80,8 +82,9 @@ function mapDigimonRow(row: DigimonRow): DigimonBarEntry {
   }
 }
 
-function precomputedScopeKey(dungeonId: string, difficultyId: number): string {
-  return `${dungeonId.trim()}:${difficultyId}`
+function precomputedScopeKey(dungeonId: string, difficultyId: number, leaderboardCycleId?: string): string {
+  const cycle = leaderboardCycleId?.trim() || 'live'
+  return `${dungeonId.trim()}:${difficultyId}:${cycle}`
 }
 
 export async function fetchPrecomputedMeterLeaderboard(
@@ -93,10 +96,11 @@ export async function fetchPrecomputedMeterLeaderboard(
     return { stats: null, error: 'Select a dungeon and difficulty.' }
   }
 
-  const cached = getCachedLeaderboardStats(dungeonId, difficultyId)
+  const leaderboardCycleId = params.leaderboardCycleId?.trim() || 'live'
+  const cached = getCachedLeaderboardStats(dungeonId, difficultyId, leaderboardCycleId)
   if (cached) return { stats: cached, error: null }
 
-  const inflightKey = precomputedScopeKey(dungeonId, difficultyId)
+  const inflightKey = precomputedScopeKey(dungeonId, difficultyId, leaderboardCycleId)
   const existing = precomputedInflight.get(inflightKey)
   if (existing) return existing
 
@@ -191,7 +195,7 @@ async function fetchPrecomputedMeterLeaderboardUncached(
     /* keep RPC names */
   }
 
-  setCachedLeaderboardStats(dungeonId, difficultyId, stats)
+  setCachedLeaderboardStats(dungeonId, difficultyId, stats, params.leaderboardCycleId?.trim() || 'live')
   return { stats, error: null }
 }
 
@@ -206,38 +210,57 @@ export async function resolvePrecomputedLeaderboardNames(
   }
 }
 
-export type ParticipationPoolEntry = PlayerRankEntry & { roleBucket: MeterRoleBucket }
+export type ParticipationPoolEntry = PlayerRankEntry & {
+  roleBucket: MeterRoleBucket
+  parseId: string
+  achievedAt: string
+}
+
+type ParticipationRow = PlayerRow & {
+  parse_id?: string | null
+  created_at?: string | null
+}
 
 export async function fetchParticipationPlayersInWindow(
   params: PrecomputedLeaderboardParams,
 ): Promise<{ entries: ParticipationPoolEntry[]; error: string | null }> {
   const supabase = getMeterAnonSupabase()
   if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
-  if (!params.windowStart || !params.windowEnd) return { entries: [], error: null }
+  if (!params.windowStart) return { entries: [], error: null }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('meter_leaderboard_entries')
     .select(
-      'role_bucket, player_key, display_name, dps, digimon_id, digimon_name, icon_id, portrait_url',
+      'role_bucket, player_key, display_name, dps, digimon_id, digimon_name, icon_id, portrait_url, parse_id, created_at',
     )
     .eq('dungeon_id', params.dungeonId.trim())
     .eq('difficulty_id', params.difficultyId)
     .gte('created_at', params.windowStart)
-    .lt('created_at', params.windowEnd)
+
+  if (params.windowEnd) {
+    query = query.lt('created_at', params.windowEnd)
+  }
+
+  const { data, error } = await query
 
   if (error) return { entries: [], error: error.message }
 
-  const entries = ((data ?? []) as PlayerRow[])
-    .filter((row): row is PlayerRow & { role_bucket: MeterRoleBucket } => isRoleBucket(row.role_bucket))
+  const entries = ((data ?? []) as ParticipationRow[])
+    .filter((row): row is ParticipationRow & { role_bucket: MeterRoleBucket } => isRoleBucket(row.role_bucket))
     .map((row) => ({
       ...mapPlayerRow(row),
       roleBucket: row.role_bucket,
+      parseId: row.parse_id?.trim?.() ?? String(row.parse_id ?? '').trim(),
+      achievedAt: row.created_at ?? '',
     }))
+    .filter((entry) => entry.parseId && entry.dps > 0)
   const resolved = await applyOfficialNamesToPlayerRankEntries(entries).catch(() => entries)
   return {
     entries: resolved.map((entry, i) => ({
       ...entry,
       roleBucket: entries[i]!.roleBucket,
+      parseId: entries[i]!.parseId,
+      achievedAt: entries[i]!.achievedAt,
     })),
     error: null,
   }

@@ -3,6 +3,7 @@ import { isShopPurchasableMeterThemeId } from './meterThemeGrants'
 import {
   getMeterPartyBarTheme,
   HALL_OF_FAME_THEME_ID,
+  MAGIA_HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
   OLYMPOS_XII_COMMON_SHOP_THEMES,
   OLYMPOS_XII_RARE_METER_PARTY_BAR_THEMES,
@@ -39,6 +40,9 @@ export function meterThemeShopPriceForTheme(theme: MeterPartyBarTheme): number {
 }
 
 export function meterThemeShopTierLabelForTheme(theme: MeterPartyBarTheme): string {
+  if (theme.id === HALL_OF_FAME_THEME_ID || theme.id === MAGIA_HALL_OF_FAME_THEME_ID) {
+    return METER_THEME_HOF_TIER_LABEL
+  }
   if (theme.variant === 'rare') return METER_THEME_SHOP_RARE_TIER_LABEL
   if (theme.variant === 'legendary') return 'Legendary'
   return METER_THEME_SHOP_TIER_LABEL
@@ -106,6 +110,7 @@ const REWARDS_THEME_BAR_ORDER = new Map(
 function meterRewardsThemeSortKey(theme: MeterPartyBarTheme): [tier: number, barIndex: number] {
   if (theme.id === MIST_DEV_REWARD_THEME_ID) return [0, 0]
   if (theme.id === HALL_OF_FAME_THEME_ID) return [0, 1]
+  if (theme.id === MAGIA_HALL_OF_FAME_THEME_ID) return [0, 2]
   if (theme.variant === 'legendary') {
     return [1, REWARDS_THEME_BAR_ORDER.get(theme.barStyleId) ?? 99]
   }

@@ -10,14 +10,13 @@ import { buildThemePreviewRows, MeterThemePreview } from '../components/MeterThe
 import { useMeterRewards } from '../hooks/useMeterRewards'
 import {
   getMeterPartyBarTheme,
-  HALL_OF_FAME_THEME_ID,
+  isHallOfFameMeterTheme,
   meterThemeRewardsCardTitle,
   MIST_DEV_REWARD_THEME_ID,
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
 import {
   meterThemeShopTierLabelForTheme,
-  METER_THEME_HOF_TIER_LABEL,
   METER_THEME_UNIQUE_TIER_LABEL,
   previewDigimonForTheme,
 } from '../lib/meterThemeShop'
@@ -169,7 +168,7 @@ export function MeterMyRewardsPage() {
             const equipped = rewards.equippedThemeId === theme.id
             const confirming = confirmEquipId === theme.id
             const isUniqueTheme = theme.id === MIST_DEV_REWARD_THEME_ID
-            const isHofTheme = theme.id === HALL_OF_FAME_THEME_ID
+            const isHofTheme = isHallOfFameMeterTheme(theme)
             const isRareTheme = theme.variant === 'rare'
             const isLegendaryTheme = theme.variant === 'legendary'
             const hofRecordCount = theme.hofRecordCount ?? catalog.hofRecordCount
@@ -184,9 +183,7 @@ export function MeterMyRewardsPage() {
                   >
                     {isUniqueTheme
                       ? METER_THEME_UNIQUE_TIER_LABEL
-                      : isHofTheme
-                        ? METER_THEME_HOF_TIER_LABEL
-                        : meterThemeShopTierLabelForTheme(theme)}
+                      : meterThemeShopTierLabelForTheme(theme)}
                   </span>
                   <h3 className="meter-shop-card-title">
                     {meterThemeRewardsCardTitle(theme, hofRecordCount)}

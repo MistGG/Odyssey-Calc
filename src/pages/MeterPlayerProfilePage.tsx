@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth'
 import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { MeterPlayerProfileCard } from '../components/MeterPlayerProfileCard'
 import { MeterPlayerHallOfFameCard } from '../components/MeterPlayerHallOfFameCard'
+import { MeterPlayerPastSeasonsPanel } from '../components/MeterPlayerPastSeasonsPanel'
 import { MeterPlayerSharePanel } from '../components/MeterPlayerSharePanel'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { digimonPortraitUrl } from '../lib/digimonImage'
@@ -17,13 +18,19 @@ import {
   buildPlayerFavoriteDigimonFromLeaderboardEntries,
   buildScopeLeaderboardDpsPoolsFromPrecomputed,
   displayNameFromLeaderboardEntries,
+  filterLeaderboardEntriesInCycleWindow,
   leaderboardDpsPoolForBestEntry,
   METER_PROFILE_IDENTITY_NOTICE,
   normalizeRoutePlayerKey,
   sortPlayerBestParsesByParseScore,
 } from '../lib/meterPlayerProfile'
 import { dpsToPercentile, parseScoreColor } from '../lib/meterPublicStats'
-import { fetchPlayerHallOfFameEntries, type ProfileHallOfFameEntry } from '../lib/meterHallOfFame'
+import { fetchPlayerHallOfFameByCycles, playerHallOfFameCycleSummariesForProfile, type ProfileHallOfFameEntry } from '../lib/meterHallOfFame'
+import {
+  getDefaultMeterLeaderboardCycle,
+  meterLeaderboardCycleShortLabel,
+  meterLeaderboardCycleWindow,
+} from '../lib/meterLeaderboardCycles'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 
 type ProfileLocationState = {
@@ -54,6 +61,14 @@ export function MeterPlayerProfilePage() {
     Awaited<ReturnType<typeof buildScopeLeaderboardDpsPoolsFromPrecomputed>>
   >(() => new Map())
   const [hofEntries, setHofEntries] = useState<ProfileHallOfFameEntry[]>([])
+  const [hofPastCycles, setHofPastCycles] = useState<
+    Awaited<ReturnType<typeof fetchPlayerHallOfFameByCycles>>['cycles']
+  >([])
+  const [hofCurrentCycleId, setHofCurrentCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
+  const [hofCurrentCycleShortLabel, setHofCurrentCycleShortLabel] = useState(() =>
+    meterLeaderboardCycleShortLabel(getDefaultMeterLeaderboardCycle()),
+  )
+  const [hofCurrentSeasonCount, setHofCurrentSeasonCount] = useState(0)
   const [hofLoading, setHofLoading] = useState(true)
   const [hofError, setHofError] = useState<string | null>(null)
 
@@ -69,6 +84,10 @@ export function MeterPlayerProfilePage() {
       setHofLoading(true)
       setHofError(null)
       setHofEntries([])
+      setHofPastCycles([])
+      setHofCurrentCycleId(getDefaultMeterLeaderboardCycle().id)
+      setHofCurrentCycleShortLabel(meterLeaderboardCycleShortLabel(getDefaultMeterLeaderboardCycle()))
+      setHofCurrentSeasonCount(0)
 
       const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
       if (cancelled) return
@@ -76,24 +95,40 @@ export function MeterPlayerProfilePage() {
 
       const [leaderboardRes, hofRes] = await Promise.all([
         fetchPlayerMeterLeaderboardEntries(playerKey),
-        fetchPlayerHallOfFameEntries(playerKey, dungeons, { maxScopes: 50 }),
+        fetchPlayerHallOfFameByCycles(playerKey, dungeons, { maxScopes: 50 }),
       ])
       if (cancelled) return
 
       if (leaderboardRes.error) setLoadError(leaderboardRes.error)
       setLeaderboardEntries(leaderboardRes.entries)
 
-      const bestFromEntries = buildPlayerBestParsesFromLeaderboardEntries(
+      const cycleWindow = meterLeaderboardCycleWindow(getDefaultMeterLeaderboardCycle())
+      const cycleEntries = filterLeaderboardEntriesInCycleWindow(
         leaderboardRes.entries,
-        dungeons,
+        cycleWindow.windowStart,
+        cycleWindow.windowEnd,
       )
-      const pools = await buildScopeLeaderboardDpsPoolsFromPrecomputed(bestFromEntries)
+      const bestFromEntries = buildPlayerBestParsesFromLeaderboardEntries(cycleEntries, dungeons)
+      const pools = await buildScopeLeaderboardDpsPoolsFromPrecomputed(bestFromEntries, {
+        leaderboardCycleId: getDefaultMeterLeaderboardCycle().id,
+        windowStart: cycleWindow.windowStart,
+        windowEnd: cycleWindow.windowEnd,
+      })
       if (cancelled) return
       setScopeLeaderboardPools(pools)
       setLoading(false)
 
       if (hofRes.error) setHofError(hofRes.error)
-      else setHofEntries(hofRes.entries)
+      else {
+        const profileHof = playerHallOfFameCycleSummariesForProfile(hofRes.cycles)
+        setHofEntries(profileHof.currentCycleEntries)
+        setHofCurrentSeasonCount(profileHof.currentCycleRecordCount)
+        setHofPastCycles(profileHof.pastCycles)
+        if (profileHof.currentCycle) {
+          setHofCurrentCycleId(profileHof.currentCycle.cycle.id)
+          setHofCurrentCycleShortLabel(meterLeaderboardCycleShortLabel(profileHof.currentCycle.cycle))
+        }
+      }
       setHofLoading(false)
     })()
 
@@ -107,17 +142,32 @@ export function MeterPlayerProfilePage() {
     return displayNameFromLeaderboardEntries(leaderboardEntries, playerKey) || playerKey
   }, [nav?.displayName, leaderboardEntries, playerKey])
 
+  const currentCycleWindow = useMemo(
+    () => meterLeaderboardCycleWindow(getDefaultMeterLeaderboardCycle()),
+    [],
+  )
+
+  const cycleLeaderboardEntries = useMemo(
+    () =>
+      filterLeaderboardEntriesInCycleWindow(
+        leaderboardEntries,
+        currentCycleWindow.windowStart,
+        currentCycleWindow.windowEnd,
+      ),
+    [leaderboardEntries, currentCycleWindow.windowEnd, currentCycleWindow.windowStart],
+  )
+
   const favoriteDigimon = useMemo(
-    () => buildPlayerFavoriteDigimonFromLeaderboardEntries(leaderboardEntries),
-    [leaderboardEntries],
+    () => buildPlayerFavoriteDigimonFromLeaderboardEntries(cycleLeaderboardEntries),
+    [cycleLeaderboardEntries],
   )
 
   const bestParses = useMemo(
     () =>
-      leaderboardEntries.length
-        ? buildPlayerBestParsesFromLeaderboardEntries(leaderboardEntries, wikiDungeons)
+      cycleLeaderboardEntries.length
+        ? buildPlayerBestParsesFromLeaderboardEntries(cycleLeaderboardEntries, wikiDungeons)
         : [],
-    [leaderboardEntries, wikiDungeons],
+    [cycleLeaderboardEntries, wikiDungeons],
   )
 
   const sortedBestParses = useMemo(
@@ -166,9 +216,21 @@ export function MeterPlayerProfilePage() {
       bestEntryCount: bestParses.length,
       dungeonCount,
       favoriteDigimon,
-      hallOfFameRecordCount: hofEntries.length,
+      hallOfFameRecordCount: hofCurrentSeasonCount,
+      cycleShortLabel: hofCurrentCycleShortLabel,
+      hofBadgeVariant: hofCurrentCycleId === 'magia' ? 'magia' : 'olympus',
     }
-  }, [loading, displayName, peakDps, bestParses.length, dungeonCount, favoriteDigimon, hofEntries.length])
+  }, [
+    loading,
+    displayName,
+    peakDps,
+    bestParses.length,
+    dungeonCount,
+    favoriteDigimon,
+    hofCurrentSeasonCount,
+    hofCurrentCycleShortLabel,
+    hofCurrentCycleId,
+  ])
 
   const backTo = nav?.fromMeter?.dungeonId
     ? {
@@ -225,7 +287,17 @@ export function MeterPlayerProfilePage() {
         dungeonCount={dungeonCount}
         loading={loading}
         loadProgress={null}
-        hallOfFameRecordCount={hofEntries.length}
+        currentSeasonBadge={
+          hofCurrentSeasonCount > 0
+            ? {
+                variant: hofCurrentCycleId === 'magia' ? 'magia' : 'olympus',
+                recordCount: hofCurrentSeasonCount,
+                cycleShortLabel: hofCurrentCycleShortLabel,
+              }
+            : null
+        }
+        favoriteDigimonCycleLabel={hofCurrentCycleShortLabel}
+        statsCycleLabel={hofCurrentCycleShortLabel}
         hallOfFameLoading={hofLoading}
         backTo={backTo}
       />
@@ -233,7 +305,14 @@ export function MeterPlayerProfilePage() {
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
       {hofError ? <p className="meter-parses-error meter-parses-error--center">{hofError}</p> : null}
 
-      <MeterPlayerHallOfFameCard entries={hofEntries} loading={hofLoading} />
+      <MeterPlayerHallOfFameCard
+        entries={hofEntries}
+        loading={hofLoading}
+        cycleShortLabel={hofCurrentCycleShortLabel}
+        cycleId={hofCurrentCycleId}
+      />
+
+      <MeterPlayerPastSeasonsPanel pastCycles={hofPastCycles} loading={hofLoading} />
 
       <MeterPlayerSharePanel
         playerKey={playerKey}
@@ -246,7 +325,10 @@ export function MeterPlayerProfilePage() {
       {!loading ? (
         <section className="meter-profile-bests-panel meter-parses-meter-chrome">
           <div className="meter-profile-bests-panel__head">
-            <h3 className="meter-parses-section-title">Best parses</h3>
+            <div>
+              <p className="meter-profile-bests-panel__eyebrow">{hofCurrentCycleShortLabel}</p>
+              <h3 className="meter-parses-section-title">Best parses</h3>
+            </div>
             <span className="meter-profile-bests-panel__count">
               {bestParses.length} {bestParses.length === 1 ? 'entry' : 'entries'}
             </span>
@@ -255,7 +337,7 @@ export function MeterPlayerProfilePage() {
             <p className="meter-parses-muted meter-profile-bests-panel__empty">
               {showIdentityNotice
                 ? METER_PROFILE_IDENTITY_NOTICE
-                : 'No ranked parses found for this tamer yet.'}
+                : 'No ranked parses this season yet.'}
             </p>
           ) : (
             <div className="meter-profile-bests-panel__table-wrap meter-scroll--themed">

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { MeterProfileHallOfFameBadge } from './MeterProfileHallOfFameBadge'
+import { MeterProfileHallOfFameBadge, type MeterProfileHofBadgeVariant } from './MeterProfileHallOfFameBadge'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import { parseScoreColor, dpsToPercentile } from '../lib/meterPublicStats'
 import type { PlayerFavoriteDigimon } from '../lib/meterPlayerProfile'
@@ -22,7 +22,9 @@ export function MeterPlayerProfileCard({
   dungeonCount,
   loading,
   loadProgress,
-  hallOfFameRecordCount,
+  currentSeasonBadge,
+  favoriteDigimonCycleLabel,
+  statsCycleLabel,
   hallOfFameLoading,
   backTo,
 }: {
@@ -34,7 +36,13 @@ export function MeterPlayerProfileCard({
   dungeonCount: number
   loading: boolean
   loadProgress: { done: number; total: number } | null
-  hallOfFameRecordCount: number
+  currentSeasonBadge: {
+    variant: MeterProfileHofBadgeVariant
+    recordCount: number
+    cycleShortLabel: string
+  } | null
+  favoriteDigimonCycleLabel: string
+  statsCycleLabel: string
   hallOfFameLoading: boolean
   backTo: { pathname: string; state?: unknown }
 }) {
@@ -76,15 +84,6 @@ export function MeterPlayerProfileCard({
                 <span className="meter-profile-card__portrait-fallback">{tamerInitial(displayName)}</span>
               )}
             </div>
-            {!hallOfFameLoading && hallOfFameRecordCount > 0 ? (
-              <span
-                className="meter-profile-card__hof-medallion"
-                title={`${hallOfFameRecordCount} Hall of Fame record break${hallOfFameRecordCount === 1 ? '' : 's'}`}
-                aria-hidden
-              >
-                {hallOfFameRecordCount}
-              </span>
-            ) : null}
           </div>
         </div>
 
@@ -92,12 +91,21 @@ export function MeterPlayerProfileCard({
           <p className="meter-profile-card__eyebrow">Tamer</p>
           <h2 className="meter-profile-card__name">{displayName}</h2>
 
-          {!hallOfFameLoading ? (
-            <MeterProfileHallOfFameBadge recordCount={hallOfFameRecordCount} />
+          {!hallOfFameLoading && currentSeasonBadge && currentSeasonBadge.recordCount > 0 ? (
+            <div className="meter-profile-card__hof-badges">
+              <MeterProfileHallOfFameBadge
+                variant={currentSeasonBadge.variant}
+                recordCount={currentSeasonBadge.recordCount}
+                cycleShortLabel={currentSeasonBadge.cycleShortLabel}
+                scrollToRecordBreaks
+              />
+            </div>
           ) : null}
         </div>
 
-        <dl className="meter-profile-card__stats">
+        <div className="meter-profile-card__stats-wrap">
+          <p className="meter-profile-card__stats-cycle">{statsCycleLabel}</p>
+          <dl className="meter-profile-card__stats" aria-label={`${statsCycleLabel} stats`}>
           <div className="meter-profile-card__stat">
             <dt>Peak DPS</dt>
             <dd style={peakColor ? { color: peakColor } : undefined}>
@@ -113,6 +121,7 @@ export function MeterPlayerProfileCard({
             <dd>{loading && dungeonCount === 0 ? '—' : dungeonCount}</dd>
           </div>
         </dl>
+        </div>
 
         <div className="meter-profile-card__favorite">
           <span className="meter-profile-card__favorite-label">Favorite digimon</span>
@@ -133,7 +142,7 @@ export function MeterPlayerProfileCard({
                 <span className="meter-profile-card__favorite-name">{favoriteDigimon.digimonName}</span>
                 <span className="meter-profile-card__favorite-meta">
                   Top DPS in {favoriteDigimon.parseCount} parse
-                  {favoriteDigimon.parseCount === 1 ? '' : 's'}
+                  {favoriteDigimon.parseCount === 1 ? '' : 's'} · {favoriteDigimonCycleLabel}
                 </span>
               </div>
             </div>

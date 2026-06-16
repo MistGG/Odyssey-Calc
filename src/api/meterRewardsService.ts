@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import {
-  fetchMeterPlayerHofRecordCount,
+  fetchMeterPlayerHofRecordCountForTheme,
   resolveMeterPlayerKeyForHof,
   userQualifiesForHallOfFameTheme,
 } from '../lib/meterHallOfFameTheme'
@@ -12,6 +12,7 @@ import { isGrantOnlyMeterThemeId, isShopPurchasableMeterThemeId } from '../lib/m
 import {
   clearEquippedMeterPartyBarThemeId,
   HALL_OF_FAME_THEME_ID,
+  MAGIA_HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
   writeEquippedMeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
@@ -66,19 +67,25 @@ export async function equipMeterTheme(
       await upsertEquippedTheme(supabase, themeId)
       return { ok: true, error: null }
     }
-    if (themeId === HALL_OF_FAME_THEME_ID) {
+    if (themeId === HALL_OF_FAME_THEME_ID || themeId === MAGIA_HALL_OF_FAME_THEME_ID) {
       const playerKey = await resolveMeterPlayerKeyForHof(
         supabase,
         options?.profileDisplayName ?? null,
       )
       if (playerKey) {
-        const { count } = await fetchMeterPlayerHofRecordCount(supabase, playerKey)
+        const { count } = await fetchMeterPlayerHofRecordCountForTheme(supabase, playerKey, themeId)
         if (userQualifiesForHallOfFameTheme(count)) {
           await upsertEquippedTheme(supabase, themeId)
           return { ok: true, error: null }
         }
       }
-      return { ok: false, error: 'Earn a Hall of Fame record break to unlock this theme.' }
+      return {
+        ok: false,
+        error:
+          themeId === MAGIA_HALL_OF_FAME_THEME_ID
+            ? 'Earn a Magia cycle record break to unlock this theme.'
+            : 'Earn a Hall of Fame record break to unlock this theme.',
+      }
     }
     if (isGrantOnlyMeterThemeId(themeId)) {
       return { ok: false, error: 'You have not earned this theme yet.' }
