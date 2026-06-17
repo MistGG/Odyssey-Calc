@@ -3,23 +3,29 @@ import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from './meterRoleBuckets
 /**
  * Community clear event config.
  *
- * Set `leaderboardsLive` to true once Hard is available in-game and uploads should rank.
+ * When delayed: keep `scheduleAnnounced: false` and date fields null / TBD labels.
+ * To go live: set scheduleAnnounced true, fill in dates, set leaderboardsLive when Hard is in-game.
  */
 export const MAY_CLEAR_EVENT = {
   eventTitle: 'Dungeon Clear Challenge',
-  eventDateLabel: 'June 4 - June 11, 2026',
+  /** Shown in hero eyebrow / theme chrome. */
+  eventThemeLabel: 'Dragon Emperor · Examon',
+  /** False while dates are not finalized (event cannot end automatically). */
+  scheduleAnnounced: false,
+  eventDateLabel: 'TBD',
   /** Display label for the full upload window (start through cutoff). */
-  eventWindowLabel: 'June 4 - June 11, 2026 04:00 UTC',
-  eventDateIso: '2026-06-04',
-  /** Hard cutoff for uploads: June 11, 2026, 04:00 UTC. */
-  eventDateEndIso: '2026-06-11T04:00:00.000Z',
-  eventEndUtcLabel: 'June 11, 2026, 04:00 UTC',
+  eventWindowLabel: 'Date TBD',
+  /** UTC calendar day the upload window opens (YYYY-MM-DD), or null while TBD. */
+  eventDateIso: null as string | null,
+  /** Hard cutoff for uploads (ISO instant), or null while TBD. */
+  eventDateEndIso: null as string | null,
+  eventEndUtcLabel: 'TBD',
   difficultyLabel: 'Hard',
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
   /** Show the selected dungeon on the event page. */
   dungeonAnnounced: true,
-  /** Live leaderboards off until Hard is live in-game. */
+  /** Live leaderboards off until Hard is live in-game. Dev / preview URL can still show them. */
   leaderboardsLive: false,
   dungeonName: 'Dragon Dimension',
   /** Fallback wiki id when the list is unavailable or the name changes. */
@@ -38,6 +44,28 @@ export type MayClearEventDungeon = {
   dungeonName: string
 }
 
+export type MayClearEventWindow = {
+  windowStart: string
+  windowEnd: string
+}
+
+export function isMayClearEventScheduleAnnounced(): boolean {
+  return (
+    MAY_CLEAR_EVENT.scheduleAnnounced &&
+    Boolean(MAY_CLEAR_EVENT.eventDateIso?.trim()) &&
+    Boolean(MAY_CLEAR_EVENT.eventDateEndIso?.trim())
+  )
+}
+
+/** Upload window for leaderboard filtering; null while schedule is TBD. */
+export function mayClearEventWindow(): MayClearEventWindow | null {
+  if (!isMayClearEventScheduleAnnounced()) return null
+  return {
+    windowStart: `${MAY_CLEAR_EVENT.eventDateIso}T00:00:00.000Z`,
+    windowEnd: MAY_CLEAR_EVENT.eventDateEndIso!,
+  }
+}
+
 export function isMayClearEventDungeonAnnounced(): boolean {
   return MAY_CLEAR_EVENT.dungeonAnnounced
 }
@@ -54,15 +82,16 @@ export function mayClearEventDungeonFallback(): MayClearEventDungeon | null {
   }
 }
 
-/** Live event leaderboards require Hard to be live and leaderboards enabled. */
+/** Live event leaderboards require Hard to be live and leaderboards enabled (or dev / preview). */
 export function shouldShowMayClearEventLeaderboards(
   dungeon: MayClearEventDungeon | null,
+  options?: { previewLeaderboards?: boolean },
 ): dungeon is MayClearEventDungeon {
-  return (
-    MAY_CLEAR_EVENT.leaderboardsLive &&
-    isMayClearEventDungeonAnnounced() &&
-    dungeon != null
-  )
+  const show =
+    MAY_CLEAR_EVENT.leaderboardsLive ||
+    options?.previewLeaderboards === true ||
+    import.meta.env.DEV
+  return show && isMayClearEventDungeonAnnounced() && dungeon != null
 }
 
 /** Resolve event dungeon from wiki list by name; null until announced. */
@@ -82,7 +111,7 @@ export function resolveMayClearEventDungeon(
 }
 
 export const EVENT_DELAY_NOTICE =
-  'Event delayed to June 4. Dragon Dimension Hard is not live in-game yet. Live leaderboards and ranked uploads open once Hard is available. If Hard is still unavailable by the end of the event window, the event will be delayed further.'
+  'Event delayed. New dates coming soon. Dragon Dimension Hard is not live in-game yet. Live leaderboards and ranked uploads open once Hard is available and the schedule is announced.'
 
 export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.leaderboardsLive
   ? 'Live leaderboards update from valid Hard party uploads.'
@@ -101,8 +130,15 @@ export function mayClearEventMeterNavState(dungeonId?: string): {
   }
 }
 
-/** Event page announcement image (forum teaser section). */
-export const EVENT_TEASER_IMAGE_URL = 'https://i.imgur.com/5ZCqkPy.png'
+/** Bundled event teaser (sync via `npm run sync:event-examon-teaser`). */
+export const EVENT_TEASER_IMAGE_PATH = '/event/examon-teaser.jpg'
+
+/** Google Photos share link for re-syncing the teaser asset. */
+export const EVENT_TEASER_GOOGLE_PHOTOS_URL =
+  'https://photos.app.goo.gl/qoJ27xMNBFDvxUR46'
+
+/** @deprecated Use EVENT_TEASER_IMAGE_PATH */
+export const EVENT_TEASER_IMAGE_URL = EVENT_TEASER_IMAGE_PATH
 
 export const MAY_CLEAR_EVENT_ROLES = METER_ROLE_BUCKETS.map((id) => ({
   id,

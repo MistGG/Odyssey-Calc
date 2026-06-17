@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MAY_CLEAR_EVENT } from '../lib/mayClearEvent'
+import { MAY_CLEAR_EVENT, isMayClearEventScheduleAnnounced } from '../lib/mayClearEvent'
 import { isMayClearEventEnded } from '../lib/mayClearEventResults'
 
 /** Flips to ended at `eventDateEndIso` (exact timeout + visibility refresh). */
@@ -14,6 +14,18 @@ export function useMayClearEventEnded(previewEnded = false): boolean {
 
     const sync = () => setEnded(isMayClearEventEnded(new Date(), false))
     sync()
+
+    if (!isMayClearEventScheduleAnnounced() || !MAY_CLEAR_EVENT.eventDateEndIso) {
+      const intervalId = window.setInterval(sync, 60_000)
+      const onVisible = () => {
+        if (document.visibilityState === 'visible') sync()
+      }
+      document.addEventListener('visibilitychange', onVisible)
+      return () => {
+        window.clearInterval(intervalId)
+        document.removeEventListener('visibilitychange', onVisible)
+      }
+    }
 
     const endMs = new Date(MAY_CLEAR_EVENT.eventDateEndIso).getTime()
     const delay = endMs - Date.now()

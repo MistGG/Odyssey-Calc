@@ -46,6 +46,9 @@ export function EventWinnerCard({
 
   return (
     <div className={`event-winner-card event-winner-card--filled ${variantClass}`}>
+      <span className="event-winner-card__crown" aria-hidden>
+        {variant === 'leaderboard' ? '👑' : '✦'}
+      </span>
       <span className="event-winner-card__role">{label}</span>
       <span className="event-winner-card__prize">{prizeLabel}</span>
       <Link

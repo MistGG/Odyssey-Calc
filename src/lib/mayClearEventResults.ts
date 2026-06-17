@@ -17,26 +17,30 @@ import {
   isDungeonPartyParsePayload,
   partyMembersFromPayload,
 } from './meterParsePayload'
-import { MAY_CLEAR_EVENT } from './mayClearEvent'
+import { MAY_CLEAR_EVENT, isMayClearEventScheduleAnnounced, mayClearEventWindow } from './mayClearEvent'
 import type { PlayerRankEntry } from './meterPublicStats'
 
 const PARTICIPATION_DRAW_SEED = 'may-clear-2026-participation'
 
-function eventWindowMs(): { start: number; end: number } {
-  const startIso = `${MAY_CLEAR_EVENT.eventDateIso}T00:00:00.000Z`
+function eventWindowMs(): { start: number; end: number } | null {
+  const window = mayClearEventWindow()
+  if (!window) return null
   return {
-    start: new Date(startIso).getTime(),
-    end: new Date(MAY_CLEAR_EVENT.eventDateEndIso).getTime(),
+    start: new Date(window.windowStart).getTime(),
+    end: new Date(window.windowEnd).getTime(),
   }
 }
 
 export function isMayClearEventEnded(now = new Date(), previewEnded = false): boolean {
   if (previewEnded) return true
+  if (!isMayClearEventScheduleAnnounced() || !MAY_CLEAR_EVENT.eventDateEndIso) return false
   return now.getTime() >= new Date(MAY_CLEAR_EVENT.eventDateEndIso).getTime()
 }
 
 export function filterParsesInMayClearEventWindow(rows: PublicMeterParseRow[]): PublicMeterParseRow[] {
-  const { start, end } = eventWindowMs()
+  const window = eventWindowMs()
+  if (!window) return rows
+  const { start, end } = window
   return rows.filter((row) => {
     const t = new Date(row.created_at).getTime()
     return t >= start && t < end

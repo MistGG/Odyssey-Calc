@@ -25,7 +25,7 @@
   <rect x="44" y="72" width="1112" height="112" rx="16" fill="url(#hero)" stroke="rgba(251,191,36,.4)" stroke-width="2"/>
   <text x="600" y="118" text-anchor="middle" fill="#fffbeb" font-family="Segoe UI, system-ui, sans-serif" font-size="38" font-weight="800">Dungeon Clear Challenge</text>
   <rect x="346" y="138" width="418" height="32" rx="16" fill="rgba(180,83,9,.45)" stroke="rgba(251,191,36,.35)"/>
-  <text x="555" y="159" text-anchor="middle" fill="#fef3c7" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">June 4 - June 11, 2026</text>
+  <text x="555" y="159" text-anchor="middle" fill="#fef3c7" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Date TBD</text>
   <rect x="774" y="138" width="80" height="32" rx="16" fill="rgba(59,130,246,.22)" stroke="rgba(96,165,250,.45)"/>
   <text x="814" y="159" text-anchor="middle" fill="#93c5fd" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">Hard</text>
   <text x="600" y="212" text-anchor="middle" fill="#fde68a" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="700" letter-spacing="0.12em">PRIZES</text>

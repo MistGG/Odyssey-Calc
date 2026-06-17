@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useMayClearEventEnded } from '../hooks/useMayClearEventEnded'
 import { getPublicDungeonParsesCached, loadDigimonRoleMapForMeter } from '../lib/meterDataSource'
 import { getCachedScopeParses, meterScopeKey } from '../lib/meterParseCache'
-import { MAY_CLEAR_EVENT, type MayClearEventDungeon } from '../lib/mayClearEvent'
+import { MAY_CLEAR_EVENT, isMayClearEventScheduleAnnounced, mayClearEventWindow, type MayClearEventDungeon } from '../lib/mayClearEvent'
 import {
   buildMayClearEventResults,
   buildMayClearEventResultsFromPrecomputed,
@@ -16,11 +16,10 @@ import {
 } from '../lib/meterLeaderboardPrecomputed'
 import type { MeterPublicAggregates } from '../lib/meterPublicStats'
 import {
-  METER_ROLE_BUCKET_LABELS,
   METER_ROLE_BUCKETS,
 } from '../lib/meterRoleBuckets'
+import { EventLeaderboardRolePanel } from './EventLeaderboardRolePanel'
 import { EventWinnerCard } from './EventWinnerCard'
-import { MeterPlayerRankingList } from './MeterPlayerRankingList'
 
 const EVENT_TOP_PLAYERS = 12
 
@@ -36,13 +35,7 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
     [dungeonId, difficultyId],
   )
 
-  const eventWindow = useMemo(
-    () => ({
-      windowStart: `${MAY_CLEAR_EVENT.eventDateIso}T00:00:00.000Z`,
-      windowEnd: MAY_CLEAR_EVENT.eventDateEndIso,
-    }),
-    [],
-  )
+  const eventWindow = useMemo(() => mayClearEventWindow(), [])
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,7 +67,7 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
         dungeonId,
         difficultyId,
         limitPerRole: EVENT_TOP_PLAYERS,
-        ...eventWindow,
+        ...(eventWindow ?? {}),
       })
       if (cancelled) return
       if (pre.error) setLoadError(pre.error)
@@ -86,7 +79,7 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
           void fetchParticipationPlayersInWindow({
             dungeonId,
             difficultyId,
-            ...eventWindow,
+            ...(eventWindow ?? {}),
           }).then((poolRes) => {
             if (cancelled) return
             if (poolRes.error) setLoadError(poolRes.error)
@@ -136,9 +129,16 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
 
   return (
     <section
-      className={`event-panel event-panel--leaderboards${eventEnded ? ' event-panel--ended' : ''}`}
+      className={`event-panel event-panel--leaderboards event-panel--examon-lb${eventEnded ? ' event-panel--ended' : ''}`}
       aria-labelledby="event-lb-heading"
     >
+      {!isMayClearEventScheduleAnnounced() && !eventEnded ? (
+        <p className="event-schedule-tbd-note" role="note">
+          Event dates are <strong>TBD</strong>. Boards below are a preview until the schedule is
+          announced and Hard goes live.
+        </p>
+      ) : null}
+
       {previewEnded ? (
         <p className="event-ended-preview-note" role="note">
           Preview: ended state. Remove <code>?previewEnded=1</code> from the URL for the live view.
@@ -156,23 +156,31 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
       ) : null}
 
       <div className="event-lb-head">
-        <h2 id="event-lb-heading" className="event-section-title">
-          {eventEnded ? 'Final results' : 'Live leaderboards'}
-        </h2>
-        <p className="event-section-lead muted">
-          {eventEnded ? (
-            <>
-              <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): prize leaders by
-              Best DPS and participation draw winners, one per role.
-            </>
-          ) : (
-            <>
-              <strong>{dungeonName}</strong> ({MAY_CLEAR_EVENT.difficultyLabel}): best parse per
-              player by role. Current #1 in each role wins the crown prize until{' '}
-              <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
-            </>
-          )}
-        </p>
+        <div className="event-lb-head__copy">
+          <p className="event-lb-head__tag">
+            {dungeonName} · {MAY_CLEAR_EVENT.difficultyLabel}
+          </p>
+          <h2 id="event-lb-heading" className="event-section-title event-lb-head__title">
+            {eventEnded ? 'Final standings' : 'Live raid boards'}
+          </h2>
+          <p className="event-section-lead muted">
+            {eventEnded ? (
+              <>
+                Prize leaders and raffle winners for <strong>{dungeonName}</strong>, locked at{' '}
+                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>.
+              </>
+            ) : (
+              <>
+                Best parse per tamer in each role on <strong>{dungeonName}</strong>. Hold #1 through
+                the cutoff to claim the crown prize.
+              </>
+            )}
+          </p>
+        </div>
+        <div className="event-lb-head__crest" aria-hidden>
+          <span className="event-lb-head__crest-ring" />
+          <span className="event-lb-head__crest-core">⚔</span>
+        </div>
       </div>
 
       {loadError ? <p className="meter-parses-error">{loadError}</p> : null}
@@ -232,11 +240,11 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
 
               <details className="event-final-standings">
                 <summary className="event-final-standings__summary">Final standings (top 12 per role)</summary>
-                <div className="event-lb-ranks">
+                <div className="event-lb-ranks event-lb-ranks--examon">
                   {METER_ROLE_BUCKETS.map((role) => (
-                    <MeterPlayerRankingList
+                    <EventLeaderboardRolePanel
                       key={role}
-                      title={METER_ROLE_BUCKET_LABELS[role]}
+                      role={role}
                       entries={results.stats.playersByBucket[role]}
                       poolDps={results.stats.sortedDpsByBucket[role]}
                       meterContext={meterContext}
@@ -262,11 +270,11 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
                   />
                 ))}
               </div>
-              <div className="event-lb-ranks">
+              <div className="event-lb-ranks event-lb-ranks--odyssey">
                 {METER_ROLE_BUCKETS.map((role) => (
-                  <MeterPlayerRankingList
+                  <EventLeaderboardRolePanel
                     key={role}
-                    title={METER_ROLE_BUCKET_LABELS[role]}
+                    role={role}
                     entries={results.stats.playersByBucket[role]}
                     poolDps={results.stats.sortedDpsByBucket[role]}
                     meterContext={meterContext}
