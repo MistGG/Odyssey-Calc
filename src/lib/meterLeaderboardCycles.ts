@@ -2,6 +2,9 @@
  * Leaderboard ranking cycles. Edit when a new cycle starts: set `endsAt` on the
  * outgoing cycle and add a new live entry without `endsAt`.
  *
+ * Also insert/update the matching row in `meter_leaderboard_cycles` (Supabase) and
+ * call `refresh_meter_hof_cycle_summary` for the outgoing cycle when it ends.
+ *
  * Windows filter meter_leaderboard_entries.created_at on the server (bounded RPC
  * rows only — no full parse payloads).
  */

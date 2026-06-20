@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
-import type { WikiDungeonListItem } from '../types/wikiApi'
 import {
-  fetchPlayerHallOfFameForCycle,
+  fetchPlayerHallOfFamePastCycleBadges,
   type PlayerHallOfFameCycleSummary,
 } from '../lib/meterHallOfFame'
 import {
@@ -13,10 +12,8 @@ import { MeterProfileHallOfFameBadge } from './MeterProfileHallOfFameBadge'
 
 export function MeterPlayerPastSeasonsPanel({
   playerKey,
-  wikiDungeons,
 }: {
   playerKey: string
-  wikiDungeons: WikiDungeonListItem[]
 }) {
   const pastCycleDefs = useMemo(
     () => METER_LEADERBOARD_CYCLES.filter((cycle) => !isMeterLeaderboardCycleLive(cycle)),
@@ -33,23 +30,18 @@ export function MeterPlayerPastSeasonsPanel({
     setLoading(true)
     setLoadError(null)
 
-    const results = await Promise.all(
-      pastCycleDefs.map((cycle) =>
-        fetchPlayerHallOfFameForCycle(playerKey, wikiDungeons, cycle, { stopAfterFirst: false }),
-      ),
-    )
+    const { cycles, error } = await fetchPlayerHallOfFamePastCycleBadges(playerKey)
 
-    const firstError = results.find((row) => row.error)?.error ?? null
-    if (firstError) {
-      setLoadError(firstError)
+    if (error) {
+      setLoadError(error)
       setLoading(false)
       return
     }
 
-    setPastCycles(results.map((row) => row.summary).filter((row) => row.recordCount > 0))
+    setPastCycles(cycles)
     setLoaded(true)
     setLoading(false)
-  }, [loaded, loading, pastCycleDefs, playerKey, wikiDungeons])
+  }, [loaded, loading, pastCycleDefs, playerKey])
 
   const handleToggle = () => {
     const next = !expanded

@@ -312,7 +312,7 @@ export function MeterPlayerProfilePage() {
         cycleId={hofCurrentCycleId}
       />
 
-      <MeterPlayerPastSeasonsPanel playerKey={playerKey} wikiDungeons={wikiDungeons} />
+      <MeterPlayerPastSeasonsPanel playerKey={playerKey} />
 
       <MeterPlayerSharePanel
         playerKey={playerKey}

@@ -318,11 +318,10 @@ export async function fetchScopeHallOfFameGoldEntries(
   }
 
   const rpcRows = (rpcRes.data ?? []) as HofGoldRpcRow[]
-  let rows = filterGoldRecordBreaks(
-    rpcRows
-      .map((row) => mapHofGoldRpcRow(row))
-      .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> => row != null),
-  )
+  // RPC returns server-maintained gold rows; do not re-filter client-side.
+  let rows = rpcRows
+    .map((row) => mapHofGoldRpcRow(row))
+    .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> => row != null)
   rows = await resolveHofGoldNames(rows)
 
   const poolByRole: Record<MeterRoleBucket, number[]> =
@@ -463,14 +462,12 @@ async function fetchPlayerHallOfFameFromPlayerRpc(
     return { entries: [], error: error.message }
   }
 
+  // RPC returns server-maintained gold rows; do not re-filter client-side.
   let goldRows = ((data ?? []) as PlayerHofGoldRpcRow[])
     .map((row) => mapPlayerHofGoldRpcRow(row))
     .filter((row): row is HofRowWithScope => row != null)
 
   const scopeByEntryKey = new Map(goldRows.map((row) => [entryKey(row), row]))
-  goldRows = filterGoldRecordBreaks(goldRows)
-    .map((row) => scopeByEntryKey.get(entryKey(row)))
-    .filter((row): row is HofRowWithScope => row != null)
 
   if (options?.stopAfterFirst && goldRows.length > 1) {
     goldRows = goldRows.slice(0, 1)
@@ -567,6 +564,8 @@ export type FetchPlayerHallOfFameOptions = {
   maxScopes?: number
   /** Stop after first matching induction (faster eligibility checks). */
   stopAfterFirst?: boolean
+  /** Badge / rewards only — skip downloading full induction rows. */
+  countsOnly?: boolean
   leaderboardCycleId?: string
   windowStart?: string | null
   windowEnd?: string | null
@@ -578,25 +577,94 @@ export type PlayerHallOfFameCycleSummary = {
   entries: ProfileHallOfFameEntry[]
 }
 
+type HofCycleCountRpcRow = {
+  cycle_id?: string
+  induction_count?: number
+}
+
+/** O(1) per-cycle induction counts from meter_hof_cycle_player_summary. */
+export async function fetchPlayerHofCycleCountsMap(
+  playerKey: string,
+): Promise<{ counts: Record<string, number>; error: string | null }> {
+  const supabase = getMeterAnonSupabase()
+  if (!supabase) return { counts: {}, error: 'Supabase is not configured.' }
+
+  const key = playerKey.trim().toLowerCase()
+  if (!key) return { counts: {}, error: null }
+
+  const { data, error } = await supabase.rpc('get_meter_player_hof_cycle_counts', {
+    p_player_key: key,
+  })
+
+  if (error) {
+    return { counts: {}, error: error.message }
+  }
+
+  const counts: Record<string, number> = {}
+  for (const row of (data ?? []) as HofCycleCountRpcRow[]) {
+    const cycleId = row.cycle_id?.trim()
+    if (!cycleId) continue
+    counts[cycleId] = Number(row.induction_count) || 0
+  }
+
+  return { counts, error: null }
+}
+
+/** Past-season badges — summary counts only (no induction row download). */
+export async function fetchPlayerHallOfFamePastCycleBadges(
+  playerKey: string,
+): Promise<{ cycles: PlayerHallOfFameCycleSummary[]; error: string | null }> {
+  const { counts, error } = await fetchPlayerHofCycleCountsMap(playerKey)
+  if (error) return { cycles: [], error }
+
+  const cycles = METER_LEADERBOARD_CYCLES.filter(
+    (cycle) => !isMeterLeaderboardCycleLive(cycle) && (counts[cycle.id] ?? 0) > 0,
+  ).map((cycle) => ({
+    cycle,
+    recordCount: counts[cycle.id] ?? 0,
+    entries: [] as ProfileHallOfFameEntry[],
+  }))
+
+  return { cycles, error: null }
+}
+
 /** Per-cycle HoF inductions for one tamer (profile badges, season card). */
 export async function fetchPlayerHallOfFameForCycle(
   playerKey: string,
   wikiDungeons: WikiDungeonListItem[],
   cycle: MeterLeaderboardCycle,
-  options?: Pick<FetchPlayerHallOfFameOptions, 'maxScopes' | 'stopAfterFirst'>,
+  options?: Pick<FetchPlayerHallOfFameOptions, 'maxScopes' | 'stopAfterFirst' | 'countsOnly'>,
 ): Promise<{ summary: PlayerHallOfFameCycleSummary; error: string | null }> {
+  const { counts, error: countsError } = await fetchPlayerHofCycleCountsMap(playerKey)
+  if (countsError) {
+    return {
+      summary: { cycle, recordCount: 0, entries: [] },
+      error: countsError,
+    }
+  }
+
+  const recordCount = counts[cycle.id] ?? 0
+  const needsEntries = !options?.countsOnly && !options?.stopAfterFirst && recordCount > 0
+
+  if (!needsEntries) {
+    return {
+      summary: { cycle, recordCount, entries: [] },
+      error: null,
+    }
+  }
+
   const window = meterLeaderboardCycleWindow(cycle)
   const res = await fetchPlayerHallOfFameFromPlayerRpc(playerKey, wikiDungeons, {
     maxScopes: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
-    stopAfterFirst: options?.stopAfterFirst,
     leaderboardCycleId: cycle.id,
     windowStart: window.windowStart,
     windowEnd: window.windowEnd,
   })
+
   return {
     summary: {
       cycle,
-      recordCount: res.entries.length,
+      recordCount,
       entries: res.entries,
     },
     error: res.error,
@@ -607,10 +675,26 @@ export async function fetchPlayerHallOfFameForCycle(
 export async function fetchPlayerHallOfFameByCycles(
   playerKey: string,
   wikiDungeons: WikiDungeonListItem[],
-  options?: { maxScopes?: number; stopAfterFirst?: boolean },
+  options?: { maxScopes?: number; stopAfterFirst?: boolean; countsOnly?: boolean },
 ): Promise<{ cycles: PlayerHallOfFameCycleSummary[]; error: string | null }> {
   const key = playerKey.trim().toLowerCase()
   if (!key) return { cycles: [], error: null }
+
+  const { counts, error: countsError } = await fetchPlayerHofCycleCountsMap(key)
+  if (countsError) return { cycles: [], error: countsError }
+
+  const countsOnly = options?.countsOnly ?? options?.stopAfterFirst ?? false
+
+  if (countsOnly) {
+    return {
+      cycles: METER_LEADERBOARD_CYCLES.map((cycle) => ({
+        cycle,
+        recordCount: counts[cycle.id] ?? 0,
+        entries: [] as ProfileHallOfFameEntry[],
+      })),
+      error: null,
+    }
+  }
 
   const results = await Promise.all(
     METER_LEADERBOARD_CYCLES.map((cycle) =>
@@ -626,7 +710,10 @@ export async function fetchPlayerHallOfFameByCycles(
   }
 
   return {
-    cycles: results.map(({ summary }) => summary),
+    cycles: results.map(({ summary }) => ({
+      ...summary,
+      recordCount: counts[summary.cycle.id] ?? summary.recordCount,
+    })),
     error: null,
   }
 }

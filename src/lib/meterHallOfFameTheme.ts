@@ -1,20 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import {
-  fetchPlayerHallOfFameByCycles,
-  fetchPlayerHallOfFameEntries,
   fetchPlayerHallOfFameForCycle,
+  fetchPlayerHofCycleCountsMap,
   METER_HOF_PROFILE_SCOPE_LIMIT,
 } from './meterHallOfFame'
-import {
-  getMeterLeaderboardCycle,
-  meterLeaderboardCycleWindow,
-} from './meterLeaderboardCycles'
+import { getMeterLeaderboardCycle } from './meterLeaderboardCycles'
 import { normalizeRoutePlayerKey } from './meterPlayerProfile'
 import { fetchStoredConfirmedPlayerKey } from './meterPointGrants'
 import type { OlympusHofBreakForGrant } from './meterPointGrants'
 import type { WikiDungeonListItem } from '../types/wikiApi'
-import { loadWikiDungeonsForMeter } from './wikiDungeons'
 import {
   HALL_OF_FAME_THEME_ID,
   MAGIA_HALL_OF_FAME_THEME_ID,
@@ -40,7 +35,7 @@ export function hofRecordCountForThemeId(
   return counts[cycleId] ?? 0
 }
 
-/** Induction count for a cycle — same rules as the profile page (excludes self-record improvements). */
+/** Induction count for a cycle — reads meter_hof_cycle_player_summary. */
 export async function fetchMeterPlayerHofRecordCount(
   _client: SupabaseClient,
   playerKey: string,
@@ -50,19 +45,10 @@ export async function fetchMeterPlayerHofRecordCount(
   if (!key) return { count: 0, error: null }
 
   const cycleId = options?.cycleId?.trim() || 'magia'
-  const cycle = getMeterLeaderboardCycle(cycleId)
-  if (!cycle) return { count: 0, error: null }
+  const { counts, error } = await fetchPlayerHofCycleCountsMap(key)
+  if (error) return { count: 0, error }
 
-  const window = meterLeaderboardCycleWindow(cycle)
-  const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
-  const { entries, error } = await fetchPlayerHallOfFameEntries(key, dungeons, {
-    maxScopes: METER_HOF_PROFILE_SCOPE_LIMIT,
-    stopAfterFirst: true,
-    leaderboardCycleId: cycle.id,
-    windowStart: window.windowStart,
-    windowEnd: window.windowEnd,
-  })
-  return { count: entries.length, error }
+  return { count: counts[cycleId] ?? 0, error: null }
 }
 
 export async function fetchMeterPlayerHofRecordCountForTheme(
@@ -79,18 +65,7 @@ export async function fetchMeterPlayerHofRecordCountsByCycle(
   _client: SupabaseClient,
   playerKey: string,
 ): Promise<{ counts: Record<string, number>; error: string | null }> {
-  const key = playerKey.trim().toLowerCase()
-  if (!key) return { counts: {}, error: null }
-
-  const dungeons = await loadWikiDungeonsForMeter().catch(() => [])
-  const { cycles, error } = await fetchPlayerHallOfFameByCycles(key, dungeons, {
-    maxScopes: METER_HOF_PROFILE_SCOPE_LIMIT,
-  })
-  if (error) return { counts: {}, error }
-
-  const counts: Record<string, number> = {}
-  for (const row of cycles) counts[row.cycle.id] = row.recordCount
-  return { counts, error: null }
+  return fetchPlayerHofCycleCountsMap(playerKey)
 }
 
 /** Olympus-cycle record breaks used for shop point grants (2 pts each). */
