@@ -159,8 +159,8 @@ export function dedupeCoalescedPartyUploads(rows: HofRow[]): HofRow[] {
  * does not add another induction — only taking the record from someone else (or the first break) counts.
  * Self-improvements while holding the record upgrade that induction row's displayed parse/DPS.
  */
-export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
-  const sorted = dedupeCoalescedPartyUploads(rows)
+export function filterGoldRecordBreaks<T extends HofRow>(rows: T[]): T[] {
+  const sorted = dedupeCoalescedPartyUploads(rows) as T[]
   const runningMax: Record<MeterRoleBucket, number> = {
     melee: 0,
     ranged: 0,
@@ -185,7 +185,7 @@ export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
     tank: null,
     healer: null,
   }
-  const gold: HofRow[] = []
+  const gold: T[] = []
   const seen = new Set<string>()
 
   for (const entry of sorted) {
