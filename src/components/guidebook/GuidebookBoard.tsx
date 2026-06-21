@@ -145,22 +145,27 @@ function StepDetailPanel({ step }: { step: GuidebookProgressionStep }) {
         </div>
       </header>
 
-      <section className="guidebook-board-detail__objectives" aria-label="Objectives">
-        <h3 className="guidebook-board-detail__label">
-          {step.informativeOnly ? 'Overview' : 'Steps'}
-        </h3>
-        <ul className="guidebook-board-detail__tasks">
-          {step.tasks.map((task) => (
-            <li key={`${task.kind}-${task.text}`} className={`guidebook-board-detail__task guidebook-board-detail__task--${task.kind}`}>
-              <span className="guidebook-board-detail__task-kind">{GUIDEBOOK_TASK_KIND_LABELS[task.kind]}</span>
-              <span>{task.text}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {!step.detailOnly ? (
+        <section className="guidebook-board-detail__objectives" aria-label="Objectives">
+          <h3 className="guidebook-board-detail__label">
+            {step.informativeOnly ? 'Overview' : 'Steps'}
+          </h3>
+          <ul className="guidebook-board-detail__tasks">
+            {step.tasks.map((task) => (
+              <li key={`${task.kind}-${task.text}`} className={`guidebook-board-detail__task guidebook-board-detail__task--${task.kind}`}>
+                <span className="guidebook-board-detail__task-kind">{GUIDEBOOK_TASK_KIND_LABELS[task.kind]}</span>
+                <span>{task.text}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-      <section className="guidebook-board-detail__wiki" aria-label="Detailed guide">
-        <h3 className="guidebook-board-detail__label">Details</h3>
+      <section
+        className={`guidebook-board-detail__wiki${step.detailOnly ? ' guidebook-board-detail__wiki--solo' : ''}`}
+        aria-label="Detailed guide"
+      >
+        {!step.detailOnly ? <h3 className="guidebook-board-detail__label">Details</h3> : null}
         <GuidebookStepContent stepId={step.id} />
       </section>
     </article>

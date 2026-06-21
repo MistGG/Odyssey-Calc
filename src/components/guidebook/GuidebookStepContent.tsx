@@ -4,11 +4,12 @@ import {
   GuideEarlyGame150,
   GuideEarlyGame5070,
   GuideEarlyGame70Beyond,
-  GuideGearCorruptedEarring,
-  GuideGearCorruptedNecklace,
+  GuideGearCorruptedAccessories,
+  GuideGearChips,
   GuideGearClothes,
+  GuideGearCorruptedChips,
+  GuideGearDigiAura,
   GuideGearOlympusClothes,
-  GuideGearCorruptedRing,
   GuideGearDigivice,
   GuideGearEarring,
   GuideGearGoggles,
@@ -35,6 +36,8 @@ export function GuidebookStepContent({ stepId }: { stepId: string }) {
       return <GuidebookClones />
     case 'mid-clothes':
       return <GuideGearClothes />
+    case 'mid-chips':
+      return <GuideGearChips />
     case 'mid-digivice':
       return <GuideGearDigivice />
     case 'mid-ring':
@@ -49,12 +52,12 @@ export function GuidebookStepContent({ stepId }: { stepId: string }) {
       return <GuideGearEarring />
     case 'mid-corrupted-clothes':
       return <GuideGearOlympusClothes />
-    case 'mid-corrupted-ring':
-      return <GuideGearCorruptedRing />
-    case 'mid-corrupted-necklace':
-      return <GuideGearCorruptedNecklace />
-    case 'mid-corrupted-earring':
-      return <GuideGearCorruptedEarring />
+    case 'mid-corrupted-chips':
+      return <GuideGearCorruptedChips />
+    case 'mid-digi-aura':
+      return <GuideGearDigiAura />
+    case 'mid-corrupted-accessories':
+      return <GuideGearCorruptedAccessories />
     default:
       return <GuidebookComingSoon />
   }

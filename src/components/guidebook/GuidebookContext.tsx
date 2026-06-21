@@ -12,6 +12,7 @@ import type { GuidebookDetail } from '../../lib/guidebookContent'
 import {
   guidebookNextStepId,
   guidebookProgressionStepIds,
+  guidebookResolveStepId,
   guidebookStepIsInformative,
 } from '../../lib/guidebookProgression'
 import { readGuidebookProgressStep, writeGuidebookProgressStep } from '../../lib/guidebookProgress'
@@ -36,7 +37,7 @@ const VALID_STEP_IDS = new Set(guidebookProgressionStepIds())
 
 function normalizeStepId(raw: string | null | undefined): string {
   const id = raw?.trim()
-  if (id && VALID_STEP_IDS.has(id)) return id
+  if (id) return guidebookResolveStepId(id)
   return readGuidebookProgressStep()
 }
 
@@ -57,10 +58,14 @@ export function GuidebookProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fromUrl = searchParams.get('step') ?? searchParams.get('section')
-    if (fromUrl?.trim() && VALID_STEP_IDS.has(fromUrl.trim())) {
-      setViewStepId(fromUrl.trim())
+    if (fromUrl?.trim()) {
+      const resolved = guidebookResolveStepId(fromUrl.trim())
+      setViewStepId(resolved)
+      if (resolved !== fromUrl.trim()) {
+        setSearchParams({ step: resolved }, { replace: true })
+      }
     }
-  }, [searchParams])
+  }, [searchParams, setSearchParams])
 
   const setProgressStep = useCallback((stepId: string) => {
     if (!VALID_STEP_IDS.has(stepId) || guidebookStepIsInformative(stepId)) return

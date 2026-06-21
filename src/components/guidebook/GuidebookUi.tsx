@@ -87,12 +87,12 @@ function GuidebookStatRollPanel({
       aria-label={`${title} stat targets`}
     >
       <h5 className="guidebook-stat-roll-panel__title">{title}</h5>
-      {hint ? <p className="guidebook-stat-roll-panel__hint muted">{hint}</p> : null}
       <ul className="guidebook-stat-roll-panel__list">
         {items.map((item, index) => (
           <li key={`${item}-${index}`}>{item}</li>
         ))}
       </ul>
+      {hint ? <p className="guidebook-stat-roll-panel__hint muted">{hint}</p> : null}
     </section>
   )
 }
@@ -102,10 +102,14 @@ export function GuidebookGearStatRollPanels({
   rolls,
   ariaLabel,
   sectionTitle = 'Stat Recommendations',
+  hideSectionHeader = false,
+  className = '',
 }: {
   rolls: readonly GuidebookGearStatRoll[]
   ariaLabel: string
   sectionTitle?: string
+  hideSectionHeader?: boolean
+  className?: string
 }) {
   const useLegacyTwoPanel =
     rolls.length === 2 &&
@@ -115,10 +119,15 @@ export function GuidebookGearStatRollPanels({
     !rolls[1]?.hint
 
   return (
-    <section className="guidebook-stat-recommendations" aria-label={ariaLabel}>
-      <header className="guidebook-stat-recommendations__header">
-        <h4 className="guidebook-stat-recommendations__title">{sectionTitle}</h4>
-      </header>
+    <section
+      className={`guidebook-stat-recommendations${className ? ` ${className}` : ''}`}
+      aria-label={ariaLabel}
+    >
+      {!hideSectionHeader ? (
+        <header className="guidebook-stat-recommendations__header">
+          <h4 className="guidebook-stat-recommendations__title">{sectionTitle}</h4>
+        </header>
+      ) : null}
       <div
         className={`guidebook-stat-roll-panels${rolls.length > 2 ? ' guidebook-stat-roll-panels--multi' : ''}`}
       >

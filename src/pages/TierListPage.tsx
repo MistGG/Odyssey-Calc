@@ -14,6 +14,7 @@ import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
   clampTierFightDurationSec,
+  clampTierFightDurationSecFree,
   TIER_FIGHT_DURATION_DEFAULT_SEC,
 } from '../lib/tierFightDurationScale'
 import { resimTierEntrySustainedAtFightDuration } from '../lib/tierListFightDurationResim'
@@ -304,7 +305,7 @@ export function TierListPage() {
   const [tierFightDurationSec, setTierFightDurationSec] = useState<number>(initialFightDurationSec)
   const [fightDurationAppliedSec, setFightDurationAppliedSec] = useState<number>(initialFightDurationSec)
   const tierFightDurationSliderRef = useRef(initialFightDurationSec)
-  tierFightDurationSliderRef.current = clampTierFightDurationSec(tierFightDurationSec)
+  tierFightDurationSliderRef.current = tierFightDurationSec
   /** Sustained fight-length resims keyed by tier revision + sim params (cleared on tier list update). */
   const fightResimCacheRef = useRef<TierFightResimCacheRootV1 | null>(null)
   const [dpsTargetEnemyAttribute, setDpsTargetEnemyAttribute] = useState<string>(() =>
@@ -346,6 +347,16 @@ export function TierListPage() {
 
   function commitFightDurationFromSlider() {
     const v = clampTierFightDurationSec(tierFightDurationSliderRef.current)
+    setFightDurationAppliedSec((prev) => {
+      if (v === prev) return prev
+      writeTierFightDurationSec(v)
+      return v
+    })
+  }
+
+  function commitCustomFightDurationSec(next: number) {
+    const v = clampTierFightDurationSecFree(next)
+    setTierFightDurationSec(v)
     setFightDurationAppliedSec((prev) => {
       if (v === prev) return prev
       writeTierFightDurationSec(v)
@@ -454,7 +465,7 @@ export function TierListPage() {
 
   useEffect(() => {
     const id = window.setTimeout(() => {
-      const v = clampTierFightDurationSec(tierFightDurationSliderRef.current)
+      const v = clampTierFightDurationSecFree(tierFightDurationSliderRef.current)
       setFightDurationAppliedSec((prev) => {
         if (v === prev) return prev
         writeTierFightDurationSec(v)
@@ -1083,11 +1094,11 @@ export function TierListPage() {
       const targetTrim = dpsTargetEnemyAttribute.trim()
       const needFightResim =
         dpsTierCategory === 'sustained' &&
-        clampTierFightDurationSec(fightDurationAppliedSec) !== TIER_FIGHT_DURATION_DEFAULT_SEC
+        clampTierFightDurationSecFree(fightDurationAppliedSec) !== TIER_FIGHT_DURATION_DEFAULT_SEC
 
       const resimDoneIds = new Set<string>()
       if (needFightResim) {
-        const dur = clampTierFightDurationSec(fightDurationAppliedSec)
+        const dur = clampTierFightDurationSecFree(fightDurationAppliedSec)
         const modifiers = {
           forceAutoCrit: dpsForceAutoCrit,
           perfectAtClone: dpsPerfectAtClone,
@@ -1992,6 +2003,7 @@ export function TierListPage() {
                   tierFightDurationSec={tierFightDurationSec}
                   onFightDurationChange={setTierFightDurationSecPersist}
                   onFightDurationPointerUp={commitFightDurationFromSlider}
+                  onFightDurationCustomSet={commitCustomFightDurationSec}
                   dpsForceAutoCrit={dpsForceAutoCrit}
                   onDpsForceAutoCritChange={setDpsForceAutoCritPersist}
                   dpsPerfectAtClone={dpsPerfectAtClone}

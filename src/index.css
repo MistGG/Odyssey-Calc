@@ -1717,6 +1717,75 @@ a.nav-user-pill--link:focus-visible {
   line-height: 1.2;
 }
 
+.tier-fight-duration-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.22rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid rgba(51, 65, 85, 0.45);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.tier-fight-duration-custom--disabled {
+  opacity: 0.55;
+}
+
+.tier-fight-duration-custom-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted, #94a3b8);
+  white-space: nowrap;
+}
+
+.tier-fight-duration-custom-input {
+  width: 4.25rem;
+  padding: 0.18rem 0.35rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  border-radius: 6px;
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  background: rgba(2, 6, 23, 0.55);
+}
+
+.tier-fight-duration-custom-input:focus {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+}
+
+.tier-fight-duration-custom-unit {
+  font-size: 0.68rem;
+  color: var(--muted, #94a3b8);
+  white-space: nowrap;
+}
+
+.tier-fight-duration-custom-set {
+  padding: 0.2rem 0.55rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e0f2fe;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(14, 165, 233, 0.18);
+}
+
+.tier-fight-duration-custom-set:hover:not(:disabled) {
+  border-color: rgba(34, 211, 238, 0.65);
+  background: rgba(14, 165, 233, 0.28);
+}
+
+.tier-fight-duration-custom-set:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .tier-modifiers-popover-anchor {
   position: relative;
   flex: 0 0 auto;
@@ -19878,6 +19947,217 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   border-top: 1px solid rgba(56, 189, 248, 0.16);
 }
 
+.guidebook-board-detail__wiki--solo {
+  margin-top: 0;
+}
+
+.guidebook-corrupted-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.guidebook-corrupted-section {
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.78), rgba(2, 8, 20, 0.9));
+  padding: 1rem 1.05rem 1.05rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.guidebook-corrupted-section__head {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.guidebook-corrupted-section__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.guidebook-corrupted-section__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(14, 165, 233, 0.14);
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #7dd3fc;
+}
+
+.guidebook-corrupted-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #f8fafc;
+}
+
+.guidebook-corrupted-section__lead {
+  margin: 0.4rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.guidebook-corrupted-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.guidebook-corrupted-panel {
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 6, 23, 0.42);
+}
+
+.guidebook-corrupted-panel--materials {
+  margin-top: 0;
+}
+
+.guidebook-corrupted-materials {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.guidebook-corrupted-materials__label {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.guidebook-corrupted-note {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+.guidebook-corrupted-page .guidebook-material-sources {
+  margin-top: 0;
+}
+
+.guidebook-corrupted-page .guidebook-material-sources__hint {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.guidebook-corrupted-subsection + .guidebook-corrupted-subsection {
+  padding-top: 0.95rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.guidebook-corrupted-subsection--sources {
+  padding-top: 0.95rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.guidebook-corrupted-subsection__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #bae6fd;
+}
+
+.guidebook-corrupted-subsection__text {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.guidebook-corrupted-subsection__list-label {
+  margin: 0.75rem 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.guidebook-corrupted-alt__status {
+  margin: 0.55rem 0 0;
+  font-size: 0.82rem;
+}
+
+.guidebook-corrupted-page .guidebook-stat-recommendations--corrupted {
+  padding: 0.85rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 6, 23, 0.38);
+  box-shadow: none;
+}
+
+.guidebook-corrupted-page .guidebook-stat-recommendations--corrupted .guidebook-stat-roll-panels--multi {
+  gap: 0.65rem;
+}
+
+.guidebook-corrupted-page .guidebook-stat-recommendations--corrupted .guidebook-stat-roll-panel {
+  padding: 0.7rem 0.75rem;
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.guidebook-corrupted-page .guidebook-stat-recommendations--corrupted .guidebook-stat-roll-panel__title {
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+}
+
+.guidebook-corrupted-page .guidebook-stat-recommendations--corrupted .guidebook-stat-roll-panel__hint {
+  font-size: 0.74rem;
+}
+
+.guidebook-corrupted-stat-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.guidebook-corrupted-stat-block {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.guidebook-corrupted-stat-block:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.guidebook-corrupted-stat-block__head {
+  margin-bottom: 0.65rem;
+}
+
+.guidebook-corrupted-stat-block__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e0f2fe;
+}
+
+.guidebook-corrupted-stat-block__craft {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+}
+
 .guidebook-corrupted-disclaimer {
   margin: 0 0 0.85rem;
   font-size: 0.82rem;
@@ -20066,6 +20346,19 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   color: #f8fafc;
 }
 
+.guidebook-collect-pick__qty-suffix {
+  margin-left: 0.12rem;
+  font-size: 0.72em;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.guidebook-corrupted-materials-total {
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .guidebook-collect-pick__icon {
   flex-shrink: 0;
   width: 22px;
@@ -20162,6 +20455,12 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.24);
 }
 
+.guidebook-stat-roll-panels--multi .guidebook-stat-roll-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .guidebook-stat-roll-panel::before {
   content: '';
   position: absolute;
@@ -20191,9 +20490,15 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
 }
 
 .guidebook-stat-roll-panel__hint {
-  margin: -0.2rem 0 0.55rem;
-  font-size: 0.8rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.76rem;
   line-height: 1.45;
+  color: #64748b;
+}
+
+.guidebook-stat-roll-panels--multi .guidebook-stat-roll-panel__hint {
+  margin-top: auto;
+  padding-top: 0.65rem;
 }
 
 .guidebook-stat-roll-panel--dps .guidebook-stat-roll-panel__title {
@@ -20419,6 +20724,24 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
 
 .guidebook-fragment-farm + .guidebook-fragment-farm {
   margin-top: 1.25rem;
+}
+
+.guidebook-digiaura-material-group + .guidebook-digiaura-material-group {
+  margin-top: 1.15rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.guidebook-digiaura-material-group__title {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #bae6fd;
+}
+
+.guidebook-digiaura-material-group .guidebook-fragment-farm__grid {
+  margin-top: 0.55rem;
 }
 
 .guidebook-fragment-farm__title {

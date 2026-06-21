@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DpsTierCategoryKey } from '../../lib/tierList'
 import {
+  clampTierFightDurationSecFree,
   formatTierFightDurationSec,
   TIER_FIGHT_DURATION_MAX_SEC,
   TIER_FIGHT_DURATION_MIN_SEC,
@@ -13,6 +14,8 @@ type Props = {
   onFightDurationChange: (sec: number) => void
   /** When the user releases the range thumb, apply fight length to the matrix immediately. */
   onFightDurationPointerUp?: () => void
+  /** Apply a custom fight length in seconds (not limited to slider steps). */
+  onFightDurationCustomSet?: (sec: number) => void
   dpsForceAutoCrit: boolean
   onDpsForceAutoCritChange: (v: boolean) => void
   dpsPerfectAtClone: boolean
@@ -26,6 +29,7 @@ export function TierDpsModifiersControls({
   tierFightDurationSec,
   onFightDurationChange,
   onFightDurationPointerUp,
+  onFightDurationCustomSet,
   dpsForceAutoCrit,
   onDpsForceAutoCritChange,
   dpsPerfectAtClone,
@@ -34,10 +38,22 @@ export function TierDpsModifiersControls({
   onDpsAutoAnimCancelChange,
 }: Props) {
   const [open, setOpen] = useState(false)
+  const [customSecDraft, setCustomSecDraft] = useState(String(tierFightDurationSec))
   const rootRef = useRef<HTMLDivElement>(null)
   const aoe = dpsTierCategory === 'aoe'
   const sustained = dpsTierCategory === 'sustained'
   const activeCount = [dpsForceAutoCrit, dpsPerfectAtClone, dpsAutoAnimCancel].filter(Boolean).length
+
+  useEffect(() => {
+    setCustomSecDraft(String(tierFightDurationSec))
+  }, [tierFightDurationSec])
+
+  function applyCustomFightDuration() {
+    if (!sustained) return
+    const parsed = Number(customSecDraft.trim())
+    if (!Number.isFinite(parsed)) return
+    onFightDurationCustomSet?.(clampTierFightDurationSecFree(parsed))
+  }
 
   useEffect(() => {
     if (!open) return
@@ -137,6 +153,42 @@ export function TierDpsModifiersControls({
           {formatTierFightDurationSec(tierFightDurationSec)}
         </span>
       </label>
+      <div
+        className={`tier-fight-duration-custom${!sustained ? ' tier-fight-duration-custom--disabled' : ''}`}
+        title={!sustained ? 'Fight length only affects the Sustained view' : undefined}
+      >
+        <label className="tier-fight-duration-custom-label" htmlFor="tier-fight-duration-custom-sec">
+          Custom
+        </label>
+        <input
+          id="tier-fight-duration-custom-sec"
+          className="tier-fight-duration-custom-input"
+          type="number"
+          inputMode="numeric"
+          min={TIER_FIGHT_DURATION_MIN_SEC}
+          max={TIER_FIGHT_DURATION_MAX_SEC}
+          step={1}
+          value={customSecDraft}
+          disabled={!sustained}
+          aria-label="Custom fight length in seconds"
+          onChange={(e) => setCustomSecDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              applyCustomFightDuration()
+            }
+          }}
+        />
+        <span className="tier-fight-duration-custom-unit">sec</span>
+        <button
+          type="button"
+          className="tier-fight-duration-custom-set"
+          disabled={!sustained}
+          onClick={applyCustomFightDuration}
+        >
+          Set
+        </button>
+      </div>
     </div>
   )
 }

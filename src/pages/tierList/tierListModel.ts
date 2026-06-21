@@ -2,7 +2,7 @@ import { fetchDigimonPage } from '../../api/digimonService'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
 import {
-  clampTierFightDurationSec,
+  clampTierFightDurationSecFree,
   TIER_FIGHT_DURATION_DEFAULT_SEC,
 } from '../../lib/tierFightDurationScale'
 import { clearTierFightDurationResimCacheStorage } from '../../lib/tierListFightDurationResimCacheStorage'
@@ -260,7 +260,7 @@ export function readTierFightDurationSec(): number {
     if (raw == null || raw.trim() === '') return TIER_FIGHT_DURATION_DEFAULT_SEC
     const n = Number(raw)
     if (!Number.isFinite(n)) return TIER_FIGHT_DURATION_DEFAULT_SEC
-    return clampTierFightDurationSec(n)
+    return clampTierFightDurationSecFree(n)
   } catch {
     return TIER_FIGHT_DURATION_DEFAULT_SEC
   }
@@ -268,7 +268,7 @@ export function readTierFightDurationSec(): number {
 
 export function writeTierFightDurationSec(sec: number) {
   try {
-    localStorage.setItem(TIER_FIGHT_DURATION_SEC_KEY, String(clampTierFightDurationSec(sec)))
+    localStorage.setItem(TIER_FIGHT_DURATION_SEC_KEY, String(clampTierFightDurationSecFree(sec)))
   } catch {
     /* ignore */
   }

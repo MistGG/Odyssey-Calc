@@ -33,6 +33,30 @@ export const GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID = 'i1fgyfqa'
 
 export const GUIDEBOOK_DIGIVICE_HOMEOSTASIS_WISH_COUNT = 5
 
+/** Promethean DigiAura — Blacksmith in Olympus. */
+export const GUIDEBOOK_PROMETHEAN_DIGIAURA_HOMEOSTASIS_COUNT = 3
+
+export type GuidebookCraftMaterial = {
+  itemId: string
+  quantity: number
+  labelFallback: string
+}
+
+export const GUIDEBOOK_OLYMPIAN_DATA_CORE_ITEM_ID = 'ipmruh6'
+
+/** Shards and Olympian Data Core for Promethean DigiAura (Homeostasis Wish listed separately). */
+export const GUIDEBOOK_PROMETHEAN_DIGIAURA_MATERIALS: readonly GuidebookCraftMaterial[] = [
+  { itemId: GUIDEBOOK_OLYMPIAN_DATA_CORE_ITEM_ID, quantity: 1, labelFallback: 'Olympian Data Core' },
+  { itemId: 'i1s60o7o', quantity: 500, labelFallback: 'Dragonic Shard' },
+  { itemId: 'i1qajj7n', quantity: 500, labelFallback: 'Bestial Shard' },
+  { itemId: 'inrc4zq', quantity: 500, labelFallback: 'Shadow Shard' },
+  { itemId: 'i54x3vi', quantity: 500, labelFallback: 'Gale Shard' },
+  { itemId: 'ix90r36', quantity: 500, labelFallback: 'Abyssal Shard' },
+  { itemId: 'if08jw9', quantity: 500, labelFallback: 'Chromatic Shard' },
+  { itemId: 'i190is93', quantity: 500, labelFallback: 'Radiant Shard' },
+  { itemId: 'icv7d0n', quantity: 500, labelFallback: 'Verdant Shard' },
+]
+
 export type GuidebookDigiviceFragment = {
   id: string
   name: string
@@ -56,15 +80,18 @@ export const GUIDEBOOK_DIGIVICE_FRAGMENTS: readonly GuidebookDigiviceFragment[] 
 /** Ring Data: Golden Seadragon (Gear → Ring). */
 export const GUIDEBOOK_RING_DATA_ITEM_ID = 'ib9xrv6'
 
-/** Dark DigiCore — corrupted ring craft (30 required). */
+/** Dark DigiCore — corrupted accessory craft (30 required per ring, necklace, or earring). */
 export const GUIDEBOOK_DARK_DIGICORE_ITEM_ID = 'i9ygivg'
 
 export const GUIDEBOOK_CORRUPTED_RING_DARK_DIGICORE_COUNT = 30
 
-/** Energized Dark DigiCore — corrupted ring craft (15 required). */
+/** Energized Dark DigiCore — corrupted accessory craft (15 required per ring, necklace, or earring). */
 export const GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID = 'i8vp49b'
 
 export const GUIDEBOOK_CORRUPTED_RING_ENERGIZED_DIGICORE_COUNT = 15
+
+/** Ring, necklace, and earring each use {@link GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS} independently. */
+export const GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT = 3
 
 /** Dark Masters Token — pity currency from Dark Master dungeons. */
 export const GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID = 'itygv5a'

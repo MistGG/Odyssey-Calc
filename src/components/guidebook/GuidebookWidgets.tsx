@@ -7,6 +7,7 @@ import {
   useState,
   type KeyboardEvent,
   type MouseEvent,
+  type ReactNode,
 } from 'react'
 import { Pin } from 'lucide-react'
 import { createPortal } from 'react-dom'
@@ -82,6 +83,8 @@ import {
   GUIDEBOOK_EARRING_DATA_ITEM_IDS,
   GUIDEBOOK_EARLY_EARRING_ROLLS,
   GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID,
+  GUIDEBOOK_PROMETHEAN_DIGIAURA_HOMEOSTASIS_COUNT,
+  GUIDEBOOK_PROMETHEAN_DIGIAURA_MATERIALS,
   GUIDEBOOK_GOGGLES_DATA_ITEM_IDS,
   GUIDEBOOK_GOGGLES_STAT_NOTES,
   GUIDEBOOK_KEYRING_DATA_ITEM_IDS,
@@ -92,13 +95,17 @@ import {
   GUIDEBOOK_RING_ENTRIES,
   GUIDEBOOK_EARLY_NECKLACE_ROLLS,
   GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER,
+  GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
+  GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT,
+  GUIDEBOOK_CORRUPTED_RING_DARK_DIGICORE_COUNT,
+  GUIDEBOOK_CORRUPTED_RING_ENERGIZED_DIGICORE_COUNT,
+  GUIDEBOOK_CORRUPTED_GEAR_GUIDES,
   GUIDEBOOK_CLONE_RECOMMENDATIONS,
   GUIDEBOOK_DARK_DIGICORE_ITEM_ID,
   GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID,
   GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT,
   GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT,
   GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID,
-  guidebookCorruptedGearGuide,
   type GuidebookCorruptedCraftMaterial,
   type GuidebookCorruptedGearGuide,
   type GuidebookRingEntry,
@@ -2165,12 +2172,127 @@ function GuidebookDigiviceRollingNotes() {
   )
 }
 
+function GuidebookWikiMaterialChip({
+  itemId,
+  quantity,
+  labelFallback,
+}: {
+  itemId: string
+  quantity: number
+  labelFallback: string
+}) {
+  const { openItemRoot } = useGuidebookWikiOverlay()
+  const [item, setItem] = useState<WikiItemDetail | null>(() => getGuidebookItemDetailCached(itemId) ?? null)
+
+  useEffect(() => {
+    const cached = getGuidebookItemDetailCached(itemId)
+    if (cached) setItem(cached)
+    void loadGuidebookItemDetail(itemId)
+      .then(setItem)
+      .catch(() => {
+        if (!getGuidebookItemDetailCached(itemId)) setItem(null)
+      })
+  }, [itemId])
+
+  const name = item?.name?.trim() || labelFallback
+  const icon = wikiItemIconUrl(item?.icon_id ?? '')
+
+  return (
+    <button
+      type="button"
+      className="guidebook-fragment-chip"
+      onClick={() => openItemRoot(itemId)}
+      aria-label={`${quantity} ${name}, open drop sources`}
+    >
+      <span className="guidebook-fragment-chip__qty">{quantity}</span>
+      {icon ? (
+        <img className="guidebook-fragment-chip__icon" src={icon} alt="" width={36} height={36} />
+      ) : (
+        <span className="guidebook-fragment-chip__icon guidebook-fragment-chip__icon--empty" aria-hidden />
+      )}
+      <span className="guidebook-fragment-chip__name">{name}</span>
+    </button>
+  )
+}
+
+function GuidebookWikiMaterialChipGrid({
+  materials,
+  ariaLabel,
+}: {
+  materials: readonly { itemId: string; quantity: number; labelFallback: string }[]
+  ariaLabel: string
+}) {
+  return (
+    <ul className="guidebook-fragment-farm__grid" aria-label={ariaLabel}>
+      {materials.map((material) => (
+        <li key={material.itemId}>
+          <GuidebookWikiMaterialChip
+            itemId={material.itemId}
+            quantity={material.quantity}
+            labelFallback={material.labelFallback}
+          />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export function GuideGearClothes() {
+  return <GuidebookComingSoon />
+}
+
+export function GuideGearChips() {
   return <GuidebookComingSoon />
 }
 
 export function GuideGearOlympusClothes() {
   return <GuidebookComingSoon />
+}
+
+export function GuideGearCorruptedChips() {
+  return <GuidebookComingSoon />
+}
+
+export function GuideGearDigiAura() {
+  return (
+    <>
+      <section className="guidebook-fragment-farm" aria-label="Promethean DigiAura craft">
+        <h4 className="guidebook-fragment-farm__title">
+          Craft Promethean DigiAura at the Blacksmith in Olympus
+        </h4>
+
+        <div className="guidebook-digiaura-material-group">
+          <h5 className="guidebook-digiaura-material-group__title">Homeostasis Wish</h5>
+          <GuidebookMaterialRequirement
+            itemId={GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID}
+            quantity={GUIDEBOOK_PROMETHEAN_DIGIAURA_HOMEOSTASIS_COUNT}
+            labelFallback="Homeostasis Wish"
+          />
+          <p className="guidebook-fragment-farm__hint muted">
+            Can be obtained from the following dungeons.
+          </p>
+          <GuideGearRaidSourcesSection
+            gearLabel="digiaura"
+            itemIds={[GUIDEBOOK_HOMEOSTASIS_WISH_ITEM_ID]}
+            showWip={false}
+            dungeonAriaLabel="Homeostasis Wish dungeons"
+            dungeonEmptyMessage="No dungeon sources are listed for Homeostasis Wish yet."
+          />
+        </div>
+
+        <div className="guidebook-digiaura-material-group">
+          <h5 className="guidebook-digiaura-material-group__title">Other materials</h5>
+          <p className="guidebook-fragment-farm__hint muted">
+            Click a material to open wiki drop sources.
+          </p>
+          <GuidebookWikiMaterialChipGrid
+            materials={GUIDEBOOK_PROMETHEAN_DIGIAURA_MATERIALS}
+            ariaLabel="Promethean DigiAura craft materials"
+          />
+        </div>
+      </section>
+    </>
+  )
 }
 
 export function GuideGearDigivice() {
@@ -2214,10 +2336,12 @@ function GuidebookCollectMaterialPick({
   material,
   selected,
   onSelect,
+  quantitySuffix,
 }: {
   material: GuidebookCorruptedCraftMaterial
   selected: boolean
   onSelect: () => void
+  quantitySuffix?: string
 }) {
   const [item, setItem] = useState<WikiItemDetail | null>(
     () => getGuidebookItemDetailCached(material.itemId) ?? null,
@@ -2242,9 +2366,14 @@ function GuidebookCollectMaterialPick({
       className={`guidebook-collect-pick${selected ? ' is-selected' : ''}`}
       onClick={onSelect}
       aria-pressed={selected}
-      aria-label={`${material.quantity} ${name}, show drop sources`}
+      aria-label={`${material.quantity}${quantitySuffix ? ` ${quantitySuffix.trim()}` : ''} ${name}, show drop sources`}
     >
-      <span className="guidebook-collect-pick__qty">{material.quantity}</span>
+      <span className="guidebook-collect-pick__qty">
+        {material.quantity}
+        {quantitySuffix ? (
+          <span className="guidebook-collect-pick__qty-suffix">{quantitySuffix}</span>
+        ) : null}
+      </span>
       {icon ? (
         <img className="guidebook-collect-pick__icon" src={icon} alt="" width={22} height={22} />
       ) : (
@@ -2262,7 +2391,44 @@ function GuidebookCorruptedGearRollNotes({
   rolls: GuidebookCorruptedGearGuide['rolls']
   ariaLabel: string
 }) {
-  return <GuidebookGearStatRollPanels rolls={rolls} ariaLabel={ariaLabel} />
+  return (
+    <GuidebookGearStatRollPanels
+      rolls={rolls}
+      ariaLabel={ariaLabel}
+      hideSectionHeader
+      className="guidebook-stat-recommendations--corrupted"
+    />
+  )
+}
+
+function GuidebookCorruptedSection({
+  step,
+  title,
+  lead,
+  children,
+}: {
+  step: number
+  title: string
+  lead?: string
+  children: ReactNode
+}) {
+  const titleId = `guidebook-corrupted-section-${step}-${title.replace(/\s+/g, '-').toLowerCase()}`
+  return (
+    <section className="guidebook-corrupted-section" aria-labelledby={titleId}>
+      <header className="guidebook-corrupted-section__head">
+        <div className="guidebook-corrupted-section__title-row">
+          <span className="guidebook-corrupted-section__step" aria-hidden>
+            {step}
+          </span>
+          <h3 id={titleId} className="guidebook-corrupted-section__title">
+            {title}
+          </h3>
+        </div>
+        {lead ? <p className="guidebook-corrupted-section__lead muted">{lead}</p> : null}
+      </header>
+      <div className="guidebook-corrupted-section__body">{children}</div>
+    </section>
+  )
 }
 
 function GuidebookCorruptedAlternativeSources() {
@@ -2309,120 +2475,123 @@ function GuidebookCorruptedAlternativeSources() {
   }, [visible, sourceRows])
 
   return (
-    <section ref={ref} className="guidebook-corrupted-alt" aria-label="Alternative material sources">
-      <h4 className="guidebook-corrupted-alt__title">Alternative material sources</h4>
-      <p className="guidebook-corrupted-alt__lead muted">
-        If direct dungeon drops are slow, farm materials through the weekly quest or Dark Masters
-        Token pity instead.
-      </p>
+    <div ref={ref}>
+      <GuidebookCorruptedSection
+        step={2}
+        title="Other ways to farm materials"
+        lead="If direct dungeon drops are slow, use the weekly quest or trade Dark Masters Tokens."
+      >
+        <div className="guidebook-corrupted-subsection">
+          <h4 className="guidebook-corrupted-subsection__title">Weekly quest</h4>
+          <p className="guidebook-corrupted-subsection__text">
+            <GuidebookQuestHoverLink
+              questId={GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID}
+              labelFallback="[Weekly] Preparing for the Apocalypse"
+            />{' '}
+            rewards {GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT}{' '}
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_DARK_DIGICORE_ITEM_ID}
+              labelFallback="Dark DigiCore"
+            />{' '}
+            and {GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT}{' '}
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID}
+              labelFallback="Energized Dark DigiCore"
+            />{' '}
+            per week.
+          </p>
+        </div>
 
-      <div className="guidebook-corrupted-alt__blocks">
-        <article className="guidebook-corrupted-alt__block" aria-label="Weekly quest">
-          <h5 className="guidebook-corrupted-alt__block-title">Weekly quest</h5>
-          <GuideProse>
-            <p>
-              <GuidebookQuestHoverLink
-                questId={GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID}
-                labelFallback="[Weekly] Preparing for the Apocalypse"
-              />{' '}
-              rewards {GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT}{' '}
-              <GuidebookItemHoverLink
-                itemId={GUIDEBOOK_DARK_DIGICORE_ITEM_ID}
-                labelFallback="Dark DigiCore"
-              />{' '}
-              and {GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT}{' '}
-              <GuidebookItemHoverLink
-                itemId={GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID}
-                labelFallback="Energized Dark DigiCore"
-              />{' '}
-              per week.
-            </p>
-          </GuideProse>
-        </article>
-
-        <article className="guidebook-corrupted-alt__block" aria-label="Dark Masters Token">
-          <h5 className="guidebook-corrupted-alt__block-title">Dark Masters Token</h5>
-          <GuideProse>
-            <p>
-              <GuidebookItemHoverLink
-                itemId={GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID}
-                labelFallback="Dark Masters Token"
-              />{' '}
-              is pity currency from the dungeons below. Trade with Zudomon in Olympus:{' '}
-              {GUIDEBOOK_DARK_MASTERS_TOKEN_DARK_DIGICORE_COST} tokens for one{' '}
-              <GuidebookItemHoverLink
-                itemId={GUIDEBOOK_DARK_DIGICORE_ITEM_ID}
-                labelFallback="Dark DigiCore"
-              />
-              , or {GUIDEBOOK_DARK_MASTERS_TOKEN_ENERGIZED_DIGICORE_COST} tokens for one{' '}
-              <GuidebookItemHoverLink
-                itemId={GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID}
-                labelFallback="Energized Dark DigiCore"
-              />
-              .
-            </p>
-          </GuideProse>
+        <div className="guidebook-corrupted-subsection">
+          <h4 className="guidebook-corrupted-subsection__title">Dark Masters Token</h4>
+          <p className="guidebook-corrupted-subsection__text">
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID}
+              labelFallback="Dark Masters Token"
+            />{' '}
+            is pity currency from the dungeons below. Trade with Zudomon in Olympus:{' '}
+            {GUIDEBOOK_DARK_MASTERS_TOKEN_DARK_DIGICORE_COST} tokens for one{' '}
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_DARK_DIGICORE_ITEM_ID}
+              labelFallback="Dark DigiCore"
+            />
+            , or {GUIDEBOOK_DARK_MASTERS_TOKEN_ENERGIZED_DIGICORE_COST} tokens for one{' '}
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID}
+              labelFallback="Energized Dark DigiCore"
+            />
+            .
+          </p>
           {visible && loading ? (
             <p className="guidebook-corrupted-alt__status muted">Loading dungeons…</p>
           ) : null}
           {visible && loadError ? <p className="guidebook-error">{loadError}</p> : null}
           {visible && !loading && !loadError && dungeons?.length ? (
-            <ul className="guidebook-corrupted-alt__dungeon-list">
-              {dungeons.map((dungeon) => (
-                <li
-                  key={`${dungeon.dungeonId}-${dungeon.difficulty}`}
-                  className="guidebook-corrupted-alt__dungeon-row"
-                >
-                  <span className="guidebook-corrupted-alt__dungeon-level">
-                    {dungeon.bossLevel != null ? `Lv. ${dungeon.bossLevel}` : '—'}
-                  </span>
-                  <span className="guidebook-corrupted-alt__dungeon-name">{dungeon.dungeonName}</span>
-                  <span
-                    className={`guidebook-dungeon-diff guidebook-dungeon-diff--${dungeon.difficultySlug} guidebook-corrupted-alt__dungeon-diff`}
+            <>
+              <p className="guidebook-corrupted-subsection__list-label">Token dungeons</p>
+              <ul className="guidebook-corrupted-alt__dungeon-list">
+                {dungeons.map((dungeon) => (
+                  <li
+                    key={`${dungeon.dungeonId}-${dungeon.difficulty}`}
+                    className="guidebook-corrupted-alt__dungeon-row"
                   >
-                    {dungeon.difficulty}
-                  </span>
-                  <span className="guidebook-corrupted-alt__dungeon-token muted">
-                    ×{dungeon.tokenCount} token{dungeon.tokenCount === 1 ? '' : 's'}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <span className="guidebook-corrupted-alt__dungeon-level">
+                      {dungeon.bossLevel != null ? `Lv. ${dungeon.bossLevel}` : '—'}
+                    </span>
+                    <span className="guidebook-corrupted-alt__dungeon-name">{dungeon.dungeonName}</span>
+                    <span
+                      className={`guidebook-dungeon-diff guidebook-dungeon-diff--${dungeon.difficultySlug} guidebook-corrupted-alt__dungeon-diff`}
+                    >
+                      {dungeon.difficulty}
+                    </span>
+                    <span className="guidebook-corrupted-alt__dungeon-token muted">
+                      ×{dungeon.tokenCount} token{dungeon.tokenCount === 1 ? '' : 's'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : null}
-        </article>
-      </div>
-    </section>
+        </div>
+      </GuidebookCorruptedSection>
+    </div>
   )
 }
 
-function GuidebookCorruptedCraftSection({ guide }: { guide: GuidebookCorruptedGearGuide }) {
-  const [materialA, materialB] = guide.materials
+function GuidebookCorruptedCraftSection() {
+  const materials = GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS
+  const [materialA, materialB] = materials
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
-  const selectedMaterial = guide.materials.find((m) => m.itemId === selectedItemId)
-  const craftTitle = `Craft ${guide.craftLabel} at the Blacksmith in Olympus`
+  const selectedMaterial = materials.find((m) => m.itemId === selectedItemId)
+  const totalDark =
+    GUIDEBOOK_CORRUPTED_RING_DARK_DIGICORE_COUNT * GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT
+  const totalEnergized =
+    GUIDEBOOK_CORRUPTED_RING_ENERGIZED_DIGICORE_COUNT * GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT
 
   return (
-    <section
-      className="guidebook-fragment-farm guidebook-ring-craft"
-      aria-label={craftTitle}
+    <GuidebookCorruptedSection
+      step={1}
+      title="Craft corrupted accessories"
+      lead="Ring, necklace, and earring at the Blacksmith in Olympus. Material costs below are per accessory."
     >
-      <h4 className="guidebook-fragment-farm__title">{craftTitle}</h4>
       {materialA && materialB ? (
         <>
-          <GuidebookNotes ariaLabel={`${guide.craftLabel} materials`}>
-            <p className="guidebook-notes__collect">
-              <span className="guidebook-notes__collect-word">Collect</span>
+          <div className="guidebook-corrupted-panel guidebook-corrupted-panel--materials">
+            <p className="guidebook-corrupted-materials">
+              <span className="guidebook-corrupted-materials__label">Per accessory, collect</span>
               <GuidebookCollectMaterialPick
                 material={materialA}
+                quantitySuffix=" each"
                 selected={selectedItemId === materialA.itemId}
                 onSelect={() =>
                   setSelectedItemId((prev) => (prev === materialA.itemId ? null : materialA.itemId))
                 }
               />
-              <span className="guidebook-notes__collect-word">and</span>
+              <span className="guidebook-corrupted-materials__label">and</span>
               <GuidebookCollectMaterialPick
                 material={materialB}
+                quantitySuffix=" each"
                 selected={selectedItemId === materialB.itemId}
                 onSelect={() =>
                   setSelectedItemId((prev) =>
@@ -2431,11 +2600,16 @@ function GuidebookCorruptedCraftSection({ guide }: { guide: GuidebookCorruptedGe
                 }
               />
             </p>
-          </GuidebookNotes>
+            <p className="guidebook-corrupted-materials-total muted">
+              All three accessories: {totalDark} Dark DigiCore and {totalEnergized} Energized Dark
+              DigiCore total.
+            </p>
+          </div>
+          <p className="guidebook-corrupted-note muted">{GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER}</p>
           <div className="guidebook-material-sources" aria-live="polite">
             {selectedMaterial ? (
               <GuideGearRaidSourcesSection
-                gearLabel={guide.gearLabel}
+                gearLabel="accessory"
                 itemIds={[selectedMaterial.itemId]}
                 showWip={false}
                 dungeonAriaLabel={`${selectedMaterial.labelFallback} sources`}
@@ -2443,46 +2617,61 @@ function GuidebookCorruptedCraftSection({ guide }: { guide: GuidebookCorruptedGe
               />
             ) : (
               <p className="guidebook-material-sources__hint muted">
-                Click a material above to see where it drops.
+                Select a material above to see where it drops.
               </p>
             )}
           </div>
         </>
       ) : null}
-    </section>
+    </GuidebookCorruptedSection>
   )
 }
 
-function GuidebookCorruptedGearDataSection({ guide }: { guide: GuidebookCorruptedGearGuide }) {
+function GuidebookCorruptedStatRecommendationsSection() {
   return (
-    <section className="guidebook-ring-entry" aria-label={guide.dataTitle}>
-      <h4 className="guidebook-fragment-farm__title">{guide.dataTitle}</h4>
-      <GuidebookCorruptedGearRollNotes rolls={guide.rolls} ariaLabel={`${guide.dataTitle} stat rolls`} />
-      {guide.dataItemId ? (
-        <>
-          <p className="guidebook-fragment-farm__hint muted">
-            Can be obtained from the following dungeons.
-          </p>
-          <GuideGearRaidSourcesSection
-            gearLabel={guide.gearLabel}
-            itemIds={[guide.dataItemId]}
-            showWip={false}
-            dungeonAriaLabel={`${guide.dataTitle} dungeons`}
-            dungeonEmptyMessage={`No dungeon sources are listed for ${guide.dataTitle} yet.`}
-          />
-        </>
-      ) : null}
-    </section>
+    <GuidebookCorruptedSection
+      step={3}
+      title="Stat recommendations"
+      lead="Roll these stats when crafting each corrupted accessory from its data piece."
+    >
+      <div className="guidebook-corrupted-stat-blocks">
+        {GUIDEBOOK_CORRUPTED_GEAR_GUIDES.map((guide) => (
+          <article key={guide.slug} className="guidebook-corrupted-stat-block">
+            <header className="guidebook-corrupted-stat-block__head">
+              <h4 className="guidebook-corrupted-stat-block__title">{guide.dataTitle}</h4>
+              <p className="guidebook-corrupted-stat-block__craft muted">
+                Crafts into {guide.craftLabel}
+              </p>
+            </header>
+            <GuidebookCorruptedGearRollNotes
+              rolls={guide.rolls}
+              ariaLabel={`${guide.dataTitle} stat rolls`}
+            />
+            {guide.dataItemId ? (
+              <div className="guidebook-corrupted-subsection guidebook-corrupted-subsection--sources">
+                <h4 className="guidebook-corrupted-subsection__title">Where to farm</h4>
+                <GuideGearRaidSourcesSection
+                  gearLabel={guide.gearLabel}
+                  itemIds={[guide.dataItemId]}
+                  showWip={false}
+                  dungeonAriaLabel={`${guide.dataTitle} dungeons`}
+                  dungeonEmptyMessage={`No dungeon sources are listed for ${guide.dataTitle} yet.`}
+                />
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    </GuidebookCorruptedSection>
   )
 }
 
-function GuidebookCorruptedGearDetail({ guide }: { guide: GuidebookCorruptedGearGuide }) {
+export function GuideGearCorruptedAccessories() {
   return (
-    <div className="guidebook-ring-track guidebook-ring-track--corrupted">
-      <p className="guidebook-corrupted-disclaimer muted">{GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER}</p>
-      <GuidebookCorruptedCraftSection guide={guide} />
+    <div className="guidebook-corrupted-page">
+      <GuidebookCorruptedCraftSection />
       <GuidebookCorruptedAlternativeSources />
-      <GuidebookCorruptedGearDataSection guide={guide} />
+      <GuidebookCorruptedStatRecommendationsSection />
     </div>
   )
 }
@@ -2520,11 +2709,6 @@ export function GuideGearRing() {
   )
 }
 
-export function GuideGearCorruptedRing() {
-  const guide = guidebookCorruptedGearGuide('corrupted-ring')
-  return guide ? <GuidebookCorruptedGearDetail guide={guide} /> : null
-}
-
 export function GuideGearEarring() {
   return (
     <div className="guidebook-ring-track">
@@ -2546,16 +2730,6 @@ export function GuideGearEarring() {
       </section>
     </div>
   )
-}
-
-export function GuideGearCorruptedNecklace() {
-  const guide = guidebookCorruptedGearGuide('corrupted-necklace')
-  return guide ? <GuidebookCorruptedGearDetail guide={guide} /> : null
-}
-
-export function GuideGearCorruptedEarring() {
-  const guide = guidebookCorruptedGearGuide('corrupted-earring')
-  return guide ? <GuidebookCorruptedGearDetail guide={guide} /> : null
 }
 
 export function GuideGearNecklace() {

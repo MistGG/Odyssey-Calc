@@ -23,6 +23,8 @@ export type GuidebookProgressionStep = {
   trailCluster?: GuidebookTrailCluster
   /** View-only card; cannot be set as the user's progression step. */
   informativeOnly?: boolean
+  /** Skip the Steps list and Details label — wiki content sits directly under the header. */
+  detailOnly?: boolean
 }
 
 export const OFFICIAL_HEROES_GUIDE_URL =
@@ -124,6 +126,15 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     tasks: [{ kind: 'tip', text: 'Detailed clothes guide will be added here.' }],
   },
   {
+    id: 'mid-chips',
+    title: 'Chips',
+    zone: 'Early Gear',
+    zoneTone: 'gear',
+    trailCluster: 'gear',
+    summary: '',
+    tasks: [{ kind: 'tip', text: 'Detailed chips guide will be added here.' }],
+  },
+  {
     id: 'mid-digivice',
     title: 'Digivice',
     zone: 'Early Gear',
@@ -183,47 +194,48 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
   },
   {
     id: 'mid-corrupted-clothes',
-    title: 'Olympus gear clothes',
-    zone: 'Olympus gear',
+    title: 'Olympus Clothes',
+    zone: 'Corrupted gear',
     zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
     summary: '',
-    tasks: [{ kind: 'tip', text: 'Detailed Olympus gear clothes guide will be added here.' }],
+    tasks: [{ kind: 'tip', text: 'Detailed Olympus clothes guide will be added here.' }],
   },
   {
-    id: 'mid-corrupted-ring',
-    title: 'Corrupted ring',
+    id: 'mid-corrupted-chips',
+    title: 'Chips',
     zone: 'Corrupted gear',
     zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
-    summary: 'Craft a corrupted ring using Dark DigiCore materials.',
+    summary: '',
+    tasks: [{ kind: 'tip', text: 'Detailed chips guide will be added here.' }],
+  },
+  {
+    id: 'mid-digi-aura',
+    title: 'Promethean DigiAura',
+    zone: 'Corrupted gear',
+    zoneTone: 'corrupted',
+    trailCluster: 'corrupted-gear',
+    summary: 'Craft Promethean DigiAura at the Blacksmith in Olympus.',
     tasks: [
-      { kind: 'farm', text: 'Farm DarkDigicore and Energized Dark DigiCore' },
-      { kind: 'craft', text: 'Craft corrupted ring at the Blacksmith in Olympus' },
+      { kind: 'farm', text: 'Farm Homeostasis Wish, Olympian Data Core, and element shards.' },
+      { kind: 'craft', text: 'Craft Promethean DigiAura at the Blacksmith in Olympus.' },
     ],
   },
   {
-    id: 'mid-corrupted-necklace',
-    title: 'Corrupted necklace',
+    id: 'mid-corrupted-accessories',
+    title: 'Corrupted Accessories',
     zone: 'Corrupted gear',
     zoneTone: 'corrupted',
     trailCluster: 'corrupted-gear',
-    summary: 'Craft a corrupted necklace using Dark DigiCore materials.',
+    detailOnly: true,
+    summary: 'Craft corrupted ring, necklace, and earring.',
     tasks: [
-      { kind: 'farm', text: 'Farm DarkDigicore and Energized Dark DigiCore' },
-      { kind: 'craft', text: 'Craft corrupted necklace at the Blacksmith in Olympus' },
-    ],
-  },
-  {
-    id: 'mid-corrupted-earring',
-    title: 'Corrupted earring',
-    zone: 'Corrupted gear',
-    zoneTone: 'corrupted',
-    trailCluster: 'corrupted-gear',
-    summary: 'Craft a corrupted earring using Dark DigiCore materials.',
-    tasks: [
-      { kind: 'farm', text: 'Farm DarkDigicore and Energized Dark DigiCore' },
-      { kind: 'craft', text: 'Craft corrupted earring at the Blacksmith in Olympus' },
+      {
+        kind: 'farm',
+        text: 'Farm Dark DigiCore and Energized Dark DigiCore (30 + 15 per accessory)',
+      },
+      { kind: 'craft', text: 'Craft corrupted accessories at the Blacksmith in Olympus' },
     ],
   },
 ]
@@ -253,10 +265,29 @@ export function guidebookProgressionProgressIndex(stepId: string): number {
   return guidebookProgressionProgressSteps().findIndex((s) => s.id === stepId)
 }
 
+/** Deep links and stored progress for removed step ids. */
+const GUIDEBOOK_LEGACY_STEP_ALIASES: Record<string, string> = {
+  'mid-corrupted-ring': 'mid-corrupted-accessories',
+  'mid-corrupted-necklace': 'mid-corrupted-accessories',
+  'mid-corrupted-earring': 'mid-corrupted-accessories',
+}
+
+export function guidebookResolveStepId(stepId: string): string {
+  const aliased = GUIDEBOOK_LEGACY_STEP_ALIASES[stepId.trim()] ?? stepId.trim()
+  if (!guidebookProgressionStep(aliased)) {
+    return guidebookDefaultProgressStepId()
+  }
+  return guidebookNormalizeProgressStepId(aliased)
+}
+
 /** If stored progress points at an informative card, snap to the nearest real step. */
 export function guidebookNormalizeProgressStepId(stepId: string): string {
-  if (!guidebookStepIsInformative(stepId)) return stepId
-  const fullIndex = guidebookProgressionIndex(stepId)
+  const aliased = GUIDEBOOK_LEGACY_STEP_ALIASES[stepId.trim()] ?? stepId.trim()
+  if (!guidebookStepIsInformative(aliased)) {
+    if (guidebookProgressionStep(aliased)) return aliased
+    return guidebookDefaultProgressStepId()
+  }
+  const fullIndex = guidebookProgressionIndex(aliased)
   for (let i = fullIndex + 1; i < GUIDEBOOK_PROGRESSION_STEPS.length; i++) {
     const candidate = GUIDEBOOK_PROGRESSION_STEPS[i]!
     if (!candidate.informativeOnly) return candidate.id
