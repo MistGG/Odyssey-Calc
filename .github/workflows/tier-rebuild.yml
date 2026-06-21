@@ -33,7 +33,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Rebuild tier list and write static snapshot files
+      - name: Rebuild tier list and publish change history snapshot
         env:
           # Scheduled runs always force a full rebuild; manual runs use the input (default on).
           TIER_WORKER_FORCE: ${{ github.event_name == 'schedule' && '1' || (inputs.force_recompute && '1' || '0') }}

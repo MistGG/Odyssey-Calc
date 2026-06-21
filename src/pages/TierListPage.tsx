@@ -70,7 +70,7 @@ import {
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
 import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
-import { fetchPublishedTierListSnapshot } from '../lib/tierListPublished'
+import { fetchPublishedTierListSnapshot, fetchPublishedTierChangeHistory } from '../lib/tierListPublished'
 import {
   appendTierChangeHistory,
   buildTierListUpdateSummary,
@@ -79,6 +79,7 @@ import {
   labHrefForTierEntry,
   levelMapForSkills,
   loadTierUpdateSummaryFromStorage,
+  loadTierChangeHistory,
   RATE_LIMIT_COOLDOWN_MS,
   readDpsTierCategory,
   readDpsAutoAnimCancel,
@@ -91,6 +92,7 @@ import {
   readTierUpdatePanelMinimized,
   REQUEST_DELAY_MS,
   saveTierUpdateSummaryToStorage,
+  saveTierChangeHistory,
   sleep,
   writeDpsTierCategory,
   writeDpsAutoAnimCancel,
@@ -368,7 +370,17 @@ export function TierListPage() {
       setError(null)
       const existing = loadTierListCache()
       try {
-        const published = await fetchPublishedTierListSnapshot()
+        const [published, publishedHistory] = await Promise.all([
+          fetchPublishedTierListSnapshot(),
+          fetchPublishedTierChangeHistory(),
+        ])
+        if (
+          !publishedHistory.error &&
+          publishedHistory.history?.runs?.length &&
+          loadTierChangeHistory().length === 0
+        ) {
+          saveTierChangeHistory(publishedHistory.history.runs as TierListChangeHistoryRow[])
+        }
         const remoteRow = published.snapshot
         if (!published.error && remoteRow && isTierListCacheShape(remoteRow.cache)) {
           const remoteCache = remoteRow.cache as TierListCache

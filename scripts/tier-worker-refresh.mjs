@@ -10,11 +10,15 @@
  * - TIER_WORKER_TIMEOUT_MS (default: 3600000 / 60m)
  * - TIER_WORKER_FORCE=1 — append ?forceRefresh=1 so tier list always rebuilds
  */
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import process from 'node:process'
 import { chromium } from 'playwright'
+import {
+  buildTierChangeHistoryRun,
+  mergeTierChangeHistoryRuns,
+} from './tier-change-summary.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const tierListOut = resolve(root, 'public/data/tier-list-live.json')
@@ -136,20 +140,63 @@ async function readTierExports(page) {
   )
 }
 
-function writePublishedFiles(cache, runs) {
+function readPublishedTierSnapshot() {
+  try {
+    if (!existsSync(tierListOut)) return null
+    const raw = JSON.parse(readFileSync(tierListOut, 'utf8'))
+    if (!raw?.cache || typeof raw.updated_at !== 'string') return null
+    return raw
+  } catch {
+    return null
+  }
+}
+
+function readPublishedTierHistoryRuns() {
+  try {
+    if (!existsSync(tierHistoryOut)) return []
+    const raw = JSON.parse(readFileSync(tierHistoryOut, 'utf8'))
+    return Array.isArray(raw?.runs) ? raw.runs : []
+  } catch {
+    return []
+  }
+}
+
+function writePublishedFiles(cache, priorSnapshot, priorHistoryRuns) {
   const updatedAt = new Date().toISOString()
   writeFileSync(
     tierListOut,
     `${JSON.stringify({ updated_at: updatedAt, cache }, null, 2)}\n`,
     'utf8',
   )
+
+  let historyRuns = priorHistoryRuns
+  if (isTierListCacheShape(cache)) {
+    const priorCache = priorSnapshot?.cache ?? { entries: {}, listSignatures: {} }
+    const newRun = buildTierChangeHistoryRun(priorCache, cache, 'force')
+    historyRuns = mergeTierChangeHistoryRuns(newRun, priorHistoryRuns)
+    const tierChanges =
+      newRun.summary.dpsUp.length +
+      newRun.summary.dpsDown.length +
+      newRun.summary.dpsNew.length +
+      newRun.summary.tankUp.length +
+      newRun.summary.tankDown.length +
+      newRun.summary.tankNew.length +
+      newRun.summary.healerUp.length +
+      newRun.summary.healerDown.length +
+      newRun.summary.healerNew.length +
+      newRun.summary.statusChanges.length
+    console.log(
+      `[tier-worker] history run: ${tierChanges} tier deltas, ${newRun.apiCount} api signature changes`,
+    )
+  }
+
   writeFileSync(
     tierHistoryOut,
-    `${JSON.stringify({ updated_at: updatedAt, runs }, null, 2)}\n`,
+    `${JSON.stringify({ updated_at: updatedAt, runs: historyRuns }, null, 2)}\n`,
     'utf8',
   )
   console.log('[tier-worker] wrote', tierListOut)
-  console.log('[tier-worker] wrote', tierHistoryOut, `(${runs.length} history runs)`)
+  console.log('[tier-worker] wrote', tierHistoryOut, `(${historyRuns.length} history runs)`)
 }
 
 function formatRestrictedResponse(status, url, bodyText) {
@@ -168,6 +215,17 @@ function formatRestrictedResponse(status, url, bodyText) {
 console.log('[tier-worker] site:', siteOrigin, forceRefresh ? '(force refresh)' : '')
 console.log('[tier-worker] publishing to static JSON (no Supabase tier tables)')
 console.log('[tier-worker] no sign-in required (wiki + in-browser sim)')
+
+const priorPublishedSnapshot = readPublishedTierSnapshot()
+const priorPublishedHistoryRuns = readPublishedTierHistoryRuns()
+if (priorPublishedSnapshot?.cache) {
+  console.log(
+    '[tier-worker] prior snapshot:',
+    priorPublishedSnapshot.updated_at,
+    `(${Object.keys(priorPublishedSnapshot.cache.entries ?? {}).length} entries)`,
+  )
+}
+console.log('[tier-worker] prior history runs on disk:', priorPublishedHistoryRuns.length)
 
 const browser = await chromium.launch({ headless: true })
 const ctx = await browser.newContext()
@@ -224,7 +282,7 @@ try {
     if (workerState === 'ready') {
       const { cache, runs } = await readTierExports(page)
       if (isTierListCacheShape(cache) && Object.keys(cache.entries ?? {}).length > 0) {
-        writePublishedFiles(cache, runs)
+        writePublishedFiles(cache, priorPublishedSnapshot, priorPublishedHistoryRuns)
         done = true
         break
       }
