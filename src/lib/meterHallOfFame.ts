@@ -336,7 +336,7 @@ export async function fetchScopeHallOfFameGoldEntries(
   const useCycleWindow = Boolean(cycleId && windowStart)
   const cacheKey = meterHofScopeKey(id, difficultyId, useCycleWindow ? cycleId : undefined)
   const cached = getCachedScopeHallOfFame(cacheKey)
-  if (cached) return { entries: cached, error: null }
+  if (cached) return { entries: filterGoldRecordBreaks(cached), error: null }
 
   const supabase = getMeterAnonSupabase()
   if (!supabase) return { entries: [], error: 'Supabase is not configured.' }

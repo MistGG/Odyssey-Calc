@@ -1,7 +1,7 @@
 import type { MeterHallOfFameEntry } from './meterHallOfFame'
 
 const TTL_MS = 60 * 60 * 1000
-const SESSION_KEY = 'odyssey-meter-hof-cache-v2'
+const SESSION_KEY = 'odyssey-meter-hof-cache-v3'
 const MAX_SCOPES = 32
 
 type CacheEntry = {
