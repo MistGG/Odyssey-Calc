@@ -157,6 +157,7 @@ export function dedupeCoalescedPartyUploads(rows: HofRow[]): HofRow[] {
  * Hall of Fame entry = this parse strictly beat the prior role record for the dungeon+difficulty.
  * Ties at the same DPS do not add another row. Beating your own standing record in the same role
  * does not add another induction — only taking the record from someone else (or the first break) counts.
+ * Self-improvements while holding the record upgrade that induction row's displayed parse/DPS.
  */
 export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
   const sorted = dedupeCoalescedPartyUploads(rows)
@@ -176,6 +177,14 @@ export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
     tank: null,
     healer: null,
   }
+  const lastGoldIndexByRole: Record<MeterRoleBucket, number | null> = {
+    melee: null,
+    ranged: null,
+    caster: null,
+    hybrid: null,
+    tank: null,
+    healer: null,
+  }
   const gold: HofRow[] = []
   const seen = new Set<string>()
 
@@ -185,12 +194,20 @@ export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
 
     const playerKey = entry.playerKey.trim().toLowerCase()
     const holder = recordHolder[entry.roleBucket]
-    if (holder && holder === playerKey) continue
+    if (holder && holder === playerKey) {
+      const idx = lastGoldIndexByRole[entry.roleBucket]
+      if (idx != null) {
+        gold[idx] = entry
+      }
+      runningMax[entry.roleBucket] = entry.dps
+      continue
+    }
 
     const key = entryKey(entry)
     if (seen.has(key)) continue
     seen.add(key)
 
+    lastGoldIndexByRole[entry.roleBucket] = gold.length
     gold.push(entry)
     runningMax[entry.roleBucket] = entry.dps
     recordHolder[entry.roleBucket] = playerKey
