@@ -122,10 +122,10 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'Early Gear',
     zoneTone: 'gear',
     trailCluster: 'gear',
-    summary: 'Farm and scan DigiEggs for Explorer and Digital Gear boxes',
+    summary: 'Farm and scan rank-1 DigiEggs for Explorer and Digital Gear boxes',
     tasks: [
-      { kind: 'farm', text: 'Farm matching DigiEgg scan DATA from open-world monsters.' },
-      { kind: 'gear', text: 'Scan eggs for a random Explorer Gear Box (Low/High Class) or Digital Gear Box (Super Class).' },
+      { kind: 'farm', text: 'Farm rank-1 DigiEgg scan DATA from open-world monsters.' },
+      { kind: 'gear', text: 'Scan rank-1 eggs for a random Explorer Gear Box (Low/High Class) or Digital Gear Box (Super Class).' },
     ],
   },
   {

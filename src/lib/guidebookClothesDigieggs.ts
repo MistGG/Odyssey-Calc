@@ -4,7 +4,7 @@ export type GuidebookClothesDigieggEntry = {
   id: string
   name: string
   iconId: string
-  rank: 1 | 2
+  rank: 1
   gearClass: 'Low Class' | 'High Class' | 'Super Class' | null
   typeName: string
 }
