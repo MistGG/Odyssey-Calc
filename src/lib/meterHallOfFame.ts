@@ -200,6 +200,33 @@ export function filterGoldRecordBreaks(rows: HofRow[]): HofRow[] {
   return gold
 }
 
+function meterHofScopePartitionKey(dungeonId: string, difficultyId: number): string {
+  return `${dungeonId.trim()}:${difficultyId}`
+}
+
+/** Apply induction filter per dungeon+difficulty (never across scopes). */
+export function filterGoldRecordBreaksByScope<T extends HofRow>(
+  rows: T[],
+  scopeOf: (row: T) => { dungeonId: string; difficultyId: number },
+): T[] {
+  const byScope = new Map<string, T[]>()
+  for (const row of rows) {
+    const { dungeonId, difficultyId } = scopeOf(row)
+    const key = meterHofScopePartitionKey(dungeonId, difficultyId)
+    const list = byScope.get(key) ?? []
+    list.push(row)
+    byScope.set(key, list)
+  }
+
+  const filtered: T[] = []
+  for (const group of byScope.values()) {
+    filtered.push(...filterGoldRecordBreaks(group))
+  }
+
+  filtered.sort((a, b) => new Date(b.achievedAt).getTime() - new Date(a.achievedAt).getTime())
+  return filtered
+}
+
 export function goldParsesFromLeaderboardHistory(
   rows: HofRow[],
   currentPoolByRole: Record<MeterRoleBucket, number[]>,
@@ -318,10 +345,11 @@ export async function fetchScopeHallOfFameGoldEntries(
   }
 
   const rpcRows = (rpcRes.data ?? []) as HofGoldRpcRow[]
-  // RPC returns server-maintained gold rows; do not re-filter client-side.
-  let rows = rpcRows
-    .map((row) => mapHofGoldRpcRow(row))
-    .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> => row != null)
+  let rows = filterGoldRecordBreaks(
+    rpcRows
+      .map((row) => mapHofGoldRpcRow(row))
+      .filter((row): row is Omit<MeterHallOfFameEntry, 'currentPercentile'> => row != null),
+  )
   rows = await resolveHofGoldNames(rows)
 
   const poolByRole: Record<MeterRoleBucket, number[]> =
@@ -462,10 +490,12 @@ async function fetchPlayerHallOfFameFromPlayerRpc(
     return { entries: [], error: error.message }
   }
 
-  // RPC returns server-maintained gold rows; do not re-filter client-side.
-  let goldRows = ((data ?? []) as PlayerHofGoldRpcRow[])
-    .map((row) => mapPlayerHofGoldRpcRow(row))
-    .filter((row): row is HofRowWithScope => row != null)
+  let goldRows = filterGoldRecordBreaksByScope(
+    ((data ?? []) as PlayerHofGoldRpcRow[])
+      .map((row) => mapPlayerHofGoldRpcRow(row))
+      .filter((row): row is HofRowWithScope => row != null),
+    (row) => ({ dungeonId: row.dungeonId, difficultyId: row.difficultyId }),
+  )
 
   const scopeByEntryKey = new Map(goldRows.map((row) => [entryKey(row), row]))
 
