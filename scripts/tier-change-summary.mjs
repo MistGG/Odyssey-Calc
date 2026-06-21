@@ -183,7 +183,7 @@ function countTierChangesInSummary(summary) {
   return ids.size
 }
 
-function buildSampleDigimon(summary, priorCache, newCache, limit = 12) {
+function buildSampleDigimon(summary, priorCache, newCache, apiDiffs, limit = 12) {
   const sample = []
   const seen = new Set()
   const push = (id, cause) => {
@@ -200,6 +200,10 @@ function buildSampleDigimon(summary, priorCache, newCache, limit = 12) {
     ) {
       push(id, 'api')
     }
+  }
+
+  for (const row of apiDiffs ?? []) {
+    push(row.id, 'api')
   }
 
   for (const bucket of [
@@ -229,6 +233,79 @@ function countApiSignatureChanges(priorCache, newCache) {
   return n
 }
 
+/** Mirrors TierListPage diffTierApiSnapshot — field-level wiki API diffs. */
+function diffTierApiSnapshot(prev, next) {
+  if (!prev || !next) return []
+  const lines = []
+  const push = (line) => {
+    if (lines.length < 20) lines.push(line)
+  }
+  const normText = (v) => (v ?? '').replace(/\s+/g, ' ').trim()
+  const cmpNum = (label, a, b) => {
+    if (a !== b) push(`${label}: ${a} -> ${b}`)
+  }
+  const cmpText = (label, a, b) => {
+    if (normText(a) !== normText(b)) push(`${label}: "${normText(a)}" -> "${normText(b)}"`)
+  }
+
+  cmpText('Role', prev.role, next.role)
+  cmpText('Attribute', prev.attribute, next.attribute)
+  cmpText('Element', prev.element, next.element)
+  cmpNum('Rank', prev.rank, next.rank)
+  cmpNum('HP', prev.hp, next.hp)
+  cmpNum('Attack', prev.attack, next.attack)
+  for (const key of Object.keys(prev.stats ?? {})) {
+    if (key === 'hp' || key === 'attack') continue
+    cmpNum(`Stats.${key}`, prev.stats[key], next.stats[key])
+  }
+
+  const prevSkills = new Map((prev.skills ?? []).map((s) => [s.id, s]))
+  const nextSkills = new Map((next.skills ?? []).map((s) => [s.id, s]))
+  for (const [id, ns] of nextSkills.entries()) {
+    const ps = prevSkills.get(id)
+    if (!ps) {
+      push(`Skill added: ${ns.name}`)
+      continue
+    }
+    cmpText(`Skill ${ns.name} name`, ps.name, ns.name)
+    cmpNum(`Skill ${ns.name} base_dmg`, ps.base_dmg, ns.base_dmg)
+    cmpNum(`Skill ${ns.name} scaling`, ps.scaling, ns.scaling)
+    cmpNum(`Skill ${ns.name} cast_time`, ps.cast_time_sec, ns.cast_time_sec)
+    cmpNum(`Skill ${ns.name} cooldown`, ps.cooldown_sec, ns.cooldown_sec)
+    cmpNum(`Skill ${ns.name} ds_cost`, ps.ds_cost, ns.ds_cost)
+    cmpNum(`Skill ${ns.name} radius`, ps.radius ?? 0, ns.radius ?? 0)
+    cmpText(`Skill ${ns.name} description`, ps.description, ns.description)
+    cmpText(`Skill ${ns.name} buff name`, ps.buff_name, ns.buff_name)
+    cmpText(`Skill ${ns.name} buff description`, ps.buff_description, ns.buff_description)
+    cmpNum(`Skill ${ns.name} buff duration`, ps.buff_duration ?? 0, ns.buff_duration ?? 0)
+  }
+  for (const [id, ps] of prevSkills.entries()) {
+    if (!nextSkills.has(id)) push(`Skill removed: ${ps.name}`)
+  }
+  return lines
+}
+
+function buildApiDiffsFromCaches(priorCache, newCache, maxBuckets = 60) {
+  const apiDiffById = {}
+  const apiDiffs = []
+  for (const id of Object.keys(newCache?.entries ?? {})) {
+    const prevSnap = priorCache?.entries?.[id]?.apiSnapshot
+    const nextSnap = newCache.entries[id]?.apiSnapshot
+    if (!nextSnap) continue
+    const lines = diffTierApiSnapshot(prevSnap, nextSnap)
+    if (lines.length === 0) continue
+    const clipped = lines.slice(0, 8)
+    apiDiffById[id] = clipped
+    apiDiffs.push({
+      id,
+      name: newCache.entries[id]?.name ?? id,
+      lines: clipped,
+    })
+    if (apiDiffs.length >= maxBuckets) break
+  }
+  return { apiDiffById, apiDiffs }
+}
+
 /**
  * Build a published history run by diffing the prior committed snapshot vs the new cache.
  * The in-browser force refresh compares against the same published snapshot (already loaded),
@@ -238,9 +315,10 @@ export function buildTierChangeHistoryRun(priorCache, newCache, mode = 'force') 
   const snapshotBefore = snapshotBeforeFromCache(priorCache)
   const refreshedIds = new Set(Object.keys(newCache?.entries ?? {}))
   const summary = buildTierListUpdateSummary(mode, snapshotBefore, newCache.entries ?? {}, refreshedIds)
-  const apiCount = countApiSignatureChanges(priorCache, newCache)
+  const { apiDiffById, apiDiffs } = buildApiDiffsFromCaches(priorCache, newCache)
+  const apiCount = Math.max(apiDiffs.length, countApiSignatureChanges(priorCache, newCache))
   const tierCount = countTierChangesInSummary(summary)
-  const sampleDigimon = buildSampleDigimon(summary, priorCache, newCache)
+  const sampleDigimon = buildSampleDigimon(summary, priorCache, newCache, apiDiffs)
 
   return {
     id: `${summary.finishedAt}-${Math.random().toString(36).slice(2, 8)}`,
@@ -250,8 +328,8 @@ export function buildTierChangeHistoryRun(priorCache, newCache, mode = 'force') 
     apiCount,
     tierCount,
     sampleDigimon,
-    apiDiffById: {},
-    apiDiffs: [],
+    apiDiffById,
+    apiDiffs,
     summary,
   }
 }

@@ -186,7 +186,7 @@ function writePublishedFiles(cache, priorSnapshot, priorHistoryRuns) {
       newRun.summary.healerNew.length +
       newRun.summary.statusChanges.length
     console.log(
-      `[tier-worker] history run: ${tierChanges} tier deltas, ${newRun.apiCount} api signature changes`,
+      `[tier-worker] history run: ${tierChanges} tier deltas, ${newRun.apiDiffs.length} api field diffs (${newRun.apiCount} api count)`,
     )
   }
 
