@@ -122,8 +122,11 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'Early Gear',
     zoneTone: 'gear',
     trailCluster: 'gear',
-    summary: '',
-    tasks: [{ kind: 'tip', text: 'Detailed clothes guide will be added here.' }],
+    summary: 'Farm and scan DigiEggs for Explorer and Digital Gear boxes',
+    tasks: [
+      { kind: 'farm', text: 'Farm matching DigiEgg scan DATA from open-world monsters.' },
+      { kind: 'gear', text: 'Scan eggs for a random Explorer Gear Box (Low/High Class) or Digital Gear Box (Super Class).' },
+    ],
   },
   {
     id: 'mid-chips',
@@ -272,15 +275,16 @@ const GUIDEBOOK_LEGACY_STEP_ALIASES: Record<string, string> = {
   'mid-corrupted-earring': 'mid-corrupted-accessories',
 }
 
+/** Deep links: legacy aliases only — informative steps stay on the card the user opened. */
 export function guidebookResolveStepId(stepId: string): string {
   const aliased = GUIDEBOOK_LEGACY_STEP_ALIASES[stepId.trim()] ?? stepId.trim()
   if (!guidebookProgressionStep(aliased)) {
     return guidebookDefaultProgressStepId()
   }
-  return guidebookNormalizeProgressStepId(aliased)
+  return aliased
 }
 
-/** If stored progress points at an informative card, snap to the nearest real step. */
+/** Stored progress only: informative cards cannot be "your step" — snap to nearest real step. */
 export function guidebookNormalizeProgressStepId(stepId: string): string {
   const aliased = GUIDEBOOK_LEGACY_STEP_ALIASES[stepId.trim()] ?? stepId.trim()
   if (!guidebookStepIsInformative(aliased)) {

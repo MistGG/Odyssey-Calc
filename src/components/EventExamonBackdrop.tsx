@@ -1,6 +1,6 @@
 import { EVENT_BACKDROP_SPIRITS, eventBackdropSpiritUrl } from '../lib/eventOdysseyArt'
 
-/** Crimson atmosphere with faint Olympos XII spirits behind the event page. */
+/** Crimson atmosphere with faint Time Stranger model spirits behind the event page. */
 export function EventExamonBackdrop() {
   return (
     <div className="event-examon-backdrop" aria-hidden>

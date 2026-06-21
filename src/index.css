@@ -17086,9 +17086,9 @@ a.meter-profile-hof-badge {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(220, 38, 38, 0.14), transparent 55%),
-    radial-gradient(ellipse 70% 45% at 85% 25%, rgba(168, 85, 247, 0.1), transparent 50%),
-    linear-gradient(180deg, rgba(15, 10, 20, 0.35) 0%, rgba(9, 9, 14, 0.92) 65%);
+    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(220, 38, 38, 0.1), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 85% 25%, rgba(168, 85, 247, 0.08), transparent 50%),
+    linear-gradient(180deg, rgba(15, 10, 20, 0.45) 0%, rgba(9, 9, 14, 0.96) 65%);
 }
 
 .event-examon-backdrop__grid {
@@ -17137,10 +17137,13 @@ a.meter-profile-hof-badge {
   position: absolute;
   width: min(36vw, 20rem);
   height: auto;
-  opacity: 0.08;
-  filter: saturate(1.05) drop-shadow(0 0 32px rgba(220, 38, 38, 0.18));
+  opacity: 0.045;
+  mix-blend-mode: soft-light;
+  filter: saturate(0.75) blur(0.4px);
   object-fit: contain;
   user-select: none;
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 42%, #000 28%, transparent 88%);
+  mask-image: radial-gradient(ellipse 72% 68% at 50% 42%, #000 28%, transparent 88%);
 }
 
 .event-examon-backdrop__spirit--far-left {
@@ -17159,7 +17162,7 @@ a.meter-profile-hof-badge {
   left: -8%;
   top: 38%;
   width: min(30vw, 17rem);
-  opacity: 0.065;
+  opacity: 0.035;
   transform: rotate(-5deg) scaleX(-1);
 }
 
@@ -17167,7 +17170,7 @@ a.meter-profile-hof-badge {
   right: -8%;
   top: 42%;
   width: min(30vw, 17rem);
-  opacity: 0.065;
+  opacity: 0.035;
   transform: rotate(5deg);
 }
 
@@ -17175,7 +17178,7 @@ a.meter-profile-hof-badge {
   left: 4%;
   top: 72%;
   width: min(28vw, 15rem);
-  opacity: 0.055;
+  opacity: 0.028;
   transform: rotate(-4deg) scaleX(-1);
 }
 
@@ -17183,7 +17186,7 @@ a.meter-profile-hof-badge {
   right: 4%;
   top: 78%;
   width: min(28vw, 15rem);
-  opacity: 0.055;
+  opacity: 0.028;
   transform: rotate(4deg);
 }
 
@@ -25006,6 +25009,82 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin: 0;
   padding: 0.15rem 0 0.35rem;
   font-size: 0.82rem;
+}
+
+/* Guidebook — Early Gear clothes (DigiEgg scan sources) */
+.guidebook-clothes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.guidebook-clothes-section {
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  padding: 0.75rem 0.85rem 0.85rem;
+}
+
+.guidebook-clothes-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.guidebook-clothes-section__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.guidebook-clothes-section__lead {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.guidebook-clothes-section__count {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: rgba(14, 116, 144, 0.12);
+}
+
+.guidebook-clothes-section__empty {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.guidebook-clothes-digieggs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.45rem;
+}
+
+.guidebook-clothes-digieggs__item {
+  min-width: 0;
+}
+
+.guidebook-clothes-digieggs__item .guidebook-item-mention {
+  display: block;
+  width: 100%;
+}
+
+.guidebook-clothes-digieggs__item .guidebook-item-mention__trigger {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .guidebook-seals-dungeon-list {

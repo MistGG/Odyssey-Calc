@@ -1,0 +1,478 @@
+{
+  "syncedAt": "2026-06-21T04:39:48.564Z",
+  "query": {
+    "q": "DigiEgg",
+    "pages": 4,
+    "perPage": 50
+  },
+  "explorerGear": [
+    {
+      "id": "ia9khly",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i14kl95",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iwdp9mr",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iqilm",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i178n4nl",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1jepnn7",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i4h6rfb",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "if3me5a",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i11qg2vr",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i18oomnd",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1p7hxj2",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "imybxt6",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1isbehn",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "imtqttg",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iu1byz0",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "isjkfms",
+      "name": "Devil DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iasys4h",
+      "name": "Devil DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1x5zg1h",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ilmq07r",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1u34b8w",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ie5dtlv",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i5oo5m9",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1hbqph1",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1d570kh",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1jbwicz",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iwu5gm4",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iy7yzwr",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1kjhw51",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "isg50qf",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 1,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1t37h9c",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 1,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iwv9hr0",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ixio0vt",
+      "name": "Mutant DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 2,
+      "gearClass": "High Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1qv0h4t",
+      "name": "Mutant DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 2,
+      "gearClass": "Low Class",
+      "typeName": "Scan item"
+    }
+  ],
+  "digitalGear": [
+    {
+      "id": "itul5xf",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1lxqinf",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1xh9nez",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ibld30l",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1a39tf1",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ir68ay",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ih453gu",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "inc44aa",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "idgquqz",
+      "name": "Devil DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1ffmir2",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "it241vb",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1u4e9js",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1ld2hq3",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i10vx3n3",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i16kbgjt",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 1,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i87yeft",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i9cjk3d",
+      "name": "Mutant DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 2,
+      "gearClass": "Super Class",
+      "typeName": "Scan item"
+    }
+  ],
+  "skippedNoClass": [
+    {
+      "id": "iqp3u0b",
+      "name": "Aquatic DigiEgg",
+      "iconId": "n1pxnsob",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i1ubqth3",
+      "name": "Beast DigiEgg",
+      "iconId": "n1vx3kp5",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "idroj02",
+      "name": "Bird DigiEgg",
+      "iconId": "n1xl7jmm",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i3ov1w4",
+      "name": "Devil DigiEgg",
+      "iconId": "n1qkd19b",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "ihzciic",
+      "name": "Dragon DigiEgg",
+      "iconId": "naaxst8",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i13pji3g",
+      "name": "Fire DigiEgg",
+      "iconId": "n10dtq1v",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "i699uao",
+      "name": "Insectoid DigiEgg",
+      "iconId": "n3u3fa1",
+      "rank": 1,
+      "gearClass": null,
+      "typeName": "Scan item"
+    },
+    {
+      "id": "iml9mi5",
+      "name": "ME DigiEgg",
+      "iconId": "nimab72",
+      "rank": 2,
+      "gearClass": null,
+      "typeName": "Scan item"
+    }
+  ]
+}

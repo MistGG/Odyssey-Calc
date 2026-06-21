@@ -57,6 +57,13 @@ import {
   type GuidebookRaidSourceDungeonCard,
 } from '../../lib/guidebookItemPanel'
 import {
+  guidebookClothesDigitalDigieggs,
+  guidebookClothesDigieggClassLabel,
+  guidebookClothesDigieggShortName,
+  guidebookClothesExplorerDigieggs,
+  type GuidebookClothesDigieggEntry,
+} from '../../lib/guidebookClothesDigieggs'
+import {
   guidebookSealCategories,
   guidebookSealDungeonEntryFromRow,
   guidebookSealSourcesForItem,
@@ -2238,7 +2245,72 @@ function GuidebookWikiMaterialChipGrid({
 }
 
 export function GuideGearClothes() {
-  return <GuidebookComingSoon />
+  const explorer = useMemo(() => guidebookClothesExplorerDigieggs(), [])
+  const digital = useMemo(() => guidebookClothesDigitalDigieggs(), [])
+
+  return (
+    <div className="guidebook-clothes">
+      <GuideProse>
+        <p>
+          Early clothes come from <strong>Explorer Gear Boxes</strong> and{' '}
+          <strong>Digital Gear Boxes</strong>. Upgrade them with bits at the blacksmith in
+          Olympus.
+        </p>
+      </GuideProse>
+
+      <GuidebookClothesDigieggSection
+        title="Explorer Gear Box"
+        entries={explorer}
+      />
+      <GuidebookClothesDigieggSection
+        title="Digital Gear Box"
+        entries={digital}
+      />
+    </div>
+  )
+}
+
+function GuidebookClothesDigieggSection({
+  title,
+  lead,
+  entries,
+}: {
+  title: string
+  lead?: string
+  entries: readonly GuidebookClothesDigieggEntry[]
+}) {
+  return (
+    <section className="guidebook-clothes-section" aria-labelledby={`guidebook-clothes-${title.replace(/\s+/g, '-').toLowerCase()}`}>
+      <header className="guidebook-clothes-section__head">
+        <div>
+          <h4 id={`guidebook-clothes-${title.replace(/\s+/g, '-').toLowerCase()}`} className="guidebook-clothes-section__title">
+            {title}
+          </h4>
+          {lead ? <p className="guidebook-clothes-section__lead muted">{lead}</p> : null}
+        </div>
+        <span className="guidebook-clothes-section__count">
+          {entries.length} DigiEgg{entries.length === 1 ? '' : 's'}
+        </span>
+      </header>
+
+      {!entries.length ? (
+        <p className="guidebook-clothes-section__empty muted">No matching DigiEggs found on the wiki yet.</p>
+      ) : (
+        <ul className="guidebook-clothes-digieggs">
+          {entries.map((entry) => (
+            <li key={entry.id} className="guidebook-clothes-digieggs__item">
+              <GuidebookItemHoverLink
+                itemId={entry.id}
+                labelFallback={guidebookClothesDigieggShortName(entry.name)}
+                iconId={entry.iconId}
+                hint={guidebookClothesDigieggClassLabel(entry)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
 }
 
 export function GuideGearChips() {

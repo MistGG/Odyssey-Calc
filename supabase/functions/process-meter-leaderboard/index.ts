@@ -88,6 +88,8 @@ type ParseRow = {
 
 type ProcessOptions = {
   force?: boolean
+  /** Set when merging a duplicate party upload onto the first parse in the window. */
+  skipDuplicateCheck?: boolean
 }
 
 function json(status: number, body: Record<string, unknown>): Response {
@@ -611,11 +613,35 @@ async function processParse(
       ? buildPartyRunFingerprint(dungeonId, difficultyId, durationSec, members)
       : null
 
-  if (fingerprint && !force) {
+  if (fingerprint && !force && !options.skipDuplicateCheck) {
     const dupId = await findDuplicatePartyParseInWindow(supabase, fingerprint, row.id)
     if (dupId) {
       await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
-      return { inserted: 0, skipped: 'duplicate party upload within window' }
+      const { data: canonical, error: canonicalError } = await supabase
+        .from('meter_parses')
+        .select(
+          'id, user_id, created_at, duration_sec, dungeon_id, difficulty_id, app_version, payload, leaderboard_summary',
+        )
+        .eq('id', dupId)
+        .maybeSingle()
+      if (canonicalError) throw new Error(canonicalError.message)
+      if (!canonical) {
+        return { inserted: 0, skipped: 'duplicate party upload within window' }
+      }
+      const mergedRow: ParseRow = {
+        ...(canonical as ParseRow),
+        payload: row.payload ?? canonical.payload,
+        leaderboard_summary: row.leaderboard_summary ?? canonical.leaderboard_summary,
+        duration_sec: row.duration_sec ?? canonical.duration_sec,
+      }
+      const merged = await processParse(mergedRow, supabase, {
+        ...options,
+        skipDuplicateCheck: true,
+      })
+      return {
+        ...merged,
+        skipped: merged.inserted > 0 ? null : merged.skipped ?? 'duplicate party upload within window',
+      }
     }
     await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
   } else if (fingerprint) {
