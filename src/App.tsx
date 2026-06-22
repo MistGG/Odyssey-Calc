@@ -21,6 +21,7 @@ import { MayClearEventPage } from './pages/MayClearEventPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 import { GuidebookPage } from './pages/GuidebookPage'
+import { DungeonsPage } from './pages/DungeonsPage'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<BrowsePage />} />
           <Route path="guidebook" element={<GuidebookPage />} />
+          <Route path="dungeons" element={<DungeonsPage />} />
           <Route path="auth" element={<AuthPage />} />
           <Route path="digimon/:id" element={<DigimonDetailPage />} />
           <Route path="lab" element={<DpsLabPage />} />

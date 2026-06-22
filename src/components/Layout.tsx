@@ -50,6 +50,10 @@ export function Layout() {
               Browse
             </NavLink>
 
+            <NavLink to="/dungeons" className={({ isActive }) => navLinkClass(isActive)}>
+              Dungeons
+            </NavLink>
+
             <NavLink
               to="/guidebook"
               className={({ isActive }) => navLinkClass(isActive, 'nav-link-guidebook')}

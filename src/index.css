@@ -17137,13 +17137,10 @@ a.meter-profile-hof-badge {
   position: absolute;
   width: min(36vw, 20rem);
   height: auto;
-  opacity: 0.045;
-  mix-blend-mode: soft-light;
-  filter: saturate(0.75) blur(0.4px);
+  opacity: 0.08;
+  filter: saturate(1.05) drop-shadow(0 0 32px rgba(220, 38, 38, 0.18));
   object-fit: contain;
   user-select: none;
-  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 50% 42%, #000 28%, transparent 88%);
-  mask-image: radial-gradient(ellipse 72% 68% at 50% 42%, #000 28%, transparent 88%);
 }
 
 .event-examon-backdrop__spirit--far-left {
@@ -17162,7 +17159,7 @@ a.meter-profile-hof-badge {
   left: -8%;
   top: 38%;
   width: min(30vw, 17rem);
-  opacity: 0.035;
+  opacity: 0.065;
   transform: rotate(-5deg) scaleX(-1);
 }
 
@@ -17170,7 +17167,7 @@ a.meter-profile-hof-badge {
   right: -8%;
   top: 42%;
   width: min(30vw, 17rem);
-  opacity: 0.035;
+  opacity: 0.065;
   transform: rotate(5deg);
 }
 
@@ -17178,7 +17175,7 @@ a.meter-profile-hof-badge {
   left: 4%;
   top: 72%;
   width: min(28vw, 15rem);
-  opacity: 0.028;
+  opacity: 0.055;
   transform: rotate(-4deg) scaleX(-1);
 }
 
@@ -17186,7 +17183,7 @@ a.meter-profile-hof-badge {
   right: 4%;
   top: 78%;
   width: min(28vw, 15rem);
-  opacity: 0.028;
+  opacity: 0.055;
   transform: rotate(4deg);
 }
 
@@ -25157,5 +25154,277 @@ a.guidebook-monster-panel__loot-btn:hover {
   .meter-cycle-theme-preview-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Dungeons reference page */
+.dungeons-page {
+  max-width: 56rem;
+  margin-inline: auto;
+  padding-bottom: 2.5rem;
+}
+
+.dungeons-hero {
+  margin-bottom: 1.75rem;
+  padding: 1.5rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(34, 211, 238, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(8, 47, 73, 0.45) 0%,
+    rgba(15, 23, 42, 0.88) 55%,
+    rgba(15, 23, 42, 0.95) 100%
+  );
+}
+
+.dungeons-hero__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.dungeons-hero__lead {
+  margin: 0;
+  max-width: 40rem;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.dungeons-section {
+  margin-bottom: 2rem;
+}
+
+.dungeons-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.65rem;
+}
+
+.dungeons-section__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.dungeons-section__head .dungeons-section__title {
+  margin-bottom: 0;
+}
+
+.dungeons-section__note {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+.dungeons-section__note--muted {
+  margin-top: -0.35rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.82rem;
+  opacity: 0.92;
+}
+
+.dungeons-search {
+  flex: 1 1 14rem;
+  max-width: 22rem;
+}
+
+.dungeons-search__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  background: rgba(8, 12, 20, 0.65);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.dungeons-search__input:focus {
+  outline: 2px solid rgba(34, 211, 238, 0.45);
+  outline-offset: 1px;
+}
+
+.dungeons-status {
+  margin: 0;
+  padding: 0.75rem 0;
+  color: var(--text-soft);
+}
+
+.dungeons-status--error {
+  color: #fecaca;
+}
+
+.dungeons-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(51, 65, 85, 0.55);
+  background: rgba(8, 12, 20, 0.45);
+}
+
+.dungeons-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.dungeons-table th,
+.dungeons-table td {
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.35);
+  vertical-align: middle;
+}
+
+.dungeons-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.dungeons-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dungeons-table tbody tr:hover {
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.dungeons-table__drp {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #67e8f9;
+  white-space: nowrap;
+}
+
+.dungeons-table__name {
+  font-weight: 600;
+}
+
+.dungeons-table__muted {
+  color: var(--text-soft);
+  font-size: 0.86rem;
+}
+
+.dungeons-difficulty-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.dungeons-difficulty {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  border: 1px solid rgba(51, 65, 85, 0.55);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.dungeons-difficulty--normal {
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #a7f3d0;
+}
+
+.dungeons-difficulty--hard {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #fecaca;
+}
+
+.dungeons-wiki-link {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #67e8f9;
+  text-decoration: none;
+}
+
+.dungeons-wiki-link:hover {
+  text-decoration: underline;
+}
+
+.dungeons-table__loot-row td {
+  padding-top: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.45);
+  background: rgba(14, 165, 233, 0.04);
+}
+
+.dungeons-loot-matches {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0 0.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dungeons-loot-match {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.dungeons-loot-match__icon {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.dungeons-loot-match__icon-fallback {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.dungeons-loot-match__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  min-width: 0;
+}
+
+.dungeons-loot-match__name {
+  font-weight: 600;
+  color: #e0f2fe;
+  text-decoration: none;
+}
+
+.dungeons-loot-match__name:hover {
+  text-decoration: underline;
+}
+
+.dungeons-loot-match__meta {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #67e8f9;
+}
+
+.dungeons-loot-match__context {
+  flex: 1 1 100%;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  line-height: 1.35;
 }
 
