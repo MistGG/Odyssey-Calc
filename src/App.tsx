@@ -4,6 +4,7 @@ import { AuthPage } from './pages/AuthPage'
 import { BrowsePage } from './pages/BrowsePage'
 import { DigimonDetailPage } from './pages/DigimonDetailPage'
 import { DpsLabPage } from './pages/DpsLabPage'
+import { RotationAnalysisPage } from './pages/RotationAnalysisPage'
 import { GearPage } from './pages/GearPage'
 import { MeterMyParsesPage } from './pages/MeterMyParsesPage'
 import { MeterMyRewardsPage } from './pages/MeterMyRewardsPage'
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="auth" element={<AuthPage />} />
           <Route path="digimon/:id" element={<DigimonDetailPage />} />
           <Route path="lab" element={<DpsLabPage />} />
+          <Route path="lab/rotation" element={<RotationAnalysisPage />} />
           <Route path="gear" element={<GearPage />} />
           <Route path="tier-list" element={<TierListPage />} />
           <Route path="changes" element={<TierChangesPage />} />
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="meter/activity" element={<Navigate to="/meter" replace />} />
           <Route path="meter/hall-of-fame" element={<MeterHallOfFamePage />} />
           <Route path="meter/cycle-theme-preview" element={<MeterCycleThemePreviewPage />} />
+          <Route path="meter/leaderboard-preview" element={<Navigate to="/meter" replace />} />
           <Route path="meter/search" element={<MeterTamerSearchPage />} />
           <Route path="meter/player/:playerKey" element={<MeterPlayerProfilePage />} />
           <Route path="meter/my-parses" element={<MeterMyParsesPage />} />

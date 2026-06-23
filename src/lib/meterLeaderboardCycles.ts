@@ -43,7 +43,6 @@ export const METER_LEADERBOARD_CYCLES: MeterLeaderboardCycle[] = [
     id: 'magia',
     label: 'Magia Cycle: June 15 - Current',
     startsAt: MAGIA_CYCLE_START_UTC,
-    note: 'Rankings update as new clears are uploaded.',
     hofThemeId: 'magia-hall-of-fame',
     hofThemeLabel: 'Magia Breaker',
   },

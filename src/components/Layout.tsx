@@ -66,6 +66,7 @@ export function Layout() {
               menuLabel="Lab menu"
               items={[
                 { to: '/lab', label: 'Lab' },
+                { to: '/lab/rotation', label: 'Rotation analysis' },
                 { to: '/gear', label: 'Gear' },
               ]}
             />

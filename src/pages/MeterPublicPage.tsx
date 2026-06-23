@@ -1,28 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { MeterSubNav } from '../components/MeterSubNav'
-import { MeterHorizontalBarChart } from '../components/MeterHorizontalBarChart'
-import { MeterPlayerRankingList } from '../components/MeterPlayerRankingList'
+import { MeterLeaderboardPreviewBoard } from '../components/MeterLeaderboardPreviewBoard'
+import { MeterLeaderboardPreviewShell } from '../components/MeterLeaderboardPreviewShell'
 import { fetchRecentMeterParseSelection } from '../lib/meterDataSource'
 import { getCachedLeaderboardStats } from '../lib/meterLeaderboardStatsCache'
 import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
+import { fetchDigimonDistributionInWindow, type DigimonDistributionByBucket } from '../lib/meterDigimonDistribution'
+import { fetchLeaderboardPartyMates, type PlayerPartyMatesByBucket } from '../lib/meterLeaderboardPartyMates'
 import {
   getDefaultMeterLeaderboardCycle,
   getMeterLeaderboardCycle,
-  isMeterLeaderboardCycleLive,
-  METER_LEADERBOARD_CYCLES,
   meterLeaderboardCycleWindow,
 } from '../lib/meterLeaderboardCycles'
-import type { DigimonDpsSortMode, MeterPublicAggregates } from '../lib/meterPublicStats'
-import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
+import type { MeterPublicAggregates } from '../lib/meterPublicStats'
 import {
   dungeonSelectOptions,
   difficultySelectOptions,
   loadWikiDungeonsForMeter,
 } from '../lib/wikiDungeons'
-
-/** Visible player rows per role (RPC may return more; keeps DOM light). */
-const LEADERBOARD_VISIBLE_PLAYERS = 40
 
 type MeterNavState = { dungeonId?: string; difficultyId?: number }
 
@@ -36,14 +31,16 @@ export function MeterPublicPage() {
   const queryDifficultyId = queryDifficultyRaw != null ? Number(queryDifficultyRaw) : null
   const queryCycleId =
     searchParams.get('cycle')?.trim() || searchParams.get('patch')?.trim() || ''
+
   const [precomputedStats, setPrecomputedStats] = useState<MeterPublicAggregates | null>(null)
+  const [digimonDistribution, setDigimonDistribution] = useState<DigimonDistributionByBucket | null>(null)
+  const [partyMates, setPartyMates] = useState<PlayerPartyMatesByBucket | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [bootLoading, setBootLoading] = useState(true)
   const [parsesRefreshing, setParsesRefreshing] = useState(false)
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
-  const [digimonDpsSort, setDigimonDpsSort] = useState<DigimonDpsSortMode>('best')
   const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
   const initialFiltersApplied = useRef(false)
 
@@ -60,17 +57,14 @@ export function MeterPublicPage() {
   }, [loadBoot])
 
   const dungeonOptions = useMemo(() => dungeonSelectOptions(wikiDungeons), [wikiDungeons])
-
   const difficultyOptions = useMemo(
     () => difficultySelectOptions(wikiDungeons, dungeonId),
     [wikiDungeons, dungeonId],
   )
-
   const leaderboardCycle = useMemo(
     () => getMeterLeaderboardCycle(leaderboardCycleId) ?? getDefaultMeterLeaderboardCycle(),
     [leaderboardCycleId],
   )
-
   const cycleWindow = useMemo(() => meterLeaderboardCycleWindow(leaderboardCycle), [leaderboardCycle])
 
   useEffect(() => {
@@ -125,10 +119,7 @@ export function MeterPublicPage() {
       return
     }
     const fromEvent = meterNav?.difficultyId
-    if (
-      fromEvent != null &&
-      difficultyOptions.some((d) => d.difficultyId === fromEvent)
-    ) {
+    if (fromEvent != null && difficultyOptions.some((d) => d.difficultyId === fromEvent)) {
       setDifficultyId(fromEvent)
       return
     }
@@ -140,6 +131,8 @@ export function MeterPublicPage() {
   useEffect(() => {
     if (!dungeonId || difficultyId == null) {
       setPrecomputedStats(null)
+      setDigimonDistribution(null)
+      setPartyMates(null)
       return
     }
 
@@ -153,16 +146,34 @@ export function MeterPublicPage() {
     }
 
     void (async () => {
-      const pre = await fetchPrecomputedMeterLeaderboard({
-        dungeonId,
-        difficultyId,
-        leaderboardCycleId: leaderboardCycle.id,
-        windowStart: cycleWindow.windowStart,
-        windowEnd: cycleWindow.windowEnd,
-      })
+      const [pre, distribution, party] = await Promise.all([
+        fetchPrecomputedMeterLeaderboard({
+          dungeonId,
+          difficultyId,
+          leaderboardCycleId: leaderboardCycle.id,
+          windowStart: cycleWindow.windowStart,
+          windowEnd: cycleWindow.windowEnd,
+        }),
+        fetchDigimonDistributionInWindow({
+          dungeonId,
+          difficultyId,
+          windowStart: cycleWindow.windowStart,
+          windowEnd: cycleWindow.windowEnd,
+        }),
+        fetchLeaderboardPartyMates({
+          dungeonId,
+          difficultyId,
+          windowStart: cycleWindow.windowStart,
+          windowEnd: cycleWindow.windowEnd,
+        }),
+      ])
       if (cancelled) return
       if (pre.error) setLoadError(pre.error)
+      else if (distribution.error) setLoadError(distribution.error)
+      else if (party.error) setLoadError(party.error)
       setPrecomputedStats(pre.stats)
+      setDigimonDistribution(distribution.byBucket)
+      setPartyMates(party.byBucket)
       setParsesRefreshing(false)
     })()
 
@@ -172,84 +183,33 @@ export function MeterPublicPage() {
   }, [dungeonId, difficultyId, leaderboardCycle, cycleWindow.windowEnd, cycleWindow.windowStart])
 
   const stats = precomputedStats
-
-  const digimonByBucket = useMemo(() => {
-    if (!stats) return null
-    return digimonDpsSort === 'best' ? stats.digimonByBucketBest : stats.digimonByBucketAverage
-  }, [stats, digimonDpsSort])
-
   const showLoading = parsesRefreshing && !stats
 
+  const dungeonName =
+    dungeonOptions.find((d) => d.dungeonId === dungeonId)?.dungeonName?.trim() || 'Dungeon'
+  const difficultyLabel =
+    difficultyOptions.find((d) => d.difficultyId === difficultyId)?.label?.trim() || 'Difficulty'
+
   return (
-    <div className="meter-parses-page meter-public-page">
-      <header className="meter-parses-logged-head meter-parses-logged-head--bar meter-public-head">
-        <h1 className="meter-parses-title">Meter</h1>
-        <MeterSubNav />
-      </header>
-
-      <div className={`meter-public-filters${parsesRefreshing ? ' meter-public-filters--refreshing' : ''}`}>
-        <label className="meter-public-filter">
-          <span className="meter-public-filter-label">Cycle</span>
-          <select
-            value={leaderboardCycle.id}
-            onChange={(e) => setLeaderboardCycleId(e.target.value)}
-            disabled={bootLoading}
-          >
-            {METER_LEADERBOARD_CYCLES.map((cycle) => (
-              <option key={cycle.id} value={cycle.id}>
-                {cycle.label}
-                {isMeterLeaderboardCycleLive(cycle) ? ' (live)' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="meter-public-filter">
-          <span className="meter-public-filter-label">Dungeon</span>
-          <select
-            value={dungeonId}
-            onChange={(e) => {
-              setDungeonId(e.target.value)
-              setDifficultyId(null)
-            }}
-            disabled={!dungeonOptions.length || bootLoading}
-          >
-            {dungeonOptions.map((d) => (
-              <option key={d.dungeonId} value={d.dungeonId}>
-                {d.dungeonName}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="meter-public-filter">
-          <span className="meter-public-filter-label">Difficulty</span>
-          <select
-            value={difficultyId ?? ''}
-            onChange={(e) => setDifficultyId(Number(e.target.value))}
-            disabled={!dungeonId || difficultyOptions.length === 0 || bootLoading}
-          >
-            {difficultyOptions.map((d) => (
-              <option key={d.difficultyId} value={d.difficultyId}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {parsesRefreshing ? (
-          <span className="meter-public-filter-status muted" role="status">
-            Updating…
-          </span>
-        ) : null}
-      </div>
-
-      {!isMeterLeaderboardCycleLive(leaderboardCycle) ? (
-        <p className="meter-public-cycle-note meter-parses-muted" role="status">
-          {leaderboardCycle.label}. Rankings no longer update.
-        </p>
-      ) : leaderboardCycle.note ? (
-        <p className="meter-public-cycle-note meter-parses-muted" role="status">
-          {leaderboardCycle.note}
-        </p>
-      ) : null}
+    <div className="meter-parses-page meter-public-page meter-lb-preview-page">
+      <MeterLeaderboardPreviewShell
+        leaderboardCycle={leaderboardCycle}
+        leaderboardCycleId={leaderboardCycleId}
+        onLeaderboardCycleChange={setLeaderboardCycleId}
+        dungeonId={dungeonId}
+        onDungeonChange={(id) => {
+          setDungeonId(id)
+          setDifficultyId(null)
+        }}
+        difficultyId={difficultyId}
+        onDifficultyChange={setDifficultyId}
+        dungeonOptions={dungeonOptions}
+        difficultyOptions={difficultyOptions}
+        dungeonName={dungeonName}
+        difficultyLabel={difficultyLabel}
+        bootLoading={bootLoading}
+        parsesRefreshing={parsesRefreshing}
+      />
 
       {loadError ? <p className="meter-parses-error meter-parses-error--center">{loadError}</p> : null}
       {bootLoading && !dungeonOptions.length ? (
@@ -260,58 +220,13 @@ export function MeterPublicPage() {
         <p className="meter-parses-muted meter-parses-muted--center">Could not load dungeon list from wiki.</p>
       ) : !dungeonId || difficultyId == null ? (
         <p className="meter-parses-muted meter-parses-muted--center">Select a dungeon and difficulty.</p>
-      ) : stats ? (
-        <>
-          <div className="meter-public-grid">
-            <div className="meter-public-section">
-              <div className="meter-public-section-head">
-                <h2 className="meter-parses-section-title">Top Digimon DPS</h2>
-                <div className="meter-public-digimon-sort" role="group" aria-label="Sort top digimon by">
-                  <button
-                    type="button"
-                    className={`meter-public-digimon-sort-btn${digimonDpsSort === 'best' ? ' meter-public-digimon-sort-btn--active' : ''}`}
-                    aria-pressed={digimonDpsSort === 'best'}
-                    onClick={() => setDigimonDpsSort('best')}
-                  >
-                    Best DPS
-                  </button>
-                  <button
-                    type="button"
-                    className={`meter-public-digimon-sort-btn${digimonDpsSort === 'average' ? ' meter-public-digimon-sort-btn--active' : ''}`}
-                    aria-pressed={digimonDpsSort === 'average'}
-                    onClick={() => setDigimonDpsSort('average')}
-                  >
-                    Average DPS
-                  </button>
-                </div>
-              </div>
-              <div className="meter-public-charts-2col">
-                {METER_ROLE_BUCKETS.map((b) => (
-                  <MeterHorizontalBarChart
-                    key={b}
-                    title={METER_ROLE_BUCKET_LABELS[b]}
-                    entries={digimonByBucket![b]}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="meter-public-section">
-              <h2 className="meter-parses-section-title">Player rankings</h2>
-              <div className="meter-public-ranks-2col">
-                {METER_ROLE_BUCKETS.map((b) => (
-                  <MeterPlayerRankingList
-                    key={b}
-                    title={METER_ROLE_BUCKET_LABELS[b]}
-                    entries={stats.playersByBucket[b]}
-                    poolDps={stats.sortedDpsByBucket[b]}
-                    maxEntries={LEADERBOARD_VISIBLE_PLAYERS}
-                    meterContext={{ dungeonId, difficultyId }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
+      ) : stats && digimonDistribution && partyMates ? (
+        <MeterLeaderboardPreviewBoard
+          stats={stats}
+          digimonDistribution={digimonDistribution}
+          partyMates={partyMates}
+          meterContext={{ dungeonId, difficultyId }}
+        />
       ) : (
         <p className="meter-parses-muted meter-parses-muted--center">No rankings for this dungeon yet.</p>
       )}
