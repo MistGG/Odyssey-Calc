@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-06-23T15:00:15.168Z",
+  "updated_at": "2026-06-23T20:16:19.441Z",
   "runs": [
+    {
+      "id": "2026-06-23T20:16:19.460Z-v54g0l",
+      "finishedAt": "2026-06-23T20:16:19.460Z",
+      "mode": "force",
+      "refreshedCount": 439,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-06-23T20:16:19.460Z",
+        "mode": "force",
+        "refreshedCount": 439,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-06-23T15:00:15.188Z-0k7d68",
       "finishedAt": "2026-06-23T15:00:15.188Z",
