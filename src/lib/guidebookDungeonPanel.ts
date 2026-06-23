@@ -225,6 +225,33 @@ export function guidebookBossFromObjective(
   }
 }
 
+/** Boss objective for a raid-loot dungeon card (not always objectives[0] on multi-boss dungeons). */
+export function guidebookObjectiveForRaidLootCard(
+  diff: WikiDungeonDifficulty | null,
+  itemId?: string,
+  bossId?: string,
+): WikiDungeonObjective | undefined {
+  if (!diff?.objectives?.length) return undefined
+
+  if (bossId) {
+    const byBoss = diff.objectives.find((o) => o.monster_id === bossId)
+    if (byBoss) return byBoss
+  }
+
+  if (itemId) {
+    for (const objective of diff.objectives) {
+      for (const ranking of objective.raid_rankings ?? []) {
+        if (ranking.rewards?.some((r) => r.item_id === itemId)) return objective
+      }
+    }
+    if (diff.rewards?.some((r) => r.item_id === itemId)) {
+      return diff.objectives[diff.objectives.length - 1]
+    }
+  }
+
+  return diff.objectives[0]
+}
+
 export function formatGuidebookBossHp(hp: number | undefined): string | null {
   if (hp == null || hp <= 0) return null
   return `${hp.toLocaleString()} HP`

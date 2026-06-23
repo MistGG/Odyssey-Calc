@@ -9,6 +9,7 @@
     "generate:event-share": "node scripts/generate-event-share.mjs",
     "sync:teasers": "node scripts/sync-teaser-images.mjs",
     "sync:guidebook-seals": "node scripts/sync-guidebook-seal-sources.mjs",
+    "sync:guidebook-odyssey-seal-packs": "node scripts/sync-guidebook-odyssey-seal-pack-sources.mjs",
     "sync:guidebook-clothes-digieggs": "node scripts/sync-guidebook-clothes-digieggs.mjs",
     "sync:guidebook-dark-masters-token": "node scripts/sync-guidebook-dark-masters-token-sources.mjs",
     "sync:forum-teaser": "node scripts/sync-forum-teaser.mjs",

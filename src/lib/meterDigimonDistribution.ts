@@ -4,6 +4,8 @@ import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
 const MIN_PARSES_FOR_SERIES = 3
 export const METER_DIGIMON_CHART_MAX_SERIES = 10
 const MAX_SERIES_PER_ROLE = METER_DIGIMON_CHART_MAX_SERIES
+const DISTRIBUTION_PAGE_SIZE = 1000
+const DISTRIBUTION_MAX_ROWS = 50_000
 
 export type DigimonBoxPlot = {
   q1: number
@@ -142,29 +144,41 @@ export async function fetchDigimonDistributionInWindow(params: {
     return { byBucket: empty, error: 'Select a dungeon and difficulty.' }
   }
 
-  let query = supabase
-    .from('meter_leaderboard_entries')
-    .select('role_bucket, digimon_id, digimon_name, icon_id, portrait_url, dps')
-    .eq('dungeon_id', dungeonId)
-    .eq('difficulty_id', params.difficultyId)
-    .gt('dps', 0)
+  const rows: SampleRow[] = []
+  let offset = 0
 
-  if (params.windowStart) {
-    query = query.gte('created_at', params.windowStart)
-  }
-  if (params.windowEnd) {
-    query = query.lt('created_at', params.windowEnd)
-  }
+  while (offset < DISTRIBUTION_MAX_ROWS) {
+    let pageQuery = supabase
+      .from('meter_leaderboard_entries')
+      .select('role_bucket, digimon_id, digimon_name, icon_id, portrait_url, dps')
+      .eq('dungeon_id', dungeonId)
+      .eq('difficulty_id', params.difficultyId)
+      .gt('dps', 0)
 
-  const { data, error } = await query
-  if (error) return { byBucket: empty, error: error.message }
+    if (params.windowStart) {
+      pageQuery = pageQuery.gte('created_at', params.windowStart)
+    }
+    if (params.windowEnd) {
+      pageQuery = pageQuery.lt('created_at', params.windowEnd)
+    }
+
+    const to = offset + DISTRIBUTION_PAGE_SIZE - 1
+    const { data, error } = await pageQuery.range(offset, to)
+    if (error) return { byBucket: empty, error: error.message }
+
+    const page = (data ?? []) as SampleRow[]
+    if (!page.length) break
+    rows.push(...page)
+    if (page.length < DISTRIBUTION_PAGE_SIZE) break
+    offset += DISTRIBUTION_PAGE_SIZE
+  }
 
   const grouped = emptyBucketRecord<Map<string, DigimonSampleAccumulator>>()
   for (const bucket of METER_ROLE_BUCKETS) {
     grouped[bucket] = new Map()
   }
 
-  for (const raw of (data ?? []) as SampleRow[]) {
+  for (const raw of rows) {
     if (!isRoleBucket(raw.role_bucket)) continue
     const digimonId = raw.digimon_id?.trim()
     if (!digimonId) continue

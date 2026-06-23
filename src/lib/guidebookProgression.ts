@@ -1,6 +1,6 @@
 /** Odyssey progression board — step order and per-space objectives. */
 
-export type GuidebookTaskKind = 'farm' | 'craft' | 'quest' | 'gear' | 'money' | 'tip'
+export type GuidebookTaskKind = 'farm' | 'clear' | 'craft' | 'quest' | 'gear' | 'money' | 'tip'
 
 export type GuidebookTask = {
   kind: GuidebookTaskKind
@@ -64,9 +64,9 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     summary: 'Hit the level caps, finish Mastemon’s Report, and clear both uncap dungeons.',
     tasks: [
       { kind: 'quest', text: 'Complete Mastemon’s Report to unlock the level 50 uncap quest.' },
-      { kind: 'farm', text: "Farm Agumon's Madness (Normal) for the level 50 uncap." },
+      { kind: 'clear', text: "Clear Agumon's Madness (Normal) for the level 50 uncap." },
       { kind: 'quest', text: 'Continue story to level 70 and finish Hikari Sees Odaiba in Odaiba.' },
-      { kind: 'farm', text: 'Farm The Rise of the Fallen Angel (Normal) for the level 70 uncap.' },
+      { kind: 'clear', text: 'Clear The Rise of the Fallen Angel (Normal) for the level 70 uncap.' },
     ],
   },
   {
@@ -100,9 +100,11 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
     zone: 'General Content',
     zoneTone: 'raid',
     informativeOnly: true,
-    summary: 'Farm Digimon Seal Boxes from dungeons',
+    summary: 'Early seal boxes, midgame packs and exchange, and endgame seal farms',
     tasks: [
-      { kind: 'farm', text: 'Run the dungeons listed under each seal stat for the box you need.' },
+      { kind: 'farm', text: 'Farm Digimon Seal Boxes from the early-game dungeons listed per stat.' },
+      { kind: 'farm', text: 'Farm Odyssey Seal Packs from field raids or trade Seal Exchange Tickets at Digitamon.' },
+      { kind: 'farm', text: 'Farm Examon Seal from Dragon Dimension.' },
     ],
   },
   {
@@ -368,6 +370,7 @@ export function guidebookNextStepId(stepId: string): string | null {
 
 export const GUIDEBOOK_TASK_KIND_LABELS: Record<GuidebookTaskKind, string> = {
   farm: 'Farm',
+  clear: 'Clear',
   craft: 'Craft',
   quest: 'Quest',
   gear: 'Gear',

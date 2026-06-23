@@ -19951,7 +19951,8 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
   margin-top: 0;
 }
 
-.guidebook-corrupted-page {
+.guidebook-corrupted-page,
+.guidebook-seals-page {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -20058,6 +20059,14 @@ html:has(.guidebook-page)::-webkit-scrollbar-thumb:hover {
 .guidebook-corrupted-page .guidebook-material-sources__hint {
   margin: 0;
   font-size: 0.84rem;
+}
+
+.guidebook-seals-page .guidebook-seals-stats {
+  margin-top: 0.15rem;
+}
+
+.guidebook-seals-page .guidebook-corrupted-subsection--sources {
+  margin-top: 0.35rem;
 }
 
 .guidebook-corrupted-subsection + .guidebook-corrupted-subsection {
@@ -24868,6 +24877,11 @@ a.guidebook-monster-panel__loot-btn:hover {
   color: #86efac;
 }
 
+.guidebook-board-detail__task--clear .guidebook-board-detail__task-kind {
+  border-color: rgba(34, 211, 238, 0.35);
+  color: #67e8f9;
+}
+
 .guidebook-board-detail__task--craft .guidebook-board-detail__task-kind {
   border-color: rgba(251, 191, 36, 0.35);
   color: #fde68a;
@@ -25124,6 +25138,42 @@ a.guidebook-monster-panel__loot-btn:hover {
 .guidebook-seals-dungeon-list__diff {
   font-size: 0.68rem;
   padding: 0.1rem 0.35rem;
+}
+
+.guidebook-seals-raid-boss-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.guidebook-seals-raid-boss-list__row {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.guidebook-seals-raid-boss-list__row:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.guidebook-seals-raid-boss-list__level {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+}
+
+.guidebook-seals-raid-boss-list__drop {
+  font-size: 0.72rem;
+  white-space: nowrap;
 }
 
 .meter-public-cycle-note {

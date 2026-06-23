@@ -96,6 +96,12 @@ export const GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT = 3
 /** Dark Masters Token — pity currency from Dark Master dungeons. */
 export const GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID = 'itygv5a'
 
+/** Seal Exchange Ticket — trade with Digitamon in Olympus for various seals. */
+export const GUIDEBOOK_SEAL_EXCHANGE_TICKET_ITEM_ID = 'i1m8n4jz'
+
+/** Examon Seal — endgame seal from Dragon Dimension. */
+export const GUIDEBOOK_EXAMON_SEAL_ITEM_ID = 'ilew2u4'
+
 /** Exchange at Zudomon in Olympus: tokens → Dark DigiCore. */
 export const GUIDEBOOK_DARK_MASTERS_TOKEN_DARK_DIGICORE_COST = 15
 

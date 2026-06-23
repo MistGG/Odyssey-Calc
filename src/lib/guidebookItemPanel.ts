@@ -89,6 +89,8 @@ export type GuidebookRaidSourceDungeonCard = {
   dungeonId: string
   nameFallback: string
   difficulty: string
+  /** Raid boss for this loot row (when the dungeon has multiple objectives). */
+  bossId?: string
   /** Raid reward rate (permil), used to sort obtain locations highest first. */
   dropRatePermil: number
   /** Raid reward metadata shown on the target item&apos;s loot row. */
@@ -114,6 +116,7 @@ export async function buildRaidSourceDungeonCards(
       dungeonId: entry.dungeonId,
       nameFallback: entry.nameFallback,
       difficulty,
+      bossId: entry.bossId,
       dropRatePermil: entry.rate,
       highlightLoot: {
         itemId: item.id,

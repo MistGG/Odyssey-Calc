@@ -45,6 +45,7 @@ import {
   collectGuidebookDungeonLoot,
   formatGuidebookBossHp,
   guidebookBossFromObjective,
+  guidebookObjectiveForRaidLootCard,
   guidebookDungeonDifficultySlug,
   guidebookGearDropBindTag,
   sortGuidebookDungeonCards,
@@ -71,6 +72,10 @@ import {
   type GuidebookSealCategory,
   type GuidebookSealDungeonEntry,
 } from '../../lib/guidebookSeals'
+import {
+  guidebookOdysseySealPackCategories,
+  type GuidebookOdysseySealPack,
+} from '../../lib/guidebookOdysseySealPacks'
 import {
   guidebookDarkMastersTokenDungeonEntryFromRow,
   guidebookDarkMastersTokenSources,
@@ -100,6 +105,8 @@ import {
   GUIDEBOOK_MASTEMON_REPORT_QUEST_ID,
   GUIDEBOOK_NECKLACE_DATA_ITEM_IDS,
   GUIDEBOOK_RING_ENTRIES,
+  GUIDEBOOK_SEAL_EXCHANGE_TICKET_ITEM_ID,
+  GUIDEBOOK_EXAMON_SEAL_ITEM_ID,
   GUIDEBOOK_EARLY_NECKLACE_ROLLS,
   GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER,
   GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
@@ -131,6 +138,7 @@ import type {
   WikiDungeonDetail,
   WikiDungeonListItem,
   WikiItemDetail,
+  WikiItemRaidSource,
   WikiNpcDetail,
   WikiNpcQuestRef,
   WikiQuestDetail,
@@ -1345,6 +1353,7 @@ function GuidebookDungeonPanelCard({
   nameFallback,
   difficulty,
   badgeLabel,
+  bossId,
   highlightLoot,
   showLocationImage = true,
 }: {
@@ -1352,6 +1361,7 @@ function GuidebookDungeonPanelCard({
   nameFallback: string
   difficulty: string
   badgeLabel?: string
+  bossId?: string
   highlightLoot?: GuidebookRaidSourceDungeonCard['highlightLoot']
   showLocationImage?: boolean
 }) {
@@ -1360,12 +1370,6 @@ function GuidebookDungeonPanelCard({
   const [detail, setDetail] = useState<WikiDungeonDetail | null>(() =>
     getGuidebookDungeonDetailCached(dungeonId),
   )
-  const [bossHp, setBossHp] = useState<number | null>(() => {
-    const objective = wikiDungeonDifficulty(getGuidebookDungeonDetailCached(dungeonId), difficulty)
-      ?.objectives?.[0]
-    if (!objective) return null
-    return getGuidebookMonsterDetailCached(objective.monster_id)?.hp ?? null
-  })
 
   useEffect(() => {
     if (!visible) return
@@ -1377,7 +1381,16 @@ function GuidebookDungeonPanelCard({
   }, [dungeonId, visible])
 
   const diff = wikiDungeonDifficulty(detail, difficulty)
-  const objective = diff?.objectives?.[0]
+  const objective = guidebookObjectiveForRaidLootCard(
+    diff,
+    highlightLoot?.itemId,
+    bossId,
+  )
+
+  const [bossHp, setBossHp] = useState<number | null>(() => {
+    if (!objective) return null
+    return getGuidebookMonsterDetailCached(objective.monster_id)?.hp ?? null
+  })
 
   useEffect(() => {
     if (!visible) return
@@ -1518,6 +1531,7 @@ export function GuidebookDungeonPanel({
     nameFallback: string
     difficulty: string
     badgeLabel?: string
+    bossId?: string
     dropRatePermil?: number
     highlightLoot?: GuidebookRaidSourceDungeonCard['highlightLoot']
   }[]
@@ -2880,24 +2894,214 @@ export function GuideGearGoggles() {
 }
 
 export function GuidebookSeals() {
-  const categories = useMemo(() => guidebookSealCategories(), [])
+  const earlyCategories = useMemo(() => guidebookSealCategories(), [])
+  const odysseyCategories = useMemo(() => guidebookOdysseySealPackCategories(), [])
 
   return (
-    <div className="guidebook-seals">
-      <GuideProse>
-        <p>Early game seals are available from the following dungeons:</p>
-      </GuideProse>
+    <div className="guidebook-seals-page guidebook-corrupted-page">
+      <GuidebookCorruptedSection
+        step={1}
+        title="Early game"
+        lead="Farm Digimon Seal Boxes from dungeons. Each box gives random seals for that stat."
+      >
+        <div className="guidebook-seals-stats">
+          {earlyCategories.map((category) => (
+            <GuidebookSealBoxSection key={category.itemId} category={category} />
+          ))}
+        </div>
+      </GuidebookCorruptedSection>
 
-      <div className="guidebook-seals-stats">
-        {categories.map((category) => (
-          <GuidebookSealStatSection key={category.itemId} category={category} />
-        ))}
-      </div>
+      <GuidebookCorruptedSection
+        step={2}
+        title="Midgame"
+        lead="Odyssey Seal Packs scan into three seals. Seal Exchange Tickets trade at Digitamon in Olympus."
+      >
+        <div className="guidebook-corrupted-subsection">
+          <h4 className="guidebook-corrupted-subsection__title">Odyssey Seal Pack</h4>
+          <p className="guidebook-corrupted-subsection__text muted">
+            Each pack scans into three random seals for that stat. Drops from field raid bosses.
+          </p>
+          <div className="guidebook-seals-stats">
+            {odysseyCategories.map((category) => (
+              <GuidebookOdysseySealPackSection key={category.itemId} category={category} />
+            ))}
+          </div>
+        </div>
+
+        <div className="guidebook-corrupted-subsection">
+          <h4 className="guidebook-corrupted-subsection__title">Seal Exchange</h4>
+          <p className="guidebook-corrupted-subsection__text">
+            Trade{' '}
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_SEAL_EXCHANGE_TICKET_ITEM_ID}
+              labelFallback="Seal Exchange Ticket"
+            />{' '}
+            with Digitamon in Olympus for various seals, including ones not from dungeon boxes or
+            Odyssey packs.
+          </p>
+          <div className="guidebook-corrupted-subsection--sources">
+            <GuideGearRaidSourcesSection
+              gearLabel="seal exchange ticket"
+              itemIds={[GUIDEBOOK_SEAL_EXCHANGE_TICKET_ITEM_ID]}
+              showWip={false}
+              dungeonAriaLabel="Seal Exchange Ticket raid sources"
+              dungeonEmptyMessage="No raid sources are listed for Seal Exchange Ticket yet."
+            />
+          </div>
+        </div>
+      </GuidebookCorruptedSection>
+
+      <GuidebookCorruptedSection step={3} title="Endgame">
+        <div className="guidebook-corrupted-subsection">
+          <p className="guidebook-corrupted-subsection__text">
+            <GuidebookItemHoverLink
+              itemId={GUIDEBOOK_EXAMON_SEAL_ITEM_ID}
+              labelFallback="Examon Seal"
+            />{' '}
+            drops from Dragon Dimension.
+          </p>
+          <div className="guidebook-corrupted-subsection--sources">
+            <GuideGearRaidSourcesSection
+              gearLabel="Examon Seal"
+              itemIds={[GUIDEBOOK_EXAMON_SEAL_ITEM_ID]}
+              showWip={false}
+              dungeonAriaLabel="Examon Seal sources"
+              dungeonEmptyMessage="No raid sources are listed for Examon Seal yet."
+            />
+          </div>
+        </div>
+      </GuidebookCorruptedSection>
     </div>
   )
 }
 
-function GuidebookSealStatSection({ category }: { category: GuidebookSealCategory }) {
+type GuidebookSealRaidBossRow = {
+  bossId: string
+  bossName: string
+  bossLevel: number | null
+  rate: number
+  min: number
+  max: number
+}
+
+function dedupeSealRaidBossSources(sources: WikiItemRaidSource[]): GuidebookSealRaidBossRow[] {
+  const map = new Map<string, GuidebookSealRaidBossRow>()
+  for (const src of sources) {
+    if (!src.boss_id) continue
+    const existing = map.get(src.boss_id)
+    if (!existing || src.rate > existing.rate) {
+      map.set(src.boss_id, {
+        bossId: src.boss_id,
+        bossName: src.boss_name?.trim() || src.boss_id,
+        bossLevel: src.boss_level ?? null,
+        rate: src.rate,
+        min: src.min,
+        max: src.max,
+      })
+    }
+  }
+  return [...map.values()].sort((a, b) => {
+    const lvlA = a.bossLevel ?? Number.MAX_SAFE_INTEGER
+    const lvlB = b.bossLevel ?? Number.MAX_SAFE_INTEGER
+    if (lvlA !== lvlB) return lvlA - lvlB
+    return a.bossName.localeCompare(b.bossName)
+  })
+}
+
+function GuidebookOdysseySealPackSection({ category }: { category: GuidebookOdysseySealPack }) {
+  const [open, setOpen] = useState(false)
+  const [bosses, setBosses] = useState<GuidebookSealRaidBossRow[] | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open || bosses) return
+    let cancelled = false
+    setLoading(true)
+    setLoadError(null)
+
+    void loadGuidebookItemDetail(category.itemId)
+      .then((item) => {
+        if (cancelled) return
+        setBosses(dedupeSealRaidBossSources(item.raid_sources ?? []))
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadError('Could not load raid boss sources.')
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, category.itemId, bosses])
+
+  const bossLabel = bosses
+    ? `${bosses.length} raid boss${bosses.length === 1 ? '' : 'es'}`
+    : 'Field raids'
+
+  return (
+    <details
+      className="guidebook-seals-stat"
+      aria-label={`${category.itemName} sources`}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="guidebook-seals-stat__summary">
+        <img
+          className="guidebook-seals-stat__icon"
+          src={wikiItemIconUrl(category.iconId)}
+          alt=""
+          width={36}
+          height={36}
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="guidebook-seals-stat__titles">
+          <span className="guidebook-seals-stat__box">{category.itemName}</span>
+          <span className="guidebook-seals-stat__stat muted">
+            {category.label} ({category.boxTag}) · scan ×3
+          </span>
+        </div>
+        <span className="guidebook-seals-stat__badge">{bossLabel}</span>
+      </summary>
+
+      <div className="guidebook-seals-stat__panel">
+        {loading ? (
+          <p className="guidebook-seals-stat__empty muted">Loading raid bosses…</p>
+        ) : loadError ? (
+          <p className="guidebook-seals-stat__empty guidebook-error">{loadError}</p>
+        ) : bosses?.length ? (
+          <ul className="guidebook-seals-raid-boss-list">
+            {bosses.map((boss) => (
+              <li key={boss.bossId} className="guidebook-seals-raid-boss-list__row">
+                <span className="guidebook-seals-raid-boss-list__level">
+                  {boss.bossLevel != null ? `Lv. ${boss.bossLevel}` : '—'}
+                </span>
+                <GuidebookMonsterLink
+                  monsterId={boss.bossId}
+                  monsterName={boss.bossName}
+                  monsterLevel={boss.bossLevel ?? 0}
+                  variant="inline"
+                />
+                <span className="guidebook-seals-raid-boss-list__drop muted">
+                  {formatRaidRatePermil(boss.rate)} · {formatRaidQuantity(boss.min, boss.max)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="guidebook-seals-stat__empty muted">
+            No raid boss sources are listed for this pack yet.
+          </p>
+        )}
+      </div>
+    </details>
+  )
+}
+
+function GuidebookSealBoxSection({ category }: { category: GuidebookSealCategory }) {
   const sourceRows = useMemo(
     () => guidebookSealSourcesForItem(category.itemId),
     [category.itemId],
