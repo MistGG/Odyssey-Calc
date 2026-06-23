@@ -26384,8 +26384,8 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .meter-lb-preview-digimon-box-tooltip {
-  min-width: 200px;
-  max-width: 260px;
+  min-width: 280px;
+  max-width: 320px;
   padding: 0.85rem 1rem;
   font-size: 0.8rem;
   line-height: 1.45;
@@ -26393,8 +26393,8 @@ a.guidebook-monster-panel__loot-btn:hover {
   z-index: 30;
 }
 
-.meter-lb-preview-digimon-tooltip-stats--dps {
-  grid-template-columns: 1fr;
+.meter-lb-preview-digimon-tooltip-stats--dps dt {
+  white-space: nowrap;
 }
 
 .meter-lb-preview-digimon-tooltip-name {
@@ -26405,7 +26405,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .meter-lb-preview-digimon-tooltip-stats {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(7.5rem, 1fr));
 }
 
 .meter-lb-preview-digimon-tooltip-outliers {
