@@ -9,7 +9,8 @@ import {
 } from '../lib/meterDigimonDistribution'
 import {
   type PlayerPartyMatesByBucket,
-  type PlayerPartyMateIcon,
+  type PlayerPartySnapshot,
+  formatMeterClearTime,
   portraitForPartyMate,
 } from '../lib/meterLeaderboardPartyMates'
 import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
@@ -55,25 +56,56 @@ function portraitForPlayer(e: PlayerRankEntry): string | undefined {
   return undefined
 }
 
-function TamerPartySummaryTooltip({ mates }: { mates: PlayerPartyMateIcon[] }) {
+function TamerPartySummaryTooltip({ snapshot }: { snapshot: PlayerPartySnapshot }) {
+  const { mates, durationSec } = snapshot
+  const clearTime = durationSec != null ? formatMeterClearTime(durationSec) : ''
+
   return (
     <>
-      <strong className="meter-lb-preview-tamer-tooltip-name">Party</strong>
+      <div className="meter-lb-preview-tamer-party-tooltip-head">
+        <strong className="meter-lb-preview-tamer-tooltip-name">Party</strong>
+        {clearTime ? (
+          <span className="meter-lb-preview-tamer-party-tooltip-time">{clearTime}</span>
+        ) : null}
+      </div>
       <ul className="meter-lb-preview-tamer-party-tooltip-list">
-        {mates.map((mate) => (
-          <li key={mate.playerKey}>
-            <span className="meter-lb-preview-tamer-party-tooltip-tamer">{mate.displayName}</span>
-            {mate.digimonName ? (
-              <span className="meter-lb-preview-tamer-party-tooltip-digimon">{mate.digimonName}</span>
-            ) : null}
-          </li>
-        ))}
+        {mates.map((mate) => {
+          const portrait = portraitForPartyMate(mate)
+          return (
+            <li key={mate.playerKey} className="meter-lb-preview-tamer-party-tooltip-row">
+              {portrait ? (
+                <img
+                  src={portrait}
+                  alt=""
+                  width={22}
+                  height={22}
+                  className="meter-lb-preview-tamer-party-tooltip-portrait"
+                  loading="lazy"
+                />
+              ) : (
+                <span
+                  className="meter-lb-preview-portrait meter-lb-preview-portrait--empty meter-lb-preview-tamer-party-tooltip-portrait"
+                  aria-hidden
+                />
+              )}
+              <span className="meter-lb-preview-tamer-party-tooltip-copy">
+                <span className="meter-lb-preview-tamer-party-tooltip-tamer">{mate.displayName}</span>
+                {mate.digimonName ? (
+                  <span className="meter-lb-preview-tamer-party-tooltip-digimon">{mate.digimonName}</span>
+                ) : null}
+              </span>
+            </li>
+          )
+        })}
       </ul>
     </>
   )
 }
 
-function TamerPartyColumn({ mates }: { mates: PlayerPartyMateIcon[] }) {
+function TamerPartyColumn({ snapshot }: { snapshot: PlayerPartySnapshot }) {
+  const mates = snapshot.mates
+  const clearTime =
+    snapshot.durationSec != null ? formatMeterClearTime(snapshot.durationSec) : ''
   const wrapRef = useRef<HTMLSpanElement>(null)
   const tooltipId = useId()
   const [open, setOpen] = useState(false)
@@ -123,10 +155,16 @@ function TamerPartyColumn({ mates }: { mates: PlayerPartyMateIcon[] }) {
       onFocus={showTooltip}
       onBlur={hideTooltip}
       tabIndex={0}
+      aria-label={clearTime ? `Party clear time ${clearTime}` : `Party of ${mates.length}`}
       aria-describedby={open ? tooltipId : undefined}
     >
       <span className="meter-lb-preview-tamer-party">
-        <TamerPartyMateIcons mates={mates} />
+        <span
+          className={`meter-lb-preview-tamer-party-time${clearTime ? '' : ' meter-lb-preview-tamer-party-time--unknown'}`}
+          aria-hidden
+        >
+          {clearTime || '—'}
+        </span>
       </span>
       {open
         ? createPortal(
@@ -136,7 +174,7 @@ function TamerPartyColumn({ mates }: { mates: PlayerPartyMateIcon[] }) {
               className="meter-lb-preview-tamer-tooltip meter-lb-preview-tamer-tooltip--party meter-lb-preview-tamer-tooltip--fixed"
               style={{ top: coords.top, left: coords.left }}
             >
-              <TamerPartySummaryTooltip mates={mates} />
+              <TamerPartySummaryTooltip snapshot={snapshot} />
             </span>,
             document.body,
           )
@@ -151,35 +189,6 @@ function TamerSelfDigimonTooltip({ entry, id }: { entry: PlayerRankEntry; id: st
     <span id={id} role="tooltip" className="lab-inline-tooltip meter-lb-preview-tamer-tooltip meter-lb-preview-tamer-tooltip--self">
       <strong className="meter-lb-preview-tamer-tooltip-name">{entry.digimonName}</strong>
     </span>
-  )
-}
-
-function TamerPartyMateIcons({ mates }: { mates: PlayerPartyMateIcon[] }) {
-  if (!mates.length) return null
-
-  return (
-    <>
-      {mates.map((mate) => {
-        const portrait = portraitForPartyMate(mate)
-        return portrait ? (
-          <img
-            key={mate.playerKey}
-            src={portrait}
-            alt=""
-            width={12}
-            height={12}
-            className="meter-party-portrait meter-lb-preview-tamer-mate-icon"
-            loading="lazy"
-          />
-        ) : (
-          <span
-            key={mate.playerKey}
-            className="meter-lb-preview-portrait meter-lb-preview-portrait--empty meter-lb-preview-tamer-mate-icon"
-            aria-hidden
-          />
-        )
-      })}
-    </>
   )
 }
 
@@ -604,7 +613,7 @@ function RoleTamerCard({
   bucket: MeterRoleBucket
   entries: PlayerRankEntry[]
   poolDps: number[]
-  partyMates: Record<string, PlayerPartyMateIcon[]>
+  partyMates: Record<string, PlayerPartySnapshot>
   meterContext: { dungeonId: string; difficultyId: number }
 }) {
   const accent = ROLE_ACCENT[bucket]
@@ -626,7 +635,7 @@ function RoleTamerCard({
           <div className="meter-lb-preview-tamer-columns" aria-hidden>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--rank">#</span>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--tamer">Tamer</span>
-            <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--party">Party</span>
+            <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--party">Time</span>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--dps">DPS</span>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--score">Score</span>
           </div>
@@ -635,7 +644,7 @@ function RoleTamerCard({
             const pct = dpsToPercentile(e.dps, poolDps)
             const color = parseScoreColor(pct)
             const portrait = portraitForPlayer(e)
-            const mates = partyMates[e.playerKey] ?? []
+            const party = partyMates[e.playerKey] ?? { mates: [], durationSec: null }
             const rowKey = `${bucket}-${e.playerKey}-${i}`
             const selfTooltipId = `tamer-self-${rowKey}`
             const hasSelfTooltip = Boolean(e.digimonName.trim())
@@ -681,7 +690,7 @@ function RoleTamerCard({
                       {e.displayName}
                     </span>
                   </span>
-                  <TamerPartyColumn mates={mates} />
+                  <TamerPartyColumn snapshot={party} />
                   <span className="meter-lb-preview-dps">{formatInt(e.dps)}</span>
                   <span className="meter-lb-preview-pct" style={{ color }}>
                     {pct}

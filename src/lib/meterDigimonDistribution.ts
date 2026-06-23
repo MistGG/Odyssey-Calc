@@ -1,3 +1,5 @@
+import { digimonPortraitUrl } from './digimonImage'
+import { fetchOfficialDigimonInfoByIds } from './meterParseDigimonNames'
 import { getMeterAnonSupabase } from './meterDataSource'
 import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
 
@@ -129,6 +131,41 @@ export function buildDigimonDistributionSeries(
     .slice(0, MAX_SERIES_PER_ROLE)
 }
 
+async function resolveDigimonDistributionPortraits(
+  byBucket: DigimonDistributionByBucket,
+): Promise<DigimonDistributionByBucket> {
+  const idSet = new Set<string>()
+  for (const bucket of METER_ROLE_BUCKETS) {
+    for (const series of byBucket[bucket]) {
+      const id = series.digimonId.trim()
+      if (!id || id === 'unknown') continue
+      if (series.portraitUrl?.trim()) continue
+      if (series.iconId?.trim()) continue
+      idSet.add(id)
+    }
+  }
+  if (!idSet.size) return byBucket
+
+  const officialById = await fetchOfficialDigimonInfoByIds([...idSet])
+  if (!officialById.size) return byBucket
+
+  const resolved = emptyBucketRecord<DigimonDistributionSeries[]>()
+  for (const bucket of METER_ROLE_BUCKETS) {
+    resolved[bucket] = byBucket[bucket].map((series) => {
+      const id = series.digimonId.trim()
+      const info = officialById.get(id)
+      if (!info?.modelId) return series
+      return {
+        ...series,
+        digimonName: info.name || series.digimonName,
+        iconId: info.modelId,
+        portraitUrl: digimonPortraitUrl(info.modelId, id, info.name || series.digimonName),
+      }
+    })
+  }
+  return resolved
+}
+
 export async function fetchDigimonDistributionInWindow(params: {
   dungeonId: string
   difficultyId: number
@@ -213,5 +250,9 @@ export async function fetchDigimonDistributionInWindow(params: {
     byBucket[bucket] = buildDigimonDistributionSeries(samples, roleMaxDps)
   }
 
-  return { byBucket, error: null }
+  try {
+    return { byBucket: await resolveDigimonDistributionPortraits(byBucket), error: null }
+  } catch {
+    return { byBucket, error: null }
+  }
 }

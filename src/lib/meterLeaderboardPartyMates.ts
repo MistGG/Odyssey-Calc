@@ -12,7 +12,24 @@ export type PlayerPartyMateIcon = {
   portraitUrl?: string
 }
 
-export type PlayerPartyMatesByBucket = Record<MeterRoleBucket, Record<string, PlayerPartyMateIcon[]>>
+export type PlayerPartySnapshot = {
+  mates: PlayerPartyMateIcon[]
+  /** Clear time for the ranked parse, when available from the API. */
+  durationSec: number | null
+}
+
+export type PlayerPartyMatesByBucket = Record<MeterRoleBucket, Record<string, PlayerPartySnapshot>>
+
+const EMPTY_PARTY_SNAPSHOT: PlayerPartySnapshot = { mates: [], durationSec: null }
+
+export function formatMeterClearTime(totalSec: number): string {
+  if (!Number.isFinite(totalSec) || totalSec <= 0) return ''
+  const sec = Math.round(totalSec)
+  const minutes = Math.floor(sec / 60)
+  const seconds = sec % 60
+  if (minutes > 0) return `${minutes}m ${seconds}s`
+  return `${seconds}s`
+}
 
 type PartyMateRow = {
   role_bucket: string
@@ -24,6 +41,7 @@ type PartyMateRow = {
   icon_id: string | null
   portrait_url: string | null
   mate_order: number
+  parse_duration_sec?: number | string | null
 }
 
 function emptyMatesByBucket(): PlayerPartyMatesByBucket {
@@ -53,8 +71,8 @@ async function resolvePartyMatePortraits(
 ): Promise<PlayerPartyMatesByBucket> {
   const ids = new Set<string>()
   for (const bucket of METER_ROLE_BUCKETS) {
-    for (const mates of Object.values(byBucket[bucket])) {
-      for (const mate of mates) {
+    for (const snapshot of Object.values(byBucket[bucket])) {
+      for (const mate of snapshot.mates) {
         const id = mate.digimonId.trim()
         if (id && id !== 'unknown' && !matePortrait(mate)) ids.add(id)
       }
@@ -67,21 +85,30 @@ async function resolvePartyMatePortraits(
 
   const resolved = emptyMatesByBucket()
   for (const bucket of METER_ROLE_BUCKETS) {
-    for (const [playerKey, mates] of Object.entries(byBucket[bucket])) {
-      resolved[bucket][playerKey] = mates.map((mate) => {
-        const id = mate.digimonId.trim()
-        const info = officialById.get(id)
-        if (!info?.modelId) return mate
-        return {
-          ...mate,
-          digimonName: info.name || mate.digimonName,
-          iconId: info.modelId,
-          portraitUrl: digimonPortraitUrl(info.modelId, id, info.name || mate.digimonName),
-        }
-      })
+    for (const [playerKey, snapshot] of Object.entries(byBucket[bucket])) {
+      resolved[bucket][playerKey] = {
+        durationSec: snapshot.durationSec,
+        mates: snapshot.mates.map((mate) => {
+          const id = mate.digimonId.trim()
+          const info = officialById.get(id)
+          if (!info?.modelId) return mate
+          return {
+            ...mate,
+            digimonName: info.name || mate.digimonName,
+            iconId: info.modelId,
+            portraitUrl: digimonPortraitUrl(info.modelId, id, info.name || mate.digimonName),
+          }
+        }),
+      }
     }
   }
   return resolved
+}
+
+function parseDurationSec(value: number | string | null | undefined): number | null {
+  if (value == null || value === '') return null
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) && n > 0 ? n : null
 }
 
 export async function fetchLeaderboardPartyMates(params: {
@@ -122,20 +149,24 @@ export async function fetchLeaderboardPartyMates(params: {
     if (!playerKey || !mateKey || !digimonId) continue
 
     const bucketMap = byBucket[raw.role_bucket]
-    const prev = bucketMap[playerKey] ?? []
-    if (prev.some((mate) => mate.playerKey === mateKey)) continue
+    const prev = bucketMap[playerKey] ?? EMPTY_PARTY_SNAPSHOT
+    if (prev.mates.some((mate) => mate.playerKey === mateKey)) continue
 
-    bucketMap[playerKey] = [
-      ...prev,
-      {
-        playerKey: mateKey,
-        displayName: raw.mate_display_name?.trim() || mateKey,
-        digimonId,
-        digimonName: raw.digimon_name?.trim() || digimonId,
-        iconId: raw.icon_id,
-        portraitUrl: raw.portrait_url ?? undefined,
-      },
-    ]
+    const durationSec = parseDurationSec(raw.parse_duration_sec) ?? prev.durationSec
+    bucketMap[playerKey] = {
+      durationSec,
+      mates: [
+        ...prev.mates,
+        {
+          playerKey: mateKey,
+          displayName: raw.mate_display_name?.trim() || mateKey,
+          digimonId,
+          digimonName: raw.digimon_name?.trim() || digimonId,
+          iconId: raw.icon_id,
+          portraitUrl: raw.portrait_url ?? undefined,
+        },
+      ],
+    }
   }
 
   try {
