@@ -483,8 +483,8 @@ function DigimonDistributionChart({
       style={chartStyle}
     >
       <div className="meter-lb-preview-digimon-chart-plot-wrap">
-        <DigimonChartVerticalGrid xMin={xMin} xMax={xMax} xTicks={xTicks} />
         <div className="meter-lb-preview-digimon-chart-rows">
+          {hasData ? <DigimonChartVerticalGrid xMin={xMin} xMax={xMax} xTicks={xTicks} /> : null}
           {slots.map((row, index) => {
             if (!row) {
               return (
@@ -522,16 +522,22 @@ function DigimonDistributionChart({
 
 export function MeterLeaderboardPreviewBoard({
   digimonDistribution,
+  showDigimonStats,
+  digimonStatsLoading = false,
+  onShowDigimonStatsChange,
   partyMates,
   stats,
   meterContext,
 }: {
-  digimonDistribution: DigimonDistributionByBucket
+  digimonDistribution: DigimonDistributionByBucket | null
+  showDigimonStats: boolean
+  digimonStatsLoading?: boolean
+  onShowDigimonStatsChange: (show: boolean) => void
   partyMates: PlayerPartyMatesByBucket
   stats: MeterPublicAggregates
   meterContext: { dungeonId: string; difficultyId: number }
 }) {
-  const digimonChartRows = maxDigimonChartRows(digimonDistribution)
+  const digimonChartRows = digimonDistribution ? maxDigimonChartRows(digimonDistribution) : 1
   const [partySetupFilter, setPartySetupFilter] = useState<MeterPartySetupFilter>('non-standard')
   const [digimonRoleMap, setDigimonRoleMap] = useState<Map<string, string> | null>(null)
 
@@ -552,26 +558,47 @@ export function MeterLeaderboardPreviewBoard({
   return (
     <div className="meter-lb-preview-board">
       <div className="meter-lb-preview-body">
-        <section className="meter-lb-preview-section">
-          <div className="meter-lb-preview-section-head">
-            <div>
-              <h3 className="meter-lb-preview-section-title">Digimon statistics</h3>
-              <p className="meter-lb-preview-section-note meter-parses-muted">
-                Parse score distribution · box shows where most runs cluster, whiskers and dots show outliers
-              </p>
+        {showDigimonStats ? (
+          <section className="meter-lb-preview-section">
+            <div className="meter-lb-preview-section-head">
+              <div>
+                <h3 className="meter-lb-preview-section-title">Digimon statistics</h3>
+                <p className="meter-lb-preview-section-note meter-parses-muted">Parse Score Distribution</p>
+              </div>
+              <button
+                type="button"
+                className="meter-lb-preview-section-toggle"
+                onClick={() => onShowDigimonStatsChange(false)}
+              >
+                Hide
+              </button>
             </div>
+            {digimonStatsLoading || !digimonDistribution ? (
+              <p className="meter-parses-muted meter-lb-preview-digimon-stats-loading">Loading digimon statistics…</p>
+            ) : (
+              <div className="meter-lb-preview-role-grid">
+                {METER_ROLE_BUCKETS.map((bucket) => (
+                  <RoleDigimonCard
+                    key={bucket}
+                    bucket={bucket}
+                    series={digimonDistribution[bucket]}
+                    rowSlots={digimonChartRows}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        ) : (
+          <div className="meter-lb-preview-digimon-reveal">
+            <button
+              type="button"
+              className="meter-lb-preview-section-toggle meter-lb-preview-section-toggle--reveal"
+              onClick={() => onShowDigimonStatsChange(true)}
+            >
+              Show digimon statistics
+            </button>
           </div>
-          <div className="meter-lb-preview-role-grid">
-            {METER_ROLE_BUCKETS.map((bucket) => (
-              <RoleDigimonCard
-                key={bucket}
-                bucket={bucket}
-                series={digimonDistribution[bucket]}
-                rowSlots={digimonChartRows}
-              />
-            ))}
-          </div>
-        </section>
+        )}
 
         <section className="meter-lb-preview-section">
           <div className="meter-lb-preview-section-head">

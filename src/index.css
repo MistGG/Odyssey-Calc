@@ -26117,10 +26117,76 @@ a.guidebook-monster-panel__loot-btn:hover {
   font-size: 0.82rem;
 }
 
+.meter-lb-preview-section-toggle {
+  padding: 0.38rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.meter-lb-preview-section-toggle:hover {
+  color: var(--text-soft);
+}
+
+.meter-lb-preview-digimon-reveal {
+  display: flex;
+  justify-content: stretch;
+}
+
+.meter-lb-preview-section-toggle--reveal {
+  width: 100%;
+  padding: 0.72rem 1.1rem;
+  border-color: rgba(56, 189, 248, 0.45);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    165deg,
+    rgba(34, 211, 238, 0.14) 0%,
+    rgba(12, 20, 36, 0.92) 55%,
+    rgba(12, 20, 36, 0.98) 100%
+  );
+  color: #e2e8f0;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.08) inset,
+    0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.meter-lb-preview-section-toggle--reveal:hover {
+  color: #f8fafc;
+  border-color: rgba(103, 232, 249, 0.65);
+  background: linear-gradient(
+    165deg,
+    rgba(34, 211, 238, 0.22) 0%,
+    rgba(12, 20, 36, 0.94) 55%,
+    rgba(12, 20, 36, 0.98) 100%
+  );
+}
+
+.meter-lb-preview-section-toggle--reveal:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.55);
+  outline-offset: 2px;
+}
+
+.meter-lb-preview-digimon-stats-loading {
+  margin: 0;
+  padding: 0.5rem 0 0.25rem;
+  font-size: 0.82rem;
+}
+
 .meter-lb-preview-role-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
+  align-items: stretch;
 }
 
 @media (min-width: 1100px) {
@@ -26178,6 +26244,18 @@ a.guidebook-monster-panel__loot-btn:hover {
   background: rgba(12, 20, 36, 0.95);
 }
 
+.meter-lb-preview-role-card:has(> .meter-lb-preview-tamer-table),
+.meter-lb-preview-role-card:has(> .meter-lb-preview-role-empty) {
+  height: 100%;
+}
+
+.meter-lb-preview-role-card > .meter-lb-preview-role-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .meter-lb-preview-kind-toggle {
   display: inline-flex;
   border-radius: 999px;
@@ -26208,7 +26286,9 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-tamer-list {
   list-style: none;
   margin: 0;
-  padding: 0.35rem 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
   max-height: 420px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -26218,6 +26298,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-tamer-table {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
   --tamer-col-party: 3.65rem;
   --tamer-col-dps: 4.85rem;
@@ -26260,6 +26341,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-tamer-list > li {
   position: relative;
   z-index: 0;
+  overflow: hidden;
 }
 
 .meter-lb-preview-tamer-list > li:has(.lab-inline-tooltip-wrap:hover),
@@ -26267,6 +26349,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-tamer-list > li:has(.meter-lb-preview-tamer-party-wrap:hover),
 .meter-lb-preview-tamer-list > li:has(.meter-lb-preview-tamer-party-wrap:focus-within) {
   z-index: 20;
+  overflow: visible;
 }
 
 .meter-lb-preview-role-card:has(.meter-lb-preview-tamer-list) {
@@ -26282,7 +26365,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-digimon-chart {
   padding: 0.55rem 0.65rem 0.65rem;
   background: rgba(12, 20, 36, 0.95);
-  overflow: visible;
+  overflow: hidden;
 }
 
 .meter-lb-preview-digimon-chart--uniform {
@@ -26292,6 +26375,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 .meter-lb-preview-digimon-chart-plot-wrap {
   position: relative;
+  overflow: hidden;
 }
 
 .meter-lb-preview-digimon-chart-grid {
@@ -26316,6 +26400,7 @@ a.guidebook-monster-panel__loot-btn:hover {
     var(--digimon-chart-rows) * var(--digimon-chart-row-h) +
       (var(--digimon-chart-rows) - 1) * var(--digimon-chart-row-gap)
   );
+  overflow: hidden;
 }
 
 .meter-lb-preview-digimon-chart-row {

@@ -8,6 +8,10 @@ import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomp
 import { fetchDigimonDistributionInWindow, type DigimonDistributionByBucket } from '../lib/meterDigimonDistribution'
 import { fetchLeaderboardPartyMates, type PlayerPartyMatesByBucket } from '../lib/meterLeaderboardPartyMates'
 import {
+  readMeterShowDigimonStats,
+  writeMeterShowDigimonStats,
+} from '../lib/meterLeaderboardPreferences'
+import {
   getDefaultMeterLeaderboardCycle,
   getMeterLeaderboardCycle,
   meterLeaderboardCycleWindow,
@@ -42,6 +46,7 @@ export function MeterPublicPage() {
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
   const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
+  const [showDigimonStats, setShowDigimonStats] = useState(() => readMeterShowDigimonStats())
   const initialFiltersApplied = useRef(false)
 
   const loadBoot = useCallback(async () => {
@@ -129,6 +134,10 @@ export function MeterPublicPage() {
   }, [dungeonId, difficultyOptions, difficultyId, meterNav?.difficultyId, queryDifficultyId])
 
   useEffect(() => {
+    setDigimonDistribution(null)
+  }, [dungeonId, difficultyId, leaderboardCycle.id])
+
+  useEffect(() => {
     if (!dungeonId || difficultyId == null) {
       setPrecomputedStats(null)
       setDigimonDistribution(null)
@@ -154,12 +163,14 @@ export function MeterPublicPage() {
           windowStart: cycleWindow.windowStart,
           windowEnd: cycleWindow.windowEnd,
         }),
-        fetchDigimonDistributionInWindow({
-          dungeonId,
-          difficultyId,
-          windowStart: cycleWindow.windowStart,
-          windowEnd: cycleWindow.windowEnd,
-        }),
+        showDigimonStats
+          ? fetchDigimonDistributionInWindow({
+              dungeonId,
+              difficultyId,
+              windowStart: cycleWindow.windowStart,
+              windowEnd: cycleWindow.windowEnd,
+            })
+          : Promise.resolve(null),
         fetchLeaderboardPartyMates({
           dungeonId,
           difficultyId,
@@ -169,10 +180,12 @@ export function MeterPublicPage() {
       ])
       if (cancelled) return
       if (pre.error) setLoadError(pre.error)
-      else if (distribution.error) setLoadError(distribution.error)
+      else if (distribution?.error) setLoadError(distribution.error)
       else if (party.error) setLoadError(party.error)
       setPrecomputedStats(pre.stats)
-      setDigimonDistribution(distribution.byBucket)
+      if (distribution) {
+        setDigimonDistribution(distribution.byBucket)
+      }
       setPartyMates(party.byBucket)
       setParsesRefreshing(false)
     })()
@@ -180,7 +193,14 @@ export function MeterPublicPage() {
     return () => {
       cancelled = true
     }
-  }, [dungeonId, difficultyId, leaderboardCycle, cycleWindow.windowEnd, cycleWindow.windowStart])
+  }, [
+    dungeonId,
+    difficultyId,
+    leaderboardCycle,
+    cycleWindow.windowEnd,
+    cycleWindow.windowStart,
+    showDigimonStats,
+  ])
 
   const stats = precomputedStats
   const showLoading = parsesRefreshing && !stats
@@ -220,10 +240,16 @@ export function MeterPublicPage() {
         <p className="meter-parses-muted meter-parses-muted--center">Could not load dungeon list from wiki.</p>
       ) : !dungeonId || difficultyId == null ? (
         <p className="meter-parses-muted meter-parses-muted--center">Select a dungeon and difficulty.</p>
-      ) : stats && digimonDistribution && partyMates ? (
+      ) : stats && partyMates ? (
         <MeterLeaderboardPreviewBoard
           stats={stats}
           digimonDistribution={digimonDistribution}
+          showDigimonStats={showDigimonStats}
+          digimonStatsLoading={showDigimonStats && !digimonDistribution && parsesRefreshing}
+          onShowDigimonStatsChange={(show) => {
+            writeMeterShowDigimonStats(show)
+            setShowDigimonStats(show)
+          }}
           partyMates={partyMates}
           meterContext={{ dungeonId, difficultyId }}
         />
