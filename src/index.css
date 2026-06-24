@@ -1,7 +1,7 @@
 /* Odyssey Calc: dark digital blue theme */
 :root {
-  --bg-deep: #030712;
-  --bg: #0a0f1a;
+  --bg-deep: #030a14;
+  --bg: #06101f;
   --surface: rgba(15, 23, 42, 0.72);
   --surface-solid: #0f172a;
   --surface-2: #111c33;
@@ -45,15 +45,10 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font);
-    font-size: 16px;
+  font-size: 16px;
   line-height: 1.5;
   color: var(--text);
-  background: var(--bg-deep);
-  background-image:
-    radial-gradient(ellipse 120% 80% at 50% -30%, rgba(14, 165, 233, 0.18), transparent 50%),
-    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(99, 102, 241, 0.08), transparent 45%),
-    radial-gradient(ellipse 60% 40% at 0% 80%, rgba(6, 182, 212, 0.06), transparent 40%);
-  background-attachment: fixed;
+  background: #030a14;
 }
 
 html,
@@ -112,17 +107,33 @@ code {
   isolation: isolate;
 }
 
-.app-shell-bg {
+.digital-world-backdrop {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 70%);
+  overflow: hidden;
+  background: #030a14;
+}
+
+.digital-world-backdrop__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.4;
+  filter: saturate(0.84) brightness(0.84) contrast(1.05);
+  mix-blend-mode: screen;
+}
+
+.digital-world-backdrop__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 42%, rgba(3, 10, 20, 0.12), rgba(2, 6, 14, 0.62) 100%),
+    linear-gradient(180deg, rgba(3, 8, 18, 0.38) 0%, rgba(2, 5, 12, 0.72) 100%);
 }
 
 .header {
@@ -135,21 +146,35 @@ code {
   padding-top: 0.85rem;
   padding-bottom: 1.1rem;
   overflow: visible;
+  /* Full-bleed bar aligned with #root horizontal padding */
+  margin-left: -1.25rem;
+  margin-right: -1.25rem;
+  width: calc(100% + 2.5rem);
   /* Inset from the sticky bar edges (root already pads the viewport); safe-area on notched devices */
   padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
   padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
   margin-bottom: 0.25rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.1);
   position: sticky;
   top: 0;
   z-index: 10;
   background: linear-gradient(
     180deg,
-    rgba(3, 7, 18, 0.94) 0%,
-    rgba(10, 15, 26, 0.88) 100%
+    rgba(3, 8, 18, 0.72) 0%,
+    rgba(3, 10, 20, 0.5) 100%
   );
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.05);
+}
+
+@media (min-width: 1024px) {
+  .header {
+    margin-left: -2rem;
+    margin-right: -2rem;
+    width: calc(100% + 4rem);
+    padding-left: max(2rem, env(safe-area-inset-left, 0px));
+    padding-right: max(2rem, env(safe-area-inset-right, 0px));
+  }
 }
 
 /* Compact top bar — single row, scrollable primary links */
@@ -7868,6 +7893,14 @@ button.lab-event-tag.buff-breakdown-trigger:focus-visible {
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
     padding-bottom: max(2rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .header {
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    width: calc(100% + 1.5rem);
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   }
 
   .header:not(.header--compact) {

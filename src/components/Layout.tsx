@@ -3,6 +3,7 @@ import { useAuth } from '../auth/useAuth'
 import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
 import { NavMenuGroup } from './NavMenuGroup'
+import { DigitalWorldBackdrop } from './DigitalWorldBackdrop'
 import { SiteFanFooter } from './SiteFanNotice'
 
 function navLinkClass(isActive: boolean, extra = '') {
@@ -29,7 +30,7 @@ export function Layout() {
 
   return (
     <div className="layout app-shell">
-      <div className="app-shell-bg" aria-hidden="true" />
+      <DigitalWorldBackdrop />
       <header className="header header--compact">
         <Link to="/" className="brand brand--compact">
           <img
