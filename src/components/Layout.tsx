@@ -56,6 +56,13 @@ export function Layout() {
             </NavLink>
 
             <NavLink
+              to="/patch-notes"
+              className={({ isActive }) => navLinkClass(isActive || pathname.startsWith('/patch-notes'))}
+            >
+              Patch Notes
+            </NavLink>
+
+            <NavLink
               to="/guidebook"
               className={({ isActive }) => navLinkClass(isActive, 'nav-link-guidebook')}
             >

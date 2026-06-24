@@ -23,6 +23,7 @@ import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 import { GuidebookPage } from './pages/GuidebookPage'
 import { DungeonsPage } from './pages/DungeonsPage'
+import { PatchNotesPage } from './pages/PatchNotesPage'
 
 export default function App() {
   return (
@@ -31,6 +32,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<BrowsePage />} />
           <Route path="guidebook" element={<GuidebookPage />} />
+          <Route path="patch-notes" element={<PatchNotesPage />} />
+          <Route path="patch-notes/:slug" element={<PatchNotesPage />} />
           <Route path="dungeons" element={<DungeonsPage />} />
           <Route path="auth" element={<AuthPage />} />
           <Route path="digimon/:id" element={<DigimonDetailPage />} />

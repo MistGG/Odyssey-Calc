@@ -26972,3 +26972,488 @@ a.guidebook-monster-panel__loot-btn:hover {
   }
 }
 
+/* Patch notes — Digital Odyssey transmission log */
+.patch-notes-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 0 2.5rem;
+}
+
+.patch-notes-scroll--themed {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(62, 224, 255, 0.45) rgba(0, 0, 0, 0.35);
+}
+
+.patch-notes-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.35rem;
+  padding: 1.15rem 1.2rem 1.2rem;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(34, 211, 238, 0.12), transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, rgba(168, 85, 247, 0.1), transparent 50%),
+    linear-gradient(165deg, rgba(10, 16, 30, 0.96), rgba(12, 20, 36, 0.98));
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.patch-notes-hero__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+
+.patch-notes-hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 3.2vw, 2rem);
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.patch-notes-hero__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+}
+
+.patch-notes-hero__sync {
+  color: var(--muted);
+}
+
+.patch-notes-teaser {
+  margin-bottom: 1.35rem;
+}
+
+.latest-forum-teaser {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: var(--radius);
+  background: rgba(12, 20, 36, 0.96);
+}
+
+.latest-forum-teaser.meter-parses-meter-chrome {
+  padding: 0;
+}
+
+.latest-forum-teaser__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 80% at 0% 0%, rgba(34, 211, 238, 0.1), transparent 55%),
+    radial-gradient(70% 60% at 100% 100%, rgba(168, 85, 247, 0.08), transparent 50%);
+}
+
+.latest-forum-teaser__head {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  padding: 0.9rem 1rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.latest-forum-teaser__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+
+.latest-forum-teaser__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.latest-forum-teaser__updated {
+  margin: 0.35rem 0 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.latest-forum-teaser__more {
+  color: #7dd3fc;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.latest-forum-teaser__more:hover {
+  color: #bae6fd;
+}
+
+.latest-forum-teaser__stage {
+  position: relative;
+  padding: 0.65rem 0.75rem 0.85rem;
+}
+
+.latest-forum-teaser__stage .forum-teaser-embedded {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.latest-forum-teaser__stage .forum-teaser-media--event-stage {
+  display: block;
+}
+
+.patch-notes-muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.patch-notes-muted--center {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.patch-notes-error {
+  margin: 0;
+  color: #fca5a5;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.patch-notes-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.patch-notes-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: calc(100vh - 7rem);
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(12, 20, 36, 0.92);
+}
+
+@media (min-width: 900px) {
+  .patch-notes-aside {
+    position: sticky;
+    top: 5rem;
+  }
+}
+
+.patch-notes-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.patch-notes-search__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.patch-notes-search__input {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.patch-notes-search__input:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.45);
+  outline-offset: 1px;
+}
+
+.patch-notes-archive {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.patch-notes-archive__empty {
+  padding: 0.5rem 0.15rem;
+  font-size: 0.82rem;
+}
+
+.patch-notes-archive__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.18);
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+}
+
+.patch-notes-archive__item:hover {
+  border-color: rgba(56, 189, 248, 0.28);
+  background: rgba(34, 211, 238, 0.06);
+}
+
+.patch-notes-archive__item--active {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: linear-gradient(165deg, rgba(34, 211, 238, 0.14), rgba(12, 20, 36, 0.9));
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.08) inset;
+}
+
+.patch-notes-archive__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.patch-notes-archive__date {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.patch-notes-archive__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-soft);
+}
+
+.patch-notes-archive__item--active .patch-notes-archive__title {
+  color: #f1f5f9;
+}
+
+.patch-notes-kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.patch-notes-kind--hotfix {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.patch-notes-kind--update {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(74, 222, 128, 0.28);
+}
+
+.patch-notes-main {
+  min-width: 0;
+}
+
+.patch-notes-doc {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius);
+  background: rgba(12, 20, 36, 0.96);
+}
+
+.patch-notes-doc.meter-parses-meter-chrome {
+  padding: 0;
+}
+
+.patch-notes-doc__glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(80% 60% at 100% 0%, rgba(34, 211, 238, 0.08), transparent 60%),
+    radial-gradient(60% 50% at 0% 100%, rgba(168, 85, 247, 0.06), transparent 55%);
+}
+
+.patch-notes-doc__head {
+  position: relative;
+  padding: 1rem 1.15rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.patch-notes-doc__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.55rem;
+}
+
+.patch-notes-doc__date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.patch-notes-doc__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.25;
+}
+
+.patch-notes-doc__updated {
+  margin: 0.45rem 0 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.patch-notes-doc__body {
+  position: relative;
+  padding: 1rem 1.15rem 1.35rem;
+}
+
+.patch-notes-md {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.patch-notes-md-h2,
+.patch-notes-md-h3 {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+}
+
+.patch-notes-md-h2 {
+  font-size: 1rem;
+}
+
+.patch-notes-md-h3 {
+  font-size: 0.92rem;
+}
+
+.patch-notes-md-h4 {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.patch-notes-md-p {
+  margin: 0;
+}
+
+.patch-notes-md-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.patch-notes-md-list li::marker {
+  color: #67e8f9;
+}
+
+.patch-notes-md a {
+  color: #7dd3fc;
+}
+
+.patch-notes-md a:hover {
+  color: #bae6fd;
+}
+
+.patch-notes-md strong {
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.patch-notes-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.patch-notes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.patch-notes-table th,
+.patch-notes-table td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  text-align: left;
+  vertical-align: top;
+}
+
+.patch-notes-table th {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.patch-notes-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.patch-notes-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+@media (max-width: 899px) {
+  .patch-notes-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .patch-notes-aside {
+    max-height: 280px;
+  }
+
+  .patch-notes-hero__meta {
+    align-items: flex-start;
+  }
+}
+

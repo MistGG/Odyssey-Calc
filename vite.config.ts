@@ -15,15 +15,24 @@ const wikiProxy = {
   '/api/raid-timer': odysseyApiProxy,
 } as const
 
+const outlineProxy = {
+  '/api/outline': {
+    target: 'https://docs.thedigitalodyssey.com',
+    changeOrigin: true,
+    secure: true,
+    rewrite: (path: string) => path.replace(/^\/api\/outline/, '/api'),
+  },
+} as const
+
 // https://vite.dev/config/
 export default defineConfig({
   // For GitHub Pages project sites, set VITE_BASE_PATH="/<repo-name>/"
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [guidebookSharePagesPlugin(), react()],
   server: {
-    proxy: wikiProxy,
+    proxy: { ...wikiProxy, ...outlineProxy },
   },
   preview: {
-    proxy: wikiProxy,
+    proxy: { ...wikiProxy, ...outlineProxy },
   },
 })

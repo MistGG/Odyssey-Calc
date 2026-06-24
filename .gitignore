@@ -19,6 +19,7 @@ dist-ssr
 scripts/*
 !scripts/sync-teaser-images.mjs
 !scripts/sync-forum-teaser.mjs
+!scripts/sync-patch-notes.mjs
 !scripts/lib/
 !scripts/generate-guidebook-share.mjs
 !scripts/generate-event-share.mjs

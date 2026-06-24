@@ -1,0 +1,479 @@
+{
+  "syncedAt": "2026-06-24T21:50:08.254Z",
+  "shareId": "2bb157c9-224d-48ab-a6f2-697589ebe97a",
+  "officialUrl": "https://docs.thedigitalodyssey.com/s/2bb157c9-224d-48ab-a6f2-697589ebe97a/?theme=dark",
+  "entries": [
+    {
+      "id": "f7946a7c-5a77-4782-812d-fb7a74c98935",
+      "slug": "2026-06-24-spawn-adjustment-and-missing-resources-fqG22XPTz8",
+      "title": "[2026-06-24] Spawn adjustment and missing resources",
+      "text": "PATCH NOTES\n\n* Added missing resource files.\n* Adjusted spawn radius in Metal Empire.\n* Adjusted Caster role skills\n\n| Skill | Before | After |\n|-------|--------|-------|\n| Magia Code: Protection | 99% Damage Reduction, 15s duration, 35s cooldown | 30% Damage Reduction, 5s duration, 70s cooldown |\n| Magia Code: Omega | +50% Skill Damage, Cooldown Reduction (scales with INT), +20,000 Max DS | +70% Skill Damage, Cooldown Reduction (scales with INT), +20,000 Max DS |\n| Magia Code: Dispell | Cleanse self, 5s cooldown | Cleanse self, 150s cooldown |\n| Sprint | +800 Move Speed, 8s | +800 Move Speed, 12s |\n| Magia Code: Ravage | +100% Skill Damage, 15s | No change |\n\n\nNote: We will be launching a new event later this week and will continue making additional adjustments as needed.",
+      "updatedAt": "2026-06-24T17:05:32.059Z",
+      "publishedAt": "2026-06-24T17:05:11.837Z"
+    },
+    {
+      "id": "c1a9b9b0-23e6-4c18-a95d-5358ad229288",
+      "slug": "2026-06-23-metal-empire-hard-modes-eXaXgiggct",
+      "title": "[2026-06-23] Metal Empire Hard modes",
+      "text": "DIGITAL ODYSSEY PATCH NOTES\n\nNEW CONTENT\n\n• Added Ophanimon Falldown Mode Riding Mode item to the Cash Shop.\n\n• Added New Digimon Effects\n\n• Added Hard Mode versions of the following dungeons:\n\n* MetalSeadramon\n* WaruMonzaemon\n* Pinocchimon\n* Mugendramon\n\n\nADDITIONAL CONTENT\n\nNew Seals\n\n• MetalSeadramon Seal\n\n* +2.5% Block\n* +3.0% HP\n\n• Mugendramon Seal\n\n* +6.0% Attack\n* +5.0% Defense\n\n• Puppetmon Seal\n\n* +11.0% DS\n* +2.0% HP\n\n\n\\\nCHANGES\n\n• Some rewards previously exclusive to Hard Mode have been moved to their Normal Mode counterparts. • Raid Timer no longer requires Membership to view raid spawn timers. • The teleport functionality remains a Membership-exclusive feature.\n\n\n\\\nNEW ACCESSORIES\n\nDark Accessories can now be crafted through Zudomon \\[Olympus\\].\n\nCrafting Cost \n\n• 10T\n\nAvailable Accessories \n\n• Dark Ring \n\n• Dark Necklace \n\n• Dark Earrings \n\n• Dark Bracelet\n\n\nRequired Materials (per craft) \n\n• 1 Matching Corrupted Accessory \n\n• 50 Bound Dark DigiCore \n\n• 25 Bound Energized Dark DigiCore \n\n• 100 Overloaded Dark DigiCore \n\n• 5 Respective DarkDigicore\n\n\nDarkDigicore Sources\n\n• DarkDigicore: Golden Seadragon — MetalSeadramon (Hard) (3%) \n\n• DarkDigicore: Cursed Puppet — Pinocchimon (Hard) (3%) \n\n• DarkDigicore: Fullmetal Tyrant — Mugendramon (Hard) (3%) \n\n• DarkDigicore: Fiendish Clown — Currently unavailable\n\n\nMaterial Drops\n\nDark DigiCore (Normal Mode Only) \n\n• Tankmon (20%) \n\n• MegaDramon (15%) \n\n• WaruMonzaemon (15%) \n\n• Mugendramon (15%)\n\n\nEnergized Dark DigiCore (Normal Mode Only)\n\n• Tankmon (15%) \n\n• MegaDramon (10%) \n\n• WaruMonzaemon (10%) \n\n• Mugendramon (10%)\n\n\nOverloaded Dark DigiCore \n\n• MetalSeadramon (Hard) (100%) \n\n• Pinocchimon (Hard) (100%) \n\n• Mugendramon (Hard) (100%) \n\n• Tankmon (Hard) (40%) \n\n• MegaDramon (Hard) (40%) \n\n• GigaDramon (Hard) (40%) \n\n• WaruMonzaemon (Hard) (40%)\n\n\n\\\nRing Data: Dark Seadragon\n\n\\n• MaxHP%: 5 – 15\\n• MaxDS%: 5 – 12\\n• AT%: 1 – 12\\n• DE%: 1 – 14\\n• Attribute Damage: 1 – 9\\n• Block: 1 – 10\\n• Evasion: 1 – 8\\n• Skill Damage%: 0.5 – 10\n\n\nNecklace Data: Dark Puppet\n\n\\n• MaxHP%: 2.5 – 15\\n• MaxDS%: 2.5 – 12\\n• AT%: 1 – 10\\n• DE%: 1 – 14\\n• Attack Speed: 1 – 7.5\\n• Attribute Damage: 1 – 10\\n• Accuracy: 1 – 10\\n• Evasion: 1 – 10\\n• Block: 1 – 10\\n• Skill Damage%: 0.5 – 10\n\n\nEarrings Data: Fullmetal Dark Tyrant\n\n\\n• MaxHP%: 1 – 15\\n• AT%: 1 – 10\\n• DE%: 1 – 14\\n• Critical Damage: 1 – 10\\n• Accuracy: 1 – 10\\n• Evasion: 1 – 10\\n• Block: 1 – 10\\n• Skill Damage%: 0.5 – 10\n\n\nBracelet Data: Dark Clown\n\n\\n• MaxHP%: 1 – 15\\n• MaxDS%: 1 – 15\\n• AT%: 1 – 10\\n• DE%: 1 – 10\\n• Critical Damage: 1 – 10\\n• Accuracy: 1 – 10\\n• Block: 1 – 8\\n• Evasion: 1 – 8\\n• Skill Damage%: 0.5 – 10\n\n\n\\\n\n\\\n\nCHANGES\n\n• Raid Timer no longer requires Membership to view raid spawn timers. • The teleport functionality remains a Membership-exclusive feature.\n\nCORRUPTED ACCESSORY QUESTS\n\n\nZudomon the Blacksmith on Olympos Island now offers quests that reward Character Bound Corrupted Accessory Data items. The items needs to be in inventory.\n\nAvailable Quests \n\n• The Corrupted Seadragon → Ring Data: Corrupted Seadragon \n\n• The Corrupted Puppet → Necklace Data: Corrupted Puppet \n\n• The Corrupted Tyrant → Earrings Data: Corrupted Tyrant \n\n• The Corrupted Clown → Bracelet Data: Corrupted Clown\n\n\n\\\nNOTES\n\n• Corrupted Accessory quests only reward Character Bound accessory data. \n\n• Tradable Corrupted Accessories are obtained through a separate crafting option that creates accessory boxes. \n\n• Tradable Dark DigiCore and Energized Dark DigiCore can be converted into their Bound versions at Zudomon free of charge. \n\n• Dark Bracelet cannot currently be crafted because DarkDigicore: Fiendish Clown does not yet have a drop source.\n\n* More drops will be added to Normal modes across Forest of the Marionette Instances and Metal Empire/UnderGround City instances shortly",
+      "updatedAt": "2026-06-23T18:49:44.457Z",
+      "publishedAt": "2026-06-23T17:06:00.826Z"
+    },
+    {
+      "id": "17bff488-fc23-4839-a829-68603fc86ab8",
+      "slug": "2026-06-18-tekken-correction-oPZMnjuIyb",
+      "title": "[2026-06-18] Tekken correction",
+      "text": "## CHANGES\n\n* Fixed an issue where the Character-Bound (CB) and tradable versions of Tekken were reversed. Their settings have now been corrected.\n* Removed Red Light from the Cash Shop.",
+      "updatedAt": "2026-06-18T09:54:26.173Z",
+      "publishedAt": "2026-06-18T09:51:15.231Z"
+    },
+    {
+      "id": "3fe54961-c35e-4790-9810-d8d0d01251be",
+      "slug": "2026-06-18-portal-fix-gdHhKBCfpe",
+      "title": "[2026-06-18] Portal fix",
+      "text": "**FIXES**\n\n* Fixed portals that were leading to unintended maps.\n* Fixed an issue where some items were unintentionally becoming character-bound (CB).",
+      "updatedAt": "2026-06-18T01:20:01.997Z",
+      "publishedAt": "2026-06-18T01:19:51.578Z"
+    },
+    {
+      "id": "156a1690-e228-4b57-87e4-ed5baca5e8f3",
+      "slug": "2026-06-16-skill-casting-bar-ydQRVZ4cbY",
+      "title": "[2026-06-16] Skill Casting Bar",
+      "text": "## New Feature: Skill Casting Bar\n\nSkills that root your Digimon in place while casting now display a clear casting indicator above its head, making it easier to see exactly how long you will be locked in place.\n\n* **Casting bar over your Digimon:** Appears automatically when using skills that prevent movement during casting, including Caster-role skills and skills with cast animations.\n* **Live countdown timer:** A seconds readout next to the bar shows exactly how long remains before you can move again.\n* **Draining progress bar:** The bar starts full and empties as the cast progresses, giving you a quick visual sense of timing.\n* **Integrated with overhead bars:** Positioned just below the DS bar, matching the rest of your Digimon's overhead status display.\n* **Shield-aware layout:** When a damage shield is active, the shield amount and timer automatically reposition to avoid overlapping the casting bar.\n\n## Revamped UI: Trade Window\n\nThe player-to-player Trade Window has been rebuilt to match the game's modern themed interface.\n\n* **Refreshed visual style:** The themed window body and panel headers replace the old textured chrome, bringing the Trade Window in line with the updated UI.\n* **New button styling:** Close, OK, Cancel, Trade, and money buttons now use clean themed pill styling.\n* **Clearer labels:** Trader name labels have been redrawn with the new text styling for improved readability.\n\n**Unchanged core layout:** Trade item slots and the chat log remain unchanged.\n\n## Combat Fixes\n\n* **Fixed a high-power damage overflow issue:** Fixed a calculation error where damage could overflow and collapse to near-zero on high-power characters, causing both skills and basic attacks to hit for only a fraction of their real value.\n* **Corrected affected damage cases:** This issue mainly affected Digimon with high Attack combined with skill-damage or crit-damage accessories.\n* **Preserved intended accessory scaling:** Skill and basic attack damage now calculate correctly. Accessory Skill Damage % keeps its full value and continues to scale with enchantment and INT exactly as intended.\\n\n*  Adjusted skill damage calculations to improve overall damage scaling.\n\n\n## General Changes\n\n• Increased spawn density and adjusted respawn times for Digimon in Chaotic Space.\n\n• Adjusted skill damage calculations to improve overall damage scaling.",
+      "updatedAt": "2026-06-16T19:24:45.715Z",
+      "publishedAt": "2026-06-16T17:04:05.896Z"
+    },
+    {
+      "id": "f8e61023-6171-4e96-b970-b055fef184c5",
+      "slug": "2026-06-15-patch-2-e36G7jqt2I",
+      "title": "[2026-06-15] Patch 2",
+      "text": "NEW MAP\n\n• Chaotic Space has been added(Requires last quest in infinite mountain to enter).\n\n* This map will be expanded over time with new areas, higher-level content, and additional Digimon.\n* For now, it serves as a beginner-friendly zone.\n\nNEW DIGIMON CONTENT\n\n• Meicoomon Eggs can now be farmed in Chaotic Space.\n\n• Numemon Eggs can now be farmed in Chaotic Space.\n\n• Meicoomon Eggs are now available in the Cash Shop.\n\nNOTE\n\n• Numemon will receive a unique and powerful evolution line, fully obtainable through gameplay with no Cash Shop requirements.\n\nSYSTEM CHANGES\n\n• Riding Mode now requires the appropriate canonical riding items.\n\n• Canonical riding items are available in the Cash Shop.",
+      "updatedAt": "2026-06-16T16:59:00.274Z",
+      "publishedAt": "2026-06-16T02:04:36.972Z"
+    },
+    {
+      "id": "2c72bdfc-de32-4ca4-9e95-a3ea9c82a3e4",
+      "slug": "2026-06-15-caster-rework-OuMtYr9RjZ",
+      "title": "[2026-06-15] Caster Rework",
+      "text": "PATCH NOTES\n\n\n**IMPORTANT NOTICE**\n\n* ### **Babel's Appreciation Card Alpha, Beta, and Gamma will be no longer obtainable after 2026-06-28**\n* ### **Any unused Babel's Appreciation Cards should be redeemed before the event ends**\n* ### **Remaining cards will become unusable once the banner period expires**\n\n\nDIGITAL ODYSSEY PATCH NOTES\n\nNEW DIGIMON\n\n* Raguelmon (Caster)\n* Plesiomon (Caster)\n* Zhuqiaomon (Caster)\\n\n\n  \\\n\nNOTE\n\n* The eggs will be obtainable for free shortly.\n\n\nNOTE\n\n* The Caster role is newly introduced and may receive future balance adjustments.\n* Casters cannot move mid skill animation.\n\n\nCHANGES\n\n* Sleipmon has been reworked into the Caster role and rebalanced properly\n* Demon has been retuned to function as a proper Caster\n* Jijimon has been reworked into the Caster role\n\nBALANCE\n\n* Tank aggro has been increased\n* Justimon has been promoted to SS+ Tier\n\nIMPROVEMENTS\n\nRevamped UI Theming\n\nSeveral major interface windows have been visually revamped with improved theming, cleaner layouts, and better readability.\n\nStore UI\n\n* Refreshed store window visuals\n* Improved item listing presentation\n* Better spacing, alignment, and readability\n\nSeason Pass UI\n\n* Updated visual theming\n* Improved reward layout readability\n* Clearer progression display\n\nItem Make UI\n\n* Cleaner crafting interface layout\n* Improved material and requirement readability\n* Better spacing and visual hierarchy\n\nSeal Master UI\n\n* Updated interface theming\n* Improved seal list readability\n* Cleaner and more consistent layout\n\nThese updates are part of the ongoing UI polish pass focused on improving consistency, readability, and overall usability across the game.\n\nCONTENT ADDITIONS\n\nCulumon\n\nBM Ticket Crafting\n\n* BM Ticket\n  * Spirit of Awakening and Fighting ×7\n\nBM Evolution Exchange\n\n* Duo Solar Spear — BM Ticket ×1\n* Madness of Abyssal — BM Ticket ×1\n* Holy Wing — BM Ticket ×1\n* Ato, Rene, Por — BM Ticket ×1\n* Tekken — BM Ticket ×1\n* Gehenna — BM Ticket ×1\n* Guardian of the West — BM Ticket ×1\n* Black Saint Wing — BM Ticket ×1\n* Guardian of the North — BM Ticket ×1\n* Death-X-Antibody — BM Ticket ×1\n* Z'd-hou — BM Ticket ×1\n\nBM Random Box\n\n* BM Random Box\n  * Data of Overload ×2\n\nOverloaded Evolutions\n\n* Hyper Cannon — Data of Overload ×4\n* Gungnir — Data of Overload ×4\n* Critical Arms — Data of Overload ×4\n* Sodom and Gomorrah — Data of Overload ×4\n* Toy Gun — Data of Overload ×4\n* Alarm Clock — Data of Overload ×4\n\n\nNote: Only BM items obtained through BM boxes are scannable and provide Data of Overload. BM unlock items obtained through Babel cannot be scanned for the time being.\n\n\nCash Shop\n\nGuaranteed Path Pack (Zhuqiaomon)\n\n* Data Summon Ticket: Rare \\[Event\\] ×15\n* Mega Reinforced Digiclone Set ×6\n* Growth Fruit ×1\n* Zhuqiaomon DigiEgg Lv5 \\[Champion\\] ×1\n\nGuaranteed Path Pack (Raguelmon)\n\n* Data Summon Ticket: Rare \\[Event\\] ×15\n* Mega Reinforced Digiclone Set ×6\n* Growth Fruit ×1\n* Meicoomon DigiEgg Lv5 \\[Champion\\] ×1\n\nGuaranteed Path Pack (Plesiomon)\n\n* Data Summon Ticket: Rare \\[Event\\] ×15\n* Mega Reinforced Digiclone Set ×6\n* Growth Fruit ×1\n* Gomamon DigiEgg Lv5 \\[Champion\\] ×1\n\nBabel Summon\n\nAvailable until 2026-06-28.\n\nNotice\n\n* Babel's Appreciation Card Alpha, Beta, and Gamma will no longer drop after 2026-06-28\n* Any unused Babel's Appreciation Cards should be redeemed before the event ends\n* Remaining cards will become unusable once the banner period expires\n\nBanner 12 — Guardian of the South\n\nMain Reward (5%)\n\n* Guardian of the South (Zhuqiaomon)\n\nSub Reward (7%)\n\n* Alarm Clock (Belphemon: Rage Mode)\n\nPity Reward\n\n* Babel's Appreciation Card Alpha\n\nBanner 13 — Blue Eyes White Dragon\n\nMain Reward (5%)\n\n* Essence of Marine Dragon (Plesiomon)\n\nSub Reward (7%)\n\n* Toy Gun (Beelzebumon Blast Mode)\n\nPity Reward\n\n* Babel's Appreciation Card Beta\n\nBanner 14 — Guardian of the Angels\n\nMain Reward (5%)\n\n* Wicked Slasher (Raguelmon)\n\nSub Reward (7%)\n\n* Tyrant Crow (TyrantKabuterimon)\n\nPity Reward\n\n* Babel's Appreciation Card Gamma",
+      "updatedAt": "2026-06-16T12:52:55.630Z",
+      "publishedAt": "2026-06-15T23:28:05.403Z"
+    },
+    {
+      "id": "f35344c9-bbbe-421b-9359-d311f5e32bff",
+      "slug": "2026-06-13-new-aoe-skill-preview-EtPCrpu2EP",
+      "title": "[2026-06-13] New AOE skill preview",
+      "text": "# Patch Notes\n\n## Improvements\n\n### Skill AOE Preview Indicators\n\n* Added new **Skill AOE Preview Indicators**.\n\nYou can now preview a skill's area of effect on the ground before using it. Hover over any area skill in your skill bar and its hit zone will be drawn directly in the world, making it easier to line up attacks, position support skills, and understand exactly what each skill will affect.\n\nPreview indicators adapt based on the skill type:\n\n* **Circular skills** display a ground circle.\n  * Buffs and heals are centered on your Digimon.\n  * Offensive skills are centered on your current target.\n* **Rush skills** display a directional lane from your Digimon toward the target, showing the full path the charge will sweep through.\n\nIndicator color now shows skill intent at a glance:\n\n* 🔴 **Red** — damaging/offensive skills.\n* 🟢 **Green** — heals, buffs, and other helpful skills.\n\nIndicators use a clean, thin outline with a soft edge, subtle pulse, and smooth fade-in, keeping them easy to read without cluttering the screen. They also update in real time, following you and your target as movement changes.\n\nA new option has been added under **Settings → Interface → Skill AOE Preview**:\n\n* **On (hover)** — always show the preview while hovering a skill. Default option.\n* **Ctrl + hover** — only show the preview while holding Ctrl, for a cleaner skill bar when previews are not needed.\n* **Off** — disable Skill AOE Preview Indicators entirely.\n\n### Quest Browser\n\n* Added a quick quest view for **Limit Break Quests**.\n\nWhen a Digimon reaches its level cap, its level label will appear in red. Clicking the red level label opens the related quest directly in the **Quest Browser**, making it easier to find the required **Limit Break Quest** and unlock further progression.\n\n### Raid Damage Ranking UI\n\n* Revamped the **Raid Damage Ranking** UI with improved theming.\n* Improved the table layout for better readability.\n* Improved ranking display and handling.",
+      "updatedAt": "2026-06-13T19:26:02.506Z",
+      "publishedAt": "2026-06-13T19:22:45.219Z"
+    },
+    {
+      "id": "5cab0598-8f66-4c11-b287-ee91f97da76f",
+      "slug": "2026-06-13-hotfix-Nbd8VmICSw",
+      "title": "[2026-06-13] Hotfix",
+      "text": "Fixed Hard modes in Metal Empire being open unintentionally",
+      "updatedAt": "2026-06-13T19:22:17.603Z",
+      "publishedAt": "2026-06-13T15:02:55.156Z"
+    },
+    {
+      "id": "4afaecb6-4b92-473a-8632-5f085bd5a7e9",
+      "slug": "2026-06-13-patch-notes-rOSlKKeoLz",
+      "title": "[2026-06-13] Patch notes",
+      "text": "# Patch Notes\n\n## Fixes\n\n* Fixed some cases where the Digivice icon did not appear for completed Digivice quests.\n* Fixed an issue where changing fullscreen or resolution settings could incorrectly reposition UI elements.\n* Fixed various crash-related issues.\n\n## Improvements\n\n* Added outlines to text displayed over bars, improving readability across all themes.",
+      "updatedAt": "2026-06-13T12:00:58.957Z",
+      "publishedAt": "2026-06-13T11:50:25.919Z"
+    },
+    {
+      "id": "f40add00-411a-40a9-a027-60b105438230",
+      "slug": "2026-06-12-hotfix-NzlG63q0QL",
+      "title": "[2026-06-12] Hotfix",
+      "text": "# Patch Notes\n\n### Hotfix\n\n* Fixed the amount of seals received when Scanning Digimon Seal Box \\[HT\\]\n* Fixed some of the World Boss HP\n* The cost of scanning the cursed shard box was reduced from 500b to 200b",
+      "updatedAt": "2026-06-13T11:50:08.672Z",
+      "publishedAt": "2026-06-12T23:02:35.879Z"
+    },
+    {
+      "id": "8e67fd2f-2599-42a2-a96f-697bab5ed701",
+      "slug": "2026-06-12-the-devil-still-lingers-loots-JOsVAdCaAf",
+      "title": "[2026-06-12] The Devil Still Lingers - Loots",
+      "text": "# Mega Random Box Contents\n\n## Mega Random Box - DPS\n\n| Item |\n|------|\n| Dot Matrix |\n| Grace of Nobility |\n| Noble Being |\n| Tomahawk |\n| Gorgon |\n| Huangshuyue Saber |\n| Demon King's Necklace |\n| DEX-Evolution |\n| Survival of the Fittest |\n| Avatar of Destruction |\n| Blade of the Night |\n| Chivalry (Evolution) |\n| Ultimate Insect |\n| Supersonic |\n| Fiery Justice |\n| Twin Staff |\n| Metal Howling |\n| Blades of the Ancient Dragon |\n| Trump Sword (Mega) |\n| Wood Cross |\n| Giant Missile |\n| Giga Drill |\n| Red Digizoid |\n| Royal Commander |\n| Dramon Breaker |\n| Brave Shield |\n| Dark Dragon Warrior |\n| Golden Armor |\n\n## Mega Random Box - Tank\n\n| Item |\n|------|\n| GAKU-RAN |\n| Eternal Sleep |\n| Plasma Stake |\n| Giga Drill |\n| Kernel |\n| D-Brigade |\n| System Fail |\n| Aegis (Evolution) |\n| Horn Buster |\n| Prince of the Sky |\n| Offense is the Best Defense |\n| Escape but Win! |\n| Demon Beast |\n| Pile Bunker |\n| Laser Sight |\n| King of the Sea |\n| Metal Head |\n| King Fang |\n| Spiral Bone |\n| Blue Digizoid |\n| Cloud Minion |\n| Mjolnir |\n\n## Mega Random Box - Support\n\n| Item |\n|------|\n| Judge |\n| Death Lure |\n| Smiley Bomber |\n| Angel Ring |\n| Bio Synapse |\n| Hang on Death |\n| Dark Goddess |\n| Ocean Love |\n| Count Digimon |\n| Holy Spear |\n| Parasite |\n| Oh God of Chess, forgive me! |\n| Queen of Wildflowers |\n| Will of God |\n| Holy Sunshine |\n\n## Mega Random Box - Hybrid\n\n| Item |\n|------|\n| Argos Panoptes |\n| Abyssal Digimon |\n| Great King Suit |\n| Good and Evil |\n| King of Digimon |\n| Infinite Cannon |\n| Life Force |\n\n# BM Random Box Contents\n\n## BM Random Box\n\n| Item |\n|------|\n| Sodom and Gomorrah |\n| Gungnir |\n| Alarm Clock |\n| Critical Arms |\n| Hyper Cannon |\n| Toy Gun |\n| Shadow Wing |\n| Giga Scale |\n| Trojan Horse |\n| Monk Staff |\n| Tyrant Crow |\n\n# Cursed Shard Box & Random Lv4 Mercenary DigiEgg Contents\n\n## Cursed Shard Box\n\n| Item |\n|------|\n| Fruit of the Goddess |\n| Evoluter |\n| Increasing Digitary Power Stone |\n| Decreasing Digitary Power Stone |\n| Mysterious Growth Fruit |\n| Option Change Stone |\n| Number Change Stone |\n| Backup Disk |\n| Reinforced Digiclone Cube |\n| Hatch Backup Lv.4 |\n| Hatch Backup Lv.5 |\n| Digimon Seal Box \\[MaxHP\\] |\n| Digimon Seal Box \\[MaxDS\\] |\n| Digimon Seal Box \\[AT\\] |\n| Digimon Seal Box \\[CT\\] |\n| Digimon Seal Box \\[DE\\] |\n| Digimon Seal Box \\[BL\\] |\n| Digimon Seal Box \\[EV\\] |\n| Digimon Seal Box \\[HT\\] |\n| Blue Light of DigiSoul |\n| Attribute EXP Booster \\[1 Day\\] |\n| Amplification Booster +500% |\n| Amplification Booster +300% |\n| ModeSelector |\n| Random Lv4 Mercenary DigiEgg |\n| Digicore |\n\n## Random Lv4 Mercenary DigiEgg\n\n| Item |\n|------|\n| Arkadimon DigiEgg Lv.4 |\n| Baihumon DigiEgg Lv.4 |\n| CommanDramon DigiEgg Lv.4 |\n| Dracomon \\[Blue\\] DigiEgg Lv.4 |\n| Dracomon \\[Green\\] DigiEgg Lv.4 |\n| Gardromon DigiEgg Lv.4 |\n| Hackmon DigiEgg Lv.4 |\n| Keramon DigiEgg Lv.4 |\n| Kudamon DigiEgg Lv.4 |\n| Lucemon DigiEgg Lv.4 |\n| MechaNorimon DigiEgg Lv.4 |\n| Myotismon DigiEgg Lv.4 |\n| PawnChessmon \\[Black\\] DigiEgg Lv.4 |\n| PawnChessmon \\[White\\] DigiEgg Lv.4 |\n| Raremon DigiEgg Lv.4 |\n| Ryudamon DigiEgg Lv.4 |\n| Terriermon DigiEgg Lv.4 |\n| Wormmon DigiEgg Lv.4 |\n| Xuanwumon DigiEgg Lv.4 |",
+      "updatedAt": "2026-06-13T04:46:25.461Z",
+      "publishedAt": "2026-06-13T04:26:34.144Z"
+    },
+    {
+      "id": "04e36eff-3c55-4051-b0e8-bcb6c8c5a4d5",
+      "slug": "2026-06-12-the-devil-still-lingers-bGiu5k1hg6",
+      "title": "[2026-06-12] The Devil Still Lingers",
+      "text": "# Patch Notes\n\n### General Changes\n\n* Added new quest in Gennai - First Steps as a beginner boost quest.\n* Removed ExV-Mon from Random DigiEggs.\n* All V-Mon DigiEggs now hatch into the V-Dramon evolution line.\n* Added a new option in Digitamamon to exchange Seals for Seal Exchange Tickets.\n* Added Miracle, Fate, and Kindness to the Digivice reroll pool in the Andromon NPC.\n* Fixed an issue where all Champion Digimon had their evolutions unlocked immediately upon hatching.\n* Added an option to Zudomon NPC that allows you to turn your non-CB Dark DigiCores and Energized Dark DigiCores into CB ones.\n\n### UI Improvements\n\n#### Party Window\n\n* Redesigned party member cards with a Digimon-focused layout.\n* Removed the unused Tamer HP and DS bars from party entries.\n* Enlarged Digimon HP and DS bars and added numeric HP/DS value displays for improved readability.\n* Reorganized each party card into distinct **Header**, **Vitals**, and **Buffs** sections with visual dividers.\n* Moved buff icons into a dedicated buff strip within the party card frame for cleaner presentation.\n* Added a pulsing red warning frame when a party member's Digimon falls to **20% HP or lower**.\n* Moved the party leader crown icon next to the voice chat indicator.\n* Fixed an issue where the final party slot could not be selected.\n\n### Crafting\n\n* Promethean DigiAura can now be crafted through Zudomon.\n\n### Server Continent Canyon\n\n* Server Continent Canyon Story Mode has been converted into a Solo Dungeon.\n* Rebalanced dungeon drops accordingly.\n* Added additional rewards to the dungeon's drop table.\n* Added a First Clear Reward for Story Mode.\n\n### Main Quest Progression\n\n* All Main Quest-related instanced boss fights and dungeons now require their intended entry requirements before access is granted.\n\n### Raids & Rewards\n\n* Added Seal Packs to World Raid rewards. Some of the packs contain old seals to help avoid excessive power progression.\n* Added Weekly Quests that reward Dark Digicores and Energized Dark Digicores.\n\n### Notes\n\n* Further class readjustments will be made only when deemed absolutely necessary.\n\n\n---\n\n# Temporary Event — The Devil Still Lingers\n\n**Duration:** June 12, 2026 – June 26, 2026\n\nAn old darkness stirs once more across File Island. Devimon and his loyal PicoDevimon swarms have returned, spreading Black Gears throughout the land in an attempt to reclaim dominion over the Digital World.\n\nSpeak with **Angemon — Warden of Hope** to participate.\n\n### Event Features\n\n* Devimon and PicoDemimon have appeared throughout File Island.\n* Defeat event monsters to obtain **Cursed Shard Boxes** and **Black Gear**.\n* Complete the daily quest to earn **Devimon's Sigil**.\n* Exchange event currencies for exclusive rewards at Angemon's Shop.\n\n### Daily Quest — The Devil Still Lingers\n\n**Objective**\n\n* Defeat 200 Devimon.\n* Defeat 200 PicoDevimon.\n\n**Rewards**\n\n* Devimon's Sigil ×10\n* Cursed Shard Box ×80\n* Black Gear ×1000\n\n### Event Currencies\n\n**Black Gear**\n\n* Dropped by Devimon and PicoDevimon throughout File Island.\n\n**Devimon's Sigil**\n\n* Obtained exclusively from the daily quest.\n\n### Event Rewards\n\nRewards available include:\n\n* Promethean DigiAura\n* BM Random Box \\[Event\\]\n* Mega Random Boxes\n* Mercenary Slot Expansion\n* Reinforced Digiclone Items\n* Inventory and Archive Expansions\n* Adventure Tamer Exchange\n* Many Mercenary DigiEggs\n* Various progression and customization items\n\n> All event rewards and event box contents besides Digicore and Blue Lights are character-bound.\n\nFile Island needs you, Hero. Stand with Angemon and drive back the darkness.",
+      "updatedAt": "2026-06-13T06:21:35.728Z",
+      "publishedAt": "2026-06-12T17:39:35.687Z"
+    },
+    {
+      "id": "2ea5519b-2660-41f1-8192-e24c8966b050",
+      "slug": "2026-06-12-ui-update-new-interface-system-and-themes-lE1tsOnpTg",
+      "title": "[2026-06-12] 🎨 UI Update: New Interface System and Themes",
+      "text": "Hey Heroes,\n\nThis patch includes the first major wave of our UI rework. A big part of the interface has been rebuilt on a new system, and along with it we're introducing UI themes that let you change the look of the game's windows.\n\n## The new UI\n\nWindows that have been moved to the new system get a cleaner, more consistent look: redesigned panels, buttons, lists and scrollbars, sharper text, and better hover and click feedback. There are also some smaller quality-of-life improvements along the way, like the new money input in the Market that lets you type Tera, Mega and Bit amounts directly in one place.\n\nSo far, the following windows have been updated:\n\n* Market\n* Inventory extensions (Base, Seal and Evolution grids)\n* Quick Slot bars\n* Tamer, Digimon and Target HUD, including the X-Antibody gauge\n* Tamer Status and Digimon Status windows\n* Quest windows and the Quest Helper\n* Guild and Community windows\n* Mail\n* Friend List\n* Options\n* Digimon Archive and Achievements\n* HUD toggles (Auto-Heal, Magnetic, Party Matching)\n\nNot everything is converted yet. Some windows still use the old UI and will be updated in future patches, one wave at a time, until the whole interface is on the new system.\n\n## UI Themes\n\nYou can now change the color scheme of the entire updated UI. Pick a theme in the Options window and every updated window switches to match. Your selection is saved and restored when you log in.\n\n**Free themes, available to everyone:**\n\n* Market (the new default navy and gold look)\n* Slate\n* Teal\n* Emerald\n\n**Membership themes:**\n\nPlayers with an active Membership also get access to:\n\n* Black\n* Obsidian\n* Nebula\n* Pink\n\n**Coming later:**\n\nMore themes will be added over time and will become obtainable in upcoming updates through event rewards, ranking rewards and Cash Shop premium packs.\n\n## Feedback\n\nThis rework is an ongoing project. If something looks off in one of the updated windows, or you have ideas for theme colors you'd like to see, let us know on Discord. Your feedback helps us decide which windows to tackle next.\n\nThanks for playing!",
+      "updatedAt": "2026-06-12T03:36:41.264Z",
+      "publishedAt": "2026-06-12T03:05:13.938Z"
+    },
+    {
+      "id": "3e5b984b-01fe-41b9-9897-3d76e1c21a0b",
+      "slug": "2026-06-11-ui-modernization-begins-A5u0oRg2mg",
+      "title": "[2026-06-11] UI Modernization Begins",
+      "text": "# Patch Notes\n\n\n> **TL;DR:** Inventory, Warehouse & Extra Inventory have moved to our new UI system, and you can now **resize and scale** them.\n\nWe've started migrating interface to a new UI engine. The legacy UI limited what we could build; the new system unlocks resizing, scaling, and more customization features down the road. We're migrating window by window, starting with the ones you use most.\n\n## Changes\n\n* Inventory, Warehouse & Extra Inventory migrated to the new UI\n* Added resize and scaling support to Inventory and Warehouse\n\n## Known Issues\n\n* As this is a new system, visual glitches may occur, report anything odd.\n\n\n---\n\n*More windows will move to the new style in upcoming patches.*",
+      "updatedAt": "2026-06-11T12:27:38.310Z",
+      "publishedAt": "2026-06-11T12:17:32.474Z"
+    },
+    {
+      "id": "41e805b9-7b36-49cc-aa54-d2a379b07b61",
+      "slug": "2026-06-10-YaD8yjjphe",
+      "title": "2026-06-10",
+      "text": "# Patch Notes\n\n### Improvements\n\n* improved some UIs list perfomance ( Quest Browser )\n* Polished Market System UI\n\n### Fixes\n\n* Fixed several client crashes;\n* Fixed issue where FPS dropped with some UIs open;",
+      "updatedAt": "2026-06-10T16:55:46.763Z",
+      "publishedAt": "2026-06-10T16:50:32.392Z"
+    },
+    {
+      "id": "2bbb286c-ebd0-4459-a153-e7833baa50ae",
+      "slug": "2026-06-09-patch-2-R55w3YgDIM",
+      "title": "2026-06-09 Patch 2",
+      "text": "# Patch Notes\n\n### Improvements\n\n* Added HDR support.\n* Added a path trail feature.\n\n### Fixes\n\n* Fixed several client crashes.",
+      "updatedAt": "2026-06-09T21:22:34.959Z",
+      "publishedAt": "2026-06-09T21:19:25.930Z"
+    },
+    {
+      "id": "0e285a7f-baf9-4ace-9daf-0732740904cd",
+      "slug": "2026-06-09-rbeeah1Ouv",
+      "title": "2026-06-09",
+      "text": "### Adjustments\n\n* Temporarily reduced World Raid HP.",
+      "updatedAt": "2026-06-09T12:59:31.749Z",
+      "publishedAt": "2026-06-09T12:56:27.245Z"
+    },
+    {
+      "id": "0c445cff-08ce-4719-926a-b82cbfd34b85",
+      "slug": "2026-06-07-Ih2TTxT0Aa",
+      "title": "2026-06-07",
+      "text": "# Patch Notes\n\n### Adjustments\n\n* Corrected the EXP curve for Tamer levels.",
+      "updatedAt": "2026-06-07T17:01:17.432Z",
+      "publishedAt": "2026-06-07T17:01:05.452Z"
+    },
+    {
+      "id": "b8ded06f-a4b8-411a-861e-85505f885d3e",
+      "slug": "2026-06-04-kIBhU5Q5Cm",
+      "title": "2026-06-04",
+      "text": "**Patch Notes**\n\n* Corrected the **DE% values** on Corrupted Earrings.\n* Fixed several rendering issues.\n  * We recommend leaving **Shadows** enabled for optimal visual quality.",
+      "updatedAt": "2026-06-05T01:35:38.646Z",
+      "publishedAt": "2026-06-05T01:35:27.937Z"
+    },
+    {
+      "id": "5635fef9-2c95-423c-b2ec-5c52fd7968fe",
+      "slug": "2026-06-03-patch-2-yKz7usnS0q",
+      "title": "2026-06-03 patch 2",
+      "text": "# Patch Notes\n\n### Gameplay Changes\n\n* All Healer Digimon now have access to AoE skills.\n\n### NPC Updates\n\n* Added a new exchange option in the Mercurymon NPC:\n  * Olympian Coins can now be exchanged for Megaphones.\n\n### Fixes\n\n* Fixed an issue where certain items could become stuck in limbo.\n* Fixed Xuanwumon DigiEgg hatching the wrong line",
+      "updatedAt": "2026-06-03T17:17:28.902Z",
+      "publishedAt": "2026-06-03T17:13:57.254Z"
+    },
+    {
+      "id": "c216d4da-4f3a-44d1-8589-decd47698e11",
+      "slug": "2026-06-03-KUHXXjDGBC",
+      "title": "2026-06-03",
+      "text": "# Patch Notes\n\n### Fixes\n\n* Fixed tooltips not rendering correctly.\n\n### Season Pass\n\n* Added rewards for the new Season Pass.",
+      "updatedAt": "2026-06-02T16:45:17.021Z",
+      "publishedAt": "2026-06-02T16:45:07.655Z"
+    },
+    {
+      "id": "682e0745-4e55-4ddf-9f82-1c7edac5505e",
+      "slug": "2026-06-02-FP5JP9iKYK",
+      "title": "2026-06-02",
+      "text": "# Patch Notes\n\n* Adjusted drop rates for Dark DigiCore and Energized Dark DigiCore in Disunity.\n\n### Drop Rate Adjustments\n\n\n\n| Item | Rate | Quantity |\n|------|------|----------|\n| Dark DigiCore | 2%   | 1        |\n| Energized Dark DigiCore | 1%   | 1        |\n\n* \\",
+      "updatedAt": "2026-06-02T02:04:44.843Z",
+      "publishedAt": "2026-06-02T02:04:16.560Z"
+    },
+    {
+      "id": "1866ae51-c536-4f58-b25c-7bfc8a3e6d04",
+      "slug": "2026-06-01-client-update-uBwv5imtlI",
+      "title": "2026-06-01 Client Update",
+      "text": "# Patch Notes\n\n### New Features\n\n* Added **Exclusive Inventory Expansion** to the Cash Shop.\n\n### Bug Fixes\n\n* Fixed HP and DS overflow issues.\n\n### Client Updates\n\n* The game client has been upgraded to **64-bit**.\n* The **DirectX 9 (DX9) client** is no longer supported and will no longer function.",
+      "updatedAt": "2026-06-01T22:06:19.821Z",
+      "publishedAt": "2026-06-01T22:03:10.126Z"
+    },
+    {
+      "id": "609e5340-2599-4fce-9702-559fe3183c15",
+      "slug": "2026-06-01-hotfix-s8YG2UNPgr",
+      "title": "2026-06-01 Hotfix",
+      "text": "### Bug Fixes\n\n* Fixed an issue causing corrupted accessory having more slots",
+      "updatedAt": "2026-06-01T18:50:29.730Z",
+      "publishedAt": "2026-06-01T18:45:47.367Z"
+    },
+    {
+      "id": "6026e2e7-e3de-4c3d-8719-885e26699c24",
+      "slug": "2026-06-01-hotfix-orRnh5CnFW",
+      "title": "2026-06-01 Hotfix",
+      "text": "### Drop Rate Adjustments\n\nFixed incorrect drop rates for Cherrymon (Normal).\n\n| Item | Rate | Qty |\n|------|------|-----|\n| Dark DigiCore | 3%   | 1   |\n| Energized Dark DigiCore | 1%   | 1   |\n\n* \\",
+      "updatedAt": "2026-06-01T17:07:35.923Z",
+      "publishedAt": "2026-06-01T17:07:07.361Z"
+    },
+    {
+      "id": "735e5d20-a41a-46fc-9f8d-d8debbe150cb",
+      "slug": "2026-06-01-XEEWitc0id",
+      "title": "2026-06-01",
+      "text": "# Patch Notes\n\n### Balance Adjustments\n\n* Readjusted Bit drops in Spiral Mountain.\n* Readjusted monster HP in Metal Empire and Underground City to help prevent economy inflation.\n  * Additional loot adjustments are planned for future updates.\n\n### DRP Adjustments\n\nDRP has been added to the following instances:\n\n| Instance | DRP |\n|----------|-----|\n| Army of Steel | 5000 |\n| Twins of Destruction | 3300 |\n| Evil Plushie | 3500 |\n| Fullmetal Tyrant | 3300 |\n| Dragon Dimension | 6000 |",
+      "updatedAt": "2026-06-01T00:03:42.855Z",
+      "publishedAt": "2026-06-01T00:03:23.435Z"
+    },
+    {
+      "id": "6294c3df-cdf3-4ca7-9c5b-a4ed1e7f2d9e",
+      "slug": "2026-05-30-hotfix-PjBJVQnGYE",
+      "title": "2026-05-30 Hotfix",
+      "text": "# Hotfix Patch Notes\n\n* Added a new quest to **Minervamon** that rewards **1,000 Tokens** upon completing the Labours questline.\n* Fixed missing crafting options from **Mercurymon**.\n* Added **Backup Disks** back to the reward pool of **SCC**.",
+      "updatedAt": "2026-05-30T22:51:04.382Z",
+      "publishedAt": "2026-05-30T22:50:59.919Z"
+    },
+    {
+      "id": "f8c11ea3-d07d-4ced-bc70-e76f800a433a",
+      "slug": "2026-05-30-adjustments-6tyVPhyQNi",
+      "title": "2026-05-30 Adjustments",
+      "text": "# Patch Notes\n\n## Balance Adjustments\n\n* Readjusted stat gains from Seals.\n* Readjusted World Raid HP and damage output.\n* Readjusted World Raid respawn time to **3 hours**.\n* Readjusted World Raid drop rates:\n  * 10% chance to obtain **4x Olympian Data Fragments**\n  * 15% chance to obtain **10x Chrome Digizoid Shards**\n  * 5% chance to obtain **1x Olympian Data Core**\n  * 5% chance to obtain **1x Chrome Digizoid**\n* Readjusted open-world monster stats in **Metal Empire** and **Underground City**.\n* Increased the drop rate of **Earrings Data: Fullmetal Tyrant** from **10%** to **30%**.\n* Fixed **Dexmon's ASB**.\n\n## Spiral Mountain (Normal Mode) Drop Adjustments\n\n### Metal Empire / Underground City Instances\n\n* Chrome Digizoid — **15%** (1x) *(Tankmon Instance Only)*\n* Dark Digicore — **15%** (1–2x) *(Tankmon: 20%)*\n* Energized Dark Digicore — **10%** (1x) *(Tankmon: 15%)*\n* Tokens per clear:\n  * Standard Instances: **1 Token**\n  * Tankmon Instance: **2 Tokens**\n\n### Forest of the Marionette Instances\n\n* Dark Digicore — **7%** (1–2x)\n* Energized Dark Digicore — **5%** (1x)\n\n### MetalSeadramon\n\n* Dark Digicore — **4%** (1–2x)\n* Energized Dark Digicore — **2%** (1x)\n\n## Examon Instance\n\n* **Olympian Token** — 100% (50x)\n* **Examon Seal** — 10% (2–5x)\n* **Chrome Digizoid Shards** — 10% (5x)\n* **Olympian Data Fragment** — 10% (2x)\n* **Olympian Data Core** — 3% (1x)\n* **Chrome Digizoid** — 3% (1x)\n\n## New Additions\n\n* Added **Dark Masters Tokens** to all **Metal Empire** and **Underground City** Normal Mode instances.\n\n## Crafting\n\nNew crafting options have been added to the **Zudomon NPC**:\n\n* **15 Dark Masters Tokens** → **1 Dark Digicore**\n* **30 Dark Masters Tokens** → **1 Energized Dark Digicore**\n* Readjusted the crafting cost for CB and Tradable Accessories",
+      "updatedAt": "2026-05-30T21:13:47.544Z",
+      "publishedAt": "2026-05-30T21:10:32.235Z"
+    },
+    {
+      "id": "a27fc22d-8597-4b99-ba1d-0a66d4eb37ee",
+      "slug": "2026-05-29-hotfix-3-bxZMB9E3fP",
+      "title": "2026-05-29 hotfix 3",
+      "text": "* Fixed MugenDramon loot table\n* Reverted HT seals to flat value temporarily\n* Readjust on DE seals temporarily",
+      "updatedAt": "2026-05-30T01:22:10.431Z",
+      "publishedAt": "2026-05-30T01:21:17.860Z"
+    },
+    {
+      "id": "c7c94857-8563-4291-886d-fa40c3f4389e",
+      "slug": "2026-05-29-hotfix-2-QxAdEFMfOs",
+      "title": "2026-05-29 hotfix 2",
+      "text": "* Fixed Xuanwumon DigiEgg.\n* Reduced raid boss HP.",
+      "updatedAt": "2026-05-29T23:36:57.250Z",
+      "publishedAt": "2026-05-29T23:36:52.868Z"
+    },
+    {
+      "id": "e7c8017c-3a70-456d-aef6-431066dc8f64",
+      "slug": "2026-05-29-hotfix-mFLmOVAxiy",
+      "title": "2026-05-29 hotfix",
+      "text": "## Additional Changes & Fixes\n\n* Fixed issues with the **Cash Shop**\n* Fixed **Raid Boss monster sizes**\n* Added **Exclusive Inventory Expansion** to the **Cash Shop**\n\n## New Feature\n\n### Group Finder (Beta)\n\nThe **Group Finder (Beta)** system has been added. You can access it through the button located **underneath the minimap**.",
+      "updatedAt": "2026-05-29T22:06:41.969Z",
+      "publishedAt": "2026-05-29T22:04:31.327Z"
+    },
+    {
+      "id": "c3f62eb0-ef4f-44e1-b42f-a8992d380f00",
+      "slug": "2026-05-29-OqVy40hkvn",
+      "title": "2026-05-29",
+      "text": "# Update - Metal Empire\n\n## New Maps & Main Quests\n\n* **Metal Empire**\n* **Underground City**\n\n\n## New Instance / Boss Fights\n\n* **Tankmon Dungeon** *(Story / Normal)*\n* **Megadramon / Gigadramon** Dual Boss Fight *(Story / Normal)*\n* **Warumonzaemon** Boss Fight *(Story / Normal)*\n* **Mugendramon** Boss Fight *(Story / Normal)*\n\n**Hard versions will be added shortly.**\n\nDRP will be added weekly reset\n\n## New World Raids\n\n* **Goatmon**\n* **Vikaralamon**\n* **Sukamon**\n* **Crowmon**\n* **Vajramon**\n* **AncientTrojamon**\n* **Dobermon**\n* **Cerberumon**\n\nEach new Raid Boss drops **exclusive rewards** and **rare crafting materials**, including the **Olympian Data Core**.\n\n## New Equipment\n\n### Earring Data\n\n* **Fullmetal Tyrant**\n* **Corrupted Series**\n\n### Olympian Tier (R4) - Tamer Gear *(Class 5 Epic)*\n\n**Clothing Set (36 items total)** 6 equipment slots × 6 stat variants *(A–F)*\n\n**Equipment Slots:**\n\n* Cap\n* Headset\n* Vest\n* Pants\n* Gloves\n* Boots\n\n### Olympian Data Core\n\nA **rare drop from World Raids**, required as a crafting material for **all Olympian (R4) tier items**.\n\n\n---\n\n## Digimon Release\n\n* **Xuanwumon** *(MEGA)*\n* **Z'D Garurumon** *(Gabumon Line)*\n* **Death-X-Mon**\n\n\n---\n\n## New Quest Chain: The 12 Labours\n\n### Rewards\n\n* **1,000 Olympian Tokens**\n* **7-Day Magnetic ID**\n* Olympian Data Core\n* Chrome Digizoid\n\n\n## New Seals added to Digitamamon Exchange\n\n\n## Seals were rebalanced to Percentage based\n\n* Dual Stats will be added shortly.\n\n\n\\\n**More content will be added shortly.**",
+      "updatedAt": "2026-05-29T22:29:34.459Z",
+      "publishedAt": "2026-05-29T20:55:10.851Z"
+    },
+    {
+      "id": "e2fdd091-39c0-42ba-9f9f-5adbcf662402",
+      "slug": "2026-05-27-fdcgNyyUtT",
+      "title": "2026-05-27",
+      "text": "## Graphics Update\n\n### Renderer\n\n* Upgraded the client from **DirectX 9** to **DirectX 11**\n* Replaced the legacy **Blur** post-processing effect with a new **Bloom** effect\n* Added **Rim Lighting** for improved silhouette definition\n* Added **Cel Shading** for a cleaner, more stylized cartoon appearance\n* Reworked the **Outline Effect** to better complement the new cartoon rendering style\n\n### New Graphics Settings\n\nThe following sliders have been added to the graphics settings, allowing you to customize the visual experience to your preference:\n\n* **Bloom Intensity**\n* **Sharpness**\n* **Rim Lighting**\n* **Cel Shading**\n* **Outline Thickness**\n\n### Compatibility\n\nA **DirectX 9** client version will remain available as a fallback option for players who may experience compatibility or performance issues with the new renderer.\n\n### Behind the Scenes\n\nThis update also includes major improvements to our internal workflow, helping us deliver future content, expansions, and updates more efficiently.\n\nMore new features and content are coming this Friday stay tuned!",
+      "updatedAt": "2026-05-27T22:48:27.726Z",
+      "publishedAt": "2026-05-27T22:38:30.255Z"
+    },
+    {
+      "id": "7ba302a8-3290-4c5e-afe7-c9f22d6dcd25",
+      "slug": "2026-05-25-7sni1KMEkj",
+      "title": "2026-05-25",
+      "text": "* Event Quest in Culumon has been deactivated.",
+      "updatedAt": "2026-05-25T03:32:58.369Z",
+      "publishedAt": "2026-05-25T03:32:22.872Z"
+    },
+    {
+      "id": "c60e7796-bfe3-4dad-98b4-1a406c3e871c",
+      "slug": "2026-05-23-WytzKPAIcY",
+      "title": "2026-05-23",
+      "text": "* Adjusted spawn positions in **Server Continent Canyon(Normal)**. Monster spawns are now arranged in a more linear pattern.",
+      "updatedAt": "2026-05-23T15:14:23.892Z",
+      "publishedAt": "2026-05-23T15:13:29.348Z"
+    },
+    {
+      "id": "2326e86f-f4ce-4c3f-9e80-1e2af1c4f9fe",
+      "slug": "2026-05-19-YONOuuCzMa",
+      "title": "2026-05-19",
+      "text": "# Patch Notes\n\n\n***********************************************************************************************\n\n## NOTICES\n\n* Past summons in Babel will be re-enabled until the next releases arrive.\n\n### Upcoming Releases\n\n* Xuanwumon\n* Z'D Garurumon\n* Death-X-mon\n\n### Banner Changes\n\n* Upcoming banners will include 2 extra BM items.\n* The pity reward system will be changed to a selectable ticket that allows players to choose the item they want.\n\nIf this system works well and players enjoy it, it may continue to be used for future banners.\n\n\n---\n\n## Next Content Update Schedule\n\n* The next content update is scheduled for Friday the 29th.\n\nWe are taking a bit longer than usual to release new content because we want to ensure everything is properly tested and delivered in a polished state. We will keep you updated.\n\nThank you for your patience.\n\n\n\n***********************************************************************************************\n\n\n## New Content\n\n### New Player Support Quest 2\n\n* Added a new **Player Support Quest 2** in Gennai (Village of the Beginning).\n* Rewards include:\n  * 21 Evoluters\n  * 5 Riding Modes\n  * 3-Day Random Magnetic ID\n\n\n---\n\n## Bug Fixes & Adjustments\n\n### Devimon & VenomVamdemon\n\n* Fixed Devimon and VenomVamdemon F3 AoE issues.\n\n### Champion Digimon Skill Unlock Requirements\n\n* Changed the level requirements to unlock skills for:\n  * Kiwimon\n  * Baihumon\n  * Deputymon\n  * Other Champion Digimon without a Rookie form\n\n### Belphemon\n\n* Adjusted Belphemon skill gains per level and F2 cooldown to better match the performance of other Tank Digimon.\n* Changed Belphemon Rage Mode model.\n\n\n\\\n\n---\n\n## Sinduramon Changes\n\n### F4 Effect Changes\n\nSinduramon F4 now:\n\n* Reduces damage taken by 10%\n* Increases Max HP by 360 (+76 per Skill Level)\n* Increases DE by 27 (+6 per Skill Level)\n* Duration: 15 seconds\n\n### F5 Effect Changes\n\nSinduramon F5 now:\n\n* Increases Attack Speed by 12%\n* Increases Critical Damage by 5% (+1% per Skill Level)\n* Increases Skill Damage by 3% (+1% per Skill Level)\n* Duration: 15 seconds\n\n\n---\n\n## Gomamon Line Rework\n\n### Description Fixes\n\n* Fixed F4 descriptions for:\n  * Gomamon\n  * Ikkakumon\n  * Zudomon\n  * Vikemon\n\n### F4 Reworks\n\n#### Gomamon — Tidewall Formation\n\n* Grants a Shield of 200 (+30 per Skill Level)\n* Increases party Evasion by 3% (+1.5% per Skill Level)\n* Duration: 20 seconds\n\n#### Ikkakumon — Avalanche Aegis\n\n* Grants a Shield of 600 (+85 per Skill Level)\n* Increases party Evasion by 4% (+2% per Skill Level)\n* Duration: 20 seconds\n\n#### Zudomon — Vulcan's Bulwark\n\n* Grants a Shield of 1,100 (+145 per Skill Level)\n* Increases party Evasion by 5% (+2.5% per Skill Level)\n* Duration: 20 seconds\n\n#### Vikemon — Frostforged Wall\n\n* Grants a Shield of 2,500 (+310 per Skill Level)\n* Increases party Evasion by 6% (+3% per Skill Level)\n* Duration: 20 seconds\n\n### Additional Gomamon Line Adjustments\n\n* Fixed Gomamon line F4 Shield values being far too small relative to Tank HP at each evolution stage.\n* Lv10 Shield values now sit at roughly 10% of a Tank's Lv90, Size 120% HP at the corresponding stage.\n* Fixed Gomamon line F4 Evasion scaling being too weak.\n* Scaling now ranges from:\n  * 1.5% per Skill Level at Rookie\n  * Up to 3% per Skill Level at Mega\n* Standardized Vikemon F4 duration to 20 seconds.\n\n\n---\n\n## Fujinmon Changes\n\n* Increased Fujinmon F1, F2, and F3 damage.\n\n### Fujinmon F5 Rework\n\nFujinmon F5 now:\n\n* Increases Skill Damage by 5% (+2% per Skill Level)\n* Grants 15% Cooldown Reduction\n* Duration: 30 seconds\n\n\n---\n\n## Damage Increases\n\nIncreased F3 damage for:\n\n* GigaSeadramon\n* AncientTroiamon\n* BlitzGreymon\n* JumboGamemon\n\n\n\\\n## Dungeon Adjustments\n\n* Readjusted **DRP** for **Cherrymon (Hard)** to **6,500 base**.",
+      "updatedAt": "2026-05-19T17:07:41.774Z",
+      "publishedAt": "2026-05-19T16:51:07.131Z"
+    },
+    {
+      "id": "ea3043ce-008d-4152-a7a9-26757c95c6ed",
+      "slug": "2026-05-16-JWRizlnUgt",
+      "title": "2026-05-16",
+      "text": "Here's a cleaned-up and properly formatted patch note version:\n\n# Hotfix May 16, 2026\n\n## Role & Skill Fixes\n\n* Fixed issues with Ranged DPS role skills.\n* Added a small cast time to Role Skills to prevent unintended Auto Attack cancel interactions.\n\n## Digimon Adjustments\n\n* Changed **Dorugoramon's F5 effect**:\n  * Now increases **Critical Damage by 2% (+2% per Skill Level)**.\n  * Now increases **Skill Damage by 2% (+2% per Skill Level)**.\n  * Duration: **20 seconds**.\n* Added **INT scaling** to **Lucemon Satan Mode**.\n* Fixed **Beelzemon BM** animation delay.\n* Fixed **Meramon F4** animation delay.\n* Fixed **Meramon F3** not dealing AoE damage.\n* Fixed **Mojyamon**, who now properly functions as a **Ranged DPS**.\n* Fixed **AncientTroiamon F5** healing not scaling properly.\n* Fixed **BlackSaintGalgomon F4** range issue and changed it to deal **AoE damage around the target**.\n* Increased **Valdurmon F1** damage to be more in line with other healers.\n* Increased **Valdurmon F2** damage to be more in line with other healers.\n* Reduced **Valdurmon F2 (Aurora Undulation)** cooldown from **8.4s → 7.5s**.\n* Reduced **Craniamon F2** cooldown to match other Tanks.\n* Reduced **BelialVamdemon F3** cooldown to **5.8 seconds**.\n\n## Dungeon & Boss Adjustments\n\n* Reduced **Disunity Bosses' evasion**.\n* Changed the **Disunity map**, and boss aggro now works properly.\n* Fixed **Disunity OCS/NCS** to match the current versions dropped in **MDG**.\n* Fixed boss monster behavior in **Disunity / Puppet Master**.\n* Increased **mob eyesight** in **Cherrymon/Jureimon Hard Mode**.\n* Changed **Cherrymon/Jureimon Hard Mode loot table**:\n  * Fruits have been moved from mobs to the **Dungeon Boss**.\n* **Pinocchimon (Hard Mode)** felt lonely because some players avoided his friends, so he now properly invites them to the party.\n* **Ring Data: Golden Seadragon** now has increased **DE** values.\n  * A **reroll is required** to obtain the updated option.\n\n\n\\\n* Added new **DigiEggs** to the loot tables of their respective evolutio lines:\n  * **Floramon**\n  * **Gizamon**\n  * **Syakomon**\n  * **Swimmon**\n  * **Tsukaimon**\n  * **Armadimon**\n  * **Lopmon**\n\n\n## World Boss Adjustments\n\n* Increased **Neptunemon World Boss HP**.\n* Added **Mysterious Odyssey DigiEgg - Omega** to the **Neptunemon World Boss** loot pool.",
+      "updatedAt": "2026-05-17T08:21:52.529Z",
+      "publishedAt": "2026-05-17T02:13:38.820Z"
+    },
+    {
+      "id": "5bb955d2-5995-43fc-af40-69e3d8015e46",
+      "slug": "2026-05-14-ep3R492kpJ",
+      "title": "2026-05-14",
+      "text": "# Patch Notes  May 14, 2026\n\n## Important Notice\n\n* All Seals will eventually be changed from flat values to percentage-based stats once testing is complete.\n* We are also planning to release many more new Seals in future updates.\n\n## Fixes & Improvements\n\n* Fixed an issue preventing players from joining parties when tamer names contained non-default characters.\n* Evolution items can now be used directly from the Extra Inventory.\n* Crafting Materials can now be used directly from the Extra Inventory.\n\n## Additions\n\n* Added **Neptunemon** as a permanent World Raid in **Olympos Festival Island**.\n* Added loot rewards to the **Neptunemon World Raid**.\n  * About World Raids: Each World Raid boss has a single, server-wide HP pool that is shared across every channel. Damage dealt by any player on any channel is subtracted from the same pool, and the boss dies once that global pool reaches zero, there is no per-channel instance. Loot eligibility is based on your contribution to that shared fight, so coordinating across channels does not split the boss into multiple copies\n* Added new items to spend **Olympos Tokens** at the **Mercurymon NPC** in **Olympos Festival Island**.\n* Added **Mid Data Exchange** to the **Zudomon NPC** in **Olympos Festival Island**.\n* **Olympos Tokens** are now tradable.\n* Added **Goggles** to the **Disunity Instance**.\n* Added **Hard Mode** to the **Cherrymon/Jureimon Dungeon**.\n\n## UI Changes\n\n* Inventory and Warehouse now display the number of occupied slots.\n* The **Seals Master UI** can now filter activated Seals.\n* The chat bar now includes an emoji picker.\n\n## Dungeon Ranking Points\n\n* **500 DRP**  Lord of the Deep Forest (Normal)\n* **7,200 DRP**  Lord of the Deep Forest (Hard)\n* **900 DRP**  Disunity (Normal)\n* **2,000 DRP**  Disunity (Hard)\n* **900 DRP**  Metallic Avenger (Normal)\n* **2,000 DRP**  Metallic Avenger (Hard)\n* **1,200 DRP**  The Puppet Master (Normal)\n* **2,500 DRP**  The Puppet Master (Hard)\n\n## Additional Notices\n\n**Notice:** We are aware that some Digimon, such as **Lucemon**, **Baihumon**, and **Terriermon**, currently do not have farmable DigiEggs. We will gradually introduce them in a way that maintains game balance and does not negatively impact players.\n\n**Notice 2:** All equipment currently available in the game will receive further upgrades in future updates.",
+      "updatedAt": "2026-05-14T05:41:43.616Z",
+      "publishedAt": "2026-05-14T04:59:41.475Z"
+    },
+    {
+      "id": "6c2bbf80-04ce-4fd1-a1ac-7b68b43cceeb",
+      "slug": "2026-05-12-9SCjAdP9rH",
+      "title": "2026-05-12",
+      "text": "# Patch Notes — Forest of Marionette Update\n\n## New Content\n\n* Added **Forest of Marionette**\n* Added **Jureimon Boss Instance**\n  * Hard Mode will be added tomorrow\n* Added **Disunity Instance** (*WarGreymon & MetalGarurumon*)\n* Added **MetalEtemon Instance**\n  * Drops **Keyrings of the Chosen Children**\n* Added **Pinocchimon Instance**\n  * Drops **Necklace Data: Cursed Puppet** *(Character Bound on Normal / Tradable on Hard)*\n* Added a **Quest through Culumon** *(Olympos Festival Island)* that allows players to obtain **one of the three Digimon released today**\n\n## Cash Shop\n\n* Added **Nameplates**\n* Added **Guaranteed Packs** for the following Digimon:\n  * **Lucemon Satan Mode** *(Hybrid)*\n  * **Baihumon** *(Melee DPS)*\n  * **BlackSaintGalgomon** *(Ranged DPS)*\n\n## System & Quality of Life\n\n* **Auto Attack** no longer requires skill canceling to move during attack animations\n* Client now supports **multi-language input**\n* **Guild EXP** is now being added correctly\n* You can now **hold Ctrl and click a player's name** to automatically **copy it to your clipboard**\n\n## Guild Contribution Changes\n\nGuild contribution tasks have been adjusted as follows:\n\n* **Raid Monster Kill** → 10 Points\n* **Quest Completion** → 5 Points\n* **Hatch an Egg** → 30 Points\n* **100 Monster Kills** → 5 Points\n* **Dungeon Clear (Hard & Extreme)** → 25 Points\n* **Transcendence** → 1000 Points\n\n## Notice\n\n* **Jureimon/Cherrymon Hard Mode** and the **Olympos Token Vendor** will be added tomorrow.\n* Some icons are still missing. We will continue uploading them over time, and **no server restart will be required** for these updates.",
+      "updatedAt": "2026-05-12T23:57:54.880Z",
+      "publishedAt": "2026-05-12T19:04:47.951Z"
+    },
+    {
+      "id": "8a8844d5-e2de-4432-b1d3-76950f0d6ab8",
+      "slug": "2026-05-11-hotfix-T048jY9V02",
+      "title": "2026-05-11 Hotfix",
+      "text": "### Fixes\n\n* Fixed Taichi missing in Forest of the Beginning",
+      "updatedAt": "2026-05-11T12:23:25.904Z",
+      "publishedAt": "2026-05-11T12:23:12.714Z"
+    },
+    {
+      "id": "f58e0be6-ad08-4e8e-920e-1b3f6b6ca372",
+      "slug": "2026-05-11-nP1ZiAeNTt",
+      "title": "2026-05-11",
+      "text": "## Patch Notes — May 11, 2026\n\n### Event\n\n* The Marsmon Event has ended. The boss will remain available for fun, but rewards are no longer obtainable.\n\n### Additions\n\n* Added Digimon Archive NPCs across all File Island maps.\n* Added Digimon Archive NPCs across all Server Continent maps.\n* Added Digimon Archive NPCs across all Odaiba area maps.\n\n### Fixes\n\n* Fixed an issue where Magia Code Protection was not activating its effect.",
+      "updatedAt": "2026-05-11T00:17:04.602Z",
+      "publishedAt": "2026-05-11T00:13:06.421Z"
+    },
+    {
+      "id": "abadb257-e94d-4f9f-9e3f-478a539029a6",
+      "slug": "patch-notes-2-knClGCAuU8",
+      "title": "Patch Notes-2",
+      "text": "# Patch Notes — May 8, 2026\n\n## Progression & World Adjustments\n\n* Story Mode is no longer restricted to Single Player only.\n* EXP rewards and boss stats have been readjusted across instanced content.",
+      "updatedAt": "2026-05-08T23:17:08.674Z",
+      "publishedAt": "2026-05-08T23:16:12.834Z"
+    },
+    {
+      "id": "3007510a-582b-43c1-9d99-6ecc39033469",
+      "slug": "2026-05-08-QxvIBkB3Lb",
+      "title": "2026-05-08",
+      "text": "# Patch Notes  May 8, 2026\n\n## Visual Updates\n\n* Added new skill icons for the following Digimon:\n  * Dukemon Crimson Mode\n  * UlforceV-dramon\n  * Seraphimon\n  * Lilithmon\n  * JumboGamemon\n  * Ophanimon\n  * TigerVespamon\n  * VictoryGreymon\n\n\n---\n\n## Digimon Balance Changes\n\n### Hackmon\n\n* Changed F5 effect:\n  * Increases Critical Damage by 5% (+2% per Skill Level)\n  * Increases Critical Rate by 10% (+2% per Skill Level)\n  * Duration: 20 seconds\n* Adjusted stats to properly fit a Rookie Melee role\n\n### BaoHackmon\n\n* Changed F5 effect:\n  * Increases Critical Damage by 5% (+2% per Skill Level)\n  * Increases Skill Damage by 10% (+3% per Skill Level)\n* Adjusted stats to properly fit a Champion Melee role\n\n### Seadramon\n\n* Changed F4 effect:\n  * Restores 5% MaxDS\n  * Restores 450 HP (+42 per Skill Level)\n  * Reduces damage taken by 4% for 20 seconds\n* Changed F5 effect:\n  * Restores 230 HP per tick\n  * Reduces damage taken by 25%\n  * Gains a Shield of 1050 (+98 per Skill Level)\n  * Duration: 15 seconds\n\n### MegaSeadramon\n\n* Changed F4 effect:\n  * Restores 5% MaxDS\n  * Restores 600 HP (+56 per Skill Level)\n  * Reduces damage taken by 4% for 20 seconds\n* Changed F5 effect:\n  * Restores 360 HP per tick\n  * Reduces damage taken by 25%\n  * Gains a Shield of 1650 (+154 per Skill Level)\n  * Duration: 15 seconds\n\n\n---\n\n## Dungeon & Combat Adjustments\n\n### Marsmon Instance\n\n* Reduced Story, Normal, and Hard Mode Evasion to improve consistency for Digimon that rely on auto attacks\n* Adjusted instance rewards\n* Increased rewards for Normal and Hard Mode\n\n### MetalSeadramon <Normal>\n\n* Re-tuned encounter damage output\n* The fight now properly requires Tank and Support roles\n\n\n---\n\n## System Fixes\n\n* Fixed ALL chipsets not being applied correctly to all families\n* Fixed buffs remaining active after evolutions\n* Fixed Gazimon in Odaiba not dropping DigiEggs\n* Added a buff to Story Mode Instances providing +300% AT +300% Skill Damage + 300% DE\n\n\n---\n\n## Progression & World Adjustments\n\n* Adjusted Story Mode boss EXP gain up to VenomVamdemon Boss\n* Adjusted Story Mode boss stats\n* Adjusted EXP gain and stats for several mobs in Odaiba maps\n* Added ChaosDramon to the BlackAgumon line\n\n\n---\n\n# Note\n\nWe are aware of the issues currently affecting the game, and we truly appreciate everyone taking the time to report bugs and provide feedback.\n\nAlongside fixing these issues, we are also continuing to implement new content while making sure everything is properly tested before release.\n\nForest of Marionette is nearly ready. The update will include 4 new instances, and we are currently finalizing the mechanics and encounter systems.\n\nA final round of testing will take place on Monday, as we are unable to properly schedule testers during the weekend. If no major issues are found, the update is planned to release on Tuesday.\n\nWe want to keep delivering new content consistently, but we would rather take the time to do things properly than repeat the same mistakes from the past.\n\nAs many of you already know, our goal is not to simply recreate things 1:1. We are rebuilding and redesigning as much as possible in our own way, including systems, mechanics, and features, to create a more unique, polished, and enjoyable experience overall.\n\nWe will continue doing our best to deliver updates as quickly as possible while keeping quality and gameplay experience as the priority.\n\nThank you all for the support, patience, and understanding.\n\nEnjoy the final 2 days of the event.",
+      "updatedAt": "2026-05-09T10:16:59.532Z",
+      "publishedAt": "2026-05-08T21:34:39.389Z"
+    },
+    {
+      "id": "c76f338f-2377-46e8-880a-dcd8860c0b97",
+      "slug": "hotfix-2026-05-05-n2r8Uwtywl",
+      "title": "Hotfix 2026-05-05",
+      "text": "### Patch Notes\n\n\n**Fixes**\n\n* AntiMacro check doesn't trigger mid-fight in dungeons anymore \n* Touchpad clicks now work\n* Various crashes resolved",
+      "updatedAt": "2026-05-05T18:44:26.752Z",
+      "publishedAt": "2026-05-05T18:39:43.643Z"
+    },
+    {
+      "id": "d59048a1-8fbf-4d6a-b649-3c3c254e1562",
+      "slug": "hotfix-2026-05-04-x1haPmiZ5F",
+      "title": "Hotfix 2026-05-04",
+      "text": "### Patch Notes\n\n\n**Fixes**\n\n* Fixed an issue where heals and buffs were not being applied correctly inside instances\n* Fixed a disconnect occurring when leveling up Digimon skills\n* Fixed cloned menu causing crashes in Olympos Island\n* Fixed minimap issues on the new map\n* Fixed crafting item sorting *(descriptions still require further adjustments)*",
+      "updatedAt": "2026-05-04T19:44:01.440Z",
+      "publishedAt": "2026-05-04T19:43:42.443Z"
+    },
+    {
+      "id": "96c362f3-aff6-4aff-9394-c22194d1911b",
+      "slug": "hotfix-q9gI3aS2we",
+      "title": "Hotfix",
+      "text": "**Patch Notes – Hotfix Update**\n\n* Fixed Reinforced Clone Cube not being scannable\n* Changed Marsmon map to SkullGreymon map for improved visibility of mechanics (circles)\n* Fixed crashes when hovering over EXP gear\n\n  \\\n\nWe will continue pushing additional fixes as soon as possible. Unfortunately, the rest of the dev team is currently unavailable, but work will resume shortly.\n\nThank you for your patience.",
+      "updatedAt": "2026-05-03T20:53:55.174Z",
+      "publishedAt": "2026-05-03T17:48:14.938Z"
+    },
+    {
+      "id": "d2e5f066-2114-4e42-b3c9-4dc6fe076204",
+      "slug": "2026-05-02-IvQ4QJVI7p",
+      "title": "2026-05-02",
+      "text": "",
+      "updatedAt": "2026-05-02T02:48:08.937Z",
+      "publishedAt": "2026-05-02T02:48:01.231Z"
+    },
+    {
+      "id": "d50fd331-8ccf-41a2-8930-82807277e334",
+      "slug": "hotfix-i7IWUdDKgb",
+      "title": "Hotfix",
+      "text": "* Fixed Psychemon respawn time in Server Continent Desert",
+      "updatedAt": "2026-05-01T01:22:11.711Z",
+      "publishedAt": "2026-04-30T23:32:52.135Z"
+    },
+    {
+      "id": "0ea05817-a031-4d8e-ab17-ebd148bdae28",
+      "slug": "2026-04-29-mVwTtNK97F",
+      "title": "2026-04-29",
+      "text": "",
+      "updatedAt": "2026-04-29T16:34:27.846Z",
+      "publishedAt": "2026-04-29T16:34:27.852Z"
+    },
+    {
+      "id": "04c73195-ea00-4da1-bb23-a096fc4a8962",
+      "slug": "2026-04-28-kTSHvhhU3b",
+      "title": "2026-04-28",
+      "text": "",
+      "updatedAt": "2026-04-28T19:42:56.954Z",
+      "publishedAt": "2026-04-28T19:42:56.962Z"
+    },
+    {
+      "id": "03144d37-26f3-459a-8168-bcb65b43001a",
+      "slug": "2026-04-27-c49DEFkoCd",
+      "title": "2026-04-27",
+      "text": "",
+      "updatedAt": "2026-04-27T21:26:31.812Z",
+      "publishedAt": "2026-04-27T21:26:31.820Z"
+    },
+    {
+      "id": "e8734a37-40ed-46e5-b183-9c9d9bc3f64e",
+      "slug": "2026-04-26-ng7XqthdbO",
+      "title": "2026-04-26",
+      "text": "",
+      "updatedAt": "2026-04-27T15:51:33.847Z",
+      "publishedAt": "2026-04-27T15:51:33.853Z"
+    },
+    {
+      "id": "fb8e3245-eb93-4c3f-af87-a47b247e8ce0",
+      "slug": "2026-04-25-AaZ7sCq7oU",
+      "title": "2026-04-25",
+      "text": "\\\n* Added an interface to confirm Digimon deletion in order to prevent accidentally deleting\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzBlMDVjMTFjLTkxYWYtNDMwYS04YTIxLTE2NThmM2Y2M2FjNi85MzRlODI0NS02NDRiLTRhOTEtYWY4Ny0yMDVkZDA1ZjliOTYvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODIzMzc4MDcsImV4cCI6MTc4MjM0MTQwN30.vwMIlFguIKfSiNxJnQk768lz6tSBysZLF0XR-kKADtc \" =471x266\")\n\n\nFixed Stale Buffs inside dungeons;",
+      "updatedAt": "2026-04-26T00:02:08.919Z",
+      "publishedAt": "2026-04-25T23:11:12.983Z"
+    },
+    {
+      "id": "36d735c9-b649-40f7-a9f1-a3291a4f1084",
+      "slug": "2026-04-24-sb7n0X37f4",
+      "title": "2026-04-24",
+      "text": "* Fixed Salamon Line alignments.",
+      "updatedAt": "2026-04-27T15:52:04.922Z",
+      "publishedAt": "2026-04-24T08:48:54.697Z"
+    },
+    {
+      "id": "734a8d4b-171f-4630-a690-291ec41cb3e6",
+      "slug": "2026-04-23-QnPtcGCOcl",
+      "title": "2026-04-23",
+      "text": "\\",
+      "updatedAt": "2026-04-23T03:51:00.673Z",
+      "publishedAt": "2026-04-23T03:50:47.149Z"
+    },
+    {
+      "id": "c18eafa9-c9fe-4fd9-85f6-4a8a91d8920f",
+      "slug": "2026-04-22-Ekqh1bMdSx",
+      "title": "2026-04-22",
+      "text": "",
+      "updatedAt": "2026-04-22T23:40:46.400Z",
+      "publishedAt": "2026-04-22T23:40:46.417Z"
+    },
+    {
+      "id": "72c0638e-575b-40b5-81b6-6d8d93ef0bd7",
+      "slug": "2026-04-21-q4j5SnzzHb",
+      "title": "2026-04-21",
+      "text": "",
+      "updatedAt": "2026-04-21T05:47:29.591Z",
+      "publishedAt": "2026-04-21T05:47:29.606Z"
+    },
+    {
+      "id": "b6cccf1c-8b55-4f93-a163-b52629d11c07",
+      "slug": "2026-04-20-Y5f6tXWNWW",
+      "title": "2026-04-20",
+      "text": "Patch Notes — April 20, 2026",
+      "updatedAt": "2026-04-20T19:43:25.532Z",
+      "publishedAt": "2026-04-20T19:36:59.428Z"
+    }
+  ]
+}
