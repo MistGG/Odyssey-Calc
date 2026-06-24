@@ -16,7 +16,11 @@ import {
 import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
 import type { MeterPublicAggregates, PlayerRankEntry } from '../lib/meterPublicStats'
 import { dpsToPercentile, parseScoreColor } from '../lib/meterPublicStats'
-import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS, type MeterRoleBucket } from '../lib/meterRoleBuckets'
+import {
+  filterTamerEntriesByPartySetup,
+  type MeterPartySetupFilter,
+} from '../lib/meterPartySetup'
+import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS, fetchDigimonRoleMap, type MeterRoleBucket } from '../lib/meterRoleBuckets'
 import { meterBarBackgroundForSkill } from '../lib/meterSkillBarGradient'
 
 const ROLE_ACCENT: Record<MeterRoleBucket, string> = {
@@ -528,6 +532,22 @@ export function MeterLeaderboardPreviewBoard({
   meterContext: { dungeonId: string; difficultyId: number }
 }) {
   const digimonChartRows = maxDigimonChartRows(digimonDistribution)
+  const [partySetupFilter, setPartySetupFilter] = useState<MeterPartySetupFilter>('non-standard')
+  const [digimonRoleMap, setDigimonRoleMap] = useState<Map<string, string> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchDigimonRoleMap()
+      .then((map) => {
+        if (!cancelled) setDigimonRoleMap(map)
+      })
+      .catch(() => {
+        if (!cancelled) setDigimonRoleMap(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="meter-lb-preview-board">
@@ -555,10 +575,33 @@ export function MeterLeaderboardPreviewBoard({
 
         <section className="meter-lb-preview-section">
           <div className="meter-lb-preview-section-head">
-            <h3 className="meter-lb-preview-section-title">Tamer rankings</h3>
-            <p className="meter-lb-preview-section-note meter-parses-muted">
-              Best parse per tamer · top {VISIBLE_TAMERS} per role
-            </p>
+            <div>
+              <h3 className="meter-lb-preview-section-title">Tamer rankings</h3>
+              <p className="meter-lb-preview-section-note meter-parses-muted">
+                Best parse per tamer · top {VISIBLE_TAMERS} per role
+                {partySetupFilter === 'standard'
+                  ? ' · 1 tank, 1 healer parties'
+                  : ' · other party compositions'}
+              </p>
+            </div>
+            <div className="meter-lb-preview-kind-toggle" role="group" aria-label="Party setup">
+              <button
+                type="button"
+                className={`meter-lb-preview-kind-btn${partySetupFilter === 'standard' ? ' meter-lb-preview-kind-btn--active' : ''}`}
+                aria-pressed={partySetupFilter === 'standard'}
+                onClick={() => setPartySetupFilter('standard')}
+              >
+                Standard
+              </button>
+              <button
+                type="button"
+                className={`meter-lb-preview-kind-btn${partySetupFilter === 'non-standard' ? ' meter-lb-preview-kind-btn--active' : ''}`}
+                aria-pressed={partySetupFilter === 'non-standard'}
+                onClick={() => setPartySetupFilter('non-standard')}
+              >
+                Non Standard
+              </button>
+            </div>
           </div>
           <div className="meter-lb-preview-role-grid">
             {METER_ROLE_BUCKETS.map((bucket) => (
@@ -569,6 +612,8 @@ export function MeterLeaderboardPreviewBoard({
                 poolDps={stats.sortedDpsByBucket[bucket]}
                 partyMates={partyMates[bucket]}
                 meterContext={meterContext}
+                partySetupFilter={partySetupFilter}
+                digimonRoleMap={digimonRoleMap}
               />
             ))}
           </div>
@@ -609,15 +654,29 @@ function RoleTamerCard({
   poolDps,
   partyMates,
   meterContext,
+  partySetupFilter,
+  digimonRoleMap,
 }: {
   bucket: MeterRoleBucket
   entries: PlayerRankEntry[]
   poolDps: number[]
   partyMates: Record<string, PlayerPartySnapshot>
   meterContext: { dungeonId: string; difficultyId: number }
+  partySetupFilter: MeterPartySetupFilter
+  digimonRoleMap: Map<string, string> | null
 }) {
   const accent = ROLE_ACCENT[bucket]
-  const visible = entries.slice(0, VISIBLE_TAMERS)
+  const filteredEntries = filterTamerEntriesByPartySetup(
+    entries,
+    bucket,
+    partyMates,
+    partySetupFilter,
+    digimonRoleMap,
+  )
+  const filteredPoolDps = digimonRoleMap?.size
+    ? filteredEntries.map((entry) => entry.dps).sort((a, b) => a - b)
+    : poolDps
+  const visible = filteredEntries.slice(0, VISIBLE_TAMERS)
 
   return (
     <article
@@ -641,7 +700,7 @@ function RoleTamerCard({
           </div>
           <ol className="meter-lb-preview-tamer-list meter-scroll--themed">
           {visible.map((e, i) => {
-            const pct = dpsToPercentile(e.dps, poolDps)
+            const pct = dpsToPercentile(e.dps, filteredPoolDps)
             const color = parseScoreColor(pct)
             const portrait = portraitForPlayer(e)
             const party = partyMates[e.playerKey] ?? { mates: [], durationSec: null }
