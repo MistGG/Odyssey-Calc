@@ -125,7 +125,7 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
   }, [precomputedStats, participationPool, rows, digimonRoleById, dungeonId, difficultyId])
 
   const leaderboardPrizeLabel = `${MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns + ${MAY_CLEAR_EVENT.prizeShopPointsPerRole} shop pts`
-  const participationPrizeLabel = `${MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns`
+  const participationPrizeLabel = `${MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns + ${MAY_CLEAR_EVENT.participationShopPointsAll} shop pts`
 
   return (
     <section
@@ -171,8 +171,8 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
               </>
             ) : (
               <>
-                Best parse per tamer in each role on <strong>{dungeonName}</strong>. Hold #1 through
-                the cutoff to claim the crown prize.
+                Become the best tamer in your role for <strong>{dungeonName}</strong> to claim{' '}
+                <strong>{MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns</strong>!
               </>
             )}
           </p>
@@ -222,7 +222,8 @@ export function MayClearEventLeaderboards({ dungeon }: { dungeon: MayClearEventD
                   Participation draw winners
                 </h3>
                 <p className="event-results-block__lead muted">
-                  One random eligible player per role from all valid event uploads.
+                  One random eligible player per role wins crowns and shop points. Role champions are
+                  excluded from their role&apos;s draw.
                 </p>
                 <div className="event-winners-grid" role="list">
                   {METER_ROLE_BUCKETS.map((role) => (

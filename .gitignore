@@ -23,6 +23,7 @@ scripts/*
 !scripts/lib/
 !scripts/generate-guidebook-share.mjs
 !scripts/generate-event-share.mjs
+!scripts/generate-event-discord-teaser.mjs
 !scripts/backfill-meter-leaderboard.mjs
 !scripts/backfill-meter-leaderboard-parses.mjs
 !scripts/backfill-meter-leaderboard-entries.mjs

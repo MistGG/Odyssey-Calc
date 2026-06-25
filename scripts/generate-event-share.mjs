@@ -20,6 +20,11 @@ const SITE_ORIGIN = (process.env.VITE_SITE_ORIGIN || 'https://odyssey-calc.com')
 const SITE_BASE = `${SITE_ORIGIN}${BASE_PATH.startsWith('/') ? BASE_PATH : `/${BASE_PATH}`}`
 
 const OG = { width: 1200, height: 630 }
+const DISCORD_TEASER_OG = { width: 1200, height: 675 }
+
+function ogImageUrl(event) {
+  return `${SITE_BASE}share/event/${event.id}/discord-teaser.png`
+}
 
 /** @type {Array<{
  *   id: string
@@ -37,26 +42,26 @@ const EVENTS = [
     id: 'may-clear',
     ogSlug: 'event-may-clear',
     eventTitle: 'Dungeon Clear Challenge',
-    eventDateLabel: 'Date TBD',
-    eventEndUtcLabel: 'TBD',
+    eventDateLabel: 'June 26 – July 3, 2026',
+    eventEndUtcLabel: 'July 4, 2026 00:00 UTC',
     difficultyLabel: 'Hard',
-    prizeCrownsPerRole: 200,
+    prizeCrownsPerRole: 500,
     prizeShopPointsPerRole: 100,
-    participationPrizeCrownsPerRole: 50,
+    participationPrizeCrownsPerRole: 250,
     participationShopPointsAll: 25,
     dungeonAnnounced: true,
     dungeonName: 'Dragon Dimension',
     difficultyId: 3,
     roles: [
-      { label: 'Melee', prize: 200 },
-      { label: 'Ranged', prize: 200 },
-      { label: 'Caster', prize: 200 },
-      { label: 'Hybrid', prize: 200 },
-      { label: 'Tank', prize: 200 },
-      { label: 'Healer', prize: 200 },
+      { label: 'Melee', prize: 500 },
+      { label: 'Ranged', prize: 500 },
+      { label: 'Caster', prize: 500 },
+      { label: 'Hybrid', prize: 500 },
+      { label: 'Tank', prize: 500 },
+      { label: 'Healer', prize: 500 },
     ],
     description:
-      'Dragon Dimension Hard clear challenge — dates TBD (event delayed). Hard not live in-game yet. 200 crowns + 100 shop points per role winner, random 50-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
+      'Dragon Dimension Hard clear challenge — June 26 through July 3, 2026 UTC. Uploads before June 26 00:00 UTC do not count. 500 crowns + 100 shop points per role winner, random 250-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]
@@ -88,7 +93,9 @@ function participationCrownsTotal(event) {
 
 function shareHtml(event) {
   const shareUrl = `${SITE_BASE}share/event/${event.id}/`
-  const ogImage = `${SITE_BASE}og/${event.ogSlug}.png`
+  const ogImage = ogImageUrl(event)
+  const ogWidth = DISCORD_TEASER_OG.width
+  const ogHeight = DISCORD_TEASER_OG.height
   const appLink = appUrl(event)
   const total = totalCrowns(event)
 
@@ -112,8 +119,8 @@ function shareHtml(event) {
   <meta property="og:description" content="${escapeHtml(event.description)}" />
   <meta property="og:url" content="${shareUrl}" />
   <meta property="og:image" content="${ogImage}" />
-  <meta property="og:image:width" content="${OG.width}" />
-  <meta property="og:image:height" content="${OG.height}" />
+  <meta property="og:image:width" content="${ogWidth}" />
+  <meta property="og:image:height" content="${ogHeight}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(event.eventTitle)} - Odyssey Calc" />
   <meta name="twitter:description" content="${escapeHtml(event.description)}" />
@@ -161,7 +168,7 @@ function shareHtml(event) {
       event.participationPrizeCrownsPerRole
         ? `<section class="how" aria-labelledby="participation-heading">
       <h2 id="participation-heading">Participation rewards</h2>
-      <p class="lead">Random draw: one winner per role for <strong>${event.participationPrizeCrownsPerRole} crowns</strong> each (<strong>${participationCrownsTotal(event).toLocaleString()} crowns</strong> total). Everyone with at least one eligible upload earns <strong>${event.participationShopPointsAll ?? 0} meter shop points</strong>.</p>
+      <p class="lead">Random draw: one winner per role for <strong>${event.participationPrizeCrownsPerRole} crowns</strong> each (<strong>${participationCrownsTotal(event).toLocaleString()} crowns</strong> total). Role champions are not eligible for their role&apos;s draw. Everyone with at least one eligible upload earns <strong>${event.participationShopPointsAll ?? 0} meter shop points</strong>.</p>
     </section>`
         : ''
     }
@@ -173,7 +180,7 @@ function shareHtml(event) {
         <li>Top Best DPS per role on the leaderboard wins crowns and meter shop points.</li>
         ${
           event.participationPrizeCrownsPerRole
-            ? `<li>Random participation draw: <strong>${event.participationPrizeCrownsPerRole} crowns</strong> per role; <strong>${event.participationShopPointsAll ?? 0} shop points</strong> for every eligible participant.</li>`
+            ? `<li>Random participation draw: <strong>${event.participationPrizeCrownsPerRole} crowns</strong> per role (role champions excluded); <strong>${event.participationShopPointsAll ?? 0} shop points</strong> for every eligible participant.</li>`
             : ''
         }
       </ol>

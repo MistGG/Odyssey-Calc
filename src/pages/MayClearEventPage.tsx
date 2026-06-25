@@ -181,11 +181,11 @@ export function MayClearEventPage() {
               Participation raffle
             </h2>
             <p className="event-section-lead muted">
-              One random winner per role from all valid uploads:{' '}
-              <strong>{MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns</strong> each (
-              <strong>{MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS.toLocaleString()} crowns</strong> total).
-              Everyone with a valid parse gets{' '}
-              <strong>{MAY_CLEAR_EVENT.participationShopPointsAll} shop points</strong>.
+              One random winner per role wins{' '}
+              <strong>{MAY_CLEAR_EVENT.participationPrizeCrownsPerRole} crowns + {MAY_CLEAR_EVENT.participationShopPointsAll} shop points</strong>{' '}
+              each (
+              <strong>{MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS.toLocaleString()} crowns</strong> total in
+              the draw).
             </p>
             <ul className="event-prize-grid event-prize-grid--compact">
               {MAY_CLEAR_PARTICIPATION_ROLES.map((role) => (
@@ -196,6 +196,7 @@ export function MayClearEventPage() {
                   <span className="event-prize-card__role">{role.label}</span>
                   <span className="event-prize-card__amount">{role.prizeCrowns}</span>
                   <span className="event-prize-card__unit">crowns</span>
+                  <span className="event-prize-card__bonus">+ {role.prizeShopPoints} shop pts</span>
                 </li>
               ))}
             </ul>
@@ -237,9 +238,6 @@ export function MayClearEventPage() {
               #1 in each role takes <strong>{MAY_CLEAR_EVENT.prizeCrownsPerRole} crowns</strong> +{' '}
               <strong>{MAY_CLEAR_EVENT.prizeShopPointsPerRole} shop points</strong>.
             </li>
-            <li>
-              The raffle runs separately. Placement doesn&apos;t affect your draw odds within a role.
-            </li>
           </ol>
         </section>
 
@@ -250,6 +248,14 @@ export function MayClearEventPage() {
           <ul className="event-notes muted">
             <li>Community-run via Odyssey Calc, not an official game page.</li>
             <li>Valid dungeon party parses only; broken sessions may be excluded.</li>
+            <li>Role Champions are not eligible for the lucky draw.</li>
+            {scheduleAnnounced ? (
+              <li>
+                Only uploads from <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong> count (opens{' '}
+                <strong>June 26, 2026 00:00 UTC</strong>; closes{' '}
+                <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>).
+              </li>
+            ) : null}
             {!leaderboardsLive ? (
               <>
                 <li>

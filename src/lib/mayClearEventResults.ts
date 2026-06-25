@@ -22,6 +22,37 @@ import type { PlayerRankEntry } from './meterPublicStats'
 
 const PARTICIPATION_DRAW_SEED = 'may-clear-2026-participation'
 
+function normalizePlayerKeyString(key: string | null | undefined): string {
+  return (key ?? '').trim().toLowerCase()
+}
+
+function samePlayerKey(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = normalizePlayerKeyString(a)
+  const right = normalizePlayerKeyString(b)
+  return left.length > 0 && left === right
+}
+
+function pickParticipationWinnersFromPools(
+  pools: Record<MeterRoleBucket, PlayerRankEntry[]>,
+  leaderboardWinners: Record<MeterRoleBucket, PlayerRankEntry | null>,
+  dungeonId: string,
+  difficultyId?: number,
+): Record<MeterRoleBucket, PlayerRankEntry | null> {
+  const winners = {} as Record<MeterRoleBucket, PlayerRankEntry | null>
+  for (const bucket of METER_ROLE_BUCKETS) {
+    const championKey = leaderboardWinners[bucket]?.playerKey
+    const pool = pools[bucket].filter((entry) => !samePlayerKey(entry.playerKey, championKey))
+    if (pool.length === 0) {
+      winners[bucket] = null
+      continue
+    }
+    const seedSuffix = difficultyId == null ? bucket : `${difficultyId}:${bucket}`
+    const idx = deterministicIndex(`${PARTICIPATION_DRAW_SEED}:${dungeonId}:${seedSuffix}`, pool.length)
+    winners[bucket] = pool[idx]!
+  }
+  return winners
+}
+
 function eventWindowMs(): { start: number; end: number } | null {
   const window = mayClearEventWindow()
   if (!window) return null
@@ -63,6 +94,7 @@ export function pickMayClearParticipationWinners(
   digimonRoleById: Map<string, string>,
   dungeonId: string,
   difficultyId: number,
+  leaderboardWinners: Record<MeterRoleBucket, PlayerRankEntry | null>,
 ): Record<MeterRoleBucket, PlayerRankEntry | null> {
   const pools = Object.fromEntries(METER_ROLE_BUCKETS.map((b) => [b, new Map<string, PlayerRankEntry>()])) as Record<
     MeterRoleBucket,
@@ -96,17 +128,11 @@ export function pickMayClearParticipationWinners(
     }
   }
 
-  const winners = {} as Record<MeterRoleBucket, PlayerRankEntry | null>
-  for (const bucket of METER_ROLE_BUCKETS) {
-    const pool = [...pools[bucket].values()]
-    if (pool.length === 0) {
-      winners[bucket] = null
-      continue
-    }
-    const idx = deterministicIndex(`${PARTICIPATION_DRAW_SEED}:${dungeonId}:${bucket}`, pool.length)
-    winners[bucket] = pool[idx]!
-  }
-  return winners
+  const poolLists = Object.fromEntries(
+    METER_ROLE_BUCKETS.map((bucket) => [bucket, [...pools[bucket].values()]]),
+  ) as Record<MeterRoleBucket, PlayerRankEntry[]>
+
+  return pickParticipationWinnersFromPools(poolLists, leaderboardWinners, dungeonId, difficultyId)
 }
 
 /** One random eligible player per role from precomputed leaderboard entries. */
@@ -114,6 +140,7 @@ export function pickMayClearParticipationWinnersFromEntries(
   entries: ParticipationPoolEntry[],
   dungeonId: string,
   difficultyId: number,
+  leaderboardWinners: Record<MeterRoleBucket, PlayerRankEntry | null>,
 ): Record<MeterRoleBucket, PlayerRankEntry | null> {
   const pools = Object.fromEntries(METER_ROLE_BUCKETS.map((b) => [b, new Map<string, PlayerRankEntry>()])) as Record<
     MeterRoleBucket,
@@ -128,20 +155,11 @@ export function pickMayClearParticipationWinnersFromEntries(
     }
   }
 
-  const winners = {} as Record<MeterRoleBucket, PlayerRankEntry | null>
-  for (const bucket of METER_ROLE_BUCKETS) {
-    const pool = [...pools[bucket].values()]
-    if (pool.length === 0) {
-      winners[bucket] = null
-      continue
-    }
-    const idx = deterministicIndex(
-      `${PARTICIPATION_DRAW_SEED}:${dungeonId}:${difficultyId}:${bucket}`,
-      pool.length,
-    )
-    winners[bucket] = pool[idx]!
-  }
-  return winners
+  const poolLists = Object.fromEntries(
+    METER_ROLE_BUCKETS.map((bucket) => [bucket, [...pools[bucket].values()]]),
+  ) as Record<MeterRoleBucket, PlayerRankEntry[]>
+
+  return pickParticipationWinnersFromPools(poolLists, leaderboardWinners, dungeonId, difficultyId)
 }
 
 export function buildMayClearEventResultsFromPrecomputed(
@@ -157,6 +175,7 @@ export function buildMayClearEventResultsFromPrecomputed(
     participationEntries,
     dungeonId,
     difficultyId,
+    leaderboardWinners,
   )
   return { stats, eventRows: [] as PublicMeterParseRow[], leaderboardWinners, participationWinners }
 }
@@ -177,6 +196,7 @@ export function buildMayClearEventResults(
     digimonRoleById,
     dungeonId,
     difficultyId,
+    leaderboardWinners,
   )
   return { stats, eventRows, leaderboardWinners, participationWinners }
 }

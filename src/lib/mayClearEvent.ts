@@ -11,30 +11,30 @@ export const MAY_CLEAR_EVENT = {
   /** Shown in hero eyebrow / theme chrome. */
   eventThemeLabel: 'Dragon Emperor · Examon',
   /** False while dates are not finalized (event cannot end automatically). */
-  scheduleAnnounced: false,
-  eventDateLabel: 'TBD',
+  scheduleAnnounced: true,
+  eventDateLabel: 'June 26, 2026',
   /** Display label for the full upload window (start through cutoff). */
-  eventWindowLabel: 'Date TBD',
+  eventWindowLabel: 'June 26 – July 3, 2026 UTC',
   /** UTC calendar day the upload window opens (YYYY-MM-DD), or null while TBD. */
-  eventDateIso: null as string | null,
-  /** Hard cutoff for uploads (ISO instant), or null while TBD. */
-  eventDateEndIso: null as string | null,
-  eventEndUtcLabel: 'TBD',
+  eventDateIso: '2026-06-26',
+  /** Hard cutoff for uploads (ISO instant, exclusive), or null while TBD. */
+  eventDateEndIso: '2026-07-04T00:00:00.000Z',
+  eventEndUtcLabel: 'July 4, 2026 00:00 UTC',
   difficultyLabel: 'Hard',
   /** Wiki `difficulty_id` for meter leaderboards (3 = Hard). */
   difficultyId: 3,
   /** Show the selected dungeon on the event page. */
   dungeonAnnounced: true,
-  /** Live leaderboards off until Hard is live in-game. Dev / preview URL can still show them. */
-  leaderboardsLive: false,
+  /** Live leaderboards for the announced upload window. */
+  leaderboardsLive: true,
   dungeonName: 'Dragon Dimension',
   /** Fallback wiki id when the list is unavailable or the name changes. */
   dungeonId: 'uc4j5ut',
-  prizeCrownsPerRole: 200,
+  prizeCrownsPerRole: 500,
   /** Meter theme shop points for each role winner (#1 Best DPS). */
   prizeShopPointsPerRole: 100,
   /** Random participation draw: one winner per role (eligible uploads in that bucket). */
-  participationPrizeCrownsPerRole: 50,
+  participationPrizeCrownsPerRole: 250,
   /** Meter shop points for every player with at least one eligible event upload. */
   participationShopPointsAll: 25,
 } as const
@@ -111,7 +111,7 @@ export function resolveMayClearEventDungeon(
 }
 
 export const EVENT_DELAY_NOTICE =
-  'Event delayed. New dates coming soon. Dragon Dimension Hard is not live in-game yet. Live leaderboards and ranked uploads open once Hard is available and the schedule is announced.'
+  'Event schedule is announced. Uploads outside the posted UTC window do not count toward prizes.'
 
 export const EVENT_ANNOUNCEMENT_NOTE = MAY_CLEAR_EVENT.leaderboardsLive
   ? 'Live leaderboards update from valid Hard party uploads.'
@@ -157,6 +157,7 @@ export const MAY_CLEAR_PARTICIPATION_ROLES = METER_ROLE_BUCKETS.map((id) => ({
   id,
   label: METER_ROLE_BUCKET_LABELS[id],
   prizeCrowns: MAY_CLEAR_EVENT.participationPrizeCrownsPerRole,
+  prizeShopPoints: MAY_CLEAR_EVENT.participationShopPointsAll,
 }))
 
 export const MAY_CLEAR_PARTICIPATION_TOTAL_CROWNS =
