@@ -109,6 +109,7 @@ import {
   type TierListUpdateSummary,
   type TierListUpdateSummaryTabKey,
 } from './tierList/tierListModel'
+import { wikiHttpCacheClear } from '../lib/wikiHttpCache'
 
 /** After this many ms on one Digimon, append a reassurance line (heavy DPS sims can block the UI). */
 const TIER_UPDATE_SLOW_HINT_MS = 5_000
@@ -507,6 +508,8 @@ export function TierListPage() {
   /** Full index refresh + detail fetch for every Digimon (API index signatures are too coarse for reliable diffs). */
   async function updateTierList() {
     if (!cache || building || initializing) return
+    const wikiRefresh = { wikiRefresh: true as const }
+    wikiHttpCacheClear()
     clearTierFightDurationResimCacheStorage()
     fightResimCacheRef.current = null
     /**
@@ -557,7 +560,7 @@ export function TierListPage() {
           // Non-fatal: fall back to auto planner if Supabase fetch fails
         }
       }
-      const { all, meta, signatures } = await fetchAllDigimonIndex()
+      const { all, meta, signatures } = await fetchAllDigimonIndex(wikiRefresh)
       setListMeta(meta)
 
       const latestIds = new Set(all.map((d) => d.id))
@@ -644,7 +647,7 @@ export function TierListPage() {
 
         try {
           try {
-            const detail = await fetchDigimonDetail(id)
+            const detail = await fetchDigimonDetail(id, wikiRefresh)
           const prevApiSnapshot = working.entries[id]?.apiSnapshot
           const nextApiSnapshot = buildTierApiSnapshot(detail)
           const levels = levelMapForSkills(detail.skills)

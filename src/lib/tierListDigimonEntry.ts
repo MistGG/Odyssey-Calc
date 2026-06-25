@@ -260,7 +260,7 @@ export async function refreshTierListDigimonInCache(
   const cache = loadTierListCache()
   if (!cache?.entries[digimonId]) return { status: 'no-cache' }
   try {
-    const detail = await fetchDigimonDetail(digimonId)
+    const detail = await fetchDigimonDetail(digimonId, { wikiRefresh: true })
     const approved = await fetchApprovedRotations(supabase)
     const communityRotation = approved.get(digimonId) ?? null
     cache.entries[digimonId] = buildSustainedDpsEntryForDigimon(detail, communityRotation)

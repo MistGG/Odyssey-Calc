@@ -1,4 +1,4 @@
-import { fetchDigimonPage } from '../../api/digimonService'
+import { fetchDigimonPage, type WikiFetchOptions } from '../../api/digimonService'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
 import {
@@ -648,11 +648,11 @@ function listSignature(d: WikiDigimonListItem) {
   ].join('|')
 }
 
-export async function fetchAllDigimonIndex() {
-  const first = await fetchDigimonPage(0, 500)
+export async function fetchAllDigimonIndex(options?: WikiFetchOptions) {
+  const first = await fetchDigimonPage(0, 500, undefined, undefined, options)
   const all = [...first.data]
   for (let p = 2; p <= Math.max(1, first.total_pages || 1); p += 1) {
-    const next = await fetchDigimonPage(p - 1, 500)
+    const next = await fetchDigimonPage(p - 1, 500, undefined, undefined, options)
     all.push(...next.data)
   }
   const meta: Record<string, WikiDigimonListItem> = {}

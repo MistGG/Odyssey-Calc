@@ -1,6 +1,6 @@
 import { WIKI_API_BASE } from '../config/env'
 import type { WikiDigimonDetail, WikiDigimonListResponse } from '../types/wikiApi'
-import { fetchJson } from './http'
+import { fetchJson, type FetchJsonOptions } from './http'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
 
@@ -53,18 +53,22 @@ export function wikiDigimonDetailUrl(id: string) {
   return u.toString()
 }
 
+export type WikiFetchOptions = Pick<FetchJsonOptions, 'wikiRefresh'>
+
 export async function fetchDigimonPage(
   pageZeroBased: number,
   perPage: number,
   searchQuery?: string,
   filters?: DigimonFilters,
+  options?: WikiFetchOptions,
 ) {
   const page = pageZeroBased + 1
   return fetchJson<WikiDigimonListResponse>(
     wikiDigimonListUrl(page, perPage, searchQuery, filters),
+    options,
   )
 }
 
-export async function fetchDigimonDetail(id: string) {
-  return fetchJson<WikiDigimonDetail>(wikiDigimonDetailUrl(id))
+export async function fetchDigimonDetail(id: string, options?: WikiFetchOptions) {
+  return fetchJson<WikiDigimonDetail>(wikiDigimonDetailUrl(id), options)
 }

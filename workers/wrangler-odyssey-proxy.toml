@@ -1,0 +1,7 @@
+name = "odyssey-proxy"
+main = "odyssey-proxy.js"
+compatibility_date = "2024-06-01"
+
+# Attach route in Cloudflare dashboard if not already:
+#   odyssey-proxy.qawsar-ahmed.workers.dev/*
+# Or custom domain path /proxy/*

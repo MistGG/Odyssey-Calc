@@ -6,6 +6,13 @@ export type FetchJsonError = Error & {
   url?: string
 }
 
+export type FetchJsonOptions = RequestInit & {
+  /** Bypass odyssey-proxy edge cache and fetch fresh wiki JSON (tier rebuilds). */
+  wikiRefresh?: boolean
+}
+
+const WIKI_REFRESH_HEADER = 'X-Odyssey-Wiki-Refresh'
+
 function shouldUseStaleWikiCache(e: unknown): boolean {
   if (e instanceof TypeError) return true
   if (!e || typeof e !== 'object') return false
@@ -50,13 +57,24 @@ async function fetchJsonOnce<T>(url: string, init?: RequestInit): Promise<T> {
  * GET JSON with optional localStorage cache: successful responses are stored; on rate limits
  * or transient failures we return the last successful body when available.
  */
-export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const method = (init?.method ?? 'GET').toUpperCase()
+export async function fetchJson<T>(url: string, init?: FetchJsonOptions): Promise<T> {
+  const { wikiRefresh, ...fetchInit } = init ?? {}
+  const method = (fetchInit.method ?? 'GET').toUpperCase()
   if (method !== 'GET') {
-    return fetchJsonOnce<T>(url, init)
+    return fetchJsonOnce<T>(url, fetchInit)
   }
 
-  const run = () => fetchJsonOnce<T>(url, init)
+  const headers = new Headers(fetchInit.headers ?? undefined)
+  if (wikiRefresh && isWikiGet(url, method)) {
+    headers.set(WIKI_REFRESH_HEADER, '1')
+  }
+
+  const requestInit: RequestInit = {
+    ...fetchInit,
+    headers,
+  }
+
+  const run = () => fetchJsonOnce<T>(url, requestInit)
 
   try {
     const data = isWikiGet(url, method)

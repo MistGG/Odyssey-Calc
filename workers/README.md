@@ -35,3 +35,14 @@ Share HTML redirects to the app at `https://odyssey-calc.com/#/meter/player/...`
 ## Optional: merge into `odyssey-proxy`
 
 You can paste `meter-share-proxy.js` `fetch` logic into your existing worker instead of a separate deployment; attach `share.odyssey-calc.com` to that worker’s custom domains.
+
+## Wiki API proxy (`odyssey-proxy`)
+
+`odyssey-proxy.js` caches wiki GET responses at the edge (12h) so all visitors share one copy per URL. Tier list rebuilds send `X-Odyssey-Wiki-Refresh: 1` to bypass cache and pull fresh wiki data.
+
+```bash
+cd workers
+npx wrangler deploy -c wrangler-odyssey-proxy.toml
+```
+
+Response header `X-Odyssey-Cache` is `HIT`, `MISS`, or `REFRESH` for debugging.
