@@ -63,7 +63,7 @@ export type DpsRotationCategoryKey = 'sustained' | 'burst'
 export type AoeTierCategoryScores = {
   /** Hardest-hitting damaging AoE: per-cast damage at tier-list skill level. */
   damage: number
-  /** Main damaging AoE: cast_time ÷ period (0–1); display as % cycle in cast. */
+  /** Main damaging AoE: cast-time share of an 8s mob spawn window (0–1); display as %. */
   cooldown: number
   /** Arbitrary farming rank heuristic (bucketed composite). */
   farming: number
@@ -269,12 +269,12 @@ export const AOE_TIER_CATEGORY_ORDER: readonly AoeTierCategoryKey[] = [
 
 export const AOE_TIER_MATRIX_COLUMN_LABELS: Record<AoeTierCategoryKey, string> = {
   damage: 'Damage',
-  cooldown: 'Uptime',
+  cooldown: 'Uptime (for mob spawns)',
   farming: 'Farming',
   radius: 'Radius',
 }
 
-/** Human-readable AoE matrix cell (per-cast damage, cast-uptime %, farming score, radius). */
+/** Human-readable AoE matrix cell (per-cast damage, spawn-window uptime %, farming score, radius). */
 export function formatAoeTierMatrixCell(key: AoeTierCategoryKey, v: number): string {
   if (!Number.isFinite(v)) return '…'
   switch (key) {

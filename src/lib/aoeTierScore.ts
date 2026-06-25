@@ -66,6 +66,21 @@ function farmRespawnPriority(periodSec: number): number {
   return 0.8 * Math.exp(-(periodSec - 10) / 4)
 }
 
+/**
+ * Cast-time uptime within one mob spawn window ({@link FARM_MONSTER_RESPAWN_SEC}s), clamped to `[0, 1]`.
+ * Fast cycles count whole casts that fit in the window; slower cycles use a single cast vs spawn time.
+ */
+export function aoeSpawnWindowUptime(castTimeSec: number, periodSec: number): number {
+  const spawn = FARM_MONSTER_RESPAWN_SEC
+  const period = Math.max(0.5, periodSec)
+  const cast = Math.max(0, castTimeSec)
+  if (period <= spawn) {
+    const casts = Math.floor(spawn / period)
+    return Math.min(1, (casts * cast) / spawn)
+  }
+  return Math.min(1, cast / spawn)
+}
+
 type MainAoePick = {
   dmgPerCast: number
   periodSec: number
@@ -106,7 +121,7 @@ function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick |
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: per-cast damage of the **hardest-hitting** damaging AoE (tie-break higher `damage ÷ (cast + cooldown)`).
- * - **Cooldown** (display): **cast-time uptime** for that same skill — `cast_time ÷ (cast + cooldown)` (display as % of cycle).
+ * - **Cooldown** (display): **cast-time uptime** for that same skill within an 8s mob spawn window (display as %; capped at 100%).
  * - **Farming**: arbitrary composite rank (cooldown-only buckets + blend; legacy if no damage AoE).
  * - **Radius**: wiki `radius` of that same skill (no damaging AoE → 0; buff/heal radii ignored).
  */
@@ -172,7 +187,7 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
 
   if (main) {
     damage = main.dmgPerCast
-    cooldown = Math.min(1, Math.max(0, main.castTimeSec / main.periodSec))
+    cooldown = aoeSpawnWindowUptime(main.castTimeSec, main.periodSec)
     radius = main.radius
   }
 
