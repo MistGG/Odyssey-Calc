@@ -12,11 +12,13 @@ export const MAY_CLEAR_EVENT = {
   eventThemeLabel: 'Dragon Emperor · Examon',
   /** False while dates are not finalized (event cannot end automatically). */
   scheduleAnnounced: true,
-  eventDateLabel: 'June 26, 2026',
+  eventDateLabel: 'June 25, 2026',
   /** Display label for the full upload window (start through cutoff). */
-  eventWindowLabel: 'June 26 – July 3, 2026 UTC',
+  eventWindowLabel: 'June 25 – July 3, 2026 UTC',
   /** UTC calendar day the upload window opens (YYYY-MM-DD), or null while TBD. */
-  eventDateIso: '2026-06-26',
+  eventDateIso: '2026-06-25',
+  /** Upload window opens (ISO instant, inclusive). 8:30 AM America/Phoenix on event day. */
+  eventDateStartIso: '2026-06-25T15:30:00.000Z',
   /** Hard cutoff for uploads (ISO instant, exclusive), or null while TBD. */
   eventDateEndIso: '2026-07-04T00:00:00.000Z',
   eventEndUtcLabel: 'July 4, 2026 00:00 UTC',
@@ -52,7 +54,7 @@ export type MayClearEventWindow = {
 export function isMayClearEventScheduleAnnounced(): boolean {
   return (
     MAY_CLEAR_EVENT.scheduleAnnounced &&
-    Boolean(MAY_CLEAR_EVENT.eventDateIso?.trim()) &&
+    Boolean(MAY_CLEAR_EVENT.eventDateStartIso?.trim()) &&
     Boolean(MAY_CLEAR_EVENT.eventDateEndIso?.trim())
   )
 }
@@ -61,7 +63,7 @@ export function isMayClearEventScheduleAnnounced(): boolean {
 export function mayClearEventWindow(): MayClearEventWindow | null {
   if (!isMayClearEventScheduleAnnounced()) return null
   return {
-    windowStart: `${MAY_CLEAR_EVENT.eventDateIso}T00:00:00.000Z`,
+    windowStart: MAY_CLEAR_EVENT.eventDateStartIso!,
     windowEnd: MAY_CLEAR_EVENT.eventDateEndIso!,
   }
 }

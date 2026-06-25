@@ -42,7 +42,7 @@ const EVENTS = [
     id: 'exa-clear',
     ogSlug: 'event-may-clear',
     eventTitle: 'Dungeon Clear Challenge',
-    eventDateLabel: 'June 26 – July 3, 2026',
+    eventDateLabel: 'June 25 – July 3, 2026',
     eventEndUtcLabel: 'July 4, 2026 00:00 UTC',
     difficultyLabel: 'Hard',
     prizeCrownsPerRole: 500,
@@ -61,7 +61,7 @@ const EVENTS = [
       { label: 'Healer', prize: 500 },
     ],
     description:
-      'Dragon Dimension Hard clear challenge — June 26 through July 3, 2026 UTC. Uploads before June 26 00:00 UTC do not count. 500 crowns + 100 shop points per role winner, random 250-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
+      'Dragon Dimension Hard clear challenge — June 25 through July 3, 2026 UTC. Uploads before June 25 00:00 UTC do not count. 500 crowns + 100 shop points per role winner, random 250-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]

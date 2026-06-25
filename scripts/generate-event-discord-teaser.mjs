@@ -64,7 +64,7 @@ async function renderDigitalWorldBackdrop() {
 const EVENT = {
   dungeonName: 'Dragon Dimension',
   difficultyLabel: 'Hard',
-  eventWindowLabel: 'June 26 – July 3, 2026 UTC',
+  eventWindowLabel: 'June 25 – July 3, 2026 UTC',
   prizeCrownsPerRole: 500,
   participationPrizeCrownsPerRole: 250,
   participationShopPointsAll: 25,

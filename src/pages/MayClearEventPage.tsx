@@ -252,7 +252,7 @@ export function MayClearEventPage() {
             {scheduleAnnounced ? (
               <li>
                 Only uploads from <strong>{MAY_CLEAR_EVENT.eventWindowLabel}</strong> count (opens{' '}
-                <strong>June 26, 2026 00:00 UTC</strong>; closes{' '}
+                <strong>June 25, 2026 00:00 UTC</strong>; closes{' '}
                 <strong>{MAY_CLEAR_EVENT.eventEndUtcLabel}</strong>).
               </li>
             ) : null}
