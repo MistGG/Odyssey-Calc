@@ -61,7 +61,7 @@ const EVENTS = [
       { label: 'Healer', prize: 500 },
     ],
     description:
-      'Dragon Dimension Hard clear challenge — June 25 through July 3, 2026 UTC. Uploads before June 25 00:00 UTC do not count. 500 crowns + 100 shop points per role winner, random 250-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
+      'Dragon Dimension Hard clear challenge! June 25 through July 3, 2026 UTC. 500 crowns + 100 shop points per role winner, random 250-crown draw per role, 25 shop points for every eligible participant. Odyssey Calc Meter event.',
     appHash: '/#/event',
   },
 ]
