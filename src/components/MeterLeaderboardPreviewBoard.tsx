@@ -538,7 +538,7 @@ export function MeterLeaderboardPreviewBoard({
   meterContext: { dungeonId: string; difficultyId: number }
 }) {
   const digimonChartRows = digimonDistribution ? maxDigimonChartRows(digimonDistribution) : 1
-  const [partySetupFilter, setPartySetupFilter] = useState<MeterPartySetupFilter>('non-standard')
+  const [partySetupFilter, setPartySetupFilter] = useState<MeterPartySetupFilter>('standard')
   const [digimonRoleMap, setDigimonRoleMap] = useState<Map<string, string> | null>(null)
 
   useEffect(() => {

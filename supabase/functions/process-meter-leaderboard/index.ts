@@ -114,29 +114,6 @@ function wikiRoleToBucket(role: string | null | undefined): RoleBucket | null {
   return null
 }
 
-const DPS_ROLE_BUCKETS: RoleBucket[] = ['melee', 'ranged', 'caster', 'hybrid']
-
-function isDpsRoleBucket(bucket: RoleBucket | null | undefined): boolean {
-  return bucket != null && DPS_ROLE_BUCKETS.includes(bucket)
-}
-
-function memberHasDpsAndNonDpsDamage(
-  totals: Map<string, number>,
-  wikiCatalog: Map<string, RoleBucket | null>,
-): boolean {
-  let hasDps = false
-  let hasNonDps = false
-  for (const [id, damage] of totals) {
-    if (damage <= 0) continue
-    const bucket = wikiCatalog.get(id) ?? null
-    if (!bucket) continue
-    if (isDpsRoleBucket(bucket)) hasDps = true
-    else hasNonDps = true
-    if (hasDps && hasNonDps) return true
-  }
-  return false
-}
-
 function normalizePlayerKey(member: StoredMember): string {
   const raw = member.tamerName?.trim() || member.displayLabel?.trim() || ''
   return raw.toLowerCase()
@@ -287,10 +264,10 @@ function memberDps(
   return dur > 0 ? damage / dur : 0
 }
 
-/** Digimon with the highest damage this run (any role, including same-role end-of-run swaps). */
+/** Digimon with the highest damage this run (not end-of-run swap). */
 function memberPrimaryDigimon(
   member: StoredMember,
-  wikiCatalog?: Map<string, RoleBucket | null>,
+  _wikiCatalog?: Map<string, RoleBucket | null>,
 ) {
   reconcileJustimonMisattribution(member)
   const digimons = memberDigimons(member)
@@ -303,19 +280,6 @@ function memberPrimaryDigimon(
     totals.set(id, (totals.get(id) ?? 0) + damage)
     const prev = rowsById.get(id)
     if (!prev || damage > Math.max(0, Number(prev.totalDamage) || 0)) rowsById.set(id, dg)
-  }
-
-  if (wikiCatalog && memberHasDpsAndNonDpsDamage(totals, wikiCatalog)) {
-    let bestDpsId: string | null = null
-    let bestDpsDamage = -1
-    for (const [id, damage] of totals) {
-      if (!isDpsRoleBucket(wikiCatalog.get(id) ?? null)) continue
-      if (damage > bestDpsDamage) {
-        bestDpsDamage = damage
-        bestDpsId = id
-      }
-    }
-    if (bestDpsId) return rowsById.get(bestDpsId)
   }
 
   let bestId: string | null = null
@@ -342,9 +306,6 @@ function primaryDigimonDamage(
     totals.set(id, (totals.get(id) ?? 0) + Math.max(0, Number(dg.totalDamage) || 0))
   }
   if (totals.size <= 1) return memberDamageTotal(member)
-  if (wikiCatalog && memberHasDpsAndNonDpsDamage(totals, wikiCatalog)) {
-    return memberDamageTotal(member)
-  }
   const primary = memberPrimaryDigimon(member, wikiCatalog)
   if (!primary) return memberDamageTotal(member)
   const dmg = Math.max(0, totals.get(primary.digimonId?.trim() ?? '') ?? 0)
@@ -652,10 +613,13 @@ async function processParse(
     return { inserted: 0, skipped: 'partial dungeon clear' }
   }
 
-  let summary = row.leaderboard_summary
   const wikiCatalog = await loadWikiRoleCatalog()
+  let summary =
+    members.length > 0
+      ? await buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, wikiCatalog)
+      : row.leaderboard_summary
   if (!summary?.members?.length) {
-    summary = await buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, wikiCatalog)
+    summary = row.leaderboard_summary
   }
 
   if (!summary?.eligible) return { inserted: 0, skipped: 'not leaderboard eligible' }
@@ -706,7 +670,7 @@ async function processParse(
   for (const member of memberList) {
     if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
     const playerKey = normalizePlayerKey(member)
-    if (!playerKey || existingPlayerKeys.has(playerKey)) continue
+    if (!playerKey || (!force && existingPlayerKeys.has(playerKey))) continue
     const sm = summaryByKey.get(playerKey)
     const roleBucket = await resolveRoleBucket(member, sm, roleCache, wikiCatalog)
     if (!roleBucket) continue
@@ -780,10 +744,8 @@ async function processParse(
     members: (summary.members ?? []).map((sm) => {
       const key = (sm.playerKey ?? '').trim().toLowerCase()
       const member = memberList.find((m) => normalizePlayerKey(m) === key)
-      const digimonId =
-        sm.digimonId?.trim() ||
-        (member ? memberPrimaryDigimon(member, wikiCatalog)?.digimonId?.trim() : '') ||
-        ''
+      const primary = member ? memberPrimaryDigimon(member, wikiCatalog) : undefined
+      const digimonId = primary?.digimonId?.trim() || sm.digimonId?.trim() || ''
       const enriched = enrichedByPlayerKey.get(key)
       return {
         ...sm,
@@ -791,7 +753,7 @@ async function processParse(
         digimonName: enriched?.digimonName || sm.digimonName,
         iconId: enriched?.iconId ?? sm.iconId ?? null,
         portraitUrl: enriched?.portraitUrl || sm.portraitUrl,
-        roleBucket: sm.roleBucket ?? roleCache.get(digimonId) ?? wikiCatalog.get(digimonId) ?? null,
+        roleBucket: roleCache.get(digimonId) ?? wikiCatalog.get(digimonId) ?? sm.roleBucket ?? null,
       }
     }),
   }
