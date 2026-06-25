@@ -63,7 +63,7 @@ export type DpsRotationCategoryKey = 'sustained' | 'burst'
 export type AoeTierCategoryScores = {
   /** Hardest-hitting damaging AoE: per-cast damage at tier-list skill level. */
   damage: number
-  /** Main damaging AoE: cast-time share of an 8s mob spawn window (0–1); display as %. */
+  /** Main damaging AoE: cooldown fit within an 8s mob spawn window (0–1); display as %. */
   cooldown: number
   /** Arbitrary farming rank heuristic (bucketed composite). */
   farming: number

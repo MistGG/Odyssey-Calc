@@ -67,24 +67,19 @@ function farmRespawnPriority(periodSec: number): number {
 }
 
 /**
- * Cast-time uptime within one mob spawn window ({@link FARM_MONSTER_RESPAWN_SEC}s), clamped to `[0, 1]`.
- * Fast cycles count whole casts that fit in the window; slower cycles use a single cast vs spawn time.
+ * Cooldown fit within one mob spawn window ({@link FARM_MONSTER_RESPAWN_SEC}s), clamped to `[0, 1]`.
+ * Cast time is ignored — only whether the skill is off cooldown often enough for pack spawns.
  */
-export function aoeSpawnWindowUptime(castTimeSec: number, periodSec: number): number {
+export function aoeSpawnWindowUptime(cooldownSec: number): number {
   const spawn = FARM_MONSTER_RESPAWN_SEC
-  const period = Math.max(0.5, periodSec)
-  const cast = Math.max(0, castTimeSec)
-  if (period <= spawn) {
-    const casts = Math.floor(spawn / period)
-    return Math.min(1, (casts * cast) / spawn)
-  }
-  return Math.min(1, cast / spawn)
+  const cd = Math.max(0.5, cooldownSec)
+  return Math.min(1, spawn / cd)
 }
 
 type MainAoePick = {
   dmgPerCast: number
   periodSec: number
-  castTimeSec: number
+  cooldownSec: number
   radius: number
 }
 
@@ -109,7 +104,7 @@ function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick |
       best = {
         dmgPerCast: dmg,
         periodSec: period,
-        castTimeSec: Math.max(0, s.cast_time_sec),
+        cooldownSec: Math.max(0.5, s.cooldown_sec),
         radius,
       }
     }
@@ -121,7 +116,7 @@ function pickHardestHittingDamagingAoe(detail: WikiDigimonDetail): MainAoePick |
  * Heuristic AoE kit scores from AoE-tagged skills only (`radius` present).
  *
  * - **Damage**: per-cast damage of the **hardest-hitting** damaging AoE (tie-break higher `damage ÷ (cast + cooldown)`).
- * - **Cooldown** (display): **cast-time uptime** for that same skill within an 8s mob spawn window (display as %; capped at 100%).
+ * - **Cooldown** (display): **cooldown fit** for that same skill within an 8s mob spawn window (display as %; capped at 100%; cast time ignored).
  * - **Farming**: arbitrary composite rank (cooldown-only buckets + blend; legacy if no damage AoE).
  * - **Radius**: wiki `radius` of that same skill (no damaging AoE → 0; buff/heal radii ignored).
  */
@@ -187,7 +182,7 @@ export function computeDpsAoeCategoryScores(detail: WikiDigimonDetail): {
 
   if (main) {
     damage = main.dmgPerCast
-    cooldown = aoeSpawnWindowUptime(main.castTimeSec, main.periodSec)
+    cooldown = aoeSpawnWindowUptime(main.cooldownSec)
     radius = main.radius
   }
 
