@@ -227,7 +227,7 @@ function pickLeaderboardDigimon(
 /** Digimon used for leaderboard role + label (highest damage this run). */
 export function memberTopDigimonUsed(
   member: MeterPartyMemberStored,
-  digimonRoleById?: Map<string, string>,
+  _digimonRoleById?: Map<string, string>,
   partyMembers?: MeterPartyMemberStored[],
 ): {
   digimonId: string
