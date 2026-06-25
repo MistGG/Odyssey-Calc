@@ -39,7 +39,7 @@ function ogImageUrl(event) {
  * }>} */
 const EVENTS = [
   {
-    id: 'may-clear',
+    id: 'exa-clear',
     ogSlug: 'event-may-clear',
     eventTitle: 'Dungeon Clear Challenge',
     eventDateLabel: 'June 26 – July 3, 2026',

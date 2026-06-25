@@ -1,6 +1,6 @@
 import { resolveAppSiteOrigin } from '../config/site'
 
-export const MAY_CLEAR_EVENT_SHARE_ID = 'may-clear'
+export const MAY_CLEAR_EVENT_SHARE_ID = 'exa-clear'
 
 function siteBase(): string {
   const origin = resolveAppSiteOrigin().replace(/\/$/, '')

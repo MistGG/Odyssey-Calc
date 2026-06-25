@@ -164,7 +164,7 @@ function buildOverlaySvg() {
 
 async function main() {
   const artIn = path.join(root, 'public', 'event', 'examon-teaser.jpg')
-  const outDir = path.join(root, 'public', 'share', 'event', 'may-clear')
+  const outDir = path.join(root, 'public', 'share', 'event', 'exa-clear')
   const outPng = path.join(outDir, 'discord-teaser.png')
   await fs.mkdir(outDir, { recursive: true })
 
@@ -185,7 +185,7 @@ async function main() {
     .png()
     .toFile(outPng)
 
-  console.log(`wrote public/share/event/may-clear/discord-teaser.png`)
+  console.log(`wrote public/share/event/exa-clear/discord-teaser.png`)
 }
 
 main().catch((err) => {
