@@ -96,6 +96,24 @@ export type WikiItemRaidSource = {
   max: number
 }
 
+export type WikiItemListItem = {
+  id: string
+  name: string
+  description: string
+  type: number
+  type_name: string
+  sub_type: number
+  icon_id: string
+}
+
+export type WikiItemListResponse = {
+  data: WikiItemListItem[]
+  page: number
+  per_page: number
+  total: number
+  total_pages: number
+}
+
 export type WikiItemDetail = {
   id: string
   name: string
@@ -106,6 +124,21 @@ export type WikiItemDetail = {
   icon_id: string
   drop_sources?: WikiItemDropSource[]
   raid_sources?: WikiItemRaidSource[]
+}
+
+export type WikiQuestListItem = {
+  id: string
+  title_tab: string
+  title_text: string
+  type: string
+}
+
+export type WikiQuestListResponse = {
+  data: WikiQuestListItem[]
+  page: number
+  per_page: number
+  total: number
+  total_pages: number
 }
 
 export type WikiMonsterDrop = {

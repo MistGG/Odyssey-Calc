@@ -22,6 +22,9 @@ import { MayClearEventPage } from './pages/MayClearEventPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
 import { GuidebookPage } from './pages/GuidebookPage'
+import { CommunityGuidesPage } from './pages/CommunityGuidesPage'
+import { CommunityGuideDetailPage } from './pages/CommunityGuideDetailPage'
+import { CommunityGuideEditorPage } from './pages/CommunityGuideEditorPage'
 import { DungeonsPage } from './pages/DungeonsPage'
 import { PatchNotesPage } from './pages/PatchNotesPage'
 
@@ -32,6 +35,10 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<BrowsePage />} />
           <Route path="guidebook" element={<GuidebookPage />} />
+          <Route path="guides" element={<CommunityGuidesPage />} />
+          <Route path="guides/new" element={<CommunityGuideEditorPage />} />
+          <Route path="guides/edit/:id" element={<CommunityGuideEditorPage />} />
+          <Route path="guides/:slug" element={<CommunityGuideDetailPage />} />
           <Route path="patch-notes" element={<PatchNotesPage />} />
           <Route path="patch-notes/:slug" element={<PatchNotesPage />} />
           <Route path="dungeons" element={<DungeonsPage />} />

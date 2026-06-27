@@ -24,6 +24,34 @@ export function nonStoryDifficulties(dungeon: WikiDungeonListItem): string[] {
     .filter((d) => d.trim().toLowerCase() !== STORY)
 }
 
+const DIFFICULTY_SORT = ['story', 'normal', 'hard'] as const
+
+/** Story → Normal → Hard labels from a dungeon list row. */
+export function dungeonWikiDifficultyLabels(dungeon: WikiDungeonListItem): string[] {
+  const list = dungeon.difficulties ?? []
+  const seen = new Set<string>()
+  const labels: string[] = []
+  for (const raw of list) {
+    if (typeof raw !== 'string') continue
+    const label = raw.trim()
+    if (!label) continue
+    const key = label.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    labels.push(label)
+  }
+  return labels.sort((a, b) => {
+    const ai = DIFFICULTY_SORT.indexOf(a.toLowerCase() as (typeof DIFFICULTY_SORT)[number])
+    const bi = DIFFICULTY_SORT.indexOf(b.toLowerCase() as (typeof DIFFICULTY_SORT)[number])
+    return (ai >= 0 ? ai : DIFFICULTY_SORT.length) - (bi >= 0 ? bi : DIFFICULTY_SORT.length)
+  })
+}
+
+export function defaultDungeonWikiDifficulty(dungeon: WikiDungeonListItem): string {
+  const opts = dungeonWikiDifficultyLabels(dungeon)
+  return opts.find((d) => d.toLowerCase() === 'normal') ?? opts[0] ?? 'Normal'
+}
+
 export function dungeonSelectOptions(dungeons: WikiDungeonListItem[]) {
   return [...dungeons]
     .sort((a, b) => a.name.localeCompare(b.name))

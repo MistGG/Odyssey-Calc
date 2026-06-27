@@ -62,12 +62,23 @@ export function Layout() {
               Patch Notes
             </NavLink>
 
-            <NavLink
-              to="/guidebook"
-              className={({ isActive }) => navLinkClass(isActive, 'nav-link-guidebook')}
-            >
-              Guidebook
-            </NavLink>
+            <NavMenuGroup
+              triggerLabel="Guides"
+              menuLabel="Guides menu"
+              items={[
+                {
+                  to: '/guidebook',
+                  label: 'Guidebook',
+                  className: 'nav-link-guidebook',
+                  isActive: (p) => p === '/guidebook' || p.startsWith('/guidebook/'),
+                },
+                {
+                  to: '/guides',
+                  label: 'Community Guides',
+                  isActive: (p) => p === '/guides' || p.startsWith('/guides/'),
+                },
+              ]}
+            />
 
             <NavMenuGroup
               triggerLabel="Lab"

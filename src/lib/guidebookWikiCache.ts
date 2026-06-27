@@ -1,5 +1,5 @@
 import { fetchAllWikiDungeons, fetchWikiDungeonDetail, wikiDungeonDetailUrl } from '../api/dungeonService'
-import { fetchWikiItemDetail, wikiItemDetailUrl } from '../api/itemService'
+import { fetchWikiItemDetail, fetchWikiItemsPage, wikiItemDetailUrl, wikiItemsListUrl } from '../api/itemService'
 import { fetchWikiMonsterDetail, wikiMonsterDetailUrl } from '../api/monsterService'
 import {
   fetchDigimonDetail,
@@ -9,7 +9,13 @@ import {
   type DigimonFilters,
 } from '../api/digimonService'
 import { fetchWikiNpcDetail, wikiNpcDetailUrl } from '../api/npcService'
-import { fetchWikiQuestDetail, wikiQuestDetailUrl } from '../api/questService'
+import {
+  fetchAllWikiQuests,
+  fetchWikiQuestDetail,
+  fetchWikiQuestsPage,
+  wikiQuestDetailUrl,
+  wikiQuestsListUrl,
+} from '../api/questService'
 import { digimonPortraitUrl } from './digimonImage'
 import { wikiHttpCacheGet, wikiHttpCacheStoredAt } from './wikiHttpCache'
 
@@ -22,9 +28,12 @@ import type {
   WikiDungeonDetail,
   WikiDungeonListItem,
   WikiItemDetail,
+  WikiItemListResponse,
   WikiMonsterDetail,
   WikiNpcDetail,
   WikiQuestDetail,
+  WikiQuestListItem,
+  WikiQuestListResponse,
 } from '../types/wikiApi'
 
 const GUIDEBOOK_ENTITY_CACHE_KEY = 'odysseyCalc.guidebookWikiEntities.v1'
@@ -210,6 +219,26 @@ const itemDetailCache = createRevalidatingCache<WikiItemDetail>({
   urlForKey: (id) => wikiItemDetailUrl(id),
 })
 
+const itemSearchCache = createRevalidatingCache<WikiItemListResponse>({
+  entityKey: (key) => `itemSearch:${key}`,
+  urlForKey: (key) => {
+    const parsed = JSON.parse(key) as { page: number; perPage: number; search: string }
+    return wikiItemsListUrl(parsed.page + 1, parsed.perPage, parsed.search || undefined)
+  },
+})
+
+const questsCache = createRevalidatingCache<WikiQuestListItem[]>({
+  entityKey: (key) => `quests:${key}`,
+})
+
+const questSearchCache = createRevalidatingCache<WikiQuestListResponse>({
+  entityKey: (key) => `questSearch:${key}`,
+  urlForKey: (key) => {
+    const parsed = JSON.parse(key) as { page: number; perPage: number; search: string }
+    return wikiQuestsListUrl(parsed.page + 1, parsed.perPage, parsed.search || undefined)
+  },
+})
+
 const monsterDetailCache = createRevalidatingCache<WikiMonsterDetail>({
   entityKey: (id) => `monster:${id}`,
   urlForKey: (id) => wikiMonsterDetailUrl(id),
@@ -324,6 +353,40 @@ export function getGuidebookItemDetailCached(id: string): WikiItemDetail | null 
 
 export function loadGuidebookItemDetail(id: string): Promise<WikiItemDetail> {
   return itemDetailCache.load(id, () => fetchWikiItemDetail(id))
+}
+
+function itemSearchCacheKey(pageZeroBased: number, perPage: number, searchQuery: string) {
+  return JSON.stringify({ page: pageZeroBased, perPage, search: searchQuery.trim() })
+}
+
+export function loadGuidebookItemSearch(
+  searchQuery: string,
+  pageZeroBased = 0,
+  perPage = 50,
+): Promise<WikiItemListResponse> {
+  const key = itemSearchCacheKey(pageZeroBased, perPage, searchQuery)
+  return itemSearchCache.load(key, () => fetchWikiItemsPage(pageZeroBased, perPage, searchQuery))
+}
+
+export function getGuidebookQuestsCached(perPage = 500): WikiQuestListItem[] | null {
+  return questsCache.get(`all:${perPage}`) ?? null
+}
+
+export function loadGuidebookAllQuests(perPage = 500): Promise<WikiQuestListItem[]> {
+  return questsCache.load(`all:${perPage}`, () => fetchAllWikiQuests(perPage))
+}
+
+function questSearchCacheKey(pageZeroBased: number, perPage: number, searchQuery: string) {
+  return JSON.stringify({ page: pageZeroBased, perPage, search: searchQuery.trim() })
+}
+
+export function loadGuidebookQuestSearch(
+  searchQuery: string,
+  pageZeroBased = 0,
+  perPage = 500,
+): Promise<WikiQuestListResponse> {
+  const key = questSearchCacheKey(pageZeroBased, perPage, searchQuery)
+  return questSearchCache.load(key, () => fetchWikiQuestsPage(pageZeroBased, perPage, searchQuery))
 }
 
 export function getGuidebookMonsterDetailCached(id: string): WikiMonsterDetail | null {
