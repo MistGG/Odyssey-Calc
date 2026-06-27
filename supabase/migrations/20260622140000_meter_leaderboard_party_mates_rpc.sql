@@ -31,6 +31,7 @@ as $$
 $$;
 
 drop function if exists public.get_meter_leaderboard_party_digimon(text, int, timestamptz, timestamptz);
+drop function if exists public.get_meter_leaderboard_party_mates(text, int, timestamptz, timestamptz);
 
 create or replace function public.get_meter_leaderboard_party_mates(
   p_dungeon_id text,

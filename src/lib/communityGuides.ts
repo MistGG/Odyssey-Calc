@@ -168,7 +168,7 @@ export async function fetchPublishedCommunityGuides(
       .from('community_guides')
       .select(COMMUNITY_GUIDE_LIST_SELECT_CORE)
       .eq('status', 'published')
-    data = fallback.data
+    data = fallback.data as typeof data
     error = fallback.error
   }
 
