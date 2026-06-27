@@ -8,7 +8,8 @@ import {
   isPartialDungeonClearParse,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
-  parseClearTimeFromPayload,
+  isDragonDimensionHardClearUnderMinTime,
+  sessionDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
 import { collapseCoUploadedParseRows, excludeSupersededCoUploadParses } from './meterCoUploadMerge'
@@ -162,8 +163,18 @@ export function aggregatePublicMeterStats(
     if (isBrokenMeterPartyParse(row.payload, members)) continue
     if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
     if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) continue
+    if (
+      isDragonDimensionHardClearUnderMinTime(
+        row.payload,
+        row.duration_sec ?? 0,
+        row.dungeon_id,
+        row.difficulty_id,
+      )
+    ) {
+      continue
+    }
 
-    const clearDur = parseClearTimeFromPayload(row.payload, row.duration_sec, members)
+    const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
 
     for (const member of members) {
       if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue
@@ -187,7 +198,7 @@ export function aggregatePublicMeterStats(
       }
 
       if (!primaryDigimonId) continue
-      const memberDur = Math.max(member.durationSec, clearDur, 1e-6)
+      const memberDur = Math.max(member.durationSec, sessionDur, 1e-6)
       const primaryRows = memberDigimonBreakdowns(member).filter(
         (dg) => dg.digimonId.trim() === primaryDigimonId.trim(),
       )

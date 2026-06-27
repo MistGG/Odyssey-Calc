@@ -12,6 +12,9 @@ type RoleBucket = (typeof ROLE_BUCKETS)[number]
 
 const MIN_PARTY_DAMAGE_SHARE = 0.02
 const PARTY_UPLOAD_DEDUPE_WINDOW_SEC = 10
+const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
+const DRAGON_DIMENSION_HARD_DIFFICULTY_ID = 3
+const DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC = 8 * 60
 const WIKI_DIGIMON_DETAIL_URL =
   Deno.env.get('WIKI_DIGIMON_DETAIL_URL')?.trim() ||
   'https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki/digimon'
@@ -268,7 +271,7 @@ function memberDps(
   members: StoredMember[],
 ): number {
   const damage = memberDamageTotal(member)
-  const dur = Math.max(clearTimeDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 
@@ -331,8 +334,22 @@ function memberDpsForLeaderboard(
   const digimons = memberDigimons(member)
   const damage =
     digimons.length > 1 ? primaryDigimonDamage(member, wikiCatalog) : memberDamageTotal(member)
-  const dur = Math.max(clearTimeDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
+}
+
+function isDragonDimensionHardClearUnderMinTime(
+  payload: DungeonPayload,
+  rowDurationSec: number,
+  dungeonId: string,
+  difficultyId: number,
+  members: StoredMember[],
+): boolean {
+  if (dungeonId !== DRAGON_DIMENSION_DUNGEON_ID || difficultyId !== DRAGON_DIMENSION_HARD_DIFFICULTY_ID) {
+    return false
+  }
+  const clearSec = clearTimeDuration(payload, rowDurationSec, members)
+  return clearSec > 0 && clearSec < DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC
 }
 
 function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): boolean {
@@ -490,13 +507,12 @@ async function buildSummaryFromPayload(
   const members = payload.members
   if (isBrokenPartyParse(payload, members)) return { version: 1, eligible: false, members: [] }
 
-  const meterSessionDur = sessionDuration(payload, rowDurationSec, members)
-  const clearDur = clearTimeDuration(payload, rowDurationSec, members)
-  if (clearDur < MIN_LEADERBOARD_SESSION_SEC) {
+  const sessionDur = sessionDuration(payload, rowDurationSec, members)
+  if (sessionDur < MIN_LEADERBOARD_SESSION_SEC) {
     return {
       version: 1,
       eligible: false,
-      sessionDurationSec: clearDur,
+      sessionDurationSec: sessionDur,
       members: [],
       invalidateReason: `session_under_${MIN_LEADERBOARD_SESSION_SEC}s_v3`,
     }
@@ -504,7 +520,7 @@ async function buildSummaryFromPayload(
   const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
   const out: SummaryMember[] = []
   for (const member of members) {
-    if (!isMemberLeaderboardEligible(member, meterSessionDur, dungeonLeaderboardEligible)) continue
+    if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
     const primary = memberPrimaryDigimon(member, wikiCatalog)
     const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
     const digimonId = primary?.digimonId?.trim() || ''
@@ -522,7 +538,7 @@ async function buildSummaryFromPayload(
   return {
     version: 1,
     eligible: true,
-    sessionDurationSec: clearDur,
+    sessionDurationSec: sessionDuration(payload, rowDurationSec, members),
     members: out,
   }
 }
@@ -620,6 +636,18 @@ async function processParse(
 
   if (isPartialDungeonClear(payload, Number(row.duration_sec) || 0)) {
     return { inserted: 0, skipped: 'partial dungeon clear' }
+  }
+
+  if (
+    isDragonDimensionHardClearUnderMinTime(
+      payload,
+      Number(row.duration_sec) || 0,
+      dungeonId,
+      difficultyId,
+      members,
+    )
+  ) {
+    return { inserted: 0, skipped: 'dragon dimension hard clear under 8 minutes' }
   }
 
   const wikiCatalog = await loadWikiRoleCatalog()
