@@ -10,6 +10,7 @@ import {
   isInvalidMeterPartyParseRow,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
+  parseClearTimeFromPayload,
   raidTotalFromPayload,
   sessionDurationFromPayload,
   type MeterParseDungeonStored,
@@ -54,6 +55,7 @@ export function MeterDungeonPartyReplay({
   const members = partyMembersFromPayload(row.payload)
   const raidTotal = raidTotalFromPayload(row.payload, members)
   const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
+  const clearTimeSec = parseClearTimeFromPayload(row.payload, row.duration_sec, members)
   const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
   const sorted = [...members].sort((a, b) => {
     const da = a.durationSec > 0 ? a.totalDamage / a.durationSec : 0
@@ -90,8 +92,8 @@ export function MeterDungeonPartyReplay({
               <span className="meter-stat-value meter-stat-value--accent">{formatInt(raidTotal)}</span>
             </div>
             <div className="meter-stat meter-stat--compact">
-              <span className="meter-stat-label">Time</span>
-              <span className="meter-stat-value">{sessionDur.toFixed(0)}s</span>
+              <span className="meter-stat-label">Clear</span>
+              <span className="meter-stat-value">{clearTimeSec.toFixed(0)}s</span>
             </div>
             <div className="meter-stat meter-stat--compact">
               <span className="meter-stat-label">Players</span>

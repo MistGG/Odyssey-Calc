@@ -46,6 +46,16 @@ export type MeterPartyMemberStored = {
   deathBeforeClear?: boolean
 }
 
+export type MeterParseClientComplete = {
+  success?: boolean
+  timeSec?: number
+  rank?: string
+  deaths?: number
+  partySize?: number
+  exp?: number
+  money?: number
+}
+
 export type MeterParseDungeonStored = {
   dungeonId: string
   dungeonName: string | null
@@ -56,6 +66,7 @@ export type MeterParseDungeonStored = {
   bossTargets: string[]
   runOutcome: 'clear' | 'fail' | null
   leaderboardEligible?: boolean
+  clientComplete?: MeterParseClientComplete
 }
 
 export type MeterParsePayloadPartyStored = {
@@ -168,13 +179,35 @@ export function partyMembersFromPayload(payload: unknown): MeterPartyMemberStore
   return payload.members.map(normalizePartyMember)
 }
 
+function clientCompleteFromDungeon(dungeon: Record<string, unknown>): MeterParseClientComplete | undefined {
+  const raw = dungeon.clientComplete
+  if (!raw || typeof raw !== 'object') return undefined
+  const cc = raw as Record<string, unknown>
+  const timeSec = cc.timeSec
+  return {
+    success: cc.success === true,
+    timeSec: typeof timeSec === 'number' && Number.isFinite(timeSec) ? timeSec : undefined,
+    rank: typeof cc.rank === 'string' ? cc.rank : undefined,
+    deaths: typeof cc.deaths === 'number' && Number.isFinite(cc.deaths) ? cc.deaths : undefined,
+    partySize:
+      typeof cc.partySize === 'number' && Number.isFinite(cc.partySize) ? cc.partySize : undefined,
+    exp: typeof cc.exp === 'number' && Number.isFinite(cc.exp) ? cc.exp : undefined,
+    money: typeof cc.money === 'number' && Number.isFinite(cc.money) ? cc.money : undefined,
+  }
+}
+
 export function dungeonFromPayload(payload: unknown): MeterParseDungeonStored | null {
   if (!isDungeonPartyParsePayload(payload)) return null
-  const d = payload.dungeon
+  const d = payload.dungeon as Record<string, unknown> & MeterParseDungeonStored
   const bosses = Array.isArray(d.bossTargets)
     ? d.bossTargets.filter((x): x is string => typeof x === 'string' && x.trim() !== '')
     : []
-  return { ...d, bossTargets: bosses }
+  const clientComplete = clientCompleteFromDungeon(d)
+  return {
+    ...d,
+    bossTargets: bosses,
+    clientComplete: clientComplete?.timeSec != null ? clientComplete : undefined,
+  }
 }
 
 export function parseRunOutcomeFromPayload(payload: unknown): MeterParseDungeonStored['runOutcome'] {
@@ -281,6 +314,23 @@ export function sessionDurationFromPayload(
     return Math.max(0, payload.sessionDurationSec)
   }
   return Math.max(rowDurationSec, ...members.map((m) => m.durationSec), 0)
+}
+
+/** In-game results-screen clear time from the companion upload, when present. */
+export function clientCompleteTimeFromPayload(payload: unknown): number | null {
+  const dungeon = dungeonFromPayload(payload)
+  const timeSec = dungeon?.clientComplete?.timeSec
+  if (typeof timeSec !== 'number' || !Number.isFinite(timeSec) || timeSec <= 0) return null
+  return timeSec
+}
+
+/** Display clear time: prefer game results clock, else meter session duration. */
+export function parseClearTimeFromPayload(
+  payload: unknown,
+  rowDurationSec: number,
+  members: MeterPartyMemberStored[] = [],
+): number {
+  return clientCompleteTimeFromPayload(payload) ?? sessionDurationFromPayload(payload, rowDurationSec, members)
 }
 
 export function partyIdFromPayload(payload: unknown): string | null {
