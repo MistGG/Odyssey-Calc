@@ -11,7 +11,7 @@ import {
   isBrokenMeterPartyParse,
   memberDamageTotal,
   memberDigimonBreakdowns,
-  sessionDurationFromPayload,
+  parseClearTimeFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
 
@@ -146,8 +146,8 @@ export function memberDpsInParse(
 ): number {
   if (isBrokenMeterPartyParse(payload, members)) return 0
   const damage = memberLeaderboardDamage(member, digimonRoleById)
-  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
-  const dur = Math.max(sessionDur, member.durationSec, 1e-6)
+  const clearDur = parseClearTimeFromPayload(payload, rowDurationSec, members)
+  const dur = Math.max(clearDur, member.durationSec, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 

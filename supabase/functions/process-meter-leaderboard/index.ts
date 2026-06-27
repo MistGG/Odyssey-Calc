@@ -70,6 +70,7 @@ type DungeonPayload = {
   dungeon?: {
     leaderboardEligible?: boolean
     runOutcome?: string | null
+    clientComplete?: { timeSec?: number }
   }
   members?: StoredMember[]
 }
@@ -253,6 +254,13 @@ function sessionDuration(payload: DungeonPayload, rowDurationSec: number, member
   return Math.max(...members.map((m) => Math.max(0, Number(m.durationSec) || 0)), 0)
 }
 
+/** In-game results-screen clear time; falls back to meter session duration. */
+function clearTimeDuration(payload: DungeonPayload, rowDurationSec: number, members: StoredMember[]): number {
+  const cc = Number(payload.dungeon?.clientComplete?.timeSec)
+  if (Number.isFinite(cc) && cc > 0) return cc
+  return sessionDuration(payload, rowDurationSec, members)
+}
+
 function memberDps(
   member: StoredMember,
   payload: DungeonPayload,
@@ -260,7 +268,7 @@ function memberDps(
   members: StoredMember[],
 ): number {
   const damage = memberDamageTotal(member)
-  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  const dur = Math.max(clearTimeDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 
@@ -323,7 +331,7 @@ function memberDpsForLeaderboard(
   const digimons = memberDigimons(member)
   const damage =
     digimons.length > 1 ? primaryDigimonDamage(member, wikiCatalog) : memberDamageTotal(member)
-  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  const dur = Math.max(clearTimeDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 
@@ -482,12 +490,13 @@ async function buildSummaryFromPayload(
   const members = payload.members
   if (isBrokenPartyParse(payload, members)) return { version: 1, eligible: false, members: [] }
 
-  const sessionDur = sessionDuration(payload, rowDurationSec, members)
-  if (sessionDur < MIN_LEADERBOARD_SESSION_SEC) {
+  const meterSessionDur = sessionDuration(payload, rowDurationSec, members)
+  const clearDur = clearTimeDuration(payload, rowDurationSec, members)
+  if (clearDur < MIN_LEADERBOARD_SESSION_SEC) {
     return {
       version: 1,
       eligible: false,
-      sessionDurationSec: sessionDur,
+      sessionDurationSec: clearDur,
       members: [],
       invalidateReason: `session_under_${MIN_LEADERBOARD_SESSION_SEC}s_v3`,
     }
@@ -495,7 +504,7 @@ async function buildSummaryFromPayload(
   const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
   const out: SummaryMember[] = []
   for (const member of members) {
-    if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
+    if (!isMemberLeaderboardEligible(member, meterSessionDur, dungeonLeaderboardEligible)) continue
     const primary = memberPrimaryDigimon(member, wikiCatalog)
     const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
     const digimonId = primary?.digimonId?.trim() || ''
@@ -513,7 +522,7 @@ async function buildSummaryFromPayload(
   return {
     version: 1,
     eligible: true,
-    sessionDurationSec: sessionDuration(payload, rowDurationSec, members),
+    sessionDurationSec: clearDur,
     members: out,
   }
 }

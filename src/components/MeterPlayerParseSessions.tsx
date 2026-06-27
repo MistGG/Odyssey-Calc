@@ -6,7 +6,7 @@ import {
   isInvalidMeterPartyParseRow,
   partyMembersFromPayload,
   raidTotalFromPayload,
-  sessionDurationFromPayload,
+  parseClearTimeFromPayload,
 } from '../lib/meterParsePayload'
 import { getPublicDungeonParsesCached } from '../lib/meterDataSource'
 import { meterScopeKey } from '../lib/meterParseCache'
@@ -76,8 +76,8 @@ export function MeterPlayerParseSessions({
         const invalid = isInvalidMeterPartyParseRow(row)
         const unranked = !invalid && isExcludedFromLeaderboardParseRow(row)
         const raidTotal = raidTotalFromPayload(row.payload, members)
-        const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
-        const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
+        const clearDur = parseClearTimeFromPayload(row.payload, row.duration_sec, members)
+        const raidDps = clearDur > 0 ? raidTotal / clearDur : 0
         const playerDps = profileMember
           ? memberDpsInParse(profileMember, row.payload, row.duration_sec, members)
           : 0

@@ -12,7 +12,6 @@ import {
   partyMembersFromPayload,
   parseClearTimeFromPayload,
   raidTotalFromPayload,
-  sessionDurationFromPayload,
   type MeterParseDungeonStored,
   type MeterPartyMemberStored,
 } from '../lib/meterParsePayload'
@@ -21,6 +20,7 @@ import {
   memberNameColor,
   type PublicMeterParseRow,
 } from '../lib/meterPublicStats'
+import { memberDpsInParse } from '../lib/meterRoleBuckets'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -54,12 +54,11 @@ export function MeterDungeonPartyReplay({
   const dungeon = dungeonFromPayload(row.payload)
   const members = partyMembersFromPayload(row.payload)
   const raidTotal = raidTotalFromPayload(row.payload, members)
-  const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
   const clearTimeSec = parseClearTimeFromPayload(row.payload, row.duration_sec, members)
-  const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
+  const raidDps = clearTimeSec > 0 ? raidTotal / clearTimeSec : 0
   const sorted = [...members].sort((a, b) => {
-    const da = a.durationSec > 0 ? a.totalDamage / a.durationSec : 0
-    const db = b.durationSec > 0 ? b.totalDamage / b.durationSec : 0
+    const da = memberDpsInParse(a, row.payload, row.duration_sec, members, digimonRoleById)
+    const db = memberDpsInParse(b, row.payload, row.duration_sec, members, digimonRoleById)
     return db - da
   })
   const selected = selectedMemberKey
