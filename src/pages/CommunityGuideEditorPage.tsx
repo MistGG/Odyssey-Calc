@@ -6,6 +6,7 @@ import { CommunityGuideMarkdownToolbar } from '../components/communityGuides/Com
 import { CommunityGuideThumbnail } from '../components/communityGuides/CommunityGuideThumbnail'
 import { WikiItemSearchPicker } from '../components/communityGuides/WikiItemSearchPicker'
 import { WikiQuestSearchPicker } from '../components/communityGuides/WikiQuestSearchPicker'
+import { WikiDigimonSearchPicker } from '../components/communityGuides/WikiDigimonSearchPicker'
 import { WikiDungeonSearchPicker } from '../components/communityGuides/WikiDungeonSearchPicker'
 import { GuidebookWikiOverlayProvider } from '../components/guidebook/GuidebookWikiOverlay'
 import { communityGuideEmbedToken } from '../lib/communityGuideEmbed'
@@ -16,7 +17,7 @@ import {
   fetchCommunityGuideForAuthor,
   updateCommunityGuide,
 } from '../lib/communityGuides'
-import type { WikiDungeonListItem, WikiItemListItem, WikiQuestListItem } from '../types/wikiApi'
+import type { WikiDigimonListItem, WikiDungeonListItem, WikiItemListItem, WikiQuestListItem } from '../types/wikiApi'
 
 function insertAtCursor(textarea: HTMLTextAreaElement, token: string) {
   const start = textarea.selectionStart
@@ -58,10 +59,12 @@ export function CommunityGuideEditorPage() {
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(Boolean(id))
   const [saving, setSaving] = useState(false)
+  const [savingAction, setSavingAction] = useState<'draft' | 'publish' | null>(null)
+  const [guideStatus, setGuideStatus] = useState<'draft' | 'published'>('draft')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
-  const [activePicker, setActivePicker] = useState<'item' | 'quest' | 'dungeon' | null>(null)
+  const [activePicker, setActivePicker] = useState<'item' | 'quest' | 'digimon' | 'dungeon' | null>(null)
 
   useEffect(() => {
     if (!authReady) return
@@ -86,6 +89,7 @@ export function CommunityGuideEditorPage() {
         setTitle(guide.title)
         setThumbnailUrl(guide.thumbnail_url ?? '')
         setBody(guide.body)
+        setGuideStatus(guide.status)
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load guide.')
@@ -140,6 +144,15 @@ export function CommunityGuideEditorPage() {
     [insertEmbed],
   )
 
+  const onDigimonSelect = useCallback(
+    (digimon: WikiDigimonListItem) => {
+      insertEmbed(
+        communityGuideEmbedToken({ kind: 'digimon', id: digimon.id, label: digimon.name }),
+      )
+    },
+    [insertEmbed],
+  )
+
   const onDungeonSelect = useCallback(
     (dungeon: WikiDungeonListItem, difficulty: string) => {
       insertBlockEmbed(
@@ -154,26 +167,42 @@ export function CommunityGuideEditorPage() {
     [insertBlockEmbed],
   )
 
-  const onSave = useCallback(async () => {
-    if (!supabase || !user) return
-    setSaving(true)
-    setError(null)
-    try {
-      const authorName = profileDisplayName?.trim() || 'Player'
-      const payload = { title, body, authorName, thumbnailUrl: thumbnailUrl || null }
-      if (id) {
-        const updated = await updateCommunityGuide(supabase, id, user.id, payload)
-        navigate(`/guides/${updated.slug}`, { replace: true })
-      } else {
-        const created = await createCommunityGuide(supabase, user.id, payload)
-        navigate(`/guides/${created.slug}`, { replace: true })
+  const saveGuide = useCallback(
+    async (status: 'draft' | 'published') => {
+      if (!supabase || !user) return
+      setSaving(true)
+      setSavingAction(status === 'published' ? 'publish' : 'draft')
+      setError(null)
+      try {
+        const authorName = profileDisplayName?.trim() || 'Player'
+        const payload = { title, body, authorName, thumbnailUrl: thumbnailUrl || null, status }
+        if (id) {
+          const updated = await updateCommunityGuide(supabase, id, user.id, payload)
+          setGuideStatus(updated.status)
+          if (status === 'published') {
+            navigate(`/guides/${updated.slug}`, { replace: true })
+          }
+        } else {
+          const created = await createCommunityGuide(supabase, user.id, payload)
+          setGuideStatus(created.status)
+          if (status === 'published') {
+            navigate(`/guides/${created.slug}`, { replace: true })
+          } else {
+            navigate(`/guides/edit/${created.id}`, { replace: true })
+          }
+        }
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Could not save guide.')
+      } finally {
+        setSaving(false)
+        setSavingAction(null)
       }
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not save guide.')
-    } finally {
-      setSaving(false)
-    }
-  }, [supabase, user, id, title, body, thumbnailUrl, profileDisplayName, navigate])
+    },
+    [supabase, user, id, title, body, thumbnailUrl, profileDisplayName, navigate],
+  )
+
+  const onSaveDraft = useCallback(() => void saveGuide('draft'), [saveGuide])
+  const onPublish = useCallback(() => void saveGuide('published'), [saveGuide])
 
   const onDelete = useCallback(async () => {
     if (!supabase || !user || !id || deleting) return
@@ -209,6 +238,9 @@ export function CommunityGuideEditorPage() {
 
         <header className="community-guides-editor__head">
           <h1 className="community-guides-hero__title">{id ? 'Edit guide' : 'Write a guide'}</h1>
+          {id && guideStatus === 'draft' ? (
+            <span className="community-guides-editor__status-badge">Draft</span>
+          ) : null}
         </header>
 
         <div className="community-guides-editor__layout">
@@ -265,6 +297,13 @@ export function CommunityGuideEditorPage() {
               </button>
               <button
                 type="button"
+                className={`community-guides-btn community-guides-btn--ghost${activePicker === 'digimon' ? ' is-active' : ''}`}
+                onClick={() => setActivePicker((p) => (p === 'digimon' ? null : 'digimon'))}
+              >
+                + Digimon
+              </button>
+              <button
+                type="button"
                 className={`community-guides-btn community-guides-btn--ghost${activePicker === 'dungeon' ? ' is-active' : ''}`}
                 onClick={() => setActivePicker((p) => (p === 'dungeon' ? null : 'dungeon'))}
               >
@@ -281,6 +320,7 @@ export function CommunityGuideEditorPage() {
 
             {activePicker === 'item' ? <WikiItemSearchPicker onSelect={onItemSelect} /> : null}
             {activePicker === 'quest' ? <WikiQuestSearchPicker onSelect={onQuestSelect} /> : null}
+            {activePicker === 'digimon' ? <WikiDigimonSearchPicker onSelect={onDigimonSelect} /> : null}
             {activePicker === 'dungeon' ? <WikiDungeonSearchPicker onSelect={onDungeonSelect} /> : null}
 
             {!showPreview ? (
@@ -312,11 +352,23 @@ export function CommunityGuideEditorPage() {
             <div className="community-guides-editor__actions">
               <button
                 type="button"
+                className="community-guides-btn community-guides-btn--ghost"
+                disabled={saving || deleting}
+                onClick={onSaveDraft}
+              >
+                {savingAction === 'draft' ? 'Saving…' : 'Save draft'}
+              </button>
+              <button
+                type="button"
                 className="community-guides-btn community-guides-btn--primary"
                 disabled={saving || deleting}
-                onClick={() => void onSave()}
+                onClick={onPublish}
               >
-                {saving ? 'Saving…' : 'Publish guide'}
+                {savingAction === 'publish'
+                  ? 'Saving…'
+                  : guideStatus === 'published'
+                    ? 'Save & view'
+                    : 'Publish guide'}
               </button>
               {id ? (
                 <button

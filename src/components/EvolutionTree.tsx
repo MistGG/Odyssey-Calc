@@ -23,6 +23,7 @@ function EvolutionTreeNode({
   y,
   stage,
   accent,
+  onDigimonClick,
 }: {
   digimonId: string
   currentDigimonId: string
@@ -31,21 +32,20 @@ function EvolutionTreeNode({
   y: number
   stage: string
   accent: string
+  onDigimonClick?: (digimonId: string) => void
 }) {
   const [broken, setBroken] = useState(false)
   const src = digimonPortraitUrl(node.model_id, digimonId, node.digimon_name)
+  const className = `evo-tree__node${digimonId === currentDigimonId ? ' evo-tree__node--active' : ''}`
+  const style = {
+    left: x + (EVO_TREE_COL_WIDTH - EVO_TREE_NODE_SIZE) / 2,
+    top: y,
+    ['--evo-accent' as string]: accent,
+  }
+  const title = `${node.digimon_name} · Lv ${node.open_level}+`
 
-  return (
-    <Link
-      to={`/digimon/${encodeURIComponent(digimonId)}`}
-      className={`evo-tree__node${digimonId === currentDigimonId ? ' evo-tree__node--active' : ''}`}
-      style={{
-        left: x + (EVO_TREE_COL_WIDTH - EVO_TREE_NODE_SIZE) / 2,
-        top: y,
-        ['--evo-accent' as string]: accent,
-      }}
-      title={`${node.digimon_name} · Lv ${node.open_level}+`}
-    >
+  const content = (
+    <>
       <span
         className="evo-tree__portrait"
         style={{ background: digimonStagePortraitGradient(stage) }}
@@ -57,6 +57,26 @@ function EvolutionTreeNode({
         )}
       </span>
       <span className="evo-tree__name">{node.digimon_name}</span>
+    </>
+  )
+
+  if (onDigimonClick) {
+    return (
+      <button
+        type="button"
+        className={className}
+        style={style}
+        title={title}
+        onClick={() => onDigimonClick(digimonId)}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <Link to={`/digimon/${encodeURIComponent(digimonId)}`} className={className} style={style} title={title}>
+      {content}
     </Link>
   )
 }
@@ -64,9 +84,11 @@ function EvolutionTreeNode({
 export function EvolutionTree({
   tree,
   currentDigimonId,
+  onDigimonClick,
 }: {
   tree: WikiEvolutionTree | null | undefined
   currentDigimonId: string
+  onDigimonClick?: (digimonId: string) => void
 }) {
   const layout = useMemo(
     () => buildEvolutionTreeLayout(tree, currentDigimonId),
@@ -102,38 +124,39 @@ export function EvolutionTree({
           role="img"
           aria-label="Evolution tree"
         >
-      <div className="evo-tree__stage-row" aria-hidden>
-        {layout.stages.map((stage, col) => (
-          <span
-            key={stage}
-            className="evo-tree__stage-label"
-            style={{
-              left: EVO_TREE_PAD_X + col * EVO_TREE_COL_WIDTH,
-              width: EVO_TREE_COL_WIDTH,
-              color: digimonStageAccentColor(stage),
-            }}
-          >
-            {stageShortLabel(stage)}
-          </span>
-        ))}
-      </div>
-      <svg className="evo-tree__svg" width={layout.width} height={layout.height} aria-hidden>
-        {layout.edges.map((e) => (
-          <path key={`${e.from}-${e.to}`} d={e.path} className="evo-tree__edge" />
-        ))}
-      </svg>
-      {layout.nodes.map((n) => (
-        <EvolutionTreeNode
-          key={n.digimonId}
-          digimonId={n.digimonId}
-          currentDigimonId={currentDigimonId}
-          node={n.node}
-          x={n.x}
-          y={n.y}
-          stage={n.stage}
-          accent={n.accent}
-        />
-      ))}
+          <div className="evo-tree__stage-row" aria-hidden>
+            {layout.stages.map((stage, col) => (
+              <span
+                key={stage}
+                className="evo-tree__stage-label"
+                style={{
+                  left: EVO_TREE_PAD_X + col * EVO_TREE_COL_WIDTH,
+                  width: EVO_TREE_COL_WIDTH,
+                  color: digimonStageAccentColor(stage),
+                }}
+              >
+                {stageShortLabel(stage)}
+              </span>
+            ))}
+          </div>
+          <svg className="evo-tree__svg" width={layout.width} height={layout.height} aria-hidden>
+            {layout.edges.map((e) => (
+              <path key={`${e.from}-${e.to}`} d={e.path} className="evo-tree__edge" />
+            ))}
+          </svg>
+          {layout.nodes.map((n) => (
+            <EvolutionTreeNode
+              key={n.digimonId}
+              digimonId={n.digimonId}
+              currentDigimonId={currentDigimonId}
+              node={n.node}
+              x={n.x}
+              y={n.y}
+              stage={n.stage}
+              accent={n.accent}
+              onDigimonClick={onDigimonClick}
+            />
+          ))}
         </div>
       </div>
     </div>

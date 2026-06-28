@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth'
 import { CommunityGuideThumbnail } from '../components/communityGuides/CommunityGuideThumbnail'
 import {
   COMMUNITY_GUIDE_SORT_OPTIONS,
+  fetchAuthorCommunityGuides,
   fetchPublishedCommunityGuides,
   formatCommunityGuideViewCount,
   sortCommunityGuides,
@@ -20,17 +21,21 @@ function formatGuideDate(iso: string): string {
 function GuideTile({
   guide,
   showEdit,
+  isDraft,
 }: {
   guide: CommunityGuideListItem
   showEdit?: boolean
+  isDraft?: boolean
 }) {
   const viewCount = guide.view_count ?? 0
+  const tileLink = isDraft ? `/guides/edit/${guide.id}` : `/guides/${guide.slug}`
 
   return (
-    <li className="community-guides-tile">
-      <Link to={`/guides/${guide.slug}`} className="community-guides-tile__link">
+    <li className={`community-guides-tile${isDraft ? ' community-guides-tile--draft' : ''}`}>
+      <Link to={tileLink} className="community-guides-tile__link">
         <div className="community-guides-tile__media">
           <CommunityGuideThumbnail url={guide.thumbnail_url} />
+          {isDraft ? <span className="community-guides-tile__draft-badge">Draft</span> : null}
         </div>
         <div className="community-guides-tile__body">
           <h3 className="community-guides-tile__title">{guide.title}</h3>
@@ -64,6 +69,7 @@ function GuideTile({
 export function CommunityGuidesPage() {
   const { supabase, user, authReady } = useAuth()
   const [guides, setGuides] = useState<CommunityGuideListItem[]>([])
+  const [myGuides, setMyGuides] = useState<CommunityGuideListItem[]>([])
   const [sort, setSort] = useState<CommunityGuideSort>('favorites')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -91,12 +97,23 @@ export function CommunityGuidesPage() {
     }
   }, [supabase])
 
-  const myGuides = useMemo(() => {
-    if (!user) return []
-    return guides
-      .filter((guide) => guide.author_id === user.id)
-      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-  }, [guides, user])
+  useEffect(() => {
+    if (!supabase || !user) {
+      setMyGuides([])
+      return
+    }
+    let cancelled = false
+    void fetchAuthorCommunityGuides(supabase, user.id)
+      .then((rows) => {
+        if (!cancelled) setMyGuides(rows)
+      })
+      .catch(() => {
+        if (!cancelled) setMyGuides([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, user])
 
   const myGuideIds = useMemo(() => new Set(myGuides.map((g) => g.id)), [myGuides])
   const sortedGuides = useMemo(() => sortCommunityGuides(guides, sort), [guides, sort])
@@ -126,7 +143,7 @@ export function CommunityGuidesPage() {
           <details className="community-guides-details">
             <summary
               className="community-guides-details__summary"
-              aria-label={`Your guides, ${myGuides.length} published`}
+              aria-label={`Your guides, ${myGuides.length} total`}
             >
               <span className="community-guides-details__label">
                 <span id="my-guides-heading" className="community-guides-details__title">
@@ -138,10 +155,17 @@ export function CommunityGuidesPage() {
               </span>
             </summary>
             <div className="community-guides-details__body">
-              <p className="community-guides-section__lead">Edit or share guides you have published.</p>
+              <p className="community-guides-section__lead">
+                Drafts and published guides you have written.
+              </p>
               <ul className="community-guides-grid">
                 {myGuides.map((guide) => (
-                  <GuideTile key={guide.id} guide={guide} showEdit />
+                  <GuideTile
+                    key={guide.id}
+                    guide={guide}
+                    showEdit
+                    isDraft={guide.status === 'draft'}
+                  />
                 ))}
               </ul>
             </div>

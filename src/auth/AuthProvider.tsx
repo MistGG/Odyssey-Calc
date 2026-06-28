@@ -39,6 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!url || !key) return null
     return createClient(url, key, {
       auth: { persistSession: true, autoRefreshToken: true },
+      global: {
+        headers: {
+          'x-odyssey-client': 'odyssey-calc',
+        },
+      },
     })
   }, [])
 

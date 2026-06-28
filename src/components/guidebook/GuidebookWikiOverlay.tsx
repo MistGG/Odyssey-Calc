@@ -9,13 +9,16 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import {
+  getGuidebookDigimonDetailCached,
   getGuidebookItemDetailCached,
   getGuidebookMonsterDetailCached,
+  loadGuidebookDigimonDetail,
   loadGuidebookItemDetail,
   loadGuidebookMonsterDetail,
 } from '../../lib/guidebookWikiCache'
-import type { WikiItemDetail, WikiMonsterDetail } from '../../types/wikiApi'
+import type { WikiDigimonDetail, WikiItemDetail, WikiMonsterDetail } from '../../types/wikiApi'
 import {
+  GuidebookDigimonProfilePanel,
   GuidebookItemProfilePanel,
   GuidebookMonsterProfilePanel,
 } from './GuidebookWikiOverlayPanels'
@@ -23,13 +26,16 @@ import {
 export type GuidebookWikiOverlayFrame =
   | { type: 'item'; id: string }
   | { type: 'monster'; id: string }
+  | { type: 'digimon'; id: string }
 
 type GuidebookWikiOverlayContextValue = {
   stackDepth: number
   openItemRoot: (id: string) => void
   openMonsterRoot: (id: string) => void
+  openDigimonRoot: (id: string) => void
   pushItem: (id: string) => void
   pushMonster: (id: string) => void
+  pushDigimon: (id: string) => void
   pop: () => void
   close: () => void
 }
@@ -59,6 +65,7 @@ function GuidebookWikiStackOverlay({
   const canGoBack = stack.length > 1
   const [item, setItem] = useState<WikiItemDetail | null>(null)
   const [monster, setMonster] = useState<WikiMonsterDetail | null>(null)
+  const [digimon, setDigimon] = useState<WikiDigimonDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(false)
 
@@ -71,16 +78,19 @@ function GuidebookWikiStackOverlay({
       if (cached) {
         setItem(cached)
         setMonster(null)
+        setDigimon(null)
         setLoading(false)
       } else {
         setItem(null)
         setMonster(null)
+        setDigimon(null)
         setLoading(true)
       }
       void loadGuidebookItemDetail(frame.id)
         .then((detail) => {
           setItem(detail)
           setMonster(null)
+          setDigimon(null)
         })
         .catch(() => {
           if (!getGuidebookItemDetailCached(frame.id)) setLoadError(true)
@@ -89,23 +99,52 @@ function GuidebookWikiStackOverlay({
       return
     }
 
-    const cached = getGuidebookMonsterDetailCached(frame.id)
+    if (frame.type === 'monster') {
+      const cached = getGuidebookMonsterDetailCached(frame.id)
+      if (cached) {
+        setMonster(cached)
+        setItem(null)
+        setDigimon(null)
+        setLoading(false)
+      } else {
+        setItem(null)
+        setMonster(null)
+        setDigimon(null)
+        setLoading(true)
+      }
+      void loadGuidebookMonsterDetail(frame.id)
+        .then((detail) => {
+          setMonster(detail)
+          setItem(null)
+          setDigimon(null)
+        })
+        .catch(() => {
+          if (!getGuidebookMonsterDetailCached(frame.id)) setLoadError(true)
+        })
+        .finally(() => setLoading(false))
+      return
+    }
+
+    const cached = getGuidebookDigimonDetailCached(frame.id)
     if (cached) {
-      setMonster(cached)
+      setDigimon(cached)
       setItem(null)
+      setMonster(null)
       setLoading(false)
     } else {
       setItem(null)
       setMonster(null)
+      setDigimon(null)
       setLoading(true)
     }
-    void loadGuidebookMonsterDetail(frame.id)
+    void loadGuidebookDigimonDetail(frame.id)
       .then((detail) => {
-        setMonster(detail)
+        setDigimon(detail)
         setItem(null)
+        setMonster(null)
       })
       .catch(() => {
-        if (!getGuidebookMonsterDetailCached(frame.id)) setLoadError(true)
+        if (!getGuidebookDigimonDetailCached(frame.id)) setLoadError(true)
       })
       .finally(() => setLoading(false))
   }, [frame])
@@ -133,7 +172,14 @@ function GuidebookWikiStackOverlay({
   const label =
     frame.type === 'item'
       ? item?.name ?? 'Item details'
-      : monster?.name ?? 'Monster details'
+      : frame.type === 'monster'
+        ? monster?.name ?? 'Monster details'
+        : digimon?.name ?? 'Digimon details'
+
+  const dialogClass =
+    frame.type === 'digimon'
+      ? 'guidebook-wiki-overlay__dialog guidebook-wiki-overlay__dialog--digimon guidebook-scroll--themed'
+      : 'guidebook-wiki-overlay__dialog guidebook-scroll--themed'
 
   return createPortal(
     <div
@@ -143,12 +189,7 @@ function GuidebookWikiStackOverlay({
         if (e.target === e.currentTarget) dismissBackdrop()
       }}
     >
-      <div
-        className="guidebook-wiki-overlay__dialog guidebook-scroll--themed"
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
-      >
+      <div className={dialogClass} role="dialog" aria-modal="true" aria-label={label}>
         {loading ? (
           <p className="guidebook-wiki-overlay__loading" role="status">
             Loading…
@@ -173,6 +214,14 @@ function GuidebookWikiStackOverlay({
             onClose={close}
           />
         ) : null}
+        {!loading && !loadError && frame.type === 'digimon' && digimon ? (
+          <GuidebookDigimonProfilePanel
+            digimon={digimon}
+            canGoBack={canGoBack}
+            onBack={pop}
+            onClose={close}
+          />
+        ) : null}
       </div>
     </div>,
     document.body,
@@ -190,12 +239,20 @@ export function GuidebookWikiOverlayProvider({ children }: { children: ReactNode
     setStack([{ type: 'monster', id }])
   }, [])
 
+  const openDigimonRoot = useCallback((id: string) => {
+    setStack([{ type: 'digimon', id }])
+  }, [])
+
   const pushItem = useCallback((id: string) => {
     setStack((s) => [...s, { type: 'item', id }])
   }, [])
 
   const pushMonster = useCallback((id: string) => {
     setStack((s) => [...s, { type: 'monster', id }])
+  }, [])
+
+  const pushDigimon = useCallback((id: string) => {
+    setStack((s) => [...s, { type: 'digimon', id }])
   }, [])
 
   const pop = useCallback(() => {
@@ -211,12 +268,24 @@ export function GuidebookWikiOverlayProvider({ children }: { children: ReactNode
       stackDepth: stack.length,
       openItemRoot,
       openMonsterRoot,
+      openDigimonRoot,
       pushItem,
       pushMonster,
+      pushDigimon,
       pop,
       close,
     }),
-    [stack.length, openItemRoot, openMonsterRoot, pushItem, pushMonster, pop, close],
+    [
+      stack.length,
+      openItemRoot,
+      openMonsterRoot,
+      openDigimonRoot,
+      pushItem,
+      pushMonster,
+      pushDigimon,
+      pop,
+      close,
+    ],
   )
 
   return (

@@ -1,6 +1,6 @@
 /** Embed tokens stored in community guide markdown bodies. */
 
-export type CommunityGuideEmbedKind = 'item' | 'quest' | 'dungeon'
+export type CommunityGuideEmbedKind = 'item' | 'quest' | 'digimon' | 'dungeon'
 
 export type CommunityGuideEmbed = {
   kind: CommunityGuideEmbedKind
@@ -10,7 +10,7 @@ export type CommunityGuideEmbed = {
   difficulty?: string
 }
 
-const INLINE_EMBED_RE = /\[\[(item|quest):([^|\]]+)(?:\|([^\]]+))?\]\]/g
+const INLINE_EMBED_RE = /\[\[(item|quest|digimon):([^|\]]+)(?:\|([^\]]+))?\]\]/g
 const DUNGEON_BLOCK_RE = /^\[\[dungeon:([^|\]]+)(?:\|([^|\]]+))?(?:\|([^\]]+))?\]\]$/
 
 export function communityGuideEmbedToken(embed: CommunityGuideEmbed): string {
@@ -40,7 +40,7 @@ export function parseCommunityGuideEmbeds(body: string): CommunityGuideEmbed[] {
   const re = new RegExp(INLINE_EMBED_RE.source, 'g')
   while ((match = re.exec(body)) !== null) {
     found.push({
-      kind: match[1] as 'item' | 'quest',
+      kind: match[1] as 'item' | 'quest' | 'digimon',
       id: match[2]!.trim(),
       label: match[3]?.trim() || undefined,
     })

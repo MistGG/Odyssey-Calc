@@ -1,11 +1,19 @@
 import { Fragment, useMemo, type KeyboardEvent, type MouseEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { wikiDungeonPageUrl } from '../../api/dungeonService'
-import { monsterPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
+import { digimonPortraitUrl, monsterPortraitUrl, rankSpriteStyle, skillIconUrl, wikiItemIconUrl } from '../../lib/digimonImage'
+import { digimonStagePortraitGradient } from '../../lib/digimonStage'
+import {
+  SKILL_LEVEL_CAP,
+  skillDamageAtLevel,
+  skillIsSupportOnly,
+} from '../../lib/skillDamage'
 import {
   dedupeMonsterLocations,
   formatMonsterPenName,
   groupMonsterDropsByType,
 } from '../../lib/guidebookMonsterPanel'
+import { wikiCombatStatRows } from '../../lib/wikiCombatStatRows'
 import {
   dedupeItemDropSources,
   formatRaidQuantity,
@@ -13,8 +21,54 @@ import {
   raidSourceKey,
   splitWikiItemDescription,
 } from '../../lib/guidebookItemPanel'
-import type { WikiItemDetail, WikiMonsterDetail } from '../../types/wikiApi'
+import type { WikiDigimonDetail, WikiItemDetail, WikiMonsterDetail, WikiSkill } from '../../types/wikiApi'
+import { EvolutionTree } from '../EvolutionTree'
 import { useGuidebookWikiOverlay } from './GuidebookWikiOverlay'
+
+function formatDigimonSkillSummary(skill: WikiSkill): string {
+  const cap = Math.max(1, Math.min(skill.max_level ?? SKILL_LEVEL_CAP, SKILL_LEVEL_CAP))
+  const support = skillIsSupportOnly(skill.base_dmg, skill.scaling)
+  const parts: string[] = []
+
+  if (skill.element?.trim()) parts.push(skill.element.trim())
+
+  if (support) {
+    parts.push('Support')
+    if (typeof skill.buff?.duration === 'number' && skill.buff.duration > 0) {
+      parts.push(`${skill.buff.duration}s buff`)
+    }
+  } else {
+    const dmg = skillDamageAtLevel(skill.base_dmg, skill.scaling, cap, cap)
+    parts.push(`${dmg.toLocaleString()} dmg`)
+  }
+
+  if (skill.cooldown_sec > 0) parts.push(`${skill.cooldown_sec}s CD`)
+  if (skill.ds_cost > 0) parts.push(`${skill.ds_cost} DS`)
+  if (typeof skill.radius === 'number' && skill.radius > 0) parts.push('AOE')
+
+  return parts.join(' · ')
+}
+
+function GuidebookDigimonSkillRow({ skill }: { skill: WikiSkill }) {
+  const icon = skillIconUrl(skill.icon_id)
+  const summary = formatDigimonSkillSummary(skill)
+
+  return (
+    <li className="guidebook-digimon-panel__skill">
+      {icon ? (
+        <img className="guidebook-digimon-panel__skill-icon" src={icon} alt="" width={20} height={20} />
+      ) : (
+        <span className="guidebook-digimon-panel__skill-icon-fallback" aria-hidden>
+          ·
+        </span>
+      )}
+      <div className="guidebook-digimon-panel__skill-body">
+        <span className="guidebook-digimon-panel__skill-name">{skill.name}</span>
+        <span className="guidebook-digimon-panel__skill-meta">{summary}</span>
+      </div>
+    </li>
+  )
+}
 
 function GuidebookWikiPanelNav({
   canGoBack,
@@ -359,6 +413,109 @@ export function GuidebookMonsterProfilePanel({
             </div>
           </section>
         ) : null}
+      </div>
+    </div>
+  )
+}
+
+export function GuidebookDigimonProfilePanel({
+  digimon,
+  canGoBack,
+  onBack,
+  onClose,
+}: {
+  digimon: WikiDigimonDetail
+  canGoBack?: boolean
+  onBack?: () => void
+  onClose: () => void
+}) {
+  const { pushDigimon } = useGuidebookWikiOverlay()
+  const portrait = digimonPortraitUrl(digimon.model_id, digimon.id, digimon.name)
+  const statRows = useMemo(() => wikiCombatStatRows(digimon.stats), [digimon.stats])
+  const skills = digimon.skills ?? []
+
+  return (
+    <div className="guidebook-digimon-panel" onMouseDown={(e) => e.stopPropagation()}>
+      <article className="guidebook-digimon-panel__card" aria-label={`${digimon.name} profile`}>
+        <header className="guidebook-digimon-panel__header">
+          <div
+            className="guidebook-digimon-panel__portrait-wrap"
+            style={{ background: digimonStagePortraitGradient(digimon.stage) }}
+          >
+            {portrait ? (
+              <img
+                className="guidebook-digimon-panel__portrait"
+                src={portrait}
+                alt=""
+                width={72}
+                height={72}
+              />
+            ) : null}
+            {digimon.rank > 0 ? (
+              <span className="guidebook-digimon-panel__rank" aria-hidden="true">
+                <span style={rankSpriteStyle(digimon.rank)} />
+              </span>
+            ) : null}
+          </div>
+          <div className="guidebook-digimon-panel__head-text">
+            <h3 className="guidebook-digimon-panel__name">{digimon.name}</h3>
+            <p className="guidebook-digimon-panel__stage">{digimon.stage}</p>
+            <div className="guidebook-digimon-panel__pills">
+              <span className="guidebook-digimon-panel__pill">{digimon.attribute || 'None'}</span>
+              <span className="guidebook-digimon-panel__pill">{digimon.element || 'None'}</span>
+            </div>
+            <p className="guidebook-digimon-panel__meta">
+              {digimon.role || 'None'}
+              {(digimon.family_types ?? []).length
+                ? ` · ${(digimon.family_types ?? []).join(', ')}`
+                : ''}
+            </p>
+          </div>
+          <GuidebookWikiPanelNav canGoBack={canGoBack} onBack={onBack} onClose={onClose} />
+        </header>
+      </article>
+
+      <div className="guidebook-digimon-panel__body">
+        {statRows.length > 0 ? (
+          <section className="guidebook-digimon-panel__section">
+            <h4 className="guidebook-digimon-panel__sh">Combat stats</h4>
+            <div className="stats-grid">
+              {statRows.map(([label, val]) => (
+                <div key={label} className="stat-cell">
+                  <span className="stat-label">{label}</span>
+                  <span className="stat-val">
+                    {typeof val === 'number' ? val.toLocaleString() : val}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {skills.length > 0 ? (
+          <section className="guidebook-digimon-panel__section">
+            <h4 className="guidebook-digimon-panel__sh">Skills ({skills.length})</h4>
+            <ul className="guidebook-digimon-panel__skill-list">
+              {skills.map((skill) => (
+                <GuidebookDigimonSkillRow key={skill.id} skill={skill} />
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        <section className="guidebook-digimon-panel__section guidebook-digimon-panel__section--evo">
+          <EvolutionTree
+            tree={digimon.evolution_tree}
+            currentDigimonId={digimon.id}
+            onDigimonClick={pushDigimon}
+          />
+        </section>
+
+        <p className="guidebook-digimon-panel__full-link">
+          <Link to={`/digimon/${digimon.id}`} className="guidebook-btn guidebook-btn--accent guidebook-btn--small">
+            Full profile
+          </Link>
+        </p>
       </div>
     </div>
   )

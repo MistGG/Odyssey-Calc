@@ -29,13 +29,14 @@ export type CommunityGuideListItem = Pick<
   | 'heart_count'
   | 'view_count'
   | 'updated_at'
+  | 'status'
 >
 
 const COMMUNITY_GUIDE_LIST_SELECT_CORE =
   'id, author_id, author_name, title, slug, heart_count, updated_at'
 
 const COMMUNITY_GUIDE_LIST_SELECT =
-  `${COMMUNITY_GUIDE_LIST_SELECT_CORE}, thumbnail_url, view_count`
+  `${COMMUNITY_GUIDE_LIST_SELECT_CORE}, thumbnail_url, view_count, status`
 
 function isMissingCommunityGuideColumnError(message: string): boolean {
   const lower = message.toLowerCase()
@@ -63,6 +64,7 @@ function normalizeCommunityGuideListItem(row: Record<string, unknown>): Communit
     heart_count: Number(row.heart_count) || 0,
     view_count: Number(row.view_count) || 0,
     updated_at: String(row.updated_at),
+    status: row.status === 'draft' ? 'draft' : 'published',
   }
 }
 
@@ -129,6 +131,9 @@ export function formatCommunityGuideViewCount(count: number): string {
 
 export function formatCommunityGuideError(message: string): string {
   const lower = message.toLowerCase()
+  if (lower.includes('forbidden') || lower.includes('"code":"403"')) {
+    return 'Could not reach the guides service. Refresh the page and try again.'
+  }
   if (
     lower.includes('42p01') ||
     (lower.includes('community_guides') &&
@@ -168,6 +173,32 @@ export async function fetchPublishedCommunityGuides(
       .from('community_guides')
       .select(COMMUNITY_GUIDE_LIST_SELECT_CORE)
       .eq('status', 'published')
+    data = fallback.data as typeof data
+    error = fallback.error
+  }
+
+  if (error) throw new Error(formatCommunityGuideError(error.message))
+  return (data ?? []).map((row) =>
+    normalizeCommunityGuideListItem(row as Record<string, unknown>),
+  )
+}
+
+export async function fetchAuthorCommunityGuides(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<CommunityGuideListItem[]> {
+  let { data, error } = await supabase
+    .from('community_guides')
+    .select(COMMUNITY_GUIDE_LIST_SELECT)
+    .eq('author_id', userId)
+    .order('updated_at', { ascending: false })
+
+  if (error && isMissingCommunityGuideColumnError(error.message)) {
+    const fallback = await supabase
+      .from('community_guides')
+      .select(`${COMMUNITY_GUIDE_LIST_SELECT_CORE}, status`)
+      .eq('author_id', userId)
+      .order('updated_at', { ascending: false })
     data = fallback.data as typeof data
     error = fallback.error
   }
@@ -264,6 +295,21 @@ export type SaveCommunityGuideInput = {
   authorName: string
   slug?: string
   thumbnailUrl?: string | null
+  status?: 'draft' | 'published'
+}
+
+function normalizeSaveCommunityGuideInput(
+  input: SaveCommunityGuideInput,
+  status: 'draft' | 'published',
+): { title: string; body: string; authorName: string } {
+  const title = input.title.trim().slice(0, 120) || (status === 'draft' ? 'Untitled guide' : '')
+  if (!title) throw new Error('Title is required.')
+  const body = input.body.trim()
+  if (status === 'published' && !body) {
+    throw new Error('Guide body is required to publish.')
+  }
+  const authorName = input.authorName.trim().slice(0, 64) || 'Player'
+  return { title, body, authorName }
 }
 
 function normalizeCommunityGuideThumbnailUrl(url: string | null | undefined): string | null {
@@ -331,10 +377,8 @@ export async function createCommunityGuide(
   userId: string,
   input: SaveCommunityGuideInput,
 ): Promise<CommunityGuide> {
-  const title = input.title.trim().slice(0, 120)
-  if (!title) throw new Error('Title is required.')
-  const body = input.body.trim()
-  if (!body) throw new Error('Guide body is required.')
+  const status = input.status ?? 'published'
+  const { title, body, authorName } = normalizeSaveCommunityGuideInput(input, status)
   const baseSlug = (input.slug?.trim() || slugifyCommunityGuideTitle(title)).slice(
     0,
     COMMUNITY_GUIDE_SLUG_MAX_LEN,
@@ -345,11 +389,11 @@ export async function createCommunityGuide(
   const buildInsertRow = (nextSlug: string): Record<string, unknown> => {
     const row: Record<string, unknown> = {
       author_id: userId,
-      author_name: input.authorName.trim().slice(0, 64) || 'Player',
+      author_name: authorName,
       title,
       slug: nextSlug,
       body,
-      status: 'published',
+      status,
     }
     if (thumbnailUrl) row.thumbnail_url = thumbnailUrl
     return row
@@ -389,15 +433,15 @@ export async function updateCommunityGuide(
   userId: string,
   input: SaveCommunityGuideInput,
 ): Promise<CommunityGuide> {
-  const title = input.title.trim().slice(0, 120)
-  if (!title) throw new Error('Title is required.')
-  const body = input.body.trim()
-  if (!body) throw new Error('Guide body is required.')
+  const status = input.status ?? 'published'
+  const { title, body, authorName } = normalizeSaveCommunityGuideInput(input, status)
   const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
 
   const updateRow: Record<string, unknown> = {
     title,
     body,
+    author_name: authorName,
+    status,
     updated_at: new Date().toISOString(),
   }
   if (thumbnailUrl !== null || input.thumbnailUrl === '') {

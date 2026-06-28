@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { wikiQuestPageUrl } from '../../api/questService'
 import { inlineCommunityGuideMarkdown } from '../../lib/communityGuideInlineMarkdown'
-import { wikiItemIconUrl } from '../../lib/digimonImage'
+import { digimonPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
 import {
+  getGuidebookDigimonDetailCached,
   getGuidebookItemDetailCached,
+  loadGuidebookDigimonDetail,
   loadGuidebookItemDetail,
 } from '../../lib/guidebookWikiCache'
 import {
@@ -62,6 +64,58 @@ function CommunityGuideItemLink({
   )
 }
 
+function CommunityGuideDigimonLink({
+  digimonId,
+  labelFallback,
+}: {
+  digimonId: string
+  labelFallback: string
+}) {
+  const { openDigimonRoot } = useGuidebookWikiOverlay()
+  const cached = getGuidebookDigimonDetailCached(digimonId)
+  const [name, setName] = useState(cached?.name ?? labelFallback)
+  const [modelId, setModelId] = useState(cached?.model_id ?? '')
+
+  useEffect(() => {
+    void loadGuidebookDigimonDetail(digimonId)
+      .then((detail) => {
+        setName(detail.name)
+        setModelId(detail.model_id)
+      })
+      .catch(() => {
+        /* keep fallback label */
+      })
+  }, [digimonId])
+
+  const portrait = modelId ? digimonPortraitUrl(modelId, digimonId, name) : undefined
+
+  return (
+    <button
+      type="button"
+      className="community-guide-digimon-link"
+      onClick={(e) => {
+        e.preventDefault()
+        openDigimonRoot(digimonId)
+      }}
+    >
+      {portrait ? (
+        <img
+          className="community-guide-digimon-link__icon"
+          src={portrait}
+          alt=""
+          width={16}
+          height={16}
+        />
+      ) : (
+        <span className="community-guide-digimon-link__icon-fallback" aria-hidden>
+          ·
+        </span>
+      )}
+      <span>{name}</span>
+    </button>
+  )
+}
+
 function CommunityGuideQuestLink({
   questId,
   labelFallback,
@@ -88,6 +142,8 @@ function renderInlineEmbed(embed: CommunityGuideEmbed, key: string): ReactNode {
       return <CommunityGuideItemLink key={key} itemId={embed.id} labelFallback={label} />
     case 'quest':
       return <CommunityGuideQuestLink key={key} questId={embed.id} labelFallback={label} />
+    case 'digimon':
+      return <CommunityGuideDigimonLink key={key} digimonId={embed.id} labelFallback={label} />
     default:
       return label
   }
@@ -106,7 +162,7 @@ function renderLineWithEmbeds(line: string, lineKey: string): ReactNode {
     parts.push(
       renderInlineEmbed(
         {
-          kind: match[1] as 'item' | 'quest',
+          kind: match[1] as 'item' | 'quest' | 'digimon',
           id: match[2]!.trim(),
           label: match[3]?.trim() || undefined,
         },
