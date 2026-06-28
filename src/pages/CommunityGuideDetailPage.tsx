@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { CommunityGuideBody } from '../components/communityGuides/CommunityGuideBody'
+import { CommunityGuideSocialLinks } from '../components/communityGuides/CommunityGuideSocialLinks'
 import { GuidebookWikiOverlayProvider } from '../components/guidebook/GuidebookWikiOverlay'
 import {
   communityGuideShareUrl,
@@ -173,77 +174,81 @@ export function CommunityGuideDetailPage() {
   return (
     <GuidebookWikiOverlayProvider>
       <article className="community-guides-page community-guides-detail">
-        <Link to="/guides" className="community-guides-back">
-          ← All guides
-        </Link>
-
-        <header className="community-guides-detail__head">
-          <div className="community-guides-detail__main">
-            <h1 className="community-guides-detail__title">{guide.title}</h1>
-            <p className="community-guides-detail__author">
-              by <span className="community-guides-detail__author-name">{guide.author_name}</span>
-            </p>
-            <p className="community-guides-detail__meta">
-              Updated {formatGuideDate(guide.updated_at)} · {formatCommunityGuideViewCount(viewCount)}{' '}
-              views
-            </p>
-
-            <div className="community-guides-detail__actions">
+        <div className="community-guides-detail__shell">
+          <div className="community-guides-detail__toolbar">
+            <Link to="/guides" className="community-guides-detail__back">
+              ← All guides
+            </Link>
+            <div className="community-guides-detail__toolbar-actions">
               <button
                 type="button"
-                className={`community-guides-heart${hearted ? ' is-hearted' : ''}`}
+                className={`community-guides-heart community-guides-detail__tool${hearted ? ' is-hearted' : ''}`}
                 disabled={!authReady || !user || heartBusy}
                 onClick={() => void onHeart()}
                 title={user ? (hearted ? 'Remove heart' : 'Heart this guide') : 'Sign in to heart'}
               >
                 ♥ {guide.heart_count}
               </button>
-            </div>
-
-            {error ? <p className="community-guides-error">{error}</p> : null}
-
-            {shareLinkVisible ? (
-              <div className="community-guides-detail__share">
-                <span className="community-guides-detail__share-label">Share link</span>
-                <a href={shareUrl} className="community-guides-detail__share-url">
-                  {shareUrl}
-                </a>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="community-guides-detail__aside">
-            {isAuthor ? (
-              <Link
-                to={`/guides/edit/${guide.id}`}
-                className="community-guides-btn community-guides-btn--ghost community-guides-detail__aside-btn"
-              >
-                Edit guide
-              </Link>
-            ) : null}
-            {isAuthor ? (
               <button
                 type="button"
-                className="community-guides-btn community-guides-btn--danger community-guides-detail__aside-btn"
-                disabled={deleteBusy}
-                onClick={() => void onDelete()}
+                className="community-guides-btn community-guides-btn--ghost community-guides-detail__tool"
+                onClick={() => void onCopyShareLink()}
               >
-                {deleteBusy ? 'Deleting…' : 'Delete guide'}
+                {shareCopied ? 'Link copied' : 'Copy share link'}
               </button>
-            ) : null}
-            <button
-              type="button"
-              className="community-guides-btn community-guides-btn--ghost community-guides-detail__aside-btn"
-              onClick={() => void onCopyShareLink()}
-            >
-              {shareCopied ? 'Link copied' : 'Copy share link'}
-            </button>
+              {isAuthor ? (
+                <Link
+                  to={`/guides/edit/${guide.id}`}
+                  className="community-guides-btn community-guides-btn--ghost community-guides-detail__tool"
+                >
+                  Edit
+                </Link>
+              ) : null}
+              {isAuthor ? (
+                <button
+                  type="button"
+                  className="community-guides-btn community-guides-btn--danger community-guides-detail__tool"
+                  disabled={deleteBusy}
+                  onClick={() => void onDelete()}
+                >
+                  {deleteBusy ? 'Deleting…' : 'Delete'}
+                </button>
+              ) : null}
+            </div>
           </div>
-        </header>
 
-        <section className="community-guides-detail__content" aria-label="Guide content">
-          <CommunityGuideBody body={guide.body} />
-        </section>
+          <header className="community-guides-detail__header">
+            <h1 className="community-guides-detail__title">{guide.title}</h1>
+            <p className="community-guides-detail__byline">
+              by{' '}
+              <span className="community-guides-detail__author-name">{guide.author_name}</span>
+              <span className="community-guides-detail__byline-sep" aria-hidden>
+                ·
+              </span>
+              <time dateTime={guide.updated_at}>Updated {formatGuideDate(guide.updated_at)}</time>
+              <span className="community-guides-detail__byline-sep" aria-hidden>
+                ·
+              </span>
+              <span>{formatCommunityGuideViewCount(viewCount)} views</span>
+            </p>
+            <CommunityGuideSocialLinks links={guide.social_links} />
+          </header>
+
+          {shareLinkVisible ? (
+            <div className="community-guides-detail__share">
+              <span className="community-guides-detail__share-label">Share link</span>
+              <a href={shareUrl} className="community-guides-detail__share-url">
+                {shareUrl}
+              </a>
+            </div>
+          ) : null}
+
+          {error ? <p className="community-guides-error community-guides-detail__error">{error}</p> : null}
+
+          <section className="community-guides-detail__content" aria-label="Guide content">
+            <CommunityGuideBody body={guide.body} embedded />
+          </section>
+        </div>
       </article>
     </GuidebookWikiOverlayProvider>
   )

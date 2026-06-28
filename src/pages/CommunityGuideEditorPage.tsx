@@ -8,6 +8,8 @@ import { WikiItemSearchPicker } from '../components/communityGuides/WikiItemSear
 import { WikiQuestSearchPicker } from '../components/communityGuides/WikiQuestSearchPicker'
 import { WikiDigimonSearchPicker } from '../components/communityGuides/WikiDigimonSearchPicker'
 import { WikiDungeonSearchPicker } from '../components/communityGuides/WikiDungeonSearchPicker'
+import { CommunityGuideSocialLinksEditor, socialDraftsFromLinks, type CommunityGuideSocialDraft } from '../components/communityGuides/CommunityGuideSocialLinksEditor'
+import { CommunityGuideSocialLinks } from '../components/communityGuides/CommunityGuideSocialLinks'
 import { GuidebookWikiOverlayProvider } from '../components/guidebook/GuidebookWikiOverlay'
 import { communityGuideEmbedToken } from '../lib/communityGuideEmbed'
 import { isAllowedCommunityGuideImageUrl } from '../lib/communityGuideImageUrl'
@@ -57,6 +59,7 @@ export function CommunityGuideEditorPage() {
   const [title, setTitle] = useState('')
   const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [body, setBody] = useState('')
+  const [socialLinks, setSocialLinks] = useState<CommunityGuideSocialDraft[]>([])
   const [loading, setLoading] = useState(Boolean(id))
   const [saving, setSaving] = useState(false)
   const [savingAction, setSavingAction] = useState<'draft' | 'publish' | null>(null)
@@ -90,6 +93,7 @@ export function CommunityGuideEditorPage() {
         setThumbnailUrl(guide.thumbnail_url ?? '')
         setBody(guide.body)
         setGuideStatus(guide.status)
+        setSocialLinks(socialDraftsFromLinks(guide.social_links))
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load guide.')
@@ -175,7 +179,14 @@ export function CommunityGuideEditorPage() {
       setError(null)
       try {
         const authorName = profileDisplayName?.trim() || 'Player'
-        const payload = { title, body, authorName, thumbnailUrl: thumbnailUrl || null, status }
+        const payload = {
+          title,
+          body,
+          authorName,
+          thumbnailUrl: thumbnailUrl || null,
+          socialLinks: socialLinks.map(({ platform, url }) => ({ platform, url })),
+          status,
+        }
         if (id) {
           const updated = await updateCommunityGuide(supabase, id, user.id, payload)
           setGuideStatus(updated.status)
@@ -198,7 +209,7 @@ export function CommunityGuideEditorPage() {
         setSavingAction(null)
       }
     },
-    [supabase, user, id, title, body, thumbnailUrl, profileDisplayName, navigate],
+    [supabase, user, id, title, body, thumbnailUrl, socialLinks, profileDisplayName, navigate],
   )
 
   const onSaveDraft = useCallback(() => void saveGuide('draft'), [saveGuide])
@@ -279,6 +290,8 @@ export function CommunityGuideEditorPage() {
               />
             </div>
 
+            <CommunityGuideSocialLinksEditor links={socialLinks} onChange={setSocialLinks} />
+
             <div className="community-guides-editor__toolbar community-guides-editor__toolbar--wiki">
               <span className="community-guides-editor__toolbar-label">Wiki links</span>
               <button
@@ -343,6 +356,11 @@ export function CommunityGuideEditorPage() {
             {showPreview ? (
               <section className="community-guides-editor__preview" aria-label="Preview">
                 <h2 className="community-guides-editor__preview-title">Preview</h2>
+                <CommunityGuideSocialLinks
+                  links={socialLinks
+                    .filter((link) => link.url.trim())
+                    .map(({ platform, url }) => ({ platform, url: url.trim() }))}
+                />
                 <CommunityGuideBody body={body} />
               </section>
             ) : null}

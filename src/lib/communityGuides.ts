@@ -2,6 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveAppSiteOrigin } from '../config/site'
 import { isAllowedCommunityGuideImageUrl } from './communityGuideImageUrl'
 import { slugifyCommunityGuideTitle } from './communityGuideEmbed'
+import {
+  normalizeCommunityGuideSocialLinks,
+  parseCommunityGuideSocialInputs,
+  stripOptionalCommunityGuideFields,
+  type CommunityGuideSocialLink,
+} from './communityGuideSocials'
 export type CommunityGuide = {
   id: string
   author_id: string
@@ -13,6 +19,7 @@ export type CommunityGuide = {
   heart_count: number
   view_count: number
   status: 'draft' | 'published'
+  social_links: CommunityGuideSocialLink[]
   created_at: string
   updated_at: string
 }
@@ -44,6 +51,7 @@ function isMissingCommunityGuideColumnError(message: string): boolean {
     lower.includes('42703') ||
     lower.includes('thumbnail_url') ||
     lower.includes('view_count') ||
+    lower.includes('social_links') ||
     (lower.includes('column') && lower.includes('community_guides'))
   )
 }
@@ -80,6 +88,7 @@ function normalizeCommunityGuide(row: Record<string, unknown>): CommunityGuide {
     heart_count: Number(row.heart_count) || 0,
     view_count: Number(row.view_count) || 0,
     status: row.status === 'draft' ? 'draft' : 'published',
+    social_links: normalizeCommunityGuideSocialLinks(row.social_links),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   }
@@ -295,6 +304,7 @@ export type SaveCommunityGuideInput = {
   authorName: string
   slug?: string
   thumbnailUrl?: string | null
+  socialLinks?: { platform: string; url: string }[]
   status?: 'draft' | 'published'
 }
 
@@ -385,6 +395,7 @@ export async function createCommunityGuide(
   )
   let slug = await allocateCommunityGuideSlug(supabase, baseSlug)
   const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
+  const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
 
   const buildInsertRow = (nextSlug: string): Record<string, unknown> => {
     const row: Record<string, unknown> = {
@@ -394,6 +405,7 @@ export async function createCommunityGuide(
       slug: nextSlug,
       body,
       status,
+      social_links: socialLinks,
     }
     if (thumbnailUrl) row.thumbnail_url = thumbnailUrl
     return row
@@ -409,11 +421,13 @@ export async function createCommunityGuide(
 
     if (!error) return normalizeCommunityGuide(data as Record<string, unknown>)
 
-    if (error && isMissingCommunityGuideColumnError(error.message) && 'thumbnail_url' in insertRow) {
-      delete insertRow.thumbnail_url
-      const retry = await supabase.from('community_guides').insert(insertRow).select('*').single()
-      if (!retry.error) return normalizeCommunityGuide(retry.data as Record<string, unknown>)
-      error = retry.error
+    if (error && isMissingCommunityGuideColumnError(error.message)) {
+      const insertRowRetry = { ...insertRow }
+      if (stripOptionalCommunityGuideFields(insertRowRetry, error.message)) {
+        const retry = await supabase.from('community_guides').insert(insertRowRetry).select('*').single()
+        if (!retry.error) return normalizeCommunityGuide(retry.data as Record<string, unknown>)
+        error = retry.error
+      }
     }
 
     if (error && isDuplicateCommunityGuideSlugError(error.message) && attempt < 7) {
@@ -436,12 +450,14 @@ export async function updateCommunityGuide(
   const status = input.status ?? 'published'
   const { title, body, authorName } = normalizeSaveCommunityGuideInput(input, status)
   const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
+  const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
 
   const updateRow: Record<string, unknown> = {
     title,
     body,
     author_name: authorName,
     status,
+    social_links: socialLinks,
     updated_at: new Date().toISOString(),
   }
   if (thumbnailUrl !== null || input.thumbnailUrl === '') {
@@ -456,17 +472,19 @@ export async function updateCommunityGuide(
     .select('*')
     .single()
 
-  if (error && isMissingCommunityGuideColumnError(error.message) && 'thumbnail_url' in updateRow) {
-    delete updateRow.thumbnail_url
-    const retry = await supabase
-      .from('community_guides')
-      .update(updateRow)
-      .eq('id', guideId)
-      .eq('author_id', userId)
-      .select('*')
-      .single()
-    data = retry.data
-    error = retry.error
+  if (error && isMissingCommunityGuideColumnError(error.message)) {
+    const updateRowRetry = { ...updateRow }
+    if (stripOptionalCommunityGuideFields(updateRowRetry, error.message)) {
+      const retry = await supabase
+        .from('community_guides')
+        .update(updateRowRetry)
+        .eq('id', guideId)
+        .eq('author_id', userId)
+        .select('*')
+        .single()
+      data = retry.data
+      error = retry.error
+    }
   }
 
   if (error) throw new Error(formatCommunityGuideError(error.message))

@@ -4,42 +4,49 @@ import { inlineCommunityGuideMarkdown } from '../../lib/communityGuideInlineMark
 import { digimonPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
 import {
   getGuidebookDigimonDetailCached,
-  getGuidebookItemDetailCached,
   loadGuidebookDigimonDetail,
-  loadGuidebookItemDetail,
 } from '../../lib/guidebookWikiCache'
+import { resolveWikiItemByNameOrId } from '../../lib/wikiItemResolve'
 import {
   INLINE_EMBED_RE,
   parseDungeonBlockEmbed,
   type CommunityGuideEmbed,
 } from '../../lib/communityGuideEmbed'
 import { parseCommunityGuideImageMarkdown } from '../../lib/communityGuideImageUrl'
+import { parseCommunityGuideTableBlock, mergeCommunityGuideTableChunks } from '../../lib/communityGuideMarkdownTable'
 import { GuidebookDungeonPanel } from '../guidebook/GuidebookWidgets'
 import { useGuidebookWikiOverlay } from '../guidebook/GuidebookWikiOverlay'
 import { CommunityGuideImage } from './CommunityGuideImage'
+import { CommunityGuideTableCard } from './CommunityGuideTableCard'
 
 function CommunityGuideItemLink({
-  itemId,
+  itemRef,
   labelFallback,
 }: {
-  itemId: string
+  itemRef: string
   labelFallback: string
 }) {
   const { openItemRoot } = useGuidebookWikiOverlay()
-  const cached = getGuidebookItemDetailCached(itemId)
-  const [iconId, setIconId] = useState(cached?.icon_id ?? '')
-  const [name, setName] = useState(cached?.name ?? labelFallback)
+  const [resolvedId, setResolvedId] = useState<string | null>(null)
+  const [iconId, setIconId] = useState('')
+  const [name, setName] = useState(labelFallback)
 
   useEffect(() => {
-    void loadGuidebookItemDetail(itemId)
-      .then((detail) => {
-        setIconId(detail.icon_id)
-        setName(detail.name)
+    let cancelled = false
+    void resolveWikiItemByNameOrId(itemRef, labelFallback)
+      .then((item) => {
+        if (cancelled || !item) return
+        setResolvedId(item.id)
+        setIconId(item.icon_id)
+        setName(item.name)
       })
       .catch(() => {
         /* keep fallback label */
       })
-  }, [itemId])
+    return () => {
+      cancelled = true
+    }
+  }, [itemRef, labelFallback])
 
   const icon = wikiItemIconUrl(iconId)
 
@@ -47,9 +54,10 @@ function CommunityGuideItemLink({
     <button
       type="button"
       className="community-guide-item-link"
+      disabled={!resolvedId}
       onClick={(e) => {
         e.preventDefault()
-        openItemRoot(itemId)
+        if (resolvedId) openItemRoot(resolvedId)
       }}
     >
       {icon ? (
@@ -139,7 +147,13 @@ function renderInlineEmbed(embed: CommunityGuideEmbed, key: string): ReactNode {
   const label = embed.label ?? embed.id
   switch (embed.kind) {
     case 'item':
-      return <CommunityGuideItemLink key={key} itemId={embed.id} labelFallback={label} />
+      return (
+        <CommunityGuideItemLink
+          key={key}
+          itemRef={embed.label?.trim() || embed.id}
+          labelFallback={embed.label?.trim() || embed.id}
+        />
+      )
     case 'quest':
       return <CommunityGuideQuestLink key={key} questId={embed.id} labelFallback={label} />
     case 'digimon':
@@ -216,6 +230,17 @@ function renderMarkdownChunk(chunk: string, key: number): ReactNode | null {
     return <CommunityGuideDungeonBlock key={key} embed={dungeonEmbed} />
   }
 
+  const tableBlock = parseCommunityGuideTableBlock(chunk)
+  if (tableBlock) {
+    return (
+      <CommunityGuideTableCard
+        key={key}
+        table={tableBlock}
+        renderCell={(content, cellKey) => renderLineWithEmbeds(content, cellKey)}
+      />
+    )
+  }
+
   const lines = chunk.split('\n')
   const trimmed = lines.map((l) => l.trim())
   const nonEmpty = trimmed.filter(Boolean)
@@ -281,13 +306,24 @@ function renderMarkdownChunk(chunk: string, key: number): ReactNode | null {
   return renderProseParagraph(lines, key)
 }
 
-export function CommunityGuideBody({ body }: { body: string }) {
-  const chunks = body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+export function CommunityGuideBody({ body, embedded = false }: { body: string; embedded?: boolean }) {
+  const chunks = mergeCommunityGuideTableChunks(
+    body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean),
+  )
+  const className = [
+    'community-guide-body',
+    'guidebook-prose',
+    'community-guide-md',
+    embedded ? 'community-guide-body--embedded' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   if (!chunks.length) {
     return <p className="community-guide-body__empty">This guide has no content yet.</p>
   }
   return (
-    <div className="community-guide-body guidebook-prose community-guide-md">
+    <div className={className}>
       {chunks.map((chunk, i) => renderMarkdownChunk(chunk, i))}
     </div>
   )

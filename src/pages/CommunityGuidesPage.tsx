@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { CommunityGuideThumbnail } from '../components/communityGuides/CommunityGuideThumbnail'
+import { wikiItemIconUrl } from '../lib/digimonImage'
 import {
   COMMUNITY_GUIDE_SORT_OPTIONS,
   fetchAuthorCommunityGuides,
@@ -11,11 +12,58 @@ import {
   type CommunityGuideListItem,
   type CommunityGuideSort,
 } from '../lib/communityGuides'
+import { isPinnedCommunityGuideSlug, PINNED_COMMUNITY_GUIDES } from '../lib/communityGuidePinned'
+import { GEAR_STATS_CATEGORIES } from '../lib/gearStatsReference'
 
 function formatGuideDate(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function PinnedGuideTile({
+  slug,
+  title,
+  authorName,
+}: {
+  slug: string
+  title: string
+  authorName: string
+}) {
+  const ringIcon = GEAR_STATS_CATEGORIES[0]?.pieces[0]?.iconId
+  const iconUrl = ringIcon ? wikiItemIconUrl(ringIcon) : undefined
+
+  return (
+    <li className="community-guides-tile community-guides-tile--pinned">
+      <Link to={`/guides/${slug}`} className="community-guides-tile__link">
+        <div className="community-guides-tile__media">
+          {iconUrl ? (
+            <div className="community-guides-thumbnail community-guides-thumbnail--item">
+              <img
+                className="community-guides-thumbnail__item"
+                src={iconUrl}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          ) : (
+            <CommunityGuideThumbnail url={null} />
+          )}
+          <span className="community-guides-tile__pinned-badge">Pinned</span>
+        </div>
+        <div className="community-guides-tile__body">
+          <h3 className="community-guides-tile__title">{title}</h3>
+          <p className="community-guides-tile__meta">
+            by <span className="community-guides-tile__author">{authorName}</span>
+          </p>
+          <div className="community-guides-tile__foot">
+            <span className="community-guides-tile__date">Always up-to-date</span>
+          </div>
+        </div>
+      </Link>
+    </li>
+  )
 }
 
 function GuideTile({
@@ -116,7 +164,10 @@ export function CommunityGuidesPage() {
   }, [supabase, user])
 
   const myGuideIds = useMemo(() => new Set(myGuides.map((g) => g.id)), [myGuides])
-  const sortedGuides = useMemo(() => sortCommunityGuides(guides, sort), [guides, sort])
+  const sortedGuides = useMemo(
+    () => sortCommunityGuides(guides, sort).filter((guide) => !isPinnedCommunityGuideSlug(guide.slug)),
+    [guides, sort],
+  )
 
   return (
     <div className="community-guides-page">
@@ -173,32 +224,42 @@ export function CommunityGuidesPage() {
         </section>
       ) : null}
 
-      {!loading && !error && guides.length === 0 ? (
+      {!loading && !error && guides.length === 0 && PINNED_COMMUNITY_GUIDES.length === 0 ? (
         <p className="community-guides-empty">No guides yet. Be the first to share one.</p>
       ) : null}
 
-      {!loading && guides.length > 0 ? (
+      {!loading && !error && (PINNED_COMMUNITY_GUIDES.length > 0 || guides.length > 0) ? (
         <section className="community-guides-section" aria-labelledby="all-guides-heading">
           <div className="community-guides-section__head">
             <h2 id="all-guides-heading" className="community-guides-section__title">
               {myGuides.length > 0 ? 'All guides' : 'Guides'}
             </h2>
-            <label className="community-guides-sort">
-              <span className="community-guides-sort__label">Sort by</span>
-              <select
-                className="community-guides-sort__select"
-                value={sort}
-                onChange={(e) => setSort(e.target.value as CommunityGuideSort)}
-              >
-                {COMMUNITY_GUIDE_SORT_OPTIONS.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {guides.length > 0 ? (
+              <label className="community-guides-sort">
+                <span className="community-guides-sort__label">Sort by</span>
+                <select
+                  className="community-guides-sort__select"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as CommunityGuideSort)}
+                >
+                  {COMMUNITY_GUIDE_SORT_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
           </div>
           <ul className="community-guides-grid">
+            {PINNED_COMMUNITY_GUIDES.map((guide) => (
+              <PinnedGuideTile
+                key={guide.slug}
+                slug={guide.slug}
+                title={guide.title}
+                authorName={guide.authorName}
+              />
+            ))}
             {sortedGuides.map((guide) => (
               <GuideTile key={guide.id} guide={guide} showEdit={myGuideIds.has(guide.id)} />
             ))}

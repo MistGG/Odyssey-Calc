@@ -183,7 +183,7 @@ export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGui
       },
       {
         label: 'Tank',
-        stats: 'HP, HP, Defense, Defense',
+        stats: 'HP, HP, Defense (or Basic Attribute), Defense (or Basic Attribute)',
         tone: 'tank',
       },
     ],
@@ -212,7 +212,7 @@ export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGui
       {
         label: 'Tank',
         stats:
-          'HP, HP, BL (Defense if your block seals can take you to near 100%), Defense',
+          'HP, HP, BL (Defense if your block seals can take you to near 100%), Defense (or Basic Attribute)',
         tone: 'tank',
       },
     ],
@@ -292,7 +292,7 @@ export const GUIDEBOOK_RING_ENTRIES: readonly GuidebookRingEntry[] = [
       },
       {
         label: 'Tank specific',
-        stats: 'HP, HP, DEF/Basic Attribute (ATT), DEF/Basic Attribute (ATT)',
+        stats: 'HP, HP, Defense (or Basic Attribute), Defense (or Basic Attribute)',
       },
     ],
   },

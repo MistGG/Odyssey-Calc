@@ -7,6 +7,10 @@ import {
   type CommunityGuideFontSize,
 } from '../../lib/communityGuideFontMarkup'
 import {
+  COMMUNITY_GUIDE_TABLE_TEMPLATE,
+  COMMUNITY_GUIDE_TABLE_WITH_ITEM_TEMPLATE,
+} from '../../lib/communityGuideMarkdownTable'
+import {
   insertTextareaBlock,
   prefixTextareaLines,
   setTextareaLinePrefix,
@@ -184,6 +188,24 @@ export function CommunityGuideMarkdownToolbar({
           onClick={() => run(textareaRef, onChange, (el) => insertTextareaBlock(el, '---'))}
         >
           —
+        </button>
+        <button
+          type="button"
+          className="community-guide-md-toolbar__btn"
+          title="Table (optionally add ### title and [[item:id|name]] above)"
+          onClick={() => run(textareaRef, onChange, (el) => insertTextareaBlock(el, COMMUNITY_GUIDE_TABLE_TEMPLATE))}
+        >
+          Table
+        </button>
+        <button
+          type="button"
+          className="community-guide-md-toolbar__btn"
+          title="Table with item name header"
+          onClick={() =>
+            run(textareaRef, onChange, (el) => insertTextareaBlock(el, COMMUNITY_GUIDE_TABLE_WITH_ITEM_TEMPLATE))
+          }
+        >
+          Item table
         </button>
         <button
           type="button"
