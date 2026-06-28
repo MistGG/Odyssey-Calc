@@ -3,47 +3,28 @@
  *
  *   node scripts/sync-forum-teaser.mjs
  *
- * Requires: playwright (installed in GHA or `npm install --no-save playwright`)
+ * ProBoards serves a POW bot challenge to headless browsers; we solve it in Node
+ * (see scripts/lib/proboardsPowBypass.mjs) so CI does not need Playwright.
  */
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { chromium } from 'playwright'
 
 import { imgurIdFromUrl, parseForumTeaserHtml } from './lib/parseForumTeaser.mjs'
+import { fetchProboardsPage } from './lib/proboardsPowBypass.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outDir = path.join(root, 'public', 'teasers')
 const manifestPath = path.join(root, 'public', 'data', 'teaser-manifest.json')
 const FORUM_HOME = 'https://digitalodyssey.proboards.com/'
-const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+const FETCH_TIMEOUT_MS = 120_000
 
 async function scrapeForumTeaser() {
-  const browser = await chromium.launch({ headless: true })
-  try {
-    const page = await browser.newPage({ userAgent: USER_AGENT })
-    await page.goto(FORUM_HOME, { waitUntil: 'domcontentloaded', timeout: 90_000 })
-    try {
-      await page.waitForSelector('.announcement-box img', { timeout: 45_000 })
-      const live = await page.evaluate(() => {
-        const box = document.querySelector('.announcement-box')
-        if (!box) return null
-        const img = box.querySelector('img')
-        const link = box.querySelector('a.announcement-link')
-        if (!img?.src || !link?.href) return null
-        return { imageRemoteUrl: img.src, readMoreUrl: link.href }
-      })
-      if (live?.imageRemoteUrl && live?.readMoreUrl) return live
-    } catch {
-      /* fall through to HTML parse */
-    }
-    const html = await page.content()
-    return parseForumTeaserHtml(html)
-  } finally {
-    await browser.close()
-  }
+  const { html } = await fetchProboardsPage(FORUM_HOME, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  })
+  return parseForumTeaserHtml(html)
 }
 
 function readManifest() {
