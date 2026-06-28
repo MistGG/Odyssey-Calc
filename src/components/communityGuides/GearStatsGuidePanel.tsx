@@ -1,4 +1,3 @@
-import { wikiItemPageUrl } from '../../api/itemService'
 import { wikiItemIconUrl } from '../../lib/digimonImage'
 import {
   formatGearStatRange,
@@ -13,12 +12,10 @@ function GearStatsPieceCard({
   piece,
   category,
   iconId,
-  itemId,
 }: {
   piece: GearStatsPiece
   category: GearStatsCategory
   iconId?: string
-  itemId?: string
 }) {
   const iconUrl = iconId ? wikiItemIconUrl(iconId) : undefined
   const wikiLabel = `${category.dataPrefix} Data: ${piece.name}`
@@ -28,34 +25,15 @@ function GearStatsPieceCard({
       <header className="gear-stats-piece__head">
         <div className="gear-stats-piece__icon-wrap">
           {iconUrl ? (
-            itemId ? (
-              <a
-                href={wikiItemPageUrl(itemId)}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="gear-stats-piece__icon-link"
-              >
-                <img
-                  className="gear-stats-piece__icon"
-                  src={iconUrl}
-                  alt=""
-                  width={48}
-                  height={48}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </a>
-            ) : (
-              <img
-                className="gear-stats-piece__icon"
-                src={iconUrl}
-                alt=""
-                width={48}
-                height={48}
-                loading="lazy"
-                decoding="async"
-              />
-            )
+            <img
+              className="gear-stats-piece__icon"
+              src={iconUrl}
+              alt=""
+              width={48}
+              height={48}
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <span className="gear-stats-piece__icon-fallback" aria-hidden>
               ?
@@ -115,7 +93,6 @@ export function GearStatsGuidePanel() {
                   piece={piece}
                   category={category}
                   iconId={resolved?.iconId ?? piece.iconId}
-                  itemId={resolved?.itemId ?? piece.wikiItemId}
                 />
               )
             })}
