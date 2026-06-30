@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-06-30T03:30:55.869Z",
+  "syncedAt": "2026-06-30T03:45:43.486Z",
   "shareId": "2bb157c9-224d-48ab-a6f2-697589ebe97a",
   "officialUrl": "https://docs.thedigitalodyssey.com/s/2bb157c9-224d-48ab-a6f2-697589ebe97a/?theme=dark",
   "entries": [
@@ -439,7 +439,7 @@
       "id": "fb8e3245-eb93-4c3f-af87-a47b247e8ce0",
       "slug": "2026-04-25-AaZ7sCq7oU",
       "title": "2026-04-25",
-      "text": "\\\n* Added an interface to confirm Digimon deletion in order to prevent accidentally deleting\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzBlMDVjMTFjLTkxYWYtNDMwYS04YTIxLTE2NThmM2Y2M2FjNi85MzRlODI0NS02NDRiLTRhOTEtYWY4Ny0yMDVkZDA1ZjliOTYvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODI3OTAyNTYsImV4cCI6MTc4Mjc5Mzg1Nn0.44XkptwXyjuMW2JmPLoeNXFWBAJRZf6TdpPJu6Z6ntw \" =471x266\")\n\n\nFixed Stale Buffs inside dungeons;",
+      "text": "\\\n* Added an interface to confirm Digimon deletion in order to prevent accidentally deleting\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzBlMDVjMTFjLTkxYWYtNDMwYS04YTIxLTE2NThmM2Y2M2FjNi85MzRlODI0NS02NDRiLTRhOTEtYWY4Ny0yMDVkZDA1ZjliOTYvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODI3OTExNDMsImV4cCI6MTc4Mjc5NDc0M30.Ez9K1WMQRsE_sW_9eFx47sYcv_Aac_JcNo93Z6ffgYs \" =471x266\")\n\n\nFixed Stale Buffs inside dungeons;",
       "updatedAt": "2026-04-26T00:02:08.919Z",
       "publishedAt": "2026-04-25T23:11:12.983Z"
     },
