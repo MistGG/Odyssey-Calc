@@ -70,6 +70,7 @@ import {
   WIKI_ELEMENT_OPTIONS,
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
+import { WIKI_RANK_LABELS, wikiRankLabelFromNumber } from '../lib/wikiRank'
 import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
 import { fetchPublishedTierListSnapshot, fetchPublishedTierChangeHistory } from '../lib/tierListPublished'
 import {
@@ -290,6 +291,7 @@ export function TierListPage() {
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([])
   const [selectedElements, setSelectedElements] = useState<string[]>([])
   const [selectedFamilies, setSelectedFamilies] = useState<string[]>([])
+  const [selectedRanks, setSelectedRanks] = useState<string[]>([])
   /** Planned queue length for the in-flight tier build (for progress UI; cleared when build ends). */
   const [tierBuildQueueTotal, setTierBuildQueueTotal] = useState<number | null>(null)
   const [updateSummary, setUpdateSummary] = useState<TierListUpdateSummary | null>(
@@ -1010,6 +1012,16 @@ export function TierListPage() {
     return ['All', ...preferred, ...rest]
   }, [tierEntryIds, listMeta])
 
+  const rankOptions = useMemo(() => {
+    const found = new Set<string>()
+    for (const id of tierEntryIds) {
+      const rankNum = listMeta[id]?.rank ?? cache?.entries[id]?.apiSnapshot?.rank
+      const label = wikiRankLabelFromNumber(rankNum ?? 0)
+      if (label) found.add(label)
+    }
+    return ['All', ...WIKI_RANK_LABELS.filter((x) => found.has(x))]
+  }, [tierEntryIds, listMeta, cache?.entries])
+
   const filteredEntries = useMemo(() => {
     const all = cache?.entries ?? {}
     const out: Record<string, SustainedDpsEntry> = {}
@@ -1032,6 +1044,11 @@ export function TierListPage() {
         )
         if (!match) continue
       }
+      if (selectedRanks.length > 0) {
+        const rankNum = meta?.rank ?? e.apiSnapshot?.rank
+        const label = wikiRankLabelFromNumber(rankNum ?? 0)
+        if (!label || !selectedRanks.includes(label)) continue
+      }
       out[id] = e
     }
     return out
@@ -1042,6 +1059,7 @@ export function TierListPage() {
     selectedAttributes,
     selectedElements,
     selectedFamilies,
+    selectedRanks,
     ignoreIncomplete,
   ])
 
@@ -1955,6 +1973,28 @@ export function TierListPage() {
                       type="button"
                       className="stage-tab tier-facet-tab"
                       onClick={() => toggleMultiFilter(s, setSelectedFamilies)}
+                      aria-pressed={selected}
+                    >
+                      {s}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-rank-label">
+              <span className="tier-filter-label" id="tier-filter-rank-label">
+                Rank
+              </span>
+              <div className="stage-tabs tier-filter-chips">
+                {rankOptions.map((s) => {
+                  const selected =
+                    s === 'All' ? selectedRanks.length === 0 : selectedRanks.includes(s)
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className="stage-tab tier-facet-tab"
+                      onClick={() => toggleMultiFilter(s, setSelectedRanks)}
                       aria-pressed={selected}
                     >
                       {s}
