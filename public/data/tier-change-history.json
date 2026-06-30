@@ -1,6 +1,1664 @@
 {
-  "updated_at": "2026-06-30T20:03:34.463Z",
+  "updated_at": "2026-06-30T21:48:26.215Z",
   "runs": [
+    {
+      "id": "2026-06-30T21:48:26.235Z-dgxhtj",
+      "finishedAt": "2026-06-30T21:48:26.235Z",
+      "mode": "force",
+      "refreshedCount": 439,
+      "apiCount": 60,
+      "tierCount": 62,
+      "sampleDigimon": [
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1un4asi",
+          "name": "Arkadimon Ultimate",
+          "cause": "api"
+        },
+        {
+          "id": "d1jidsdb",
+          "name": "Baihumon",
+          "cause": "api"
+        },
+        {
+          "id": "dccgvp5",
+          "name": "BanchouLeomon",
+          "cause": "api"
+        },
+        {
+          "id": "d1v6a4mo",
+          "name": "Barbamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1ua3ze0",
+          "name": "Belial Vamdemon",
+          "cause": "api"
+        },
+        {
+          "id": "dkd4rjy",
+          "name": "Belphemon: Rage Mode",
+          "cause": "api"
+        },
+        {
+          "id": "d1a1xzuc",
+          "name": "Belphemon: Sleep Mode",
+          "cause": "api"
+        },
+        {
+          "id": "d1u36138",
+          "name": "Big Mamemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1vhr9k1",
+          "name": "Brakedramon",
+          "cause": "api"
+        },
+        {
+          "id": "d7o5l1a",
+          "name": "Chaos Dukemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1tyih3f",
+          "name": "ChaosPiedmon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "dffhh64": [
+          "HP: 22496 -> 24577",
+          "Attack: 11212 -> 11854",
+          "Skill Digitalize of Soul base_dmg: 9700 -> 12533",
+          "Skill Digitalize of Soul scaling: 679 -> 1504",
+          "Skill Seiken Gradalpha base_dmg: 21300 -> 27521",
+          "Skill Seiken Gradalpha scaling: 1491 -> 2477",
+          "Skill Ultimate Digitalize base_dmg: 13324 -> 21900",
+          "Skill Ultimate Digitalize scaling: 932 -> 1971"
+        ],
+        "d1un4asi": [
+          "HP: 22295 -> 24554",
+          "Skill Exile Spear scaling: 581 -> 996",
+          "Skill Dot Matrix scaling: 1295 -> 1665",
+          "Skill Dot Matrix Crush scaling: 1278 -> 1644",
+          "Skill Chaos Chain Reaction scaling: 4368 -> 6989"
+        ],
+        "d1jidsdb": [
+          "HP: 23195 -> 24793",
+          "Skill Kongou scaling: 605 -> 1037",
+          "Skill Tekkosou scaling: 1448 -> 1861",
+          "Skill White Tiger Surge scaling: 1370 -> 1761",
+          "Skill Kongou Devastation scaling: 7313 -> 9751"
+        ],
+        "dccgvp5": [
+          "Skill King Lion base_dmg: 5425 -> 9997",
+          "Skill King Lion scaling: 379 -> 900"
+        ],
+        "d1v6a4mo": [
+          "Role: \"Support\" -> \"Caster\"",
+          "HP: 28967 -> 23154",
+          "Attack: 4786 -> 7150",
+          "Stats.ds: 61414 -> 55637",
+          "Stats.defense: 704 -> 637",
+          "Stats.crit_rate: 4114 -> 4343",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3035 -> 3263"
+        ],
+        "d1ua3ze0": [
+          "Skill Sodom and Gomorrah base_dmg: 5802 -> 14208",
+          "Skill Sodom and Gomorrah scaling: 406 -> 1279"
+        ],
+        "dkd4rjy": [
+          "Skill Rage Breaker Impact base_dmg: 4764 -> 10643",
+          "Skill Rage Breaker Impact scaling: 334 -> 958"
+        ],
+        "d1a1xzuc": [
+          "Skill Eternal Slumber base_dmg: 4723 -> 9954",
+          "Skill Eternal Slumber scaling: 331 -> 896"
+        ],
+        "d1u36138": [
+          "Skill Buster Dive cast_time: 2 -> 2.6",
+          "Skill Big Smiley Bomber cast_time: 2.5 -> 2.6",
+          "Skill Mamemon Pat cast_time: 3 -> 1.5"
+        ],
+        "d1vhr9k1": [
+          "Skill Infinity Boring base_dmg: 4392 -> 9497",
+          "Skill Infinity Boring scaling: 307 -> 855"
+        ],
+        "d7o5l1a": [
+          "HP: 23185 -> 24602",
+          "Skill Demon's Disaster scaling: 574 -> 984",
+          "Skill Judecca Prison scaling: 1288 -> 1656",
+          "Skill Gram of Hades scaling: 1192 -> 1533",
+          "Skill Bloody Tempest scaling: 10234 -> 13646"
+        ],
+        "d1tyih3f": [
+          "HP: 27287 -> 32028",
+          "Skill Masks Square scaling: 169 -> 460",
+          "Skill Trump Sword 2 scaling: 283 -> 727",
+          "Skill Chaos Grand Guignol scaling: 997 -> 1282",
+          "Skill Marionette Catastrophe scaling: 8560 -> 11413"
+        ],
+        "d1kcmd1q": [
+          "HP: 23553 -> 24680",
+          "Skill Chaos Crusher scaling: 474 -> 949",
+          "Skill Hyper Mugen Cannon scaling: 1055 -> 1582",
+          "Skill Siege Engine Charge scaling: 1077 -> 1384",
+          "Skill Omega Annihilation Field scaling: 8994 -> 11992"
+        ],
+        "dx0m1jn": [
+          "Role: \"Tank\" -> \"Caster\"",
+          "HP: 47005 -> 23909",
+          "Attack: 5580 -> 7046",
+          "Stats.ds: 25610 -> 55637",
+          "Stats.defense: 1978 -> 661",
+          "Stats.crit_rate: 4084 -> 4343",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3238 -> 3002"
+        ],
+        "d764v8e": [
+          "Skill Royal Execution Pierce base_dmg: 4551 -> 11845",
+          "Skill Royal Execution Pierce scaling: 317 -> 1066"
+        ],
+        "dn8zobu": [
+          "HP: 22295 -> 24320",
+          "Skill Great Beast-Wolf Rotation scaling: 567 -> 972",
+          "Skill Fury: Ice Moon Fang scaling: 1278 -> 1642",
+          "Skill Fenrir Sword scaling: 1245 -> 1601",
+          "Skill Full Moon Blaster scaling: 6521 -> 8695"
+        ],
+        "d17h7zns": [
+          "Skill Gigastic Lance base_dmg: 4250 -> 7377",
+          "Skill Gigastic Lance scaling: 298 -> 443",
+          "Skill Demon Stab Burst base_dmg: 4435 -> 8861",
+          "Skill Demon Stab Burst scaling: 310 -> 797"
+        ],
+        "d3qe76m": [
+          "HP: 22964 -> 24501",
+          "Skill Doru Diin scaling: 588 -> 1008",
+          "Skill Metal Impulse scaling: 1306 -> 1678",
+          "Skill X-Eraser Nova scaling: 1214 -> 1561",
+          "Skill Dead-X Evolution scaling: 10420 -> 13894"
+        ],
+        "d18ap589": [
+          "HP: 24111 -> 24742",
+          "Skill Process F scaling: 512 -> 1024",
+          "Skill Process O scaling: 1580 -> 2369",
+          "Skill X-Termination Wave scaling: 1053 -> 1579",
+          "Skill Oblivion Singularity scaling: 8088 -> 12940"
+        ],
+        "d1m5hyp7": [
+          "Skill Crimson Purge cooldown: 60 -> 31.2"
+        ],
+        "d14qie1i": [
+          "Skill Chaos Plague base_dmg: 5373 -> 9912",
+          "Skill Chaos Plague scaling: 376 -> 892"
+        ],
+        "d8nc5yn": [
+          "HP: 22295 -> 24395",
+          "Skill Doru Diin scaling: 532 -> 912",
+          "Skill Brave Metal scaling: 1250 -> 1606",
+          "Skill Metal Meteor scaling: 1021 -> 1313",
+          "Skill Cannon Rave scaling: 5350 -> 7133"
+        ],
+        "d8c8hgt": [
+          "HP: 22295 -> 24203",
+          "Skill Black Aura Blast scaling: 609 -> 1044",
+          "Skill Extincton Wave scaling: 1327 -> 1706",
+          "Skill Cavalier Victoria scaling: 796 -> 1194",
+          "Skill Sword of Annihilation scaling: 7444 -> 9926"
+        ],
+        "ds8bjit": [
+          "Skill Lightning Joust base_dmg: 4764 -> 11965",
+          "Skill Lightning Joust scaling: 334 -> 1077"
+        ],
+        "d3gby2n": [
+          "Role: \"Ranged DPS\" -> \"Caster\"",
+          "HP: 19825 -> 23946",
+          "Attack: 10637 -> 7047",
+          "Stats.ds: 20250 -> 55660",
+          "Stats.defense: 510 -> 661",
+          "Stats.crit_rate: 3983 -> 4274",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3196 -> 3002"
+        ],
+        "dw24vbb": [
+          "HP: 23117 -> 24183",
+          "Attack: 11252 -> 11905",
+          "Skill Critical Arm base_dmg: 9498 -> 12510",
+          "Skill Critical Arm scaling: 570 -> 1502",
+          "Skill Malt Cyclone base_dmg: 20888 -> 27512",
+          "Skill Malt Cyclone scaling: 1253 -> 2477",
+          "Skill Malt Cyclone cast_time: 3 -> 3.3",
+          "Skill Fujin Tempest Slicer name: \"Fujin Tempest Descent\" -> \"Fujin Tempest Slicer\""
+        ],
+        "d1lk2vyj": [
+          "HP: 23101 -> 24638",
+          "Skill Striking With Fists scaling: 567 -> 972",
+          "Skill Quake! Blast! Fire! Father! scaling: 1278 -> 1642",
+          "Skill Flipping Table In Anger scaling: 1245 -> 1601",
+          "Skill Ascetic Impact Drive scaling: 5736 -> 7648"
+        ],
+        "d1b77qqr": [
+          "HP: 22204 -> 24174",
+          "Skill Catastrophe scaling: 366 -> 730",
+          "Skill Dimension Scissors scaling: 914 -> 1371",
+          "Skill Catastrophe Claw scaling: 774 -> 1161",
+          "Skill Grand Catastrophe scaling: 6691 -> 10704"
+        ],
+        "d1c81r0i": [
+          "Skill Giant Scissors base_dmg: 3942 -> 5095",
+          "Skill Giant Scissors scaling: 236 -> 306"
+        ],
+        "dy10wzd": [
+          "HP: 22633 -> 24251",
+          "Skill Tekken Seibai scaling: 630 -> 1080",
+          "Skill Schwertgeist scaling: 1419 -> 1825",
+          "Skill Un Pour Tous scaling: 1370 -> 1761",
+          "Skill Knight’s Verdict Assault scaling: 7242 -> 9656"
+        ],
+        "d1ol71ie": [
+          "HP: 21008 -> 24150",
+          "Skill Justice Kick scaling: 336 -> 672",
+          "Skill Critical Arm scaling: 840 -> 1262",
+          "Skill Justice Impact Field scaling: 722 -> 1082",
+          "Skill Final Justice scaling: 4442 -> 7107"
+        ],
+        "djwfsba": [
+          "HP: 21008 -> 24150",
+          "Skill Accel Arm scaling: 327 -> 651",
+          "Skill Justice Kick scaling: 817 -> 1224",
+          "Skill Justice Impact Field scaling: 706 -> 1058",
+          "Skill Critical Arm name: \"Final Justice\" -> \"Critical Arm\"",
+          "Skill Critical Arm scaling: 4421 -> 7073",
+          "Skill Critical Arm description: \"Justimon launches skyward and descends with the full force of the Justice Kick concentrated into a single crushing blow, delivering a decisive strike that ends the fight on impact.\" -> \"Attacks the enemy with cutter-type skill\""
+        ],
+        "d1a79mzn": [
+          "HP: 21450 -> 24342",
+          "Skill Hikuzuryuujin scaling: 208 -> 515",
+          "Skill Enryogeki scaling: 555 -> 867",
+          "Skill Kuzuryujin scaling: 136 -> 148"
+        ],
+        "d1u2az0u": [
+          "Skill King Stick base_dmg: 4018 -> 5098",
+          "Skill King Stick scaling: 242 -> 306"
+        ],
+        "d1h6b9yz": [
+          "Skill Envious Gorge base_dmg: 4856 -> 10111",
+          "Skill Envious Gorge scaling: 340 -> 910"
+        ],
+        "d104y2rc": [
+          "Role: \"Support\" -> \"Caster\"",
+          "HP: 28947 -> 23211",
+          "Attack: 4813 -> 7283",
+          "Stats.ds: 60814 -> 55500",
+          "Stats.defense: 690 -> 621",
+          "Stats.crit_rate: 4031 -> 4422",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3539 -> 3586"
+        ],
+        "d4nl79b": [
+          "Skill Argent Fear base_dmg: 5633 -> 13803",
+          "Skill Argent Fear scaling: 394 -> 1242"
+        ],
+        "dnmr9hc": [
+          "Skill Divine Atonement base_dmg: 5130 -> 12814",
+          "Skill Divine Atonement scaling: 279 -> 434",
+          "Skill Divine Atonement cast_time: 0.8 -> 2.3",
+          "Skill Protect base_dmg: 14195 -> 36987",
+          "Skill Protect scaling: 653 -> 982",
+          "Skill Protect cast_time: 1.4 -> 3",
+          "Skill Larval Salvation description: \"Lucemon Larva radiates an unsettling salvation from its primordial form. Restores 2783 HP (+167 per Skill Level) for 15 seconds.\" -> \"Lucemon Larva radiates an unsettling salvation from its primordial form. Restores 3120 HP (+187 per Skill Level) for 15 seconds.\"",
+          "Skill Larval Salvation buff description: \"Restores 2783 HP (+167 per Skill Level) for 15 seconds.\" -> \"Restores 3120 HP (+187 per Skill Level) for 15 seconds.\""
+        ],
+        "dfabzxw": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "HP: 21359 -> 22956",
+          "Attack: 11174 -> 7322",
+          "Stats.ds: 20710 -> 55185",
+          "Stats.defense: 570 -> 618",
+          "Stats.crit_rate: 4236 -> 4534",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3301 -> 3400"
+        ],
+        "d1bsszap": [
+          "Skill Grace Cross Freezer base_dmg: 3947 -> 6500",
+          "Skill Grace Cross Freezer scaling: 236 -> 390",
+          "Skill Grace Cross Freezer cast_time: 2 -> 4",
+          "Skill Absolute Zero Arsenal base_dmg: 7875 -> 10000",
+          "Skill Absolute Zero Arsenal scaling: 472 -> 600"
+        ],
+        "d1abt5e5": [
+          "Skill Poseidon Divide base_dmg: 3962 -> 5086",
+          "Skill Poseidon Divide scaling: 238 -> 305"
+        ],
+        "dwy8es3": [
+          "HP: 20566 -> 24273",
+          "Skill Meteor Shackle scaling: 428 -> 857",
+          "Skill Final Mirage Burst scaling: 974 -> 1462",
+          "Skill Phantom Velocity Rush scaling: 997 -> 1282",
+          "Skill Sonic Howl Breaker scaling: 8640 -> 11520"
+        ],
+        "da534d5": [
+          "Role: \"Support\" -> \"Caster\"",
+          "HP: 28954 -> 23374",
+          "Attack: 4787 -> 7165",
+          "Stats.ds: 60624 -> 55783",
+          "Stats.defense: 698 -> 634",
+          "Stats.crit_rate: 4253 -> 4375",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3308 -> 3277"
+        ],
+        "dpbsan4": [
+          "HP: 23617 -> 24330",
+          "Attack: 11947 -> 12125",
+          "Skill Flame Hellscythe base_dmg: 9600 -> 12524",
+          "Skill Flame Hellscythe scaling: 576 -> 1503",
+          "Skill Demon's Crystal base_dmg: 21000 -> 27396",
+          "Skill Demon's Crystal scaling: 1260 -> 2466",
+          "Skill Fallen Salvation Rupture base_dmg: 17200 -> 20400",
+          "Skill Fallen Salvation Rupture scaling: 1032 -> 1836"
+        ],
+        "der4hr2": [
+          "Role: \"Hybrid\" -> \"Caster\"",
+          "HP: 31054 -> 23774",
+          "Attack: 8206 -> 7189",
+          "Stats.ds: 39600 -> 55900",
+          "Stats.defense: 1023 -> 644",
+          "Stats.crit_rate: 3987 -> 4534",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3499 -> 3400"
+        ],
+        "drdz7ff": [
+          "HP: 22743 -> 24365",
+          "Skill Golden Armor scaling: 581 -> 995",
+          "Skill Eiseiry uoujin scaling: 1331 -> 1710",
+          "Skill Kouga Kensou scaling: 997 -> 1282",
+          "Skill Hachikouga scaling: 8988 -> 11984"
+        ],
+        "d1yast50": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "HP: 21008 -> 23660",
+          "Attack: 11115 -> 7124",
+          "Stats.ds: 24150 -> 54950",
+          "Stats.defense: 559 -> 591",
+          "Stats.crit_rate: 3818 -> 3835",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3143 -> 3150"
+        ],
+        "d1a8u0sl": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "HP: 22070 -> 22956",
+          "Attack: 11295 -> 7345",
+          "Stats.ds: 25252 -> 55185",
+          "Stats.defense: 581 -> 618",
+          "Stats.crit_rate: 4907 -> 4534",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3491 -> 3500"
+        ],
+        "d1swxqha": [
+          "Skill Nail Crusher base_dmg: 3717 -> 4152",
+          "Skill Nail Crusher scaling: 222 -> 249"
+        ],
+        "dc3qq4y": [
+          "Skill Shine Hammer base_dmg: 3951 -> 5184",
+          "Skill Shine Hammer scaling: 238 -> 311"
+        ],
+        "d12fy5lx": [
+          "Skill Solar Flare Charge base_dmg: 4764 -> 5407",
+          "Skill Solar Flare Charge scaling: 334 -> 487"
+        ],
+        "d8e94af": [
+          "Skill Charge base_dmg: 4014 -> 5097",
+          "Skill Charge scaling: 240 -> 306"
+        ],
+        "d1eru6rh": [
+          "HP: 21625 -> 24064",
+          "Attack: 10962 -> 11663",
+          "Skill Koryu Slash base_dmg: 7200 -> 9393",
+          "Skill Koryu Slash scaling: 504 -> 1128",
+          "Skill Tenryu Slash base_dmg: 17600 -> 22960",
+          "Skill Tenryu Slash scaling: 1232 -> 2067",
+          "Skill Kouga Tsuiba base_dmg: 10112 -> 18750",
+          "Skill Kouga Tsuiba scaling: 708 -> 1688"
+        ],
+        "d13bcyba": [
+          "HP: 21385 -> 24050",
+          "Skill Gear Stinger scaling: 511 -> 876",
+          "Skill Royal Meister scaling: 1236 -> 1588",
+          "Skill Mach Stinger V scaling: 907 -> 1167",
+          "Skill Papillon Vesper scaling: 4123 -> 6597"
+        ],
+        "d186rzyx": [
+          "Role: \"Hybrid\" -> \"Caster\"",
+          "HP: 31150 -> 24592",
+          "Attack: 8206 -> 7082",
+          "Stats.ds: 39600 -> 55900",
+          "Stats.defense: 1023 -> 670",
+          "Stats.crit_rate: 3914 -> 4534",
+          "Stats.atk_speed: 1500 -> 2000",
+          "Stats.evasion: 3463 -> 3128"
+        ],
+        "dl514np": [
+          "Skill Tensegrity Shield base_dmg: 4954 -> 10828",
+          "Skill Tensegrity Shield scaling: 347 -> 975",
+          "Skill Tensegrity Shield radius: 850 -> 1000"
+        ],
+        "dzgt7kb": [
+          "Skill Venom Infusion base_dmg: 3925 -> 5203",
+          "Skill Venom Infusion scaling: 236 -> 312"
+        ],
+        "dzkw288": [
+          "HP: 22964 -> 24437",
+          "Attack: 11095 -> 11727",
+          "Skill Trident Gaia base_dmg: 8520 -> 11222",
+          "Skill Trident Gaia scaling: 511 -> 1347",
+          "Skill Dramon Breaker base_dmg: 18800 -> 24762",
+          "Skill Dramon Breaker scaling: 1128 -> 2229",
+          "Skill Victory Charge base_dmg: 14243 -> 20400",
+          "Skill Victory Charge scaling: 997 -> 1836"
+        ],
+        "depf51l": [
+          "Skill Viking Axe base_dmg: 3956 -> 5163",
+          "Skill Viking Axe scaling: 238 -> 310"
+        ],
+        "dc8jatg": [
+          "HP: 22295 -> 24419",
+          "Skill Mystic Flame scaling: 522 -> 894",
+          "Skill Focal Blade scaling: 1243 -> 1598",
+          "Skill Zanma Tou scaling: 977 -> 1256",
+          "Skill Katsujin Ken scaling: 5117 -> 6823"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "lines": [
+            "HP: 22496 -> 24577",
+            "Attack: 11212 -> 11854",
+            "Skill Digitalize of Soul base_dmg: 9700 -> 12533",
+            "Skill Digitalize of Soul scaling: 679 -> 1504",
+            "Skill Seiken Gradalpha base_dmg: 21300 -> 27521",
+            "Skill Seiken Gradalpha scaling: 1491 -> 2477",
+            "Skill Ultimate Digitalize base_dmg: 13324 -> 21900",
+            "Skill Ultimate Digitalize scaling: 932 -> 1971"
+          ]
+        },
+        {
+          "id": "d1un4asi",
+          "name": "Arkadimon Ultimate",
+          "lines": [
+            "HP: 22295 -> 24554",
+            "Skill Exile Spear scaling: 581 -> 996",
+            "Skill Dot Matrix scaling: 1295 -> 1665",
+            "Skill Dot Matrix Crush scaling: 1278 -> 1644",
+            "Skill Chaos Chain Reaction scaling: 4368 -> 6989"
+          ]
+        },
+        {
+          "id": "d1jidsdb",
+          "name": "Baihumon",
+          "lines": [
+            "HP: 23195 -> 24793",
+            "Skill Kongou scaling: 605 -> 1037",
+            "Skill Tekkosou scaling: 1448 -> 1861",
+            "Skill White Tiger Surge scaling: 1370 -> 1761",
+            "Skill Kongou Devastation scaling: 7313 -> 9751"
+          ]
+        },
+        {
+          "id": "dccgvp5",
+          "name": "BanchouLeomon",
+          "lines": [
+            "Skill King Lion base_dmg: 5425 -> 9997",
+            "Skill King Lion scaling: 379 -> 900"
+          ]
+        },
+        {
+          "id": "d1v6a4mo",
+          "name": "Barbamon",
+          "lines": [
+            "Role: \"Support\" -> \"Caster\"",
+            "HP: 28967 -> 23154",
+            "Attack: 4786 -> 7150",
+            "Stats.ds: 61414 -> 55637",
+            "Stats.defense: 704 -> 637",
+            "Stats.crit_rate: 4114 -> 4343",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3035 -> 3263"
+          ]
+        },
+        {
+          "id": "d1ua3ze0",
+          "name": "Belial Vamdemon",
+          "lines": [
+            "Skill Sodom and Gomorrah base_dmg: 5802 -> 14208",
+            "Skill Sodom and Gomorrah scaling: 406 -> 1279"
+          ]
+        },
+        {
+          "id": "dkd4rjy",
+          "name": "Belphemon: Rage Mode",
+          "lines": [
+            "Skill Rage Breaker Impact base_dmg: 4764 -> 10643",
+            "Skill Rage Breaker Impact scaling: 334 -> 958"
+          ]
+        },
+        {
+          "id": "d1a1xzuc",
+          "name": "Belphemon: Sleep Mode",
+          "lines": [
+            "Skill Eternal Slumber base_dmg: 4723 -> 9954",
+            "Skill Eternal Slumber scaling: 331 -> 896"
+          ]
+        },
+        {
+          "id": "d1u36138",
+          "name": "Big Mamemon",
+          "lines": [
+            "Skill Buster Dive cast_time: 2 -> 2.6",
+            "Skill Big Smiley Bomber cast_time: 2.5 -> 2.6",
+            "Skill Mamemon Pat cast_time: 3 -> 1.5"
+          ]
+        },
+        {
+          "id": "d1vhr9k1",
+          "name": "Brakedramon",
+          "lines": [
+            "Skill Infinity Boring base_dmg: 4392 -> 9497",
+            "Skill Infinity Boring scaling: 307 -> 855"
+          ]
+        },
+        {
+          "id": "d7o5l1a",
+          "name": "Chaos Dukemon",
+          "lines": [
+            "HP: 23185 -> 24602",
+            "Skill Demon's Disaster scaling: 574 -> 984",
+            "Skill Judecca Prison scaling: 1288 -> 1656",
+            "Skill Gram of Hades scaling: 1192 -> 1533",
+            "Skill Bloody Tempest scaling: 10234 -> 13646"
+          ]
+        },
+        {
+          "id": "d1tyih3f",
+          "name": "ChaosPiedmon",
+          "lines": [
+            "HP: 27287 -> 32028",
+            "Skill Masks Square scaling: 169 -> 460",
+            "Skill Trump Sword 2 scaling: 283 -> 727",
+            "Skill Chaos Grand Guignol scaling: 997 -> 1282",
+            "Skill Marionette Catastrophe scaling: 8560 -> 11413"
+          ]
+        },
+        {
+          "id": "d1kcmd1q",
+          "name": "Chaosdramon",
+          "lines": [
+            "HP: 23553 -> 24680",
+            "Skill Chaos Crusher scaling: 474 -> 949",
+            "Skill Hyper Mugen Cannon scaling: 1055 -> 1582",
+            "Skill Siege Engine Charge scaling: 1077 -> 1384",
+            "Skill Omega Annihilation Field scaling: 8994 -> 11992"
+          ]
+        },
+        {
+          "id": "dx0m1jn",
+          "name": "Cherubimon",
+          "lines": [
+            "Role: \"Tank\" -> \"Caster\"",
+            "HP: 47005 -> 23909",
+            "Attack: 5580 -> 7046",
+            "Stats.ds: 25610 -> 55637",
+            "Stats.defense: 1978 -> 661",
+            "Stats.crit_rate: 4084 -> 4343",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3238 -> 3002"
+          ]
+        },
+        {
+          "id": "d764v8e",
+          "name": "Craniummon",
+          "lines": [
+            "Skill Royal Execution Pierce base_dmg: 4551 -> 11845",
+            "Skill Royal Execution Pierce scaling: 317 -> 1066"
+          ]
+        },
+        {
+          "id": "dn8zobu",
+          "name": "Cres Garurumon",
+          "lines": [
+            "HP: 22295 -> 24320",
+            "Skill Great Beast-Wolf Rotation scaling: 567 -> 972",
+            "Skill Fury: Ice Moon Fang scaling: 1278 -> 1642",
+            "Skill Fenrir Sword scaling: 1245 -> 1601",
+            "Skill Full Moon Blaster scaling: 6521 -> 8695"
+          ]
+        },
+        {
+          "id": "d17h7zns",
+          "name": "DarkDramon",
+          "lines": [
+            "Skill Gigastic Lance base_dmg: 4250 -> 7377",
+            "Skill Gigastic Lance scaling: 298 -> 443",
+            "Skill Demon Stab Burst base_dmg: 4435 -> 8861",
+            "Skill Demon Stab Burst scaling: 310 -> 797"
+          ]
+        },
+        {
+          "id": "d3qe76m",
+          "name": "Death-X-DORUgoramon",
+          "lines": [
+            "HP: 22964 -> 24501",
+            "Skill Doru Diin scaling: 588 -> 1008",
+            "Skill Metal Impulse scaling: 1306 -> 1678",
+            "Skill X-Eraser Nova scaling: 1214 -> 1561",
+            "Skill Dead-X Evolution scaling: 10420 -> 13894"
+          ]
+        },
+        {
+          "id": "d18ap589",
+          "name": "Death-X-mon",
+          "lines": [
+            "HP: 24111 -> 24742",
+            "Skill Process F scaling: 512 -> 1024",
+            "Skill Process O scaling: 1580 -> 2369",
+            "Skill X-Termination Wave scaling: 1053 -> 1579",
+            "Skill Oblivion Singularity scaling: 8088 -> 12940"
+          ]
+        },
+        {
+          "id": "d1m5hyp7",
+          "name": "Demon",
+          "lines": [
+            "Skill Crimson Purge cooldown: 60 -> 31.2"
+          ]
+        },
+        {
+          "id": "d14qie1i",
+          "name": "Diablomon",
+          "lines": [
+            "Skill Chaos Plague base_dmg: 5373 -> 9912",
+            "Skill Chaos Plague scaling: 376 -> 892"
+          ]
+        },
+        {
+          "id": "d8nc5yn",
+          "name": "Dorugoramon",
+          "lines": [
+            "HP: 22295 -> 24395",
+            "Skill Doru Diin scaling: 532 -> 912",
+            "Skill Brave Metal scaling: 1250 -> 1606",
+            "Skill Metal Meteor scaling: 1021 -> 1313",
+            "Skill Cannon Rave scaling: 5350 -> 7133"
+          ]
+        },
+        {
+          "id": "d8c8hgt",
+          "name": "Duftmon",
+          "lines": [
+            "HP: 22295 -> 24203",
+            "Skill Black Aura Blast scaling: 609 -> 1044",
+            "Skill Extincton Wave scaling: 1327 -> 1706",
+            "Skill Cavalier Victoria scaling: 796 -> 1194",
+            "Skill Sword of Annihilation scaling: 7444 -> 9926"
+          ]
+        },
+        {
+          "id": "ds8bjit",
+          "name": "Dukemon",
+          "lines": [
+            "Skill Lightning Joust base_dmg: 4764 -> 11965",
+            "Skill Lightning Joust scaling: 334 -> 1077"
+          ]
+        },
+        {
+          "id": "d3gby2n",
+          "name": "Dynasmon",
+          "lines": [
+            "Role: \"Ranged DPS\" -> \"Caster\"",
+            "HP: 19825 -> 23946",
+            "Attack: 10637 -> 7047",
+            "Stats.ds: 20250 -> 55660",
+            "Stats.defense: 510 -> 661",
+            "Stats.crit_rate: 3983 -> 4274",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3196 -> 3002"
+          ]
+        },
+        {
+          "id": "dw24vbb",
+          "name": "Fujinmon",
+          "lines": [
+            "HP: 23117 -> 24183",
+            "Attack: 11252 -> 11905",
+            "Skill Critical Arm base_dmg: 9498 -> 12510",
+            "Skill Critical Arm scaling: 570 -> 1502",
+            "Skill Malt Cyclone base_dmg: 20888 -> 27512",
+            "Skill Malt Cyclone scaling: 1253 -> 2477",
+            "Skill Malt Cyclone cast_time: 3 -> 3.3",
+            "Skill Fujin Tempest Slicer name: \"Fujin Tempest Descent\" -> \"Fujin Tempest Slicer\""
+          ]
+        },
+        {
+          "id": "d1lk2vyj",
+          "name": "Gankoomon",
+          "lines": [
+            "HP: 23101 -> 24638",
+            "Skill Striking With Fists scaling: 567 -> 972",
+            "Skill Quake! Blast! Fire! Father! scaling: 1278 -> 1642",
+            "Skill Flipping Table In Anger scaling: 1245 -> 1601",
+            "Skill Ascetic Impact Drive scaling: 5736 -> 7648"
+          ]
+        },
+        {
+          "id": "d1b77qqr",
+          "name": "GrandKuwagamon",
+          "lines": [
+            "HP: 22204 -> 24174",
+            "Skill Catastrophe scaling: 366 -> 730",
+            "Skill Dimension Scissors scaling: 914 -> 1371",
+            "Skill Catastrophe Claw scaling: 774 -> 1161",
+            "Skill Grand Catastrophe scaling: 6691 -> 10704"
+          ]
+        },
+        {
+          "id": "d1c81r0i",
+          "name": "HerculesKabuterimon",
+          "lines": [
+            "Skill Giant Scissors base_dmg: 3942 -> 5095",
+            "Skill Giant Scissors scaling: 236 -> 306"
+          ]
+        },
+        {
+          "id": "dy10wzd",
+          "name": "Jesmon",
+          "lines": [
+            "HP: 22633 -> 24251",
+            "Skill Tekken Seibai scaling: 630 -> 1080",
+            "Skill Schwertgeist scaling: 1419 -> 1825",
+            "Skill Un Pour Tous scaling: 1370 -> 1761",
+            "Skill Knight’s Verdict Assault scaling: 7242 -> 9656"
+          ]
+        },
+        {
+          "id": "d1ol71ie",
+          "name": "Justimon",
+          "lines": [
+            "HP: 21008 -> 24150",
+            "Skill Justice Kick scaling: 336 -> 672",
+            "Skill Critical Arm scaling: 840 -> 1262",
+            "Skill Justice Impact Field scaling: 722 -> 1082",
+            "Skill Final Justice scaling: 4442 -> 7107"
+          ]
+        },
+        {
+          "id": "djwfsba",
+          "name": "Justimon",
+          "lines": [
+            "HP: 21008 -> 24150",
+            "Skill Accel Arm scaling: 327 -> 651",
+            "Skill Justice Kick scaling: 817 -> 1224",
+            "Skill Justice Impact Field scaling: 706 -> 1058",
+            "Skill Critical Arm name: \"Final Justice\" -> \"Critical Arm\"",
+            "Skill Critical Arm scaling: 4421 -> 7073",
+            "Skill Critical Arm description: \"Justimon launches skyward and descends with the full force of the Justice Kick concentrated into a single crushing blow, delivering a decisive strike that ends the fight on impact.\" -> \"Attacks the enemy with cutter-type skill\""
+          ]
+        },
+        {
+          "id": "d1a79mzn",
+          "name": "KaiserGreymon",
+          "lines": [
+            "HP: 21450 -> 24342",
+            "Skill Hikuzuryuujin scaling: 208 -> 515",
+            "Skill Enryogeki scaling: 555 -> 867",
+            "Skill Kuzuryujin scaling: 136 -> 148"
+          ]
+        },
+        {
+          "id": "d1u2az0u",
+          "name": "KingChessmon",
+          "lines": [
+            "Skill King Stick base_dmg: 4018 -> 5098",
+            "Skill King Stick scaling: 242 -> 306"
+          ]
+        },
+        {
+          "id": "d1h6b9yz",
+          "name": "Leviamon",
+          "lines": [
+            "Skill Envious Gorge base_dmg: 4856 -> 10111",
+            "Skill Envious Gorge scaling: 340 -> 910"
+          ]
+        },
+        {
+          "id": "d104y2rc",
+          "name": "Lilithmon",
+          "lines": [
+            "Role: \"Support\" -> \"Caster\"",
+            "HP: 28947 -> 23211",
+            "Attack: 4813 -> 7283",
+            "Stats.ds: 60814 -> 55500",
+            "Stats.defense: 690 -> 621",
+            "Stats.crit_rate: 4031 -> 4422",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3539 -> 3586"
+          ]
+        },
+        {
+          "id": "d4nl79b",
+          "name": "LordKnightmon",
+          "lines": [
+            "Skill Argent Fear base_dmg: 5633 -> 13803",
+            "Skill Argent Fear scaling: 394 -> 1242"
+          ]
+        },
+        {
+          "id": "dnmr9hc",
+          "name": "Lucemon Larva",
+          "lines": [
+            "Skill Divine Atonement base_dmg: 5130 -> 12814",
+            "Skill Divine Atonement scaling: 279 -> 434",
+            "Skill Divine Atonement cast_time: 0.8 -> 2.3",
+            "Skill Protect base_dmg: 14195 -> 36987",
+            "Skill Protect scaling: 653 -> 982",
+            "Skill Protect cast_time: 1.4 -> 3",
+            "Skill Larval Salvation description: \"Lucemon Larva radiates an unsettling salvation from its primordial form. Restores 2783 HP (+167 per Skill Level) for 15 seconds.\" -> \"Lucemon Larva radiates an unsettling salvation from its primordial form. Restores 3120 HP (+187 per Skill Level) for 15 seconds.\"",
+            "Skill Larval Salvation buff description: \"Restores 2783 HP (+167 per Skill Level) for 15 seconds.\" -> \"Restores 3120 HP (+187 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "dfabzxw",
+          "name": "Megidramon",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "HP: 21359 -> 22956",
+            "Attack: 11174 -> 7322",
+            "Stats.ds: 20710 -> 55185",
+            "Stats.defense: 570 -> 618",
+            "Stats.crit_rate: 4236 -> 4534",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3301 -> 3400"
+          ]
+        },
+        {
+          "id": "d1bsszap",
+          "name": "MetalGarurumon",
+          "lines": [
+            "Skill Grace Cross Freezer base_dmg: 3947 -> 6500",
+            "Skill Grace Cross Freezer scaling: 236 -> 390",
+            "Skill Grace Cross Freezer cast_time: 2 -> 4",
+            "Skill Absolute Zero Arsenal base_dmg: 7875 -> 10000",
+            "Skill Absolute Zero Arsenal scaling: 472 -> 600"
+          ]
+        },
+        {
+          "id": "d1abt5e5",
+          "name": "MetalSeadramon",
+          "lines": [
+            "Skill Poseidon Divide base_dmg: 3962 -> 5086",
+            "Skill Poseidon Divide scaling: 238 -> 305"
+          ]
+        },
+        {
+          "id": "dwy8es3",
+          "name": "MirageGaogamon: BurstMode",
+          "lines": [
+            "HP: 20566 -> 24273",
+            "Skill Meteor Shackle scaling: 428 -> 857",
+            "Skill Final Mirage Burst scaling: 974 -> 1462",
+            "Skill Phantom Velocity Rush scaling: 997 -> 1282",
+            "Skill Sonic Howl Breaker scaling: 8640 -> 11520"
+          ]
+        },
+        {
+          "id": "da534d5",
+          "name": "Murmukusmon",
+          "lines": [
+            "Role: \"Support\" -> \"Caster\"",
+            "HP: 28954 -> 23374",
+            "Attack: 4787 -> 7165",
+            "Stats.ds: 60624 -> 55783",
+            "Stats.defense: 698 -> 634",
+            "Stats.crit_rate: 4253 -> 4375",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3308 -> 3277"
+          ]
+        },
+        {
+          "id": "dpbsan4",
+          "name": "Ophanimon Falldown Mode",
+          "lines": [
+            "HP: 23617 -> 24330",
+            "Attack: 11947 -> 12125",
+            "Skill Flame Hellscythe base_dmg: 9600 -> 12524",
+            "Skill Flame Hellscythe scaling: 576 -> 1503",
+            "Skill Demon's Crystal base_dmg: 21000 -> 27396",
+            "Skill Demon's Crystal scaling: 1260 -> 2466",
+            "Skill Fallen Salvation Rupture base_dmg: 17200 -> 20400",
+            "Skill Fallen Salvation Rupture scaling: 1032 -> 1836"
+          ]
+        },
+        {
+          "id": "der4hr2",
+          "name": "Ornismon",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Caster\"",
+            "HP: 31054 -> 23774",
+            "Attack: 8206 -> 7189",
+            "Stats.ds: 39600 -> 55900",
+            "Stats.defense: 1023 -> 644",
+            "Stats.crit_rate: 3987 -> 4534",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3499 -> 3400"
+          ]
+        },
+        {
+          "id": "drdz7ff",
+          "name": "OuRyuumon",
+          "lines": [
+            "HP: 22743 -> 24365",
+            "Skill Golden Armor scaling: 581 -> 995",
+            "Skill Eiseiry uoujin scaling: 1331 -> 1710",
+            "Skill Kouga Kensou scaling: 997 -> 1282",
+            "Skill Hachikouga scaling: 8988 -> 11984"
+          ]
+        },
+        {
+          "id": "d1yast50",
+          "name": "Piedmon",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "HP: 21008 -> 23660",
+            "Attack: 11115 -> 7124",
+            "Stats.ds: 24150 -> 54950",
+            "Stats.defense: 559 -> 591",
+            "Stats.crit_rate: 3818 -> 3835",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3143 -> 3150"
+          ]
+        },
+        {
+          "id": "d1a8u0sl",
+          "name": "Ravemon: BurstMode",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "HP: 22070 -> 22956",
+            "Attack: 11295 -> 7345",
+            "Stats.ds: 25252 -> 55185",
+            "Stats.defense: 581 -> 618",
+            "Stats.crit_rate: 4907 -> 4534",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3491 -> 3500"
+          ]
+        },
+        {
+          "id": "d1swxqha",
+          "name": "SaberLeomon",
+          "lines": [
+            "Skill Nail Crusher base_dmg: 3717 -> 4152",
+            "Skill Nail Crusher scaling: 222 -> 249"
+          ]
+        },
+        {
+          "id": "dc3qq4y",
+          "name": "ShineGreymon",
+          "lines": [
+            "Skill Shine Hammer base_dmg: 3951 -> 5184",
+            "Skill Shine Hammer scaling: 238 -> 311"
+          ]
+        },
+        {
+          "id": "d12fy5lx",
+          "name": "ShineGreymon: BurstMode",
+          "lines": [
+            "Skill Solar Flare Charge base_dmg: 4764 -> 5407",
+            "Skill Solar Flare Charge scaling: 334 -> 487"
+          ]
+        },
+        {
+          "id": "d8e94af",
+          "name": "SkullMammothmon",
+          "lines": [
+            "Skill Charge base_dmg: 4014 -> 5097",
+            "Skill Charge scaling: 240 -> 306"
+          ]
+        },
+        {
+          "id": "d1eru6rh",
+          "name": "Slayerdramon",
+          "lines": [
+            "HP: 21625 -> 24064",
+            "Attack: 10962 -> 11663",
+            "Skill Koryu Slash base_dmg: 7200 -> 9393",
+            "Skill Koryu Slash scaling: 504 -> 1128",
+            "Skill Tenryu Slash base_dmg: 17600 -> 22960",
+            "Skill Tenryu Slash scaling: 1232 -> 2067",
+            "Skill Kouga Tsuiba base_dmg: 10112 -> 18750",
+            "Skill Kouga Tsuiba scaling: 708 -> 1688"
+          ]
+        },
+        {
+          "id": "d13bcyba",
+          "name": "TigerVespamon",
+          "lines": [
+            "HP: 21385 -> 24050",
+            "Skill Gear Stinger scaling: 511 -> 876",
+            "Skill Royal Meister scaling: 1236 -> 1588",
+            "Skill Mach Stinger V scaling: 907 -> 1167",
+            "Skill Papillon Vesper scaling: 4123 -> 6597"
+          ]
+        },
+        {
+          "id": "d186rzyx",
+          "name": "TyrantKabuterimon",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Caster\"",
+            "HP: 31150 -> 24592",
+            "Attack: 8206 -> 7082",
+            "Stats.ds: 39600 -> 55900",
+            "Stats.defense: 1023 -> 670",
+            "Stats.crit_rate: 3914 -> 4534",
+            "Stats.atk_speed: 1500 -> 2000",
+            "Stats.evasion: 3463 -> 3128"
+          ]
+        },
+        {
+          "id": "dl514np",
+          "name": "Ulforce V-dramon",
+          "lines": [
+            "Skill Tensegrity Shield base_dmg: 4954 -> 10828",
+            "Skill Tensegrity Shield scaling: 347 -> 975",
+            "Skill Tensegrity Shield radius: 850 -> 1000"
+          ]
+        },
+        {
+          "id": "dzgt7kb",
+          "name": "Venom Vamdemon",
+          "lines": [
+            "Skill Venom Infusion base_dmg: 3925 -> 5203",
+            "Skill Venom Infusion scaling: 236 -> 312"
+          ]
+        },
+        {
+          "id": "dzkw288",
+          "name": "VictoryGreymon",
+          "lines": [
+            "HP: 22964 -> 24437",
+            "Attack: 11095 -> 11727",
+            "Skill Trident Gaia base_dmg: 8520 -> 11222",
+            "Skill Trident Gaia scaling: 511 -> 1347",
+            "Skill Dramon Breaker base_dmg: 18800 -> 24762",
+            "Skill Dramon Breaker scaling: 1128 -> 2229",
+            "Skill Victory Charge base_dmg: 14243 -> 20400",
+            "Skill Victory Charge scaling: 997 -> 1836"
+          ]
+        },
+        {
+          "id": "depf51l",
+          "name": "Vikemon",
+          "lines": [
+            "Skill Viking Axe base_dmg: 3956 -> 5163",
+            "Skill Viking Axe scaling: 238 -> 310"
+          ]
+        },
+        {
+          "id": "dc8jatg",
+          "name": "Zanbamon",
+          "lines": [
+            "HP: 22295 -> 24419",
+            "Skill Mystic Flame scaling: 522 -> 894",
+            "Skill Focal Blade scaling: 1243 -> 1598",
+            "Skill Zanma Tou scaling: 977 -> 1256",
+            "Skill Katsujin Ken scaling: 5117 -> 6823"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-06-30T21:48:26.235Z",
+        "mode": "force",
+        "refreshedCount": 439,
+        "dpsUp": [
+          {
+            "id": "dffhh64",
+            "name": "Alphamon",
+            "role": "Melee DPS",
+            "before": 34685.634753100036,
+            "after": 53707.81564803516,
+            "delta": 19022.180894935125
+          },
+          {
+            "id": "d1un4asi",
+            "name": "Arkadimon Ultimate",
+            "role": "Melee DPS",
+            "before": 30784.55447355079,
+            "after": 37860.545266324705,
+            "delta": 7075.990792773915
+          },
+          {
+            "id": "d1jidsdb",
+            "name": "Baihumon",
+            "role": "Melee DPS",
+            "before": 28868.06862539571,
+            "after": 34454.37663198551,
+            "delta": 5586.308006589803
+          },
+          {
+            "id": "dccgvp5",
+            "name": "BanchouLeomon",
+            "role": "Tank",
+            "before": 16786.948179622425,
+            "after": 16884.244171153838,
+            "delta": 97.29599153141316
+          },
+          {
+            "id": "d1v6a4mo",
+            "name": "Barbamon",
+            "role": "Caster",
+            "before": 14202.134371999991,
+            "after": 57694.44092095119,
+            "delta": 43492.306548951194
+          },
+          {
+            "id": "d1ua3ze0",
+            "name": "Belial Vamdemon",
+            "role": "Tank",
+            "before": 21095.31517704193,
+            "after": 25189.591516666685,
+            "delta": 4094.2763396247537
+          },
+          {
+            "id": "dkd4rjy",
+            "name": "Belphemon: Rage Mode",
+            "role": "Tank",
+            "before": 18586.524760308705,
+            "after": 21150.85005405406,
+            "delta": 2564.3252937453544
+          },
+          {
+            "id": "d1a1xzuc",
+            "name": "Belphemon: Sleep Mode",
+            "role": "Tank",
+            "before": 17322.878758314855,
+            "after": 20469.66014128036,
+            "delta": 3146.781382965506
+          },
+          {
+            "id": "d1vhr9k1",
+            "name": "Brakedramon",
+            "role": "Tank",
+            "before": 14309.91319052863,
+            "after": 17255.70630379745,
+            "delta": 2945.793113268821
+          },
+          {
+            "id": "d7o5l1a",
+            "name": "Chaos Dukemon",
+            "role": "Melee DPS",
+            "before": 31561.01982525264,
+            "after": 37303.819872048596,
+            "delta": 5742.800046795957
+          },
+          {
+            "id": "d1tyih3f",
+            "name": "ChaosPiedmon",
+            "role": "Melee DPS",
+            "before": 19467.786715210645,
+            "after": 24650.48425413583,
+            "delta": 5182.697538925186
+          },
+          {
+            "id": "d1kcmd1q",
+            "name": "Chaosdramon",
+            "role": "Melee DPS",
+            "before": 29336.955032538626,
+            "after": 36374.21713780175,
+            "delta": 7037.262105263126
+          },
+          {
+            "id": "dx0m1jn",
+            "name": "Cherubimon",
+            "role": "Caster",
+            "before": 16043.723131593548,
+            "after": 56567.32796416864,
+            "delta": 40523.60483257509
+          },
+          {
+            "id": "d764v8e",
+            "name": "Craniummon",
+            "role": "Tank",
+            "before": 15163.665540510547,
+            "after": 18641.511070394736,
+            "delta": 3477.845529884189
+          },
+          {
+            "id": "dn8zobu",
+            "name": "Cres Garurumon",
+            "role": "Melee DPS",
+            "before": 25183.820356714517,
+            "after": 29702.330501111723,
+            "delta": 4518.510144397205
+          },
+          {
+            "id": "d17h7zns",
+            "name": "DarkDramon",
+            "role": "Tank",
+            "before": 10818.234596011103,
+            "after": 14684.793069967016,
+            "delta": 3866.5584739559126
+          },
+          {
+            "id": "d3qe76m",
+            "name": "Death-X-DORUgoramon",
+            "role": "Melee DPS",
+            "before": 28493.77146480356,
+            "after": 33826.98533147021,
+            "delta": 5333.213866666651
+          },
+          {
+            "id": "d18ap589",
+            "name": "Death-X-mon",
+            "role": "Melee DPS",
+            "before": 34632.10710454208,
+            "after": 44786.36231765681,
+            "delta": 10154.255213114724
+          },
+          {
+            "id": "d1m5hyp7",
+            "name": "Demon",
+            "role": "Caster",
+            "before": 54599.223591564914,
+            "after": 58864.39417292596,
+            "delta": 4265.170581361046
+          },
+          {
+            "id": "d14qie1i",
+            "name": "Diablomon",
+            "role": "Tank",
+            "before": 15795.51386563195,
+            "after": 19645.141516666677,
+            "delta": 3849.627651034727
+          },
+          {
+            "id": "d8nc5yn",
+            "name": "Dorugoramon",
+            "role": "Melee DPS",
+            "before": 33691.06690700665,
+            "after": 39097.88647264757,
+            "delta": 5406.8195656409225
+          },
+          {
+            "id": "d8c8hgt",
+            "name": "Duftmon",
+            "role": "Melee DPS",
+            "before": 28753.365421932303,
+            "after": 34554.16966971992,
+            "delta": 5800.804247787619
+          },
+          {
+            "id": "ds8bjit",
+            "name": "Dukemon",
+            "role": "Tank",
+            "before": 17071.310905077276,
+            "after": 20911.264740904102,
+            "delta": 3839.9538358268255
+          },
+          {
+            "id": "d3gby2n",
+            "name": "Dynasmon",
+            "role": "Caster",
+            "before": 29915.203933333938,
+            "after": 64272.65308687537,
+            "delta": 34357.44915354143
+          },
+          {
+            "id": "dw24vbb",
+            "name": "Fujinmon",
+            "role": "Melee DPS",
+            "before": 33862.85319760396,
+            "after": 54476.53011442222,
+            "delta": 20613.676916818258
+          },
+          {
+            "id": "d1lk2vyj",
+            "name": "Gankoomon",
+            "role": "Melee DPS",
+            "before": 29873.375203657895,
+            "after": 35093.80905736202,
+            "delta": 5220.433853704126
+          },
+          {
+            "id": "d1b77qqr",
+            "name": "GrandKuwagamon",
+            "role": "Melee DPS",
+            "before": 19331.71866566331,
+            "after": 24557.38836863361,
+            "delta": 5225.669702970299
+          },
+          {
+            "id": "d1c81r0i",
+            "name": "HerculesKabuterimon",
+            "role": "Tank",
+            "before": 11025.022234562464,
+            "after": 11574.845635773241,
+            "delta": 549.8234012107769
+          },
+          {
+            "id": "dy10wzd",
+            "name": "Jesmon",
+            "role": "Melee DPS",
+            "before": 32153.006603335547,
+            "after": 38760.478390922304,
+            "delta": 6607.471787586757
+          },
+          {
+            "id": "d1ol71ie",
+            "name": "Justimon",
+            "role": "Melee DPS",
+            "before": 24947.842891893273,
+            "after": 31831.375691893256,
+            "delta": 6883.532799999983
+          },
+          {
+            "id": "djwfsba",
+            "name": "Justimon",
+            "role": "Melee DPS",
+            "before": 26543.63287702655,
+            "after": 33775.79545582065,
+            "delta": 7232.1625787940975
+          },
+          {
+            "id": "d1a79mzn",
+            "name": "KaiserGreymon",
+            "role": "Melee DPS",
+            "before": 21963.627173570505,
+            "after": 24812.796240237163,
+            "delta": 2849.169066666658
+          },
+          {
+            "id": "d1u2az0u",
+            "name": "KingChessmon",
+            "role": "Tank",
+            "before": 10972.748124834434,
+            "after": 11612.551644969772,
+            "delta": 639.8035201353377
+          },
+          {
+            "id": "d1h6b9yz",
+            "name": "Leviamon",
+            "role": "Tank",
+            "before": 14746.42114248266,
+            "after": 17532.150377588303,
+            "delta": 2785.729235105642
+          },
+          {
+            "id": "d104y2rc",
+            "name": "Lilithmon",
+            "role": "Caster",
+            "before": 16439.048187278775,
+            "after": 68061.76839091154,
+            "delta": 51622.720203632765
+          },
+          {
+            "id": "d4nl79b",
+            "name": "LordKnightmon",
+            "role": "Tank",
+            "before": 18296.25624683196,
+            "after": 22566.425882872943,
+            "delta": 4270.169636040984
+          },
+          {
+            "id": "dnmr9hc",
+            "name": "Lucemon Larva",
+            "role": "Support",
+            "before": 14223.09243877778,
+            "after": 20197.660308203995,
+            "delta": 5974.567869426215
+          },
+          {
+            "id": "dfabzxw",
+            "name": "Megidramon",
+            "role": "Caster",
+            "before": 24589.16536011972,
+            "after": 71690.50419718937,
+            "delta": 47101.33883706965
+          },
+          {
+            "id": "d1abt5e5",
+            "name": "MetalSeadramon",
+            "role": "Tank",
+            "before": 10846.633717737503,
+            "after": 11539.880593080716,
+            "delta": 693.2468753432131
+          },
+          {
+            "id": "dwy8es3",
+            "name": "MirageGaogamon: BurstMode",
+            "role": "Melee DPS",
+            "before": 27178.16562535553,
+            "after": 33345.7261586889,
+            "delta": 6167.56053333337
+          },
+          {
+            "id": "da534d5",
+            "name": "Murmukusmon",
+            "role": "Caster",
+            "before": 14543.362879168972,
+            "after": 63412.69461778519,
+            "delta": 48869.33173861622
+          },
+          {
+            "id": "dpbsan4",
+            "name": "Ophanimon Falldown Mode",
+            "role": "Melee DPS",
+            "before": 31407.869794151316,
+            "after": 49153.849922203866,
+            "delta": 17745.98012805255
+          },
+          {
+            "id": "der4hr2",
+            "name": "Ornismon",
+            "role": "Caster",
+            "before": 23359.34939288434,
+            "after": 70027.34717751619,
+            "delta": 46667.99778463185
+          },
+          {
+            "id": "drdz7ff",
+            "name": "OuRyuumon",
+            "role": "Melee DPS",
+            "before": 28254.797279278166,
+            "after": 34378.72917380234,
+            "delta": 6123.931894524176
+          },
+          {
+            "id": "d1yast50",
+            "name": "Piedmon",
+            "role": "Caster",
+            "before": 23738.68941184563,
+            "after": 50165.19079494224,
+            "delta": 26426.50138309661
+          },
+          {
+            "id": "d1a8u0sl",
+            "name": "Ravemon: BurstMode",
+            "role": "Caster",
+            "before": 27037.191243509944,
+            "after": 64989.91624636494,
+            "delta": 37952.725002855
+          },
+          {
+            "id": "d1swxqha",
+            "name": "SaberLeomon",
+            "role": "Tank",
+            "before": 10527.874715312337,
+            "after": 10811.789541182989,
+            "delta": 283.91482587065184
+          },
+          {
+            "id": "dc3qq4y",
+            "name": "ShineGreymon",
+            "role": "Tank",
+            "before": 11197.722108227501,
+            "after": 11899.22183213694,
+            "delta": 701.4997239094391
+          },
+          {
+            "id": "d12fy5lx",
+            "name": "ShineGreymon: BurstMode",
+            "role": "Tank",
+            "before": 6599.82011583012,
+            "after": 6965.873224333335,
+            "delta": 366.0531085032153
+          },
+          {
+            "id": "d8e94af",
+            "name": "SkullMammothmon",
+            "role": "Tank",
+            "before": 9948.419917063706,
+            "after": 10289.795917063715,
+            "delta": 341.3760000000093
+          },
+          {
+            "id": "d1eru6rh",
+            "name": "Slayerdramon",
+            "role": "Melee DPS",
+            "before": 29656.893960484274,
+            "after": 44338.65413690867,
+            "delta": 14681.760176424395
+          },
+          {
+            "id": "d13bcyba",
+            "name": "TigerVespamon",
+            "role": "Melee DPS",
+            "before": 30232.558550117283,
+            "after": 35586.25999034801,
+            "delta": 5353.701440230725
+          },
+          {
+            "id": "d186rzyx",
+            "name": "TyrantKabuterimon",
+            "role": "Caster",
+            "before": 27424.897412455364,
+            "after": 67000.61456881034,
+            "delta": 39575.71715635498
+          },
+          {
+            "id": "dl514np",
+            "name": "Ulforce V-dramon",
+            "role": "Tank",
+            "before": 16686.037378646106,
+            "after": 20065.580184657527,
+            "delta": 3379.542806011421
+          },
+          {
+            "id": "dzgt7kb",
+            "name": "Venom Vamdemon",
+            "role": "Tank",
+            "before": 9534.404257237566,
+            "after": 10074.978249617476,
+            "delta": 540.5739923799101
+          },
+          {
+            "id": "dzkw288",
+            "name": "VictoryGreymon",
+            "role": "Melee DPS",
+            "before": 26598.269367955607,
+            "after": 41892.54200687414,
+            "delta": 15294.27263891853
+          },
+          {
+            "id": "depf51l",
+            "name": "Vikemon",
+            "role": "Tank",
+            "before": 10461.630839644633,
+            "after": 11075.943776901713,
+            "delta": 614.3129372570802
+          },
+          {
+            "id": "dc8jatg",
+            "name": "Zanbamon",
+            "role": "Melee DPS",
+            "before": 27851.08603017708,
+            "after": 33083.859720374276,
+            "delta": 5232.773690197195
+          },
+          {
+            "id": "dnvmrhg",
+            "name": "Boltmon",
+            "role": "Melee DPS",
+            "before": 20437.67775336263,
+            "after": 22032.93829784004,
+            "delta": 1595.260544477409
+          },
+          {
+            "id": "d1b204a4",
+            "name": "Baalmon",
+            "role": "Caster",
+            "before": 0,
+            "after": 78724.68505320448,
+            "delta": 78724.68505320448
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1u36138",
+            "name": "Big Mamemon",
+            "role": "Support",
+            "before": 8368.783197674424,
+            "after": 7808.2790934579525,
+            "delta": -560.5041042164712
+          },
+          {
+            "id": "d1bsszap",
+            "name": "MetalGarurumon",
+            "role": "Tank",
+            "before": 9421.065367700827,
+            "after": 8966.459938833334,
+            "delta": -454.6054288674932
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [
+          {
+            "id": "d1u36138",
+            "name": "Big Mamemon",
+            "role": "Support",
+            "before": 5.734893271406803,
+            "after": 5.765063197764529,
+            "delta": 0.03016992635772553
+          },
+          {
+            "id": "dnmr9hc",
+            "name": "Lucemon Larva",
+            "role": "Support",
+            "before": 6.0253998257179795,
+            "after": 6.116811639812355,
+            "delta": 0.09141181409437582
+          }
+        ],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "d1b204a4",
+            "name": "Baalmon",
+            "role": "Caster",
+            "from": "incomplete",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-06-30T20:03:34.494Z-t4ctdp",
       "finishedAt": "2026-06-30T20:03:34.494Z",
