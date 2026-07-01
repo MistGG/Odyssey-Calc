@@ -43,6 +43,9 @@ jobs:
           TIER_WORKER_SITE_ORIGIN: ${{ secrets.TIER_WORKER_SITE_ORIGIN }}
         run: node scripts/tier-worker-refresh.mjs
 
+      - name: Verify alternate structure digimon were indexed
+        run: node scripts/verify-tier-alternate-structure.mjs
+
       - name: Commit published tier snapshots
         id: commit_snapshots
         run: |

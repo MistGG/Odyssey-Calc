@@ -1,10 +1,12 @@
 import type { WikiDigimonDetail, WikiDigimonListItem, WikiDigimonSkin } from '../types/wikiApi'
 
-/** Wiki unlock item for skins that replace a Digimon's combat structure (separate tier-list entry). */
-export const ALTERNATE_STRUCTURE_MODULE = 'Alternate Structure Module'
+/** Wiki unlock item prefix for skins that replace a Digimon's combat structure (separate tier-list entry). */
+export const ALTERNATE_STRUCTURE_MODULE_PREFIX = 'Alternate Structure Module'
 
 export function isAlternateStructureSkin(skin: WikiDigimonSkin): boolean {
-  return (skin.unlock_item_name ?? '').trim() === ALTERNATE_STRUCTURE_MODULE
+  const unlockName = (skin.unlock_item_name ?? '').trim()
+  // e.g. "Alternate Structure Module" or "Alternate Structure Module (Ornismon)"
+  return new RegExp(`^${ALTERNATE_STRUCTURE_MODULE_PREFIX}\\b`, 'i').test(unlockName)
 }
 
 /** Override Digimon ids from Alternate Structure Module skins on a detail payload. */
