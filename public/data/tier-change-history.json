@@ -1,6 +1,169 @@
 {
-  "updated_at": "2026-06-30T21:48:26.215Z",
+  "updated_at": "2026-07-01T01:00:09.547Z",
   "runs": [
+    {
+      "id": "2026-07-01T01:00:09.566Z-zhxfkv",
+      "finishedAt": "2026-07-01T01:00:09.566Z",
+      "mode": "force",
+      "refreshedCount": 442,
+      "apiCount": 42,
+      "tierCount": 5,
+      "sampleDigimon": [
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1un4asi",
+          "name": "Arkadimon Ultimate",
+          "cause": "api"
+        },
+        {
+          "id": "d1b204a4",
+          "name": "Baalmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1jidsdb",
+          "name": "Baihumon",
+          "cause": "api"
+        },
+        {
+          "id": "d1v6a4mo",
+          "name": "Barbamon",
+          "cause": "api"
+        },
+        {
+          "id": "d7o5l1a",
+          "name": "Chaos Dukemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1tyih3f",
+          "name": "ChaosPiedmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1kcmd1q",
+          "name": "Chaosdramon",
+          "cause": "api"
+        },
+        {
+          "id": "dx0m1jn",
+          "name": "Cherubimon",
+          "cause": "api"
+        },
+        {
+          "id": "dn8zobu",
+          "name": "Cres Garurumon",
+          "cause": "api"
+        },
+        {
+          "id": "d3qe76m",
+          "name": "Death-X-DORUgoramon",
+          "cause": "api"
+        },
+        {
+          "id": "d18ap589",
+          "name": "Death-X-mon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-07-01T01:00:09.566Z",
+        "mode": "force",
+        "refreshedCount": 442,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "dijnp7z",
+            "name": "Monzaemon",
+            "role": "Hybrid",
+            "after": 7485.982504749999
+          },
+          {
+            "id": "d1846655",
+            "name": "WaruMonzaemon",
+            "role": "Hybrid",
+            "after": 7527.169599316674
+          },
+          {
+            "id": "dhs58kt",
+            "name": "Chaos Megidramon",
+            "role": "Tank",
+            "after": 17945.45134065935
+          },
+          {
+            "id": "d16e4fy1",
+            "name": "White Gale Ornismon",
+            "role": "Support",
+            "after": 19339.36952610309
+          },
+          {
+            "id": "d17wcc7a",
+            "name": "Obsidian Valor Ulforce V-dramon",
+            "role": "Melee DPS",
+            "after": 39174.53385517937
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "dhs58kt",
+            "name": "Chaos Megidramon",
+            "role": "Tank",
+            "after": 3.747981468021337
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d16e4fy1",
+            "name": "White Gale Ornismon",
+            "role": "Support",
+            "after": 5.744865355566145
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "dijnp7z",
+            "name": "Monzaemon",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d1846655",
+            "name": "WaruMonzaemon",
+            "role": "Hybrid",
+            "to": "incomplete"
+          },
+          {
+            "id": "dhs58kt",
+            "name": "Chaos Megidramon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d16e4fy1",
+            "name": "White Gale Ornismon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d17wcc7a",
+            "name": "Obsidian Valor Ulforce V-dramon",
+            "role": "Melee DPS",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-06-30T21:48:26.235Z-dgxhtj",
       "finishedAt": "2026-06-30T21:48:26.235Z",
