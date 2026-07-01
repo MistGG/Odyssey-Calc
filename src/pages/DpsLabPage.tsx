@@ -1793,10 +1793,8 @@ export function DpsLabPage() {
               {data && labAttrSkillDamageMult > 1 + 1e-9 ? (
                 <p className="lab-enemy-attr-active-hint" role="status">
                   {isOffTriangleWikiAttribute(data.attribute)
-                    ? 'Attribute matchup: Unknown / Free — '
-                    : targetEnemyAttribute === 'None'
-                      ? 'Attribute matchup: neutral enemy (None) — '
-                      : `Attribute matchup: your type beats ${targetEnemyAttribute} — `}
+                    ? 'Attribute matchup: Unknown '
+                    : `Attribute matchup: your type beats ${targetEnemyAttribute} `}
                   skill damage ×
                   {labAttrSkillDamageMult.toFixed(2).replace(/\.?0+$/, '')} on the full skill hit (
                   {labTrueViceFrac.attribute > 1e-9 &&

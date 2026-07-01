@@ -102,7 +102,9 @@ export function EnemyAttributeTargetField({
       {showLegend ? (
         <div className="enemy-attr-legend" aria-hidden="true">
           <p className="enemy-attr-legend-title">Attribute matchup</p>
-          <p className="enemy-attr-legend-sub">Vaccine · Data · Virus — ×{ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} skill damage when your attribute wins</p>
+          <p className="enemy-attr-legend-sub">
+            Vaccine · Data · Virus ×{ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} skill damage when your attribute wins
+          </p>
           <ul className="enemy-attr-legend-list">
             {ATTRIBUTE_TRIANGLE_EDGES.map(({ attacker, defender }) => (
               <li key={`${attacker}-${defender}`} className="enemy-attr-legend-item">
@@ -112,17 +114,10 @@ export function EnemyAttributeTargetField({
               </li>
             ))}
             <li className="enemy-attr-legend-item enemy-attr-legend-item--neutral">
-              <span className={pillClassForName('None')}>None</span>
-              <span className="enemy-attr-legend-beats">
-                {' '}
-                - Triangle skill dmg x {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}
-              </span>
-            </li>
-            <li className="enemy-attr-legend-item enemy-attr-legend-item--neutral">
               <span className="enemy-attr-pill enemy-attr-pill--misc">Unknown</span>
               <span className="enemy-attr-legend-beats">
                 {' '}
-                / Free — skill dmg x {ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} vs any enemy attribute
+                skill dmg x {ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} vs any enemy attribute
               </span>
             </li>
           </ul>
@@ -145,9 +140,8 @@ export function EnemyAttributeTargetField({
             </>
           ) : (
             <>
-              Your <span className={pillClassForName(aNorm)}>{aNorm}</span> is not on the triangle — choose enemy{' '}
-              <span className={pillClassForName('None')}>None</span> for ×{ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}{' '}
-              skills only.
+              Your <span className={pillClassForName(aNorm)}>{aNorm}</span> is not on the triangle and gets no
+              attribute matchup bonus.
             </>
           )}
           {value.trim() ? (

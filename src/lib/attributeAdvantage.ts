@@ -1,12 +1,11 @@
 /**
  * Wiki Vaccine / Data / Virus triangle: advantage grants extra **skill** damage (not auto-attack).
- * Wiki **None** (neutral enemy): triangle attackers get {@link ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}.
- * Wiki **Unknown** / **Free**: {@link ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} vs any selected enemy attribute.
- * Empty target in the UI means “no matchup” → no multiplier. Free is not a sim target option.
+ * Wiki **Unknown** / **Free**: {@link ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} vs Vaccine, Data, or Virus targets.
+ * **None** (neutral enemy) grants no attribute bonus. Empty target in the UI means “no matchup” → no multiplier.
  */
 export const ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT = 1.5
 
-/** Unknown / Free attackers: flat skill damage vs any enemy attribute target (Vaccine, Data, Virus, None). */
+/** Unknown / Free attackers: flat skill damage vs Vaccine, Data, or Virus enemy targets. */
 export const ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT = 1.375
 
 /** Strong matchup: attacker wiki attribute → enemy attribute it beats (rock–paper–scissors). */
@@ -61,8 +60,8 @@ export function attributeAdvantageSkillDamageMultiplier(
   const a = normalizeWikiAttribute(attackerAttribute)
   const d = normalizeWikiAttribute(targetEnemyAttribute)
   if (!d) return 1
+  if (d === 'None') return 1
   if (isOffTriangleWikiAttribute(a)) return ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT
-  if (d === 'None') return ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT
   if (!a) return 1
   if (BEATS[a] === d) return ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT
   return 1

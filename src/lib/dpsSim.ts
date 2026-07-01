@@ -155,7 +155,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 74
+export const TIER_DPS_SIM_REVISION = 75
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
