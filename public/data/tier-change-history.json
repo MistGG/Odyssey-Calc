@@ -1,6 +1,87 @@
 {
-  "updated_at": "2026-07-01T14:42:52.953Z",
+  "updated_at": "2026-07-01T17:12:47.856Z",
   "runs": [
+    {
+      "id": "2026-07-01T17:12:47.879Z-2j9nyv",
+      "finishedAt": "2026-07-01T17:12:47.879Z",
+      "mode": "force",
+      "refreshedCount": 442,
+      "apiCount": 0,
+      "tierCount": 4,
+      "sampleDigimon": [
+        {
+          "id": "dw24vbb",
+          "name": "Fujinmon",
+          "cause": "tier"
+        },
+        {
+          "id": "dy10wzd",
+          "name": "Jesmon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1724t3s",
+          "name": "ShoutmonX2",
+          "cause": "tier"
+        },
+        {
+          "id": "drh623u",
+          "name": "Dukemon Crimson Mode",
+          "cause": "tier"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-07-01T17:12:47.879Z",
+        "mode": "force",
+        "refreshedCount": 442,
+        "dpsUp": [
+          {
+            "id": "dw24vbb",
+            "name": "Fujinmon",
+            "role": "Melee DPS",
+            "before": 54476.53011442222,
+            "after": 56893.46737380001,
+            "delta": 2416.9372593777953
+          },
+          {
+            "id": "dy10wzd",
+            "name": "Jesmon",
+            "role": "Melee DPS",
+            "before": 38760.478390922304,
+            "after": 39119.971350685904,
+            "delta": 359.4929597636001
+          },
+          {
+            "id": "d1724t3s",
+            "name": "ShoutmonX2",
+            "role": "Tank",
+            "before": 9381.313033643413,
+            "after": 9448.220614313943,
+            "delta": 66.90758067052957
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "drh623u",
+            "name": "Dukemon Crimson Mode",
+            "role": "Hybrid",
+            "before": 30511.62302384379,
+            "after": 30286.923352541027,
+            "delta": -224.699671302762
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-01T14:42:52.974Z-lbiqag",
       "finishedAt": "2026-07-01T14:42:52.974Z",
