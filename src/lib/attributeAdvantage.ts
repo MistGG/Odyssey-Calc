@@ -1,9 +1,13 @@
 /**
  * Wiki Vaccine / Data / Virus triangle: advantage grants extra **skill** damage (not auto-attack).
- * Wiki **None** (neutral enemy): all attackers get the multiplier.
+ * Wiki **None** (neutral enemy): triangle attackers get {@link ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}.
+ * Wiki **Unknown** / **Free**: {@link ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} vs any selected enemy attribute.
  * Empty target in the UI means “no matchup” → no multiplier. Free is not a sim target option.
  */
 export const ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT = 1.5
+
+/** Unknown / Free attackers: flat skill damage vs any enemy attribute target (Vaccine, Data, Virus, None). */
+export const ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT = 1.375
 
 /** Strong matchup: attacker wiki attribute → enemy attribute it beats (rock–paper–scissors). */
 const BEATS: Record<string, string> = {
@@ -25,6 +29,12 @@ export function normalizeWikiAttribute(raw: string | null | undefined): string {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
 }
 
+/** Wiki Unknown or Free — off the Vaccine/Data/Virus triangle. */
+export function isOffTriangleWikiAttribute(attribute: string | null | undefined): boolean {
+  const a = normalizeWikiAttribute(attribute)
+  return a === 'Unknown' || a === 'Free'
+}
+
 /** Defender attribute this attacker beats in the triangle, or null if not on the triangle. */
 export function attributeTriangleStrongVs(attackerAttribute: string | null | undefined): string | null {
   const a = normalizeWikiAttribute(attackerAttribute)
@@ -43,7 +53,7 @@ export function attributeTriangleCountersEnemy(enemyAttribute: string | null | u
   return null
 }
 
-/** Skill-hit multiplier (1 or {@link ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}). */
+/** Skill-hit multiplier (1, {@link ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT}, or {@link ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}). */
 export function attributeAdvantageSkillDamageMultiplier(
   attackerAttribute: string | null | undefined,
   targetEnemyAttribute: string | null | undefined,
@@ -51,6 +61,7 @@ export function attributeAdvantageSkillDamageMultiplier(
   const a = normalizeWikiAttribute(attackerAttribute)
   const d = normalizeWikiAttribute(targetEnemyAttribute)
   if (!d) return 1
+  if (isOffTriangleWikiAttribute(a)) return ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT
   if (d === 'None') return ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT
   if (!a) return 1
   if (BEATS[a] === d) return ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT

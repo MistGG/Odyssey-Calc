@@ -155,7 +155,7 @@ export function clampRotationDurationSec(durationSec: number): number {
  * Bump when DPS-tier scoring inputs change (rotation sim and/or AoE DPS heuristics).
  * Tier list entries store this on refresh; a mismatch re-queues rows on incremental update.
  */
-export const TIER_DPS_SIM_REVISION = 72
+export const TIER_DPS_SIM_REVISION = 74
 
 /**
  * Wiki INT scaling (combat stat): 100 INT → +1% skill damage (when enabled), +1% healing amplification.
@@ -566,22 +566,21 @@ function skillOffCooldownAt(m: SimMutable, skillId: string, atSec: number): bool
 
 /**
  * Snapshot CDR: damaging, wiki support, and Digimon role skills off cooldown when the buff becomes
- * active get reduced CD on their next cast only. Excludes the CDR buff itself unless its cooldown
- * is shorter than buff duration.
+ * active get reduced CD on their next cast only. The CDR buff itself is handled at cast time
+ * ({@link castSupportProfile} applies CDR to its own cooldown immediately).
  */
 function applySnapshotCooldownReductionOnBuffStart(
   m: SimMutable,
   ctx: SimCtx,
   buffSkillId: string,
   cdrFraction: number,
-  buffDurationSec: number,
-  buffBaseCooldownSec: number,
+  _buffDurationSec: number,
+  _buffBaseCooldownSec: number,
   buffActiveAtSec: number,
 ) {
   if (cdrFraction <= 1e-9) return
-  const includeSelf = buffBaseCooldownSec < buffDurationSec
   const markSkill = (skillId: string) => {
-    if (skillId === buffSkillId && !includeSelf) return
+    if (skillId === buffSkillId) return
     if (!skillOffCooldownAt(m, skillId, buffActiveAtSec)) return
     const prev = m.nextCastCooldownReductionPct.get(skillId) ?? 0
     if (cdrFraction > prev) m.nextCastCooldownReductionPct.set(skillId, cdrFraction)
@@ -1357,13 +1356,16 @@ function castSupportProfile(
 ) {
   const castTime = supportCastTimeSec(chosen.skill)
   m.casts += 1
-  const cdSec = effectiveCooldownSecAfterCast(
+  let cdSec = effectiveCooldownSecAfterCast(
     m,
     chosen.skill.id,
     chosen.skill.cooldown_sec || 0,
     m.t,
     ctx.wikiInt,
   )
+  if (chosen.cooldownReductionPct > 1e-9) {
+    cdSec *= 1 - chosen.cooldownReductionPct
+  }
   if (recordEvents) {
     m.events.push({
       atSec: m.t,

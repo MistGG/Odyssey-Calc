@@ -34,6 +34,7 @@ import { TIER_DPS_SIM_REVISION } from '../lib/dpsSim'
 import {
   attributeAdvantageSkillDamageMultiplier,
   attributeAdvantageSkillDamageMultiplierWithFoldedTrueVice,
+  isOffTriangleWikiAttribute,
 } from '../lib/attributeAdvantage'
 import { digimonPortraitUrl, rankSpriteStyle, skillIconUrl } from '../lib/digimonImage'
 import { digimonStagePortraitGradient } from '../lib/digimonStage'
@@ -1791,9 +1792,11 @@ export function DpsLabPage() {
               </div>
               {data && labAttrSkillDamageMult > 1 + 1e-9 ? (
                 <p className="lab-enemy-attr-active-hint" role="status">
-                  {targetEnemyAttribute === 'None'
-                    ? 'Attribute matchup: neutral enemy (None) — '
-                    : `Attribute matchup: your type beats ${targetEnemyAttribute} — `}
+                  {isOffTriangleWikiAttribute(data.attribute)
+                    ? 'Attribute matchup: Unknown / Free — '
+                    : targetEnemyAttribute === 'None'
+                      ? 'Attribute matchup: neutral enemy (None) — '
+                      : `Attribute matchup: your type beats ${targetEnemyAttribute} — `}
                   skill damage ×
                   {labAttrSkillDamageMult.toFixed(2).replace(/\.?0+$/, '')} on the full skill hit (
                   {labTrueViceFrac.attribute > 1e-9 &&

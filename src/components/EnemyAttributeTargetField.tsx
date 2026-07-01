@@ -2,8 +2,10 @@ import type { ReactNode } from 'react'
 import {
   ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT,
   ATTRIBUTE_TRIANGLE_EDGES,
+  ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT,
   attributeAdvantageSkillDamageMultiplier,
   attributeTriangleStrongVs,
+  isOffTriangleWikiAttribute,
   normalizeWikiAttribute,
 } from '../lib/attributeAdvantage'
 import { DPS_TARGET_ENEMY_ATTRIBUTE_OPTIONS } from '../lib/wikiListFacetOptions'
@@ -113,7 +115,14 @@ export function EnemyAttributeTargetField({
               <span className={pillClassForName('None')}>None</span>
               <span className="enemy-attr-legend-beats">
                 {' '}
-                - All skill dmg x {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}
+                - Triangle skill dmg x {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT}
+              </span>
+            </li>
+            <li className="enemy-attr-legend-item enemy-attr-legend-item--neutral">
+              <span className="enemy-attr-pill enemy-attr-pill--misc">Unknown</span>
+              <span className="enemy-attr-legend-beats">
+                {' '}
+                / Free — skill dmg x {ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} vs any enemy attribute
               </span>
             </li>
           </ul>
@@ -128,6 +137,11 @@ export function EnemyAttributeTargetField({
               <span className={pillClassForName(strongVs)}>{strongVs}</span> — choose enemy attribute{' '}
               <span className={pillClassForName(strongVs)}>{strongVs}</span> for ×
               {ATTRIBUTE_ADVANTAGE_SKILL_DAMAGE_MULT} skill damage.
+            </>
+          ) : isOffTriangleWikiAttribute(aNorm) ? (
+            <>
+              Your <span className={pillClassForName(aNorm)}>{aNorm}</span> deals x
+              {ATTRIBUTE_UNKNOWN_SKILL_DAMAGE_MULT} skill damage vs any enemy attribute you select.
             </>
           ) : (
             <>
