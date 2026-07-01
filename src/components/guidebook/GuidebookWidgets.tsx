@@ -116,12 +116,16 @@ import {
   GUIDEBOOK_CORRUPTED_GEAR_GUIDES,
   GUIDEBOOK_CLONE_RECOMMENDATIONS,
   GUIDEBOOK_DARK_DIGICORE_ITEM_ID,
+  GUIDEBOOK_DARK_GEAR_GUIDES,
+  GUIDEBOOK_DARK_GEAR_TRADEABLE_DISCLAIMER,
   GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID,
+  guidebookDarkGearMaterials,
   GUIDEBOOK_PREPARING_APOCALYPSE_DARK_DIGICORE_COUNT,
   GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT,
   GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID,
   type GuidebookCorruptedCraftMaterial,
   type GuidebookCorruptedGearGuide,
+  type GuidebookDarkGearGuide,
   type GuidebookRingEntry,
   GUIDEBOOK_UNCAP_50_DUNGEON_ID,
   GUIDEBOOK_UNCAP_70_DUNGEON_ID,
@@ -2339,6 +2343,14 @@ export function GuideGearCorruptedChips() {
   return <GuidebookComingSoon />
 }
 
+export function GuideGearDarkAccessories() {
+  return (
+    <div className="guidebook-corrupted-page">
+      <GuidebookDarkCraftSection />
+    </div>
+  )
+}
+
 export function GuideGearDigiAura() {
   return (
     <>
@@ -2467,6 +2479,81 @@ function GuidebookCollectMaterialPick({
       )}
       <span className="guidebook-collect-pick__name">{name}</span>
     </button>
+  )
+}
+
+function GuidebookDarkAccessoryCraftCard({ guide }: { guide: GuidebookDarkGearGuide }) {
+  const materials = useMemo(() => guidebookDarkGearMaterials(guide), [guide])
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+  const selectedMaterial = materials.find((material) => material.itemId === selectedItemId)
+  const title = guide.craftLabel.replace(/\b\w/g, (char) => char.toUpperCase())
+
+  return (
+    <article className="guidebook-corrupted-stat-block" aria-label={title}>
+      <header className="guidebook-corrupted-stat-block__head">
+        <h4 className="guidebook-corrupted-stat-block__title">{title}</h4>
+        <p className="guidebook-corrupted-stat-block__craft muted">
+          Requires 1 {guide.prerequisiteLabel}
+        </p>
+      </header>
+
+      <div className="guidebook-corrupted-panel guidebook-corrupted-panel--materials">
+        <p className="guidebook-corrupted-materials">
+          <span className="guidebook-corrupted-materials__label">Per craft, collect</span>
+          {materials.map((material, index) => (
+            <span key={`${material.itemId}-${material.labelFallback}`}>
+              {index > 0 ? (
+                <span className="guidebook-corrupted-materials__label">
+                  {index === materials.length - 1 ? 'and' : ','}
+                </span>
+              ) : null}
+              <GuidebookCollectMaterialPick
+                material={material}
+                selected={selectedItemId === material.itemId}
+                onSelect={() =>
+                  setSelectedItemId((prev) =>
+                    prev === material.itemId ? null : material.itemId,
+                  )
+                }
+              />
+            </span>
+          ))}
+        </p>
+      </div>
+
+      <div className="guidebook-material-sources" aria-live="polite">
+        {selectedMaterial ? (
+          <GuideGearRaidSourcesSection
+            gearLabel={guide.gearLabel}
+            itemIds={[selectedMaterial.itemId]}
+            showWip={false}
+            dungeonAriaLabel={`${selectedMaterial.labelFallback} sources`}
+            dungeonEmptyMessage={`No sources are listed for ${selectedMaterial.labelFallback} yet.`}
+          />
+        ) : (
+          <p className="guidebook-material-sources__hint muted">
+            Select a material above to see where it drops.
+          </p>
+        )}
+      </div>
+    </article>
+  )
+}
+
+function GuidebookDarkCraftSection() {
+  return (
+    <GuidebookCorruptedSection
+      step={1}
+      title="Craft dark accessories"
+      lead="Upgrade each corrupted accessory at Zudomon in Olympus. Material costs below are per craft."
+    >
+      <p className="guidebook-corrupted-note muted">{GUIDEBOOK_DARK_GEAR_TRADEABLE_DISCLAIMER}</p>
+      <div className="guidebook-corrupted-stat-blocks">
+        {GUIDEBOOK_DARK_GEAR_GUIDES.map((guide) => (
+          <GuidebookDarkAccessoryCraftCard key={guide.slug} guide={guide} />
+        ))}
+      </div>
+    </GuidebookCorruptedSection>
   )
 }
 

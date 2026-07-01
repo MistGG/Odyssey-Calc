@@ -24498,9 +24498,13 @@ a.guidebook-monster-panel__loot-btn:hover {
   background: rgba(192, 132, 252, 0.07);
 }
 
+.guidebook-board__cluster--dark-gear {
+  border-color: rgba(220, 38, 38, 0.42);
+  background: linear-gradient(165deg, rgba(15, 15, 15, 0.72) 0%, rgba(69, 10, 10, 0.28) 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
 .guidebook-board__cluster-label {
-  display: block;
-  margin: 0 0 0.4rem 0.15rem;
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -24514,6 +24518,58 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 .guidebook-board__cluster--corrupted-gear .guidebook-board__cluster-label {
   color: #d8b4fe;
+}
+
+.guidebook-board__cluster--dark-gear .guidebook-board__cluster-label {
+  color: #f87171;
+}
+
+.guidebook-board__cluster-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0 0 0.4rem;
+  padding: 0.12rem 0.15rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 0.12s ease;
+}
+
+.guidebook-board__cluster-toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.guidebook-board__cluster.is-collapsed {
+  padding-bottom: 0.4rem;
+}
+
+.guidebook-board__cluster.is-collapsed .guidebook-board__cluster-toggle {
+  margin-bottom: 0;
+}
+
+.guidebook-board__cluster-chevron {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: transform 0.15s ease;
+}
+
+.guidebook-board__cluster-chevron.is-collapsed {
+  transform: rotate(-90deg);
+}
+
+.guidebook-board__cluster-meta {
+  margin-left: auto;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .guidebook-board__cluster-trail {
@@ -24633,6 +24689,27 @@ a.guidebook-monster-panel__loot-btn:hover {
 .guidebook-board__space--corrupted .guidebook-board__space-no {
   border-color: rgba(192, 132, 252, 0.5);
   color: #e9d5ff;
+}
+
+.guidebook-board__space--dark .guidebook-board__space-no {
+  border-color: rgba(220, 38, 38, 0.55);
+  background: rgba(10, 10, 10, 0.92);
+  color: #fca5a5;
+}
+
+.guidebook-board__space--dark {
+  border-color: rgba(127, 29, 29, 0.45);
+  background: rgba(10, 10, 10, 0.42);
+}
+
+.guidebook-board__space--dark:hover {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(30, 10, 10, 0.55);
+}
+
+.guidebook-board__space--dark.is-viewing {
+  border-color: rgba(248, 113, 113, 0.55);
+  box-shadow: 0 0 16px rgba(220, 38, 38, 0.18);
 }
 
 .guidebook-board__space--raid .guidebook-board__space-no {

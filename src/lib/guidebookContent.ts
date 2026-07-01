@@ -93,6 +93,94 @@ export const GUIDEBOOK_CORRUPTED_RING_ENERGIZED_DIGICORE_COUNT = 15
 /** Ring, necklace, and earring each use {@link GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS} independently. */
 export const GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT = 3
 
+/** Overloaded Dark DigiCore — dark accessory craft (100 required per piece). */
+export const GUIDEBOOK_OVERLOADED_DARK_DIGICORE_ITEM_ID = 'i1m4rskx'
+
+export const GUIDEBOOK_DARK_ACCESSORY_DARK_DIGICORE_COUNT = 50
+
+export const GUIDEBOOK_DARK_ACCESSORY_ENERGIZED_DIGICORE_COUNT = 25
+
+export const GUIDEBOOK_DARK_ACCESSORY_OVERLOADED_DIGICORE_COUNT = 100
+
+export const GUIDEBOOK_DARK_ACCESSORY_DARKDIGICORE_COUNT = 5
+
+/** DarkDigicore: Golden Seadragon — dark ring craft. */
+export const GUIDEBOOK_DARK_DIGICORE_GOLDEN_SEADRAGON_ITEM_ID = 'i1hibkgj'
+
+/** DarkDigicore: Cursed Puppet — dark necklace craft. */
+export const GUIDEBOOK_DARK_DIGICORE_CURSED_PUPPET_ITEM_ID = 'i1seu0dp'
+
+/** DarkDigicore: Fullmetal Tyrant — dark earring craft. */
+export const GUIDEBOOK_DARK_DIGICORE_FULLMETAL_TYRANT_ITEM_ID = 'iis0g67'
+
+/** Shared dark accessory craft materials (excluding prerequisite corrupted piece and respective DarkDigicore). */
+export const GUIDEBOOK_DARK_ACCESSORY_SHARED_MATERIALS: readonly GuidebookCorruptedCraftMaterial[] = [
+  {
+    itemId: GUIDEBOOK_DARK_DIGICORE_ITEM_ID,
+    quantity: GUIDEBOOK_DARK_ACCESSORY_DARK_DIGICORE_COUNT,
+    labelFallback: 'Dark DigiCore',
+  },
+  {
+    itemId: GUIDEBOOK_ENERGIZED_DARK_DIGICORE_ITEM_ID,
+    quantity: GUIDEBOOK_DARK_ACCESSORY_ENERGIZED_DIGICORE_COUNT,
+    labelFallback: 'Energized Dark DigiCore',
+  },
+  {
+    itemId: GUIDEBOOK_OVERLOADED_DARK_DIGICORE_ITEM_ID,
+    quantity: GUIDEBOOK_DARK_ACCESSORY_OVERLOADED_DIGICORE_COUNT,
+    labelFallback: 'Overloaded Dark DigiCore',
+  },
+]
+
+export type GuidebookDarkGearGuide = {
+  slug: string
+  craftLabel: string
+  prerequisiteLabel: string
+  respectiveDarkDigicoreItemId: string
+  respectiveDarkDigicoreLabel: string
+  gearLabel: string
+}
+
+export const GUIDEBOOK_DARK_GEAR_GUIDES: readonly GuidebookDarkGearGuide[] = [
+  {
+    slug: 'dark-ring',
+    craftLabel: 'dark ring',
+    prerequisiteLabel: 'Corrupted ring',
+    respectiveDarkDigicoreItemId: GUIDEBOOK_DARK_DIGICORE_GOLDEN_SEADRAGON_ITEM_ID,
+    respectiveDarkDigicoreLabel: 'DarkDigicore: Golden Seadragon',
+    gearLabel: 'ring',
+  },
+  {
+    slug: 'dark-necklace',
+    craftLabel: 'dark necklace',
+    prerequisiteLabel: 'Corrupted necklace',
+    respectiveDarkDigicoreItemId: GUIDEBOOK_DARK_DIGICORE_CURSED_PUPPET_ITEM_ID,
+    respectiveDarkDigicoreLabel: 'DarkDigicore: Cursed Puppet',
+    gearLabel: 'necklace',
+  },
+  {
+    slug: 'dark-earring',
+    craftLabel: 'dark earring',
+    prerequisiteLabel: 'Corrupted earring',
+    respectiveDarkDigicoreItemId: GUIDEBOOK_DARK_DIGICORE_FULLMETAL_TYRANT_ITEM_ID,
+    respectiveDarkDigicoreLabel: 'DarkDigicore: Fullmetal Tyrant',
+    gearLabel: 'earring',
+  },
+]
+
+export function guidebookDarkGearMaterials(
+  guide: GuidebookDarkGearGuide,
+): readonly GuidebookCorruptedCraftMaterial[] {
+  return [
+    ...GUIDEBOOK_DARK_ACCESSORY_SHARED_MATERIALS,
+    {
+      itemId: guide.respectiveDarkDigicoreItemId,
+      quantity: GUIDEBOOK_DARK_ACCESSORY_DARKDIGICORE_COUNT,
+      labelFallback: guide.respectiveDarkDigicoreLabel,
+    },
+  ]
+}
+
 /** Dark Masters Token — pity currency from Dark Master dungeons. */
 export const GUIDEBOOK_DARK_MASTERS_TOKEN_ITEM_ID = 'itygv5a'
 
@@ -140,6 +228,9 @@ export const GUIDEBOOK_CORRUPTED_RING_MATERIALS = GUIDEBOOK_CORRUPTED_CRAFT_MATE
 
 export const GUIDEBOOK_CORRUPTED_GEAR_TRADEABLE_DISCLAIMER =
   '*Tradeable versions will need more materials to craft'
+
+export const GUIDEBOOK_DARK_GEAR_TRADEABLE_DISCLAIMER =
+  '*Tradeable versions will need more tradeable corrupt accessories'
 
 export type GuidebookCorruptedGearRollLine = {
   label: string

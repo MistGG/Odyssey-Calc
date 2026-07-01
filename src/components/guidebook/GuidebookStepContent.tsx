@@ -8,6 +8,7 @@ import {
   GuideGearChips,
   GuideGearClothes,
   GuideGearCorruptedChips,
+  GuideGearDarkAccessories,
   GuideGearDigiAura,
   GuideGearOlympusClothes,
   GuideGearDigivice,
@@ -58,6 +59,8 @@ export function GuidebookStepContent({ stepId }: { stepId: string }) {
       return <GuideGearDigiAura />
     case 'mid-corrupted-accessories':
       return <GuideGearCorruptedAccessories />
+    case 'mid-dark-accessories':
+      return <GuideGearDarkAccessories />
     default:
       return <GuidebookComingSoon />
   }

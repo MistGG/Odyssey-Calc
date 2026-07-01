@@ -7,10 +7,18 @@ export type GuidebookTask = {
   text: string
 }
 
-export type GuidebookZoneTone = 'starter' | 'file' | 'odaiba' | 'metro' | 'gear' | 'raid' | 'corrupted'
+export type GuidebookZoneTone =
+  | 'starter'
+  | 'file'
+  | 'odaiba'
+  | 'metro'
+  | 'gear'
+  | 'raid'
+  | 'corrupted'
+  | 'dark'
 
 /** Visual grouping on the progression board trail. */
-export type GuidebookTrailCluster = 'gear' | 'corrupted-gear'
+export type GuidebookTrailCluster = 'gear' | 'corrupted-gear' | 'dark-gear'
 
 export type GuidebookProgressionStep = {
   id: string
@@ -243,6 +251,26 @@ export const GUIDEBOOK_PROGRESSION_STEPS: GuidebookProgressionStep[] = [
       { kind: 'craft', text: 'Craft corrupted accessories at the Blacksmith in Olympus' },
     ],
   },
+  {
+    id: 'mid-dark-accessories',
+    title: 'Dark Accessories',
+    zone: 'Dark Gear',
+    zoneTone: 'dark',
+    trailCluster: 'dark-gear',
+    detailOnly: true,
+    summary: 'Craft dark ring, necklace, and earring from corrupted counterparts.',
+    tasks: [
+      {
+        kind: 'craft',
+        text: 'Each dark accessory needs its corrupted counterpart, 50 Dark DigiCore, 25 Energized Dark DigiCore, and 100 Overloaded Dark DigiCore',
+      },
+      {
+        kind: 'farm',
+        text: 'Farm 5 matching DarkDigicore per piece (Golden Seadragon, Cursed Puppet, or Fullmetal Tyrant)',
+      },
+      { kind: 'craft', text: 'Craft dark accessories at Zudomon in Olympus' },
+    ],
+  },
 ]
 
 export function guidebookProgressionStepIds(): string[] {
@@ -340,6 +368,7 @@ export function guidebookProgressionTrailGroups(): GuidebookTrailGroup[] {
 const GUIDEBOOK_TRAIL_CLUSTER_LABELS: Record<GuidebookTrailCluster, string> = {
   gear: 'Early Gear',
   'corrupted-gear': 'Corrupted gear',
+  'dark-gear': 'Dark Gear',
 }
 
 export function guidebookTrailClusterLabel(cluster: GuidebookTrailCluster): string {

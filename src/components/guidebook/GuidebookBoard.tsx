@@ -1,6 +1,11 @@
-import { Info, Share2 } from 'lucide-react'
-import { useMemo } from 'react'
+import { ChevronDown, Info, Share2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { guidebookPublicUrl } from '../../lib/guidebookDungeonPanel'
+import {
+  readGuidebookCollapsedClusters,
+  writeGuidebookCollapsedClusters,
+  type GuidebookCollapsibleTrailCluster,
+} from '../../lib/guidebookProgress'
 import {
   GUIDEBOOK_PROGRESSION_STEPS,
   GUIDEBOOK_TASK_KIND_LABELS,
@@ -11,6 +16,7 @@ import {
   guidebookProgressionTrailGroups,
   guidebookTrailClusterLabel,
   type GuidebookProgressionStep,
+  type GuidebookTrailCluster,
 } from '../../lib/guidebookProgression'
 import { useGuidebook } from './GuidebookContext'
 import { GuidebookStepContent } from './GuidebookStepContent'
@@ -77,6 +83,73 @@ function BoardSpace({
         </span>
       ) : null}
     </button>
+  )
+}
+
+function CollapsibleGearCluster({
+  cluster,
+  steps,
+  progressStepId,
+  viewIndex,
+  collapsed,
+  onToggle,
+  onSelectStep,
+}: {
+  cluster: GuidebookTrailCluster
+  steps: { step: GuidebookProgressionStep; index: number }[]
+  progressStepId: string
+  viewIndex: number
+  collapsed: boolean
+  onToggle: () => void
+  onSelectStep: (stepId: string) => void
+}) {
+  const clusterPanelId = `guidebook-cluster-${cluster}`
+  const activeInCluster = steps.some(({ step }) => step.id === progressStepId)
+  const viewingInCluster = steps.some(({ index }) => index === viewIndex)
+
+  return (
+    <li
+      className={`guidebook-board__cluster guidebook-board__cluster--${cluster}${collapsed ? ' is-collapsed' : ''}`}
+    >
+      <button
+        type="button"
+        className="guidebook-board__cluster-toggle"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        aria-controls={clusterPanelId}
+      >
+        <ChevronDown
+          className={`guidebook-board__cluster-chevron${collapsed ? ' is-collapsed' : ''}`}
+          size={14}
+          strokeWidth={2.5}
+          aria-hidden
+        />
+        <span className="guidebook-board__cluster-label">
+          {guidebookTrailClusterLabel(cluster)}
+        </span>
+        {collapsed ? (
+          <span className="guidebook-board__cluster-meta muted">
+            {steps.length} steps
+            {activeInCluster ? ' · your step' : viewingInCluster ? ' · viewing' : ''}
+          </span>
+        ) : null}
+      </button>
+      {!collapsed ? (
+        <ol id={clusterPanelId} className="guidebook-board__cluster-trail">
+          {steps.map(({ step, index }) => (
+            <li key={step.id}>
+              <BoardSpace
+                step={step}
+                index={index}
+                progressStepId={progressStepId}
+                viewIndex={viewIndex}
+                onSelect={() => onSelectStep(step.id)}
+              />
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </li>
   )
 }
 
@@ -174,6 +247,13 @@ function StepDetailPanel({ step }: { step: GuidebookProgressionStep }) {
 
 export function GuidebookBoard() {
   const { viewStepId, progressStepId, selectStep } = useGuidebook()
+  const [collapsedClusters, setCollapsedClusters] = useState<
+    ReadonlySet<GuidebookCollapsibleTrailCluster>
+  >(() => readGuidebookCollapsedClusters())
+
+  useEffect(() => {
+    writeGuidebookCollapsedClusters(collapsedClusters)
+  }, [collapsedClusters])
 
   const viewStep = useMemo(
     () => GUIDEBOOK_PROGRESSION_STEPS.find((s) => s.id === viewStepId) ?? GUIDEBOOK_PROGRESSION_STEPS[0]!,
@@ -184,6 +264,30 @@ export function GuidebookBoard() {
   const viewIndex = guidebookProgressionIndex(viewStep.id)
   const progressSteps = guidebookProgressionProgressSteps()
   const currentProgressStep = progressSteps[progressIndex]
+
+  const toggleCluster = useCallback((cluster: GuidebookCollapsibleTrailCluster) => {
+    setCollapsedClusters((prev) => {
+      const next = new Set(prev)
+      if (next.has(cluster)) next.delete(cluster)
+      else next.add(cluster)
+      return next
+    })
+  }, [])
+
+  const handleSelectStep = useCallback(
+    (stepId: string, cluster?: GuidebookTrailCluster) => {
+      if (cluster) {
+        setCollapsedClusters((prev) => {
+          if (!prev.has(cluster)) return prev
+          const next = new Set(prev)
+          next.delete(cluster)
+          return next
+        })
+      }
+      selectStep(stepId)
+    },
+    [selectStep],
+  )
 
   return (
     <div className="guidebook-board">
@@ -208,27 +312,16 @@ export function GuidebookBoard() {
                 />
               </li>
             ) : (
-              <li
+              <CollapsibleGearCluster
                 key={group.cluster}
-                className={`guidebook-board__cluster guidebook-board__cluster--${group.cluster}`}
-              >
-                <span className="guidebook-board__cluster-label">
-                  {guidebookTrailClusterLabel(group.cluster)}
-                </span>
-                <ol className="guidebook-board__cluster-trail">
-                  {group.steps.map(({ step, index }) => (
-                    <li key={step.id}>
-                      <BoardSpace
-                        step={step}
-                        index={index}
-                        progressStepId={progressStepId}
-                        viewIndex={viewIndex}
-                        onSelect={() => selectStep(step.id)}
-                      />
-                    </li>
-                  ))}
-                </ol>
-              </li>
+                cluster={group.cluster}
+                steps={group.steps}
+                progressStepId={progressStepId}
+                viewIndex={viewIndex}
+                collapsed={collapsedClusters.has(group.cluster)}
+                onToggle={() => toggleCluster(group.cluster)}
+                onSelectStep={(stepId) => handleSelectStep(stepId, group.cluster)}
+              />
             ),
           )}
         </ol>
