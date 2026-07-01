@@ -300,6 +300,22 @@ export type WikiEvolutionTree = {
   edges: WikiEvolutionEdge[] | null
 }
 
+export type WikiDigimonSkin = {
+  id: string
+  name: string
+  model_id: string
+  applies_to_id: string
+  applies_to_name: string
+  stage: string
+  unlock_item_id: string
+  unlock_item_name: string
+  unlock_item_icon_id: string
+  /** Present on Alternate Structure Module skins — separate Digimon id/stats. */
+  override_id?: string
+  override_name?: string
+  override_model?: string
+}
+
 export type WikiDigimonDetail = {
   id: string
   name: string
@@ -315,4 +331,5 @@ export type WikiDigimonDetail = {
   stats: WikiCombatStats
   skills: WikiSkill[]
   evolution_tree?: WikiEvolutionTree | null
+  skins?: WikiDigimonSkin[]
 }

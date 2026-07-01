@@ -183,6 +183,8 @@ export type TierListCache = {
   queue: string[]
   entries: Record<string, SustainedDpsEntry>
   listSignatures: Record<string, string>
+  /** Digimon ids from Alternate Structure Module skins (not in the wiki list index). */
+  alternateStructureIds?: string[]
   lastCheckedAt?: string
 }
 

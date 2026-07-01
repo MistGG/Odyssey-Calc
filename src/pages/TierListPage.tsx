@@ -63,6 +63,12 @@ import {
   type TierListMode,
 } from '../lib/tierList'
 import { digimonPortraitUrl } from '../lib/digimonImage'
+import {
+  alternateStructureListStub,
+  collectAlternateStructureOverrideIds,
+  isAlternateStructureSkin,
+  upsertListMetaFromDetail,
+} from '../lib/digimonAlternateStructure'
 import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
 import { tierSkillsSignature } from '../lib/tierSkillsSignature'
 import {
@@ -563,22 +569,29 @@ export function TierListPage() {
         }
       }
       const { all, meta, signatures } = await fetchAllDigimonIndex(wikiRefresh)
-      setListMeta(meta)
+      const alternateStructureIds = new Set(working.alternateStructureIds ?? [])
+      const workingMeta: Record<string, WikiDigimonListItem> = { ...meta }
+      setListMeta(workingMeta)
 
-      const latestIds = new Set(all.map((d) => d.id))
+      const latestIds = new Set([...all.map((d) => d.id), ...alternateStructureIds])
       for (const cachedId of Object.keys(working.entries)) {
         if (!latestIds.has(cachedId)) delete working.entries[cachedId]
       }
       for (const cachedId of Object.keys(working.listSignatures)) {
         if (!latestIds.has(cachedId)) delete working.listSignatures[cachedId]
       }
-      working.total = all.length
 
       const hadPriorSignatures = Object.keys(working.listSignatures).length > 0
       const refreshCauseById = new Map<string, TierRefreshCauseFlags>()
       const apiDiffById = new Map<string, string[]>()
 
-      const plannedQueue = all.map((d) => d.id)
+      const listIdSet = new Set(all.map((d) => d.id))
+      const plannedQueue = [
+        ...all.map((d) => d.id),
+        ...[...alternateStructureIds].filter((id) => !listIdSet.has(id)),
+      ]
+      const plannedIdSet = new Set(plannedQueue)
+      working.total = latestIds.size
 
       for (const d of all) {
         const id = d.id
@@ -600,7 +613,8 @@ export function TierListPage() {
       }
 
       working.queue = plannedQueue
-      const initialBuildQueueTotal = plannedQueue.length
+      let queueTargetTotal = plannedQueue.length
+      const initialBuildQueueTotal = queueTargetTotal
       setTierBuildQueueTotal(initialBuildQueueTotal > 0 ? initialBuildQueueTotal : null)
       working.listSignatures = signatures
       working.lastCheckedAt = new Date().toISOString()
@@ -622,14 +636,14 @@ export function TierListPage() {
       let backoffMs = 0
       while (working.queue.length > 0) {
         const id = working.queue[0]
-        const meta = listMeta[id]
+        const metaRow = workingMeta[id]
         const runDone =
           initialBuildQueueTotal > 0
-            ? Math.min(initialBuildQueueTotal, initialBuildQueueTotal - working.queue.length)
+            ? Math.min(queueTargetTotal, queueTargetTotal - working.queue.length)
             : 0
         const runTotalForMsg =
-          initialBuildQueueTotal > 0 ? initialBuildQueueTotal : working.queue.length
-        setStatus(`Checking all Digimon… ${runDone}/${runTotalForMsg} (checking ${meta?.name ?? id})`)
+          initialBuildQueueTotal > 0 ? queueTargetTotal : working.queue.length
+        setStatus(`Checking all Digimon… ${runDone}/${runTotalForMsg} (checking ${metaRow?.name ?? id})`)
 
         if (backoffMs > 0) {
           const runTotal = runTotalForMsg
@@ -640,7 +654,7 @@ export function TierListPage() {
           backoffMs = 0
         }
 
-        const checkingLabel = meta?.name ?? id
+        const checkingLabel = metaRow?.name ?? id
         const slowHintSuffix = ' (Taking longer than expected, please wait.)'
         const slowStatusLine = `Checking all Digimon… ${runDone}/${runTotalForMsg} (checking ${checkingLabel})${slowHintSuffix}`
         const slowHintTimer = window.setTimeout(() => {
@@ -650,6 +664,7 @@ export function TierListPage() {
         try {
           try {
             const detail = await fetchDigimonDetail(id, wikiRefresh)
+          upsertListMetaFromDetail(detail, workingMeta, working.listSignatures)
           const prevApiSnapshot = working.entries[id]?.apiSnapshot
           const nextApiSnapshot = buildTierApiSnapshot(detail)
           const levels = levelMapForSkills(detail.skills)
@@ -847,6 +862,23 @@ export function TierListPage() {
           }
           working.entries[id] = entry
           refreshedIds.add(id)
+
+          for (const overrideId of collectAlternateStructureOverrideIds(detail)) {
+            alternateStructureIds.add(overrideId)
+            if (plannedIdSet.has(overrideId)) continue
+            plannedIdSet.add(overrideId)
+            working.queue.push(overrideId)
+            queueTargetTotal += 1
+            setTierBuildQueueTotal(queueTargetTotal)
+            refreshCauseById.set(overrideId, { api: true, tier: false, other: false })
+            const skin = (detail.skins ?? []).find(
+              (s) => isAlternateStructureSkin(s) && s.override_id === overrideId,
+            )
+            if (skin && !workingMeta[overrideId]) {
+              workingMeta[overrideId] = alternateStructureListStub(detail, skin)
+            }
+          }
+
           working.queue.shift()
           processed += 1
         } catch (e: unknown) {
@@ -873,6 +905,7 @@ export function TierListPage() {
 
         working.lastCheckedAt = new Date().toISOString()
         saveTierListCache(working)
+        setListMeta({ ...workingMeta })
         setCache({
           ...working,
           queue: [...working.queue],
@@ -886,6 +919,23 @@ export function TierListPage() {
       }
 
       if (working.queue.length === 0) {
+        const finalIds = new Set([...all.map((d) => d.id), ...alternateStructureIds])
+        for (const cachedId of Object.keys(working.entries)) {
+          if (!finalIds.has(cachedId)) delete working.entries[cachedId]
+        }
+        for (const cachedId of Object.keys(working.listSignatures)) {
+          if (!finalIds.has(cachedId)) delete working.listSignatures[cachedId]
+        }
+        working.alternateStructureIds = [...alternateStructureIds].sort()
+        working.total = finalIds.size
+        saveTierListCache(working)
+        setCache({
+          ...working,
+          queue: [...working.queue],
+          entries: { ...working.entries },
+          listSignatures: { ...working.listSignatures },
+        })
+
         setStatus('Tier list refresh complete. All Digimon were recalculated.')
         if (refreshedIds.size > 0) {
           const nextSummary = buildTierListUpdateSummary(

@@ -1,4 +1,5 @@
 import { fetchDigimonPage, type WikiFetchOptions } from '../../api/digimonService'
+import { digimonListSignature } from '../../lib/digimonAlternateStructure'
 import { contentStatusLabel, type DigimonContentStatus } from '../../lib/contentStatus'
 import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../../lib/dpsSim'
 import {
@@ -633,19 +634,7 @@ export function sleep(ms: number) {
 }
 
 function listSignature(d: WikiDigimonListItem) {
-  return [
-    d.id,
-    d.name,
-    d.model_id,
-    d.stage,
-    d.attribute,
-    d.element,
-    d.role,
-    d.rank,
-    d.hp,
-    d.attack,
-    (d.family_types ?? []).join(','),
-  ].join('|')
+  return digimonListSignature(d)
 }
 
 export async function fetchAllDigimonIndex(options?: WikiFetchOptions) {
