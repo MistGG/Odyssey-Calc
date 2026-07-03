@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { syncPointGrantsAfterUpload } from './pointGrants.ts'
+import { resolveEffectiveDigimonIdentity } from './alternateStructure.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,7 @@ const WIKI_DIGIMON_LIST_URL =
 
 const WIKI_CATALOG_TTL_MS = 60 * 60 * 1000
 let wikiRoleCatalog: Map<string, RoleBucket | null> | null = null
+let wikiMetaCatalog: Map<string, { name: string; modelId: string; role: string }> | null = null
 let wikiRoleCatalogLoadedAt = 0
 
 type SummaryMember = {
@@ -420,11 +422,12 @@ function isLeaderboardEligiblePayload(payload: DungeonPayload): boolean {
 
 /** Full wiki catalog (same source as the website) — avoids flaky per-id lookups in Edge. */
 async function loadWikiRoleCatalog(): Promise<Map<string, RoleBucket | null>> {
-  if (wikiRoleCatalog && Date.now() - wikiRoleCatalogLoadedAt < WIKI_CATALOG_TTL_MS) {
+  if (wikiRoleCatalog && wikiMetaCatalog && Date.now() - wikiRoleCatalogLoadedAt < WIKI_CATALOG_TTL_MS) {
     return wikiRoleCatalog
   }
 
-  const map = new Map<string, RoleBucket | null>()
+  const roleMap = new Map<string, RoleBucket | null>()
+  const metaMap = new Map<string, { name: string; modelId: string; role: string }>()
   let page = 1
   let totalPages = 1
 
@@ -434,23 +437,75 @@ async function loadWikiRoleCatalog(): Promise<Map<string, RoleBucket | null>> {
     const res = await fetch(url, { headers: { Accept: 'application/json' } })
     if (!res.ok) break
     const raw = (await res.json()) as {
-      data?: Array<{ id?: string; role?: string }>
+      data?: Array<{ id?: string; role?: string; name?: string; model_id?: string }>
       total_pages?: number
     }
     totalPages = Math.max(1, Number(raw.total_pages) || 1)
     for (const d of raw.data ?? []) {
       const id = String(d.id ?? '').trim()
       if (!id) continue
-      map.set(id, wikiRoleToBucket(typeof d.role === 'string' ? d.role : null))
+      const role = typeof d.role === 'string' ? d.role.trim() : ''
+      const name = typeof d.name === 'string' ? d.name.trim() : ''
+      const modelId = typeof d.model_id === 'string' ? d.model_id.trim() : ''
+      roleMap.set(id, wikiRoleToBucket(role))
+      metaMap.set(id, { name, modelId, role })
     }
     page += 1
   }
 
-  if (map.size > 0) {
-    wikiRoleCatalog = map
+  if (roleMap.size > 0) {
+    wikiRoleCatalog = roleMap
+    wikiMetaCatalog = metaMap
     wikiRoleCatalogLoadedAt = Date.now()
   }
-  return map
+  return roleMap
+}
+
+function getWikiMetaCatalog(): Map<string, { name: string; modelId: string; role: string }> {
+  return wikiMetaCatalog ?? new Map()
+}
+
+async function resolvePrimaryDigimonIdentity(
+  primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
+  wikiCatalog: Map<string, RoleBucket | null>,
+  roleCache: Map<string, RoleBucket | null>,
+): Promise<{
+  digimonId: string
+  digimonName: string
+  iconId: string | null
+  roleBucket: RoleBucket | null
+  parentDigimonId?: string
+}> {
+  const parentDigimonId = primary.digimonId?.trim() || ''
+  const iconId = primary.iconId?.trim() || null
+  const parentMeta = getWikiMetaCatalog().get(parentDigimonId)
+  const effective = await resolveEffectiveDigimonIdentity({
+    digimonId: parentDigimonId,
+    iconId,
+    digimonName: primary.digimonName?.trim() || parentMeta?.name || '',
+    parentModelId: parentMeta?.modelId || null,
+    parentName: parentMeta?.name || null,
+    parentRole: parentMeta?.role || null,
+  })
+
+  const digimonId = effective.digimonId || parentDigimonId
+  let roleBucket = roleCache.get(digimonId) ?? wikiCatalog.get(digimonId) ?? null
+  if (!roleBucket && effective.wikiRole) {
+    roleBucket = wikiRoleToBucket(effective.wikiRole)
+    roleCache.set(digimonId, roleBucket)
+  }
+  if (!roleBucket && !wikiCatalog.has(digimonId) && effective.wikiRole) {
+    wikiCatalog.set(digimonId, wikiRoleToBucket(effective.wikiRole))
+    roleBucket = wikiCatalog.get(digimonId) ?? null
+  }
+
+  return {
+    digimonId,
+    digimonName: effective.digimonName || primary.digimonName?.trim() || parentMeta?.name || '',
+    iconId: effective.iconId || iconId,
+    roleBucket,
+    parentDigimonId: effective.isAlternateStructure ? parentDigimonId : undefined,
+  }
 }
 
 async function fetchWikiDigimon(digimonId: string): Promise<{ name: string | null; role: string | null }> {
@@ -477,21 +532,9 @@ async function resolveRoleBucket(
   wikiCatalog: Map<string, RoleBucket | null>,
 ): Promise<RoleBucket | null> {
   const primary = memberPrimaryDigimon(member, wikiCatalog)
-  const digimonId = primary?.digimonId?.trim() || ''
-  if (!digimonId) return null
-
-  if (roleCache.has(digimonId)) return roleCache.get(digimonId) ?? null
-
-  const fromCatalog = wikiCatalog.get(digimonId)
-  if (fromCatalog) {
-    roleCache.set(digimonId, fromCatalog)
-    return fromCatalog
-  }
-
-  const wiki = await fetchWikiDigimon(digimonId)
-  const bucket = wikiRoleToBucket(wiki.role)
-  roleCache.set(digimonId, bucket)
-  return bucket
+  if (!primary?.digimonId?.trim()) return null
+  const resolved = await resolvePrimaryDigimonIdentity(primary, wikiCatalog, roleCache)
+  return resolved.roleBucket
 }
 
 async function buildSummaryFromPayload(
@@ -518,21 +561,35 @@ async function buildSummaryFromPayload(
     }
   }
   const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
+  const roleCache = new Map<string, RoleBucket | null>()
   const out: SummaryMember[] = []
   for (const member of members) {
     if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
     const primary = memberPrimaryDigimon(member, wikiCatalog)
     const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
-    const digimonId = primary?.digimonId?.trim() || ''
+    if (!primary?.digimonId?.trim()) {
+      out.push({
+        playerKey: normalizePlayerKey(member),
+        displayName: member.tamerName?.trim() || member.displayLabel?.trim() || '',
+        dps,
+        digimonId: '',
+        digimonName: primary?.digimonName?.trim() || '',
+        iconId: primary?.iconId?.trim() || null,
+        portraitUrl: primary?.portraitUrl,
+        roleBucket: null,
+      })
+      continue
+    }
+    const resolved = await resolvePrimaryDigimonIdentity(primary, wikiCatalog, roleCache)
     out.push({
       playerKey: normalizePlayerKey(member),
       displayName: member.tamerName?.trim() || member.displayLabel?.trim() || '',
       dps,
-      digimonId,
-      digimonName: primary?.digimonName?.trim() || '',
-      iconId: primary?.iconId?.trim() || null,
+      digimonId: resolved.digimonId,
+      digimonName: resolved.digimonName,
+      iconId: resolved.iconId,
       portraitUrl: primary?.portraitUrl,
-      roleBucket: digimonId ? (wikiCatalog.get(digimonId) ?? null) : null,
+      roleBucket: resolved.roleBucket,
     })
   }
   return {
@@ -695,11 +752,16 @@ async function processParse(
   }
 
   const roleCache = new Map<string, RoleBucket | null>()
-  const nameCache = new Map<string, string | null>()
   const entries: Array<Record<string, unknown>> = []
   const enrichedByPlayerKey = new Map<
     string,
-    { digimonName: string; iconId: string | null; portraitUrl: string | null }
+    {
+      digimonId: string
+      digimonName: string
+      iconId: string | null
+      portraitUrl: string | null
+      roleBucket: RoleBucket | null
+    }
   >()
 
   const sessionDur = sessionDuration(payload, Number(row.duration_sec) || 0, members)
@@ -709,24 +771,14 @@ async function processParse(
     const playerKey = normalizePlayerKey(member)
     if (!playerKey || (!force && existingPlayerKeys.has(playerKey))) continue
     const sm = summaryByKey.get(playerKey)
-    const roleBucket = await resolveRoleBucket(member, sm, roleCache, wikiCatalog)
+    const primary = memberPrimaryDigimon(member, wikiCatalog)
+    if (!primary?.digimonId?.trim()) continue
+    const resolved = await resolvePrimaryDigimonIdentity(primary, wikiCatalog, roleCache)
+    const roleBucket = resolved.roleBucket
     if (!roleBucket) continue
 
-    const primary = memberPrimaryDigimon(member, wikiCatalog)
-    const digimonId = primary?.digimonId?.trim() || ''
-    let officialName: string | null = null
-    if (digimonId) {
-      if (nameCache.has(digimonId)) {
-        officialName = nameCache.get(digimonId) ?? null
-      } else {
-        const wiki = await fetchWikiDigimon(digimonId)
-        officialName = wiki.name
-        nameCache.set(digimonId, officialName)
-        if (!roleCache.has(digimonId) && wiki.role) {
-          roleCache.set(digimonId, wikiRoleToBucket(wiki.role))
-        }
-      }
-    }
+    const digimonId = resolved.digimonId
+    const officialName = resolved.digimonName
 
     const dps = memberDpsForLeaderboard(
       member,
@@ -752,13 +804,15 @@ async function processParse(
       dps,
       digimon_id: digimonId,
       digimon_name: officialName || '',
-      icon_id: sm?.iconId?.trim() || primary?.iconId?.trim() || null,
+      icon_id: resolved.iconId || sm?.iconId?.trim() || primary?.iconId?.trim() || null,
       portrait_url: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
     })
     enrichedByPlayerKey.set(playerKey, {
+      digimonId,
       digimonName: officialName || sm?.digimonName?.trim() || primary?.digimonName?.trim() || '',
-      iconId: sm?.iconId?.trim() || primary?.iconId?.trim() || null,
+      iconId: resolved.iconId || sm?.iconId?.trim() || primary?.iconId?.trim() || null,
       portraitUrl: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
+      roleBucket,
     })
   }
 
@@ -780,17 +834,14 @@ async function processParse(
     version: 1,
     members: (summary.members ?? []).map((sm) => {
       const key = (sm.playerKey ?? '').trim().toLowerCase()
-      const member = memberList.find((m) => normalizePlayerKey(m) === key)
-      const primary = member ? memberPrimaryDigimon(member, wikiCatalog) : undefined
-      const digimonId = primary?.digimonId?.trim() || sm.digimonId?.trim() || ''
       const enriched = enrichedByPlayerKey.get(key)
       return {
         ...sm,
-        digimonId: digimonId || sm.digimonId,
+        digimonId: enriched?.digimonId || sm.digimonId,
         digimonName: enriched?.digimonName || sm.digimonName,
         iconId: enriched?.iconId ?? sm.iconId ?? null,
         portraitUrl: enriched?.portraitUrl || sm.portraitUrl,
-        roleBucket: roleCache.get(digimonId) ?? wikiCatalog.get(digimonId) ?? sm.roleBucket ?? null,
+        roleBucket: enriched?.roleBucket ?? sm.roleBucket ?? null,
       }
     }),
   }

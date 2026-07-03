@@ -1,11 +1,12 @@
 import { digimonPortraitUrl } from './digimonImage'
+import { resolveEffectiveDigimonIdentity } from './resolveDigimonAlternateStructure'
 import { reattributePayloadMembersFromSkills } from './meterDigimonSkillResolve'
 import {
   isDungeonPartyParsePayload,
   type MeterParsePayloadDungeonPartyStored,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
-import { fetchWikiDigimonCatalog, METER_ROLE_BUCKETS } from './meterRoleBuckets'
+import { fetchWikiDigimonCatalog, METER_ROLE_BUCKETS, memberTopDigimonUsed } from './meterRoleBuckets'
 import type { DigimonBarEntry, MeterPublicAggregates, PlayerRankEntry } from './meterPublicStats'
 
 function normId(id: string): string {
@@ -79,17 +80,25 @@ function applyOfficialNameToMember(
   const idKey = normId(digimonId)
   for (const dg of member.digimons ?? []) {
     if (normId(dg.digimonId) !== idKey) continue
-    dg.digimonName = officialName
-    if (modelId) {
-      dg.iconId = modelId
-      dg.portraitUrl = digimonPortraitUrl(modelId, dg.digimonId, officialName)
+    const currentIcon = dg.iconId?.trim() || ''
+    const onAlternateIcon = Boolean(currentIcon && modelId && currentIcon !== modelId)
+    if (!onAlternateIcon) {
+      dg.digimonName = officialName
+      if (modelId) {
+        dg.iconId = modelId
+        dg.portraitUrl = digimonPortraitUrl(modelId, dg.digimonId, officialName)
+      }
     }
   }
   if (member.currentDigimonId?.trim() && normId(member.currentDigimonId) === idKey) {
-    member.currentDigimonName = officialName
-    if (modelId) {
-      member.portraitIconId = modelId
-      member.portraitUrl = digimonPortraitUrl(modelId, digimonId, officialName)
+    const currentIcon = member.portraitIconId?.trim() || ''
+    const onAlternateIcon = Boolean(currentIcon && modelId && currentIcon !== modelId)
+    if (!onAlternateIcon) {
+      member.currentDigimonName = officialName
+      if (modelId) {
+        member.portraitIconId = modelId
+        member.portraitUrl = digimonPortraitUrl(modelId, digimonId, officialName)
+      }
     }
   }
 }
@@ -109,17 +118,70 @@ export function applyWikiDigimonNamesToPayload(
   return next
 }
 
+function applyAlternateStructureToMember(
+  member: MeterPartyMemberStored,
+  partyMembers: MeterPartyMemberStored[],
+  effective: Awaited<ReturnType<typeof resolveEffectiveDigimonIdentity>>,
+): void {
+  if (!effective.isAlternateStructure) return
+  const top = memberTopDigimonUsed(member, undefined, partyMembers)
+  if (!top) return
+  const parentId = effective.parentDigimonId?.trim() || top.digimonId.trim()
+  for (const dg of member.digimons ?? []) {
+    if (dg.digimonId?.trim() !== parentId) continue
+    dg.digimonName = effective.digimonName
+    if (effective.iconId) {
+      dg.iconId = effective.iconId
+      dg.portraitUrl = digimonPortraitUrl(effective.iconId, effective.digimonId, effective.digimonName)
+    }
+  }
+  if ((member.currentDigimonId?.trim() || '') === parentId) {
+    member.currentDigimonName = effective.digimonName
+    if (effective.iconId) {
+      member.portraitIconId = effective.iconId
+      member.portraitUrl = digimonPortraitUrl(
+        effective.iconId,
+        effective.digimonId,
+        effective.digimonName,
+      )
+    }
+  }
+}
+
+/** Resolve Alternate Structure Module portraits to override species names/roles. */
+export async function resolveAlternateStructureInPayload(
+  payload: MeterParsePayloadDungeonPartyStored,
+): Promise<MeterParsePayloadDungeonPartyStored> {
+  const next: MeterParsePayloadDungeonPartyStored = structuredClone(payload)
+  await Promise.all(
+    next.members.map(async (member) => {
+      const top = memberTopDigimonUsed(member, undefined, next.members)
+      if (!top?.digimonId) return
+      const effective = await resolveEffectiveDigimonIdentity({
+        digimonId: top.digimonId,
+        iconId: top.iconId,
+        digimonName: top.digimonName,
+      })
+      applyAlternateStructureToMember(member, next.members, effective)
+    }),
+  )
+  return next
+}
+
 export async function resolveDungeonPartyPayloadDigimonNames(
   payload: unknown,
 ): Promise<unknown> {
   if (!isDungeonPartyParsePayload(payload)) return payload
   const attributed = await preparePayloadDigimonAttribution(payload)
-  if (!parsePayloadNeedsDigimonWikiResolution(attributed)) return attributed
-  const ids = collectDigimonIdsFromPayload(attributed)
-  if (!ids.length) return attributed
-  const officialById = await fetchOfficialDigimonInfoByIds(ids)
-  if (!officialById.size) return attributed
-  return applyWikiDigimonNamesToPayload(attributed, officialById)
+  let next = attributed
+  if (parsePayloadNeedsDigimonWikiResolution(attributed)) {
+    const ids = collectDigimonIdsFromPayload(attributed)
+    if (ids.length) {
+      const officialById = await fetchOfficialDigimonInfoByIds(ids)
+      if (officialById.size) next = applyWikiDigimonNamesToPayload(attributed, officialById)
+    }
+  }
+  return resolveAlternateStructureInPayload(next)
 }
 
 export async function resolveMeterParseRowPayloads<T extends { payload: unknown }>(
@@ -147,14 +209,27 @@ export async function resolveMeterParseRowPayloads<T extends { payload: unknown 
 
   const officialById = idSet.size ? await fetchOfficialDigimonInfoByIds([...idSet]) : new Map()
 
-  return attributedRows.map((row) => {
+  const withWikiNames = attributedRows.map((row) => {
     if (!isDungeonPartyParsePayload(row.payload)) return row
-    if (!parsePayloadNeedsDigimonWikiResolution(row.payload) || !officialById.size) return row
+    let payload = row.payload
+    if (parsePayloadNeedsDigimonWikiResolution(payload) && officialById.size) {
+      payload = applyWikiDigimonNamesToPayload(payload, officialById)
+    }
     return {
       ...row,
-      payload: applyWikiDigimonNamesToPayload(row.payload, officialById),
+      payload,
     }
   })
+
+  return Promise.all(
+    withWikiNames.map(async (row) => {
+      if (!isDungeonPartyParsePayload(row.payload)) return row
+      return {
+        ...row,
+        payload: await resolveAlternateStructureInPayload(row.payload),
+      }
+    }),
+  )
 }
 
 function applyOfficialNameToRankEntry(
@@ -165,12 +240,17 @@ function applyOfficialNameToRankEntry(
   if (!id) return entry
   const info = officialById.get(id)
   if (!info?.name) return entry
+  const currentIcon = entry.iconId?.trim() || ''
+  const onAlternateIcon = Boolean(currentIcon && info.modelId && currentIcon !== info.modelId)
   return {
     ...entry,
-    digimonName: info.name,
-    iconId: info.modelId || entry.iconId,
-    portraitUrl:
-      info.modelId ? digimonPortraitUrl(info.modelId, id, info.name) : entry.portraitUrl,
+    digimonName: onAlternateIcon ? entry.digimonName : info.name,
+    iconId: onAlternateIcon ? entry.iconId : info.modelId || entry.iconId,
+    portraitUrl: onAlternateIcon
+      ? entry.portraitUrl
+      : info.modelId
+        ? digimonPortraitUrl(info.modelId, id, info.name)
+        : entry.portraitUrl,
   }
 }
 
@@ -182,12 +262,17 @@ function applyOfficialNameToDigimonBar(
   if (!id) return entry
   const info = officialById.get(id)
   if (!info?.name) return entry
+  const currentIcon = entry.iconId?.trim() || ''
+  const onAlternateIcon = Boolean(currentIcon && info.modelId && currentIcon !== info.modelId)
   return {
     ...entry,
-    digimonName: info.name,
-    iconId: info.modelId || entry.iconId,
-    portraitUrl:
-      info.modelId ? digimonPortraitUrl(info.modelId, id, info.name) : entry.portraitUrl,
+    digimonName: onAlternateIcon ? entry.digimonName : info.name,
+    iconId: onAlternateIcon ? entry.iconId : info.modelId || entry.iconId,
+    portraitUrl: onAlternateIcon
+      ? entry.portraitUrl
+      : info.modelId
+        ? digimonPortraitUrl(info.modelId, id, info.name)
+        : entry.portraitUrl,
   }
 }
 

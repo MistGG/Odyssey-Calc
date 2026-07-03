@@ -9,6 +9,29 @@ export function isAlternateStructureSkin(skin: WikiDigimonSkin): boolean {
   return new RegExp(`^${ALTERNATE_STRUCTURE_MODULE_PREFIX}\\b`, 'i').test(unlockName)
 }
 
+/** Bracket role tag on alternate structure skins, e.g. `[HEALER] White Gale Ornismon`. */
+export function alternateStructureBracketRole(skinName: string | null | undefined): string | null {
+  const match = /^\[(.+?)\]\s/.exec((skinName ?? '').trim())
+  return match?.[1]?.trim() || null
+}
+
+/** Match an in-game portrait `icon_id` to an alternate structure skin on a parent detail payload. */
+export function findAlternateStructureSkinByIcon(
+  detail: WikiDigimonDetail,
+  iconId: string,
+): WikiDigimonSkin | null {
+  const icon = iconId.trim()
+  if (!icon) return null
+  const parentModelId = (detail.model_id ?? '').trim()
+  if (icon === parentModelId) return null
+  for (const skin of detail.skins ?? []) {
+    if (!isAlternateStructureSkin(skin)) continue
+    const skinIcon = (skin.override_model ?? skin.model_id ?? '').trim()
+    if (skinIcon && skinIcon === icon) return skin
+  }
+  return null
+}
+
 /** Override Digimon ids from Alternate Structure Module skins on a detail payload. */
 export function collectAlternateStructureOverrideIds(detail: WikiDigimonDetail): string[] {
   const ids: string[] = []

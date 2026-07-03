@@ -1,5 +1,5 @@
 import { digimonPortraitUrl } from './digimonImage'
-import { fetchOfficialDigimonInfoByIds } from './meterParseDigimonNames'
+import { resolveEffectiveDigimonIdentity } from './resolveDigimonAlternateStructure'
 import { getMeterAnonSupabase } from './meterDataSource'
 import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
 
@@ -66,39 +66,35 @@ function matePortrait(mate: PlayerPartyMateIcon): string | undefined {
   return undefined
 }
 
+async function resolvePartyMateIdentity(mate: PlayerPartyMateIcon): Promise<PlayerPartyMateIcon> {
+  const effective = await resolveEffectiveDigimonIdentity({
+    digimonId: mate.digimonId,
+    iconId: mate.iconId,
+    digimonName: mate.digimonName,
+  })
+  if (!effective.isAlternateStructure) return mate
+  const portraitUrl = effective.iconId
+    ? digimonPortraitUrl(effective.iconId, effective.digimonId, effective.digimonName)
+    : mate.portraitUrl
+  return {
+    ...mate,
+    digimonId: effective.digimonId,
+    digimonName: effective.digimonName,
+    iconId: effective.iconId,
+    portraitUrl,
+  }
+}
+
 async function resolvePartyMatePortraits(
   byBucket: PlayerPartyMatesByBucket,
 ): Promise<PlayerPartyMatesByBucket> {
-  const ids = new Set<string>()
-  for (const bucket of METER_ROLE_BUCKETS) {
-    for (const snapshot of Object.values(byBucket[bucket])) {
-      for (const mate of snapshot.mates) {
-        const id = mate.digimonId.trim()
-        if (id && id !== 'unknown' && !matePortrait(mate)) ids.add(id)
-      }
-    }
-  }
-  if (!ids.size) return byBucket
-
-  const officialById = await fetchOfficialDigimonInfoByIds([...ids])
-  if (!officialById.size) return byBucket
-
   const resolved = emptyMatesByBucket()
   for (const bucket of METER_ROLE_BUCKETS) {
     for (const [playerKey, snapshot] of Object.entries(byBucket[bucket])) {
+      const mates = await Promise.all(snapshot.mates.map((mate) => resolvePartyMateIdentity(mate)))
       resolved[bucket][playerKey] = {
         durationSec: snapshot.durationSec,
-        mates: snapshot.mates.map((mate) => {
-          const id = mate.digimonId.trim()
-          const info = officialById.get(id)
-          if (!info?.modelId) return mate
-          return {
-            ...mate,
-            digimonName: info.name || mate.digimonName,
-            iconId: info.modelId,
-            portraitUrl: digimonPortraitUrl(info.modelId, id, info.name || mate.digimonName),
-          }
-        }),
+        mates,
       }
     }
   }
