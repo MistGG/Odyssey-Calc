@@ -1,6 +1,53 @@
 {
-  "updated_at": "2026-07-02T19:30:24.665Z",
+  "updated_at": "2026-07-03T03:02:57.240Z",
   "runs": [
+    {
+      "id": "2026-07-03T03:02:57.261Z-01heae",
+      "finishedAt": "2026-07-03T03:02:57.261Z",
+      "mode": "force",
+      "refreshedCount": 443,
+      "apiCount": 4,
+      "tierCount": 0,
+      "sampleDigimon": [
+        {
+          "id": "dok71k3",
+          "name": "Cerberumon",
+          "cause": "api"
+        },
+        {
+          "id": "d1yast50",
+          "name": "Piemon",
+          "cause": "api"
+        },
+        {
+          "id": "d7k5lfc",
+          "name": "ToyAgumon",
+          "cause": "api"
+        },
+        {
+          "id": "dpndznr",
+          "name": "Vegiemon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-07-03T03:02:57.261Z",
+        "mode": "force",
+        "refreshedCount": 443,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-02T19:30:24.686Z-f5wfzy",
       "finishedAt": "2026-07-02T19:30:24.686Z",
