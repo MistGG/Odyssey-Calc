@@ -41,9 +41,8 @@ function pickParticipationWinnersFromPools(
   // Leaderboard winners in any role are ineligible for the participation draw
   // in every role, so a multi-role champion cannot also win a random draw.
   const championKeys = METER_ROLE_BUCKETS.map((bucket) => leaderboardWinners[bucket]?.playerKey)
-  const alreadyDrawnKeys: string[] = []
   const winners = {} as Record<MeterRoleBucket, PlayerRankEntry | null>
-  for (const bucket of [...METER_ROLE_BUCKETS].reverse()) {
+  for (const bucket of METER_ROLE_BUCKETS) {
     const pool = pools[bucket].filter(
       (entry) => !championKeys.some((championKey) => samePlayerKey(entry.playerKey, championKey)),
     )
@@ -53,25 +52,9 @@ function pickParticipationWinnersFromPools(
     }
     const seedSuffix = difficultyId == null ? bucket : `${difficultyId}:${bucket}`
     const idx = deterministicIndex(`${PARTICIPATION_DRAW_SEED}:${dungeonId}:${seedSuffix}`, pool.length)
-    const winner = pickNextUniqueParticipationWinner(pool, idx, alreadyDrawnKeys)
-    winners[bucket] = winner
-    if (winner) alreadyDrawnKeys.push(winner.playerKey)
+    winners[bucket] = pool[idx]!
   }
   return winners
-}
-
-function pickNextUniqueParticipationWinner(
-  pool: PlayerRankEntry[],
-  startIndex: number,
-  alreadyDrawnKeys: string[],
-): PlayerRankEntry | null {
-  for (let offset = 0; offset < pool.length; offset += 1) {
-    const entry = pool[(startIndex + offset) % pool.length]!
-    if (!alreadyDrawnKeys.some((winnerKey) => samePlayerKey(entry.playerKey, winnerKey))) {
-      return entry
-    }
-  }
-  return pool[startIndex] ?? null
 }
 
 function eventWindowMs(): { start: number; end: number } | null {

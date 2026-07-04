@@ -25048,7 +25048,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin-top: 0;
 }
 
-.nav-link-event.nav-link-event--active {
+.nav-link-event.nav-link-event--active:not(.nav-link-event--disabled) {
   color: #fecdd3;
   border-color: rgba(251, 113, 133, 0.45);
 }
