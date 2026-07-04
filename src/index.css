@@ -694,6 +694,19 @@ code {
     0 4px 22px rgba(245, 158, 11, 0.32);
 }
 
+.nav a.nav-link-event.nav-link-event--disabled,
+.nav .nav-link-event.nav-link-event--disabled,
+.nav a.nav-link-event.nav-link-event--disabled:hover,
+.nav .nav-link-event.nav-link-event--disabled:hover,
+.nav a.nav-link-event.nav-link-event--disabled.nav-link-event--active,
+.nav .nav-link-event.nav-link-event--disabled.nav-link-event--active {
+  color: rgba(148, 163, 184, 0.74);
+  cursor: pointer;
+  border-color: rgba(100, 116, 139, 0.32);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.48) 0%, rgba(51, 65, 85, 0.28) 100%);
+  box-shadow: none;
+}
+
 .nav-link-event__badge {
   display: inline-block;
   padding: 0.1rem 0.4rem;
@@ -706,6 +719,12 @@ code {
   color: #451a03;
   background: linear-gradient(180deg, #fef08a 0%, #fbbf24 100%);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.nav-link-event--disabled .nav-link-event__badge {
+  color: rgba(15, 23, 42, 0.82);
+  background: rgba(148, 163, 184, 0.62);
+  box-shadow: none;
 }
 
 .nav-user-cluster {

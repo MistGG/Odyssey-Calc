@@ -111,10 +111,11 @@ export function Layout() {
             <NavLink
               to="/event"
               className={({ isActive }) =>
-                `nav-link-event nav-link--feat${isActive ? ' nav-link-event--active' : ''}`
+                `nav-link-event nav-link--feat nav-link-event--disabled${isActive ? ' nav-link-event--active' : ''}`
               }
+              title="Event is off"
             >
-              <span className="nav-link-event__badge">ON</span>
+              <span className="nav-link-event__badge">OFF</span>
               Event
             </NavLink>
 

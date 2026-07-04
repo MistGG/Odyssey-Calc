@@ -38,19 +38,40 @@ function pickParticipationWinnersFromPools(
   dungeonId: string,
   difficultyId?: number,
 ): Record<MeterRoleBucket, PlayerRankEntry | null> {
+  // Leaderboard winners in any role are ineligible for the participation draw
+  // in every role, so a multi-role champion cannot also win a random draw.
+  const championKeys = METER_ROLE_BUCKETS.map((bucket) => leaderboardWinners[bucket]?.playerKey)
+  const alreadyDrawnKeys: string[] = []
   const winners = {} as Record<MeterRoleBucket, PlayerRankEntry | null>
-  for (const bucket of METER_ROLE_BUCKETS) {
-    const championKey = leaderboardWinners[bucket]?.playerKey
-    const pool = pools[bucket].filter((entry) => !samePlayerKey(entry.playerKey, championKey))
+  for (const bucket of [...METER_ROLE_BUCKETS].reverse()) {
+    const pool = pools[bucket].filter(
+      (entry) => !championKeys.some((championKey) => samePlayerKey(entry.playerKey, championKey)),
+    )
     if (pool.length === 0) {
       winners[bucket] = null
       continue
     }
     const seedSuffix = difficultyId == null ? bucket : `${difficultyId}:${bucket}`
     const idx = deterministicIndex(`${PARTICIPATION_DRAW_SEED}:${dungeonId}:${seedSuffix}`, pool.length)
-    winners[bucket] = pool[idx]!
+    const winner = pickNextUniqueParticipationWinner(pool, idx, alreadyDrawnKeys)
+    winners[bucket] = winner
+    if (winner) alreadyDrawnKeys.push(winner.playerKey)
   }
   return winners
+}
+
+function pickNextUniqueParticipationWinner(
+  pool: PlayerRankEntry[],
+  startIndex: number,
+  alreadyDrawnKeys: string[],
+): PlayerRankEntry | null {
+  for (let offset = 0; offset < pool.length; offset += 1) {
+    const entry = pool[(startIndex + offset) % pool.length]!
+    if (!alreadyDrawnKeys.some((winnerKey) => samePlayerKey(entry.playerKey, winnerKey))) {
+      return entry
+    }
+  }
+  return pool[startIndex] ?? null
 }
 
 function eventWindowMs(): { start: number; end: number } | null {
@@ -150,7 +171,15 @@ export function pickMayClearParticipationWinnersFromEntries(
   for (const entry of entries) {
     const bucket = entry.roleBucket
     if (!pools[bucket].has(entry.playerKey)) {
-      const { roleBucket: _role, ...player } = entry
+      const player: PlayerRankEntry = {
+        playerKey: entry.playerKey,
+        displayName: entry.displayName,
+        dps: entry.dps,
+        digimonId: entry.digimonId,
+        digimonName: entry.digimonName,
+        iconId: entry.iconId,
+        portraitUrl: entry.portraitUrl,
+      }
       pools[bucket].set(entry.playerKey, player)
     }
   }
