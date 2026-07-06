@@ -193,7 +193,7 @@ export async function fetchLeaderboardPartyMates(params: {
     skillKeysByMate.set(mateMapKey, skillKeys)
 
     const mateRoleBucket = raw.mate_role_bucket?.trim().toLowerCase()
-    if (isRoleBucket(mateRoleBucket)) {
+    if (mateRoleBucket && isRoleBucket(mateRoleBucket)) {
       leaderboardMateKeys.add(mateMapKey)
     }
     const durationSec = parseDurationSec(raw.parse_duration_sec) ?? prev.durationSec
@@ -208,7 +208,7 @@ export async function fetchLeaderboardPartyMates(params: {
           digimonName: raw.digimon_name?.trim() || digimonId,
           iconId: raw.icon_id,
           portraitUrl: raw.portrait_url ?? undefined,
-          roleBucket: isRoleBucket(mateRoleBucket) ? mateRoleBucket : null,
+          roleBucket: mateRoleBucket && isRoleBucket(mateRoleBucket) ? mateRoleBucket : null,
         },
       ],
     }
