@@ -276,9 +276,49 @@ export type WikiDigimonCatalogEntry = {
 let catalogCache: Map<string, WikiDigimonCatalogEntry> | null = null
 let catalogPromise: Promise<Map<string, WikiDigimonCatalogEntry>> | null = null
 
-const ROLE_MAP_SESSION_KEY = 'odyssey-meter-digi-roles-v1'
-const CATALOG_SESSION_KEY = 'odyssey-meter-digi-catalog-v1'
+const ROLE_MAP_SESSION_KEY = 'odyssey-meter-digi-roles-v2'
+const CATALOG_SESSION_KEY = 'odyssey-meter-digi-catalog-v2'
 const ROLE_MAP_TTL_MS = 24 * 60 * 60 * 1000
+
+type TierListLiveSnapshot = {
+  cache?: {
+    alternateStructureIds?: string[]
+    entries?: Record<
+      string,
+      {
+        name?: string
+        role?: string
+        apiSnapshot?: { role?: string; model_id?: string }
+      }
+    >
+  }
+}
+
+async function mergeAlternateStructureCatalog(
+  map: Map<string, WikiDigimonCatalogEntry>,
+): Promise<void> {
+  try {
+    const base = import.meta.env.BASE_URL || '/'
+    const res = await fetch(`${base}data/tier-list-live.json`, { cache: 'no-store' })
+    if (!res.ok) return
+    const snapshot = (await res.json()) as TierListLiveSnapshot
+    const altIds = snapshot.cache?.alternateStructureIds ?? []
+    const entries = snapshot.cache?.entries ?? {}
+    for (const id of altIds) {
+      const entry = entries[id]
+      const name = entry?.name?.trim()
+      const role = entry?.role?.trim() || entry?.apiSnapshot?.role?.trim() || ''
+      if (!name) continue
+      map.set(id, {
+        name,
+        modelId: entry?.apiSnapshot?.model_id?.trim() || map.get(id)?.modelId || '',
+        role,
+      })
+    }
+  } catch {
+    /* tier list optional */
+  }
+}
 
 function readCatalogFromSession(allowStale = false): Map<string, WikiDigimonCatalogEntry> | null {
   if (typeof sessionStorage === 'undefined') return null
@@ -344,6 +384,7 @@ export async function fetchWikiDigimonCatalog(): Promise<Map<string, WikiDigimon
           role: d.role?.trim() || '',
         })
       }
+      await mergeAlternateStructureCatalog(map)
       catalogCache = map
       roleMapCache = new Map([...map].map(([id, e]) => [id, e.role]))
       writeCatalogToSession(map)

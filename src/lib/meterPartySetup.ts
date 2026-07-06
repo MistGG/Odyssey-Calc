@@ -21,6 +21,10 @@ export function partyRoleBucketsForEntry(
 ): MeterRoleBucket[] | null {
   const roles: MeterRoleBucket[] = [playerRoleBucket]
   for (const mate of party.mates) {
+    if (mate.roleBucket) {
+      roles.push(mate.roleBucket)
+      continue
+    }
     const id = mate.digimonId.trim()
     if (!id) return null
     const bucket = digimonIdToBucket(id, roleMap)

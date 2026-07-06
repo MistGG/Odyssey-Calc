@@ -187,11 +187,78 @@ function TamerPartyColumn({ snapshot }: { snapshot: PlayerPartySnapshot }) {
   )
 }
 
-function TamerSelfDigimonTooltip({ entry, id }: { entry: PlayerRankEntry; id: string }) {
-  if (!entry.digimonName.trim()) return null
+function TamerSelfDigimonIcon({
+  entry,
+  portrait,
+  tooltipId,
+}: {
+  entry: PlayerRankEntry
+  portrait: string
+  tooltipId: string
+}) {
+  const wrapRef = useRef<HTMLSpanElement>(null)
+  const [open, setOpen] = useState(false)
+  const [coords, setCoords] = useState({ top: 0, left: 0 })
+  const hasTooltip = Boolean(entry.digimonName.trim())
+
+  const syncPosition = useCallback(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setCoords({
+      top: rect.top + rect.height / 2,
+      left: rect.right + 8,
+    })
+  }, [])
+
+  const showTooltip = useCallback(() => {
+    if (!hasTooltip) return
+    syncPosition()
+    setOpen(true)
+  }, [hasTooltip, syncPosition])
+
+  const hideTooltip = useCallback(() => {
+    setOpen(false)
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    const onScroll = () => hideTooltip()
+    window.addEventListener('scroll', onScroll, true)
+    return () => window.removeEventListener('scroll', onScroll, true)
+  }, [hideTooltip, open])
+
   return (
-    <span id={id} role="tooltip" className="lab-inline-tooltip meter-lb-preview-tamer-tooltip meter-lb-preview-tamer-tooltip--self">
-      <strong className="meter-lb-preview-tamer-tooltip-name">{entry.digimonName}</strong>
+    <span
+      ref={wrapRef}
+      className="meter-lb-preview-tamer-self-icon-wrap"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      onFocus={showTooltip}
+      onBlur={hideTooltip}
+    >
+      <img
+        className="meter-lb-preview-portrait meter-lb-preview-tamer-self-portrait"
+        src={portrait}
+        alt=""
+        width={22}
+        height={22}
+        tabIndex={hasTooltip ? 0 : undefined}
+        aria-describedby={open && hasTooltip ? tooltipId : undefined}
+      />
+      {open && hasTooltip
+        ? createPortal(
+            <span
+              id={tooltipId}
+              role="tooltip"
+              className="meter-lb-preview-tamer-tooltip meter-lb-preview-tamer-tooltip--self meter-lb-preview-tamer-tooltip--fixed"
+              style={{ top: coords.top, left: coords.left }}
+            >
+              <strong className="meter-lb-preview-tamer-tooltip-name">{entry.digimonName}</strong>
+            </span>,
+            document.body,
+          )
+        : null}
     </span>
   )
 }
@@ -745,18 +812,7 @@ function RoleTamerCard({
                   <span className="meter-lb-preview-tamer-self">
                     {portrait ? (
                       hasSelfTooltip ? (
-                        <span className="lab-inline-tooltip-wrap meter-lb-preview-tamer-self-icon-wrap">
-                          <img
-                            className="meter-lb-preview-portrait meter-lb-preview-tamer-self-portrait"
-                            src={portrait}
-                            alt=""
-                            width={22}
-                            height={22}
-                            tabIndex={0}
-                            aria-describedby={selfTooltipId}
-                          />
-                          <TamerSelfDigimonTooltip entry={e} id={selfTooltipId} />
-                        </span>
+                        <TamerSelfDigimonIcon entry={e} portrait={portrait} tooltipId={selfTooltipId} />
                       ) : (
                         <img
                           className="meter-lb-preview-portrait meter-lb-preview-tamer-self-portrait"

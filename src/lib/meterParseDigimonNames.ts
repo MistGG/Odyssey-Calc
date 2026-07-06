@@ -161,6 +161,7 @@ export async function resolveAlternateStructureInPayload(
         digimonId: top.digimonId,
         iconId: top.iconId,
         digimonName: top.digimonName,
+        skillKeys: skillKeysFromTopDigimon(member, next.members),
       })
       applyAlternateStructureToMember(member, next.members, effective)
     }),
@@ -232,6 +233,27 @@ export async function resolveMeterParseRowPayloads<T extends { payload: unknown 
   )
 }
 
+function skillKeysFromTopDigimon(
+  member: MeterPartyMemberStored,
+  partyMembers: MeterPartyMemberStored[],
+): string[] {
+  const top = memberTopDigimonUsed(member, undefined, partyMembers)
+  if (!top?.digimonId) return []
+  const idKey = normId(top.digimonId)
+  const keys: string[] = []
+  const seen = new Set<string>()
+  for (const dg of member.digimons ?? []) {
+    if (normId(dg.digimonId) !== idKey) continue
+    for (const skill of dg.skills ?? []) {
+      const key = skill.skillKey?.trim().toLowerCase()
+      if (!key || key === '(basic)' || seen.has(key)) continue
+      seen.add(key)
+      keys.push(key)
+    }
+  }
+  return keys
+}
+
 function applyOfficialNameToRankEntry(
   entry: PlayerRankEntry,
   officialById: Map<string, { name: string; modelId: string }>,
@@ -241,13 +263,14 @@ function applyOfficialNameToRankEntry(
   const info = officialById.get(id)
   if (!info?.name) return entry
   const currentIcon = entry.iconId?.trim() || ''
-  const onAlternateIcon = Boolean(currentIcon && info.modelId && currentIcon !== info.modelId)
+  const onCustomPortrait = Boolean(currentIcon && info.modelId && currentIcon !== info.modelId)
   return {
     ...entry,
-    digimonName: onAlternateIcon ? entry.digimonName : info.name,
-    iconId: onAlternateIcon ? entry.iconId : info.modelId || entry.iconId,
-    portraitUrl: onAlternateIcon
-      ? entry.portraitUrl
+    digimonName: info.name,
+    iconId: onCustomPortrait ? entry.iconId : info.modelId || entry.iconId,
+    portraitUrl: onCustomPortrait
+      ? entry.portraitUrl ||
+        (currentIcon ? digimonPortraitUrl(currentIcon, id, info.name) : undefined)
       : info.modelId
         ? digimonPortraitUrl(info.modelId, id, info.name)
         : entry.portraitUrl,
@@ -263,13 +286,14 @@ function applyOfficialNameToDigimonBar(
   const info = officialById.get(id)
   if (!info?.name) return entry
   const currentIcon = entry.iconId?.trim() || ''
-  const onAlternateIcon = Boolean(currentIcon && info.modelId && currentIcon !== info.modelId)
+  const onCustomPortrait = Boolean(currentIcon && info.modelId && currentIcon !== info.modelId)
   return {
     ...entry,
-    digimonName: onAlternateIcon ? entry.digimonName : info.name,
-    iconId: onAlternateIcon ? entry.iconId : info.modelId || entry.iconId,
-    portraitUrl: onAlternateIcon
-      ? entry.portraitUrl
+    digimonName: info.name,
+    iconId: onCustomPortrait ? entry.iconId : info.modelId || entry.iconId,
+    portraitUrl: onCustomPortrait
+      ? entry.portraitUrl ||
+        (currentIcon ? digimonPortraitUrl(currentIcon, id, info.name) : undefined)
       : info.modelId
         ? digimonPortraitUrl(info.modelId, id, info.name)
         : entry.portraitUrl,

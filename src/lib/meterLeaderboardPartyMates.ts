@@ -1,7 +1,7 @@
 import { digimonPortraitUrl } from './digimonImage'
 import { resolveEffectiveDigimonIdentity } from './resolveDigimonAlternateStructure'
 import { getMeterAnonSupabase } from './meterDataSource'
-import { METER_ROLE_BUCKETS, type MeterRoleBucket } from './meterRoleBuckets'
+import { fetchWikiDigimonCatalog, METER_ROLE_BUCKETS, wikiRoleToBucket, type MeterRoleBucket } from './meterRoleBuckets'
 
 export type PlayerPartyMateIcon = {
   playerKey: string
@@ -10,6 +10,8 @@ export type PlayerPartyMateIcon = {
   digimonName: string
   iconId: string | null
   portraitUrl?: string
+  /** Processed leaderboard role for this mate on the ranked parse. */
+  roleBucket?: MeterRoleBucket | null
 }
 
 export type PlayerPartySnapshot = {
@@ -40,6 +42,8 @@ type PartyMateRow = {
   digimon_name: string
   icon_id: string | null
   portrait_url: string | null
+  skill_keys?: string[] | null
+  mate_role_bucket?: string | null
   mate_order: number
   parse_duration_sec?: number | string | null
 }
@@ -66,32 +70,66 @@ function matePortrait(mate: PlayerPartyMateIcon): string | undefined {
   return undefined
 }
 
-async function resolvePartyMateIdentity(mate: PlayerPartyMateIcon): Promise<PlayerPartyMateIcon> {
+function parseSkillKeys(raw: PartyMateRow['skill_keys']): string[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((key) => (typeof key === 'string' ? key.trim().toLowerCase() : ''))
+    .filter((key) => key && key !== '(basic)')
+}
+
+async function resolvePartyMateIdentity(
+  mate: PlayerPartyMateIcon,
+  skillKeys: string[],
+  fromLeaderboard: boolean,
+): Promise<PlayerPartyMateIcon> {
+  if (fromLeaderboard && mate.digimonId.trim() && mate.digimonName.trim()) {
+    return {
+      ...mate,
+      portraitUrl: mate.portraitUrl ?? (mate.iconId ? digimonPortraitUrl(mate.iconId, mate.digimonId, mate.digimonName) : undefined),
+    }
+  }
+
+  const catalog = await fetchWikiDigimonCatalog()
+  const parentEntry = catalog.get(mate.digimonId.trim())
   const effective = await resolveEffectiveDigimonIdentity({
     digimonId: mate.digimonId,
     iconId: mate.iconId,
     digimonName: mate.digimonName,
+    parentModelId: parentEntry?.modelId || null,
+    skillKeys,
   })
-  if (!effective.isAlternateStructure) return mate
   const portraitUrl = effective.iconId
     ? digimonPortraitUrl(effective.iconId, effective.digimonId, effective.digimonName)
     : mate.portraitUrl
+  const resolvedRoleBucket = wikiRoleToBucket(effective.wikiRole)
   return {
     ...mate,
     digimonId: effective.digimonId,
     digimonName: effective.digimonName,
     iconId: effective.iconId,
     portraitUrl,
+    roleBucket: mate.roleBucket ?? resolvedRoleBucket,
   }
 }
 
 async function resolvePartyMatePortraits(
   byBucket: PlayerPartyMatesByBucket,
+  skillKeysByMate: Map<string, string[]>,
+  leaderboardMateKeys: Set<string>,
 ): Promise<PlayerPartyMatesByBucket> {
   const resolved = emptyMatesByBucket()
   for (const bucket of METER_ROLE_BUCKETS) {
     for (const [playerKey, snapshot] of Object.entries(byBucket[bucket])) {
-      const mates = await Promise.all(snapshot.mates.map((mate) => resolvePartyMateIdentity(mate)))
+      const mates = await Promise.all(
+        snapshot.mates.map((mate) => {
+          const mateKey = `${bucket}:${playerKey}:${mate.playerKey}`
+          return resolvePartyMateIdentity(
+            mate,
+            skillKeysByMate.get(mateKey) ?? [],
+            leaderboardMateKeys.has(mateKey),
+          )
+        }),
+      )
       resolved[bucket][playerKey] = {
         durationSec: snapshot.durationSec,
         mates,
@@ -137,6 +175,8 @@ export async function fetchLeaderboardPartyMates(params: {
   }
 
   const byBucket = emptyMatesByBucket()
+  const skillKeysByMate = new Map<string, string[]>()
+  const leaderboardMateKeys = new Set<string>()
   for (const raw of (data ?? []) as PartyMateRow[]) {
     if (!isRoleBucket(raw.role_bucket)) continue
     const playerKey = raw.player_key?.trim().toLowerCase()
@@ -148,6 +188,14 @@ export async function fetchLeaderboardPartyMates(params: {
     const prev = bucketMap[playerKey] ?? EMPTY_PARTY_SNAPSHOT
     if (prev.mates.some((mate) => mate.playerKey === mateKey)) continue
 
+    const skillKeys = parseSkillKeys(raw.skill_keys)
+    const mateMapKey = `${raw.role_bucket}:${playerKey}:${mateKey}`
+    skillKeysByMate.set(mateMapKey, skillKeys)
+
+    const mateRoleBucket = raw.mate_role_bucket?.trim().toLowerCase()
+    if (isRoleBucket(mateRoleBucket)) {
+      leaderboardMateKeys.add(mateMapKey)
+    }
     const durationSec = parseDurationSec(raw.parse_duration_sec) ?? prev.durationSec
     bucketMap[playerKey] = {
       durationSec,
@@ -160,13 +208,14 @@ export async function fetchLeaderboardPartyMates(params: {
           digimonName: raw.digimon_name?.trim() || digimonId,
           iconId: raw.icon_id,
           portraitUrl: raw.portrait_url ?? undefined,
+          roleBucket: isRoleBucket(mateRoleBucket) ? mateRoleBucket : null,
         },
       ],
     }
   }
 
   try {
-    const resolved = await resolvePartyMatePortraits(byBucket)
+    const resolved = await resolvePartyMatePortraits(byBucket, skillKeysByMate, leaderboardMateKeys)
     return { byBucket: resolved, error: null }
   } catch {
     return { byBucket, error: null }

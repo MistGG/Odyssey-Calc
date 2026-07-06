@@ -26453,8 +26453,8 @@ a.guidebook-monster-panel__loot-btn:hover {
   overflow: hidden;
 }
 
-.meter-lb-preview-tamer-list > li:has(.lab-inline-tooltip-wrap:hover),
-.meter-lb-preview-tamer-list > li:has(.lab-inline-tooltip-wrap:focus-within),
+.meter-lb-preview-tamer-list > li:has(.meter-lb-preview-tamer-self-icon-wrap:hover),
+.meter-lb-preview-tamer-list > li:has(.meter-lb-preview-tamer-self-icon-wrap:focus-within),
 .meter-lb-preview-tamer-list > li:has(.meter-lb-preview-tamer-party-wrap:hover),
 .meter-lb-preview-tamer-list > li:has(.meter-lb-preview-tamer-party-wrap:focus-within) {
   z-index: 20;
@@ -26513,12 +26513,31 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .meter-lb-preview-digimon-chart-row {
+  position: relative;
+  z-index: 0;
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
   gap: 0.35rem;
   height: var(--digimon-chart-row-h);
   flex: 0 0 var(--digimon-chart-row-h);
+}
+
+.meter-lb-preview-digimon-chart-row:has(.meter-lb-preview-digimon-icon-wrap:hover),
+.meter-lb-preview-digimon-chart-row:has(.meter-lb-preview-digimon-icon-wrap:focus-within),
+.meter-lb-preview-digimon-chart-row:has(.meter-lb-preview-digimon-plot-tooltip-wrap:hover),
+.meter-lb-preview-digimon-chart-row:has(.meter-lb-preview-digimon-plot-tooltip-wrap:focus-within) {
+  z-index: 40;
+  overflow: visible;
+}
+
+.meter-lb-preview-digimon-chart:has(.meter-lb-preview-digimon-chart-row:hover),
+.meter-lb-preview-digimon-chart:has(.meter-lb-preview-digimon-chart-row:focus-within),
+.meter-lb-preview-digimon-chart-plot-wrap:has(.meter-lb-preview-digimon-chart-row:hover),
+.meter-lb-preview-digimon-chart-plot-wrap:has(.meter-lb-preview-digimon-chart-row:focus-within),
+.meter-lb-preview-digimon-chart-rows:has(.meter-lb-preview-digimon-chart-row:hover),
+.meter-lb-preview-digimon-chart-rows:has(.meter-lb-preview-digimon-chart-row:focus-within) {
+  overflow: visible;
 }
 
 .meter-lb-preview-digimon-chart-row--empty {
@@ -26551,8 +26570,14 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .meter-lb-preview-digimon-icon-wrap {
-  z-index: 4;
+  position: relative;
+  z-index: 1;
   justify-content: center;
+}
+
+.meter-lb-preview-digimon-icon-wrap:hover,
+.meter-lb-preview-digimon-icon-wrap:focus-within {
+  z-index: 50;
 }
 
 .meter-lb-preview-digimon-chart-icon {
@@ -26579,6 +26604,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   bottom: auto;
   top: 50%;
   transform: translateY(-50%) translateX(6px);
+  z-index: 60;
 }
 
 .meter-lb-preview-digimon-icon-wrap:hover .meter-lb-preview-digimon-icon-tooltip,
@@ -26587,11 +26613,17 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .meter-lb-preview-digimon-plot-tooltip-wrap {
+  position: relative;
   display: block;
   width: 100%;
   min-width: 0;
   cursor: help;
-  z-index: 2;
+  z-index: 1;
+}
+
+.meter-lb-preview-digimon-plot-tooltip-wrap:hover,
+.meter-lb-preview-digimon-plot-tooltip-wrap:focus-within {
+  z-index: 50;
 }
 
 .meter-lb-preview-digimon-plot-tooltip-wrap:focus {
@@ -26617,7 +26649,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   font-size: 0.8rem;
   line-height: 1.45;
   text-align: left;
-  z-index: 30;
+  z-index: 60;
 }
 
 .meter-lb-preview-digimon-tooltip-stats--dps dt {
@@ -26890,11 +26922,6 @@ a.guidebook-monster-panel__loot-btn:hover {
   pointer-events: none;
 }
 
-.meter-lb-preview-tamer-self-icon-wrap {
-  flex-shrink: 0;
-  z-index: 2;
-}
-
 .meter-lb-preview-tamer-tooltip {
   min-width: 0;
   max-width: 260px;
@@ -26913,7 +26940,14 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-tamer-tooltip--fixed {
   position: fixed;
   z-index: 10000;
+}
+
+.meter-lb-preview-tamer-tooltip--party.meter-lb-preview-tamer-tooltip--fixed {
   transform: translate(-100%, -50%);
+}
+
+.meter-lb-preview-tamer-tooltip--self.meter-lb-preview-tamer-tooltip--fixed {
+  transform: translateY(-50%);
 }
 
 .meter-lb-preview-tamer-tooltip--party {
@@ -26922,17 +26956,9 @@ a.guidebook-monster-panel__loot-btn:hover {
   padding: 0.75rem 0.9rem;
 }
 
-.meter-lb-preview-tamer-tooltip--self {
-  left: calc(100% + 8px);
-  bottom: auto;
-  top: 50%;
-  transform: translateY(-50%) translateX(6px);
-}
-
-.meter-lb-preview-tamer-self-icon-wrap:hover > .meter-lb-preview-tamer-tooltip--self,
-.meter-lb-preview-tamer-self-icon-wrap:focus-within > .meter-lb-preview-tamer-tooltip--self {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
+.meter-lb-preview-tamer-self-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .meter-lb-preview-tamer-tooltip-name {

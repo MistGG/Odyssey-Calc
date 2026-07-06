@@ -120,6 +120,25 @@ function wikiRoleToBucket(role: string | null | undefined): RoleBucket | null {
   return null
 }
 
+function portraitUrlMatchesIcon(portraitUrl: string | null | undefined, iconId: string | null): boolean {
+  const icon = iconId?.trim()
+  if (!icon) return true
+  const portrait = portraitUrl?.trim()
+  if (!portrait) return false
+  return portrait.includes(`/${icon}l.`) || portrait.includes(`/${icon}.`)
+}
+
+function portraitUrlForResolvedIcon(
+  iconId: string | null,
+  payloadPortrait: string | null | undefined,
+): string | null {
+  const icon = iconId?.trim()
+  const payload = payloadPortrait?.trim()
+  if (!icon) return payload || null
+  if (portraitUrlMatchesIcon(payload, icon)) return payload || null
+  return `https://thedigitalodyssey.com/models/${icon}l.png`
+}
+
 function normalizePlayerKey(member: StoredMember): string {
   const raw = member.tamerName?.trim() || member.displayLabel?.trim() || ''
   return raw.toLowerCase()
@@ -465,6 +484,20 @@ function getWikiMetaCatalog(): Map<string, { name: string; modelId: string; role
   return wikiMetaCatalog ?? new Map()
 }
 
+function primaryDigimonSkillKeys(
+  primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
+): string[] {
+  const keys: string[] = []
+  const seen = new Set<string>()
+  for (const skill of primary.skills ?? []) {
+    const key = String(skill.skillKey ?? '').trim().toLowerCase()
+    if (!key || key === '(basic)' || seen.has(key)) continue
+    seen.add(key)
+    keys.push(key)
+  }
+  return keys
+}
+
 async function resolvePrimaryDigimonIdentity(
   primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
   wikiCatalog: Map<string, RoleBucket | null>,
@@ -486,6 +519,7 @@ async function resolvePrimaryDigimonIdentity(
     parentModelId: parentMeta?.modelId || null,
     parentName: parentMeta?.name || null,
     parentRole: parentMeta?.role || null,
+    skillKeys: primaryDigimonSkillKeys(primary),
   })
 
   const digimonId = effective.digimonId || parentDigimonId
@@ -779,6 +813,9 @@ async function processParse(
 
     const digimonId = resolved.digimonId
     const officialName = resolved.digimonName
+    const iconId = resolved.iconId || sm?.iconId?.trim() || primary?.iconId?.trim() || null
+    const payloadPortrait = sm?.portraitUrl?.trim() || primary?.portraitUrl || null
+    const portraitUrl = portraitUrlForResolvedIcon(iconId, payloadPortrait)
 
     const dps = memberDpsForLeaderboard(
       member,
@@ -804,14 +841,14 @@ async function processParse(
       dps,
       digimon_id: digimonId,
       digimon_name: officialName || '',
-      icon_id: resolved.iconId || sm?.iconId?.trim() || primary?.iconId?.trim() || null,
-      portrait_url: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
+      icon_id: iconId,
+      portrait_url: portraitUrl,
     })
     enrichedByPlayerKey.set(playerKey, {
       digimonId,
       digimonName: officialName || sm?.digimonName?.trim() || primary?.digimonName?.trim() || '',
-      iconId: resolved.iconId || sm?.iconId?.trim() || primary?.iconId?.trim() || null,
-      portraitUrl: sm?.portraitUrl?.trim() || primary?.portraitUrl || null,
+      iconId,
+      portraitUrl,
       roleBucket,
     })
   }
