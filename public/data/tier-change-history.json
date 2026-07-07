@@ -1,6 +1,191 @@
 {
-  "updated_at": "2026-07-06T20:02:38.968Z",
+  "updated_at": "2026-07-07T03:26:19.983Z",
   "runs": [
+    {
+      "id": "2026-07-07T03:26:20.003Z-5e4fr5",
+      "finishedAt": "2026-07-07T03:26:20.003Z",
+      "mode": "force",
+      "refreshedCount": 443,
+      "apiCount": 5,
+      "tierCount": 5,
+      "sampleDigimon": [
+        {
+          "id": "d1hndr0k",
+          "name": "Aegisdramon",
+          "cause": "api"
+        },
+        {
+          "id": "dfabzxw",
+          "name": "Megidramon",
+          "cause": "api"
+        },
+        {
+          "id": "der4hr2",
+          "name": "Ornismon",
+          "cause": "api"
+        },
+        {
+          "id": "d16e4fy1",
+          "name": "White Gale Ornismon",
+          "cause": "api"
+        },
+        {
+          "id": "dhs58kt",
+          "name": "Chaos Megidramon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1hndr0k": [
+          "HP: 21970 -> 17170",
+          "Attack: 10722 -> 7962",
+          "Stats.ds: 20860 -> 14980",
+          "Stats.defense: 588 -> 468"
+        ],
+        "dfabzxw": [
+          "HP: 22956 -> 18156",
+          "Attack: 7322 -> 5522",
+          "Stats.ds: 55185 -> 40185",
+          "Stats.defense: 618 -> 498"
+        ],
+        "der4hr2": [
+          "HP: 23774 -> 18974",
+          "Attack: 7189 -> 5389",
+          "Stats.ds: 55900 -> 40900",
+          "Stats.defense: 644 -> 524"
+        ],
+        "dhs58kt": [
+          "HP: 48360 -> 39360",
+          "Attack: 5817 -> 4617",
+          "Stats.ds: 26160 -> 20280",
+          "Stats.defense: 2080 -> 1720"
+        ],
+        "d16e4fy1": [
+          "HP: 29311 -> 23311",
+          "Attack: 4865 -> 3785",
+          "Stats.ds: 61273 -> 48553",
+          "Stats.defense: 722 -> 602"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1hndr0k",
+          "name": "Aegisdramon",
+          "lines": [
+            "HP: 21970 -> 17170",
+            "Attack: 10722 -> 7962",
+            "Stats.ds: 20860 -> 14980",
+            "Stats.defense: 588 -> 468"
+          ]
+        },
+        {
+          "id": "dfabzxw",
+          "name": "Megidramon",
+          "lines": [
+            "HP: 22956 -> 18156",
+            "Attack: 7322 -> 5522",
+            "Stats.ds: 55185 -> 40185",
+            "Stats.defense: 618 -> 498"
+          ]
+        },
+        {
+          "id": "der4hr2",
+          "name": "Ornismon",
+          "lines": [
+            "HP: 23774 -> 18974",
+            "Attack: 7189 -> 5389",
+            "Stats.ds: 55900 -> 40900",
+            "Stats.defense: 644 -> 524"
+          ]
+        },
+        {
+          "id": "dhs58kt",
+          "name": "Chaos Megidramon",
+          "lines": [
+            "HP: 48360 -> 39360",
+            "Attack: 5817 -> 4617",
+            "Stats.ds: 26160 -> 20280",
+            "Stats.defense: 2080 -> 1720"
+          ]
+        },
+        {
+          "id": "d16e4fy1",
+          "name": "White Gale Ornismon",
+          "lines": [
+            "HP: 29311 -> 23311",
+            "Attack: 4865 -> 3785",
+            "Stats.ds: 61273 -> 48553",
+            "Stats.defense: 722 -> 602"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-07-07T03:26:20.003Z",
+        "mode": "force",
+        "refreshedCount": 443,
+        "dpsUp": [
+          {
+            "id": "dfabzxw",
+            "name": "Megidramon",
+            "role": "Caster",
+            "before": 71690.50419718937,
+            "after": 78769.78327690369,
+            "delta": 7079.279079714324
+          },
+          {
+            "id": "der4hr2",
+            "name": "Ornismon",
+            "role": "Caster",
+            "before": 70027.34717751619,
+            "after": 72160.63389783283,
+            "delta": 2133.286720316639
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1hndr0k",
+            "name": "Aegisdramon",
+            "role": "Ranged DPS",
+            "before": 29060.23779973888,
+            "after": 25817.20197340558,
+            "delta": -3243.0358263333
+          },
+          {
+            "id": "dhs58kt",
+            "name": "Chaos Megidramon",
+            "role": "Tank",
+            "before": 17945.45134065935,
+            "after": 17394.664527472545,
+            "delta": -550.7868131868054
+          },
+          {
+            "id": "d16e4fy1",
+            "name": "White Gale Ornismon",
+            "role": "Support",
+            "before": 19339.36952610309,
+            "after": 18984.418853457362,
+            "delta": -354.95067264572936
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [
+          {
+            "id": "dhs58kt",
+            "name": "Chaos Megidramon",
+            "role": "Tank",
+            "before": 3.747981468021337,
+            "after": 3.6022501258186974,
+            "delta": -0.1457313422026396
+          }
+        ],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-06T20:02:38.988Z-p90ixz",
       "finishedAt": "2026-07-06T20:02:38.988Z",
