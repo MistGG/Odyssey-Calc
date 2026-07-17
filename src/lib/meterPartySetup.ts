@@ -34,6 +34,18 @@ export function partyRoleBucketsForEntry(
   return roles
 }
 
+/** `true` = standard (1 tank + 1 healer), `false` = non-standard, `null` = unknown. */
+export function entryIsStandardPartySetup(
+  playerRoleBucket: MeterRoleBucket,
+  party: PlayerPartySnapshot,
+  roleMap: Map<string, string> | null,
+): boolean | null {
+  if (!roleMap?.size) return null
+  const roles = partyRoleBucketsForEntry(playerRoleBucket, party, roleMap)
+  if (!roles) return false
+  return isStandardPartySetup(roles)
+}
+
 export function entryMatchesPartySetupFilter(
   filter: MeterPartySetupFilter,
   playerRoleBucket: MeterRoleBucket,

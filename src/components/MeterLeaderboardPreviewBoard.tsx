@@ -17,8 +17,8 @@ import { meterPlayerProfilePath } from '../lib/meterPlayerProfile'
 import type { MeterPublicAggregates, PlayerRankEntry } from '../lib/meterPublicStats'
 import { dpsToPercentile, parseScoreColor } from '../lib/meterPublicStats'
 import {
+  entryIsStandardPartySetup,
   filterTamerEntriesByPartySetup,
-  type MeterPartySetupFilter,
 } from '../lib/meterPartySetup'
 import { METER_ROLE_BUCKET_LABELS, METER_ROLE_BUCKETS, fetchDigimonRoleMap, type MeterRoleBucket } from '../lib/meterRoleBuckets'
 import { meterBarBackgroundForSkill } from '../lib/meterSkillBarGradient'
@@ -605,8 +605,8 @@ export function MeterLeaderboardPreviewBoard({
   meterContext: { dungeonId: string; difficultyId: number }
 }) {
   const digimonChartRows = digimonDistribution ? maxDigimonChartRows(digimonDistribution) : 1
-  const [partySetupFilter, setPartySetupFilter] = useState<MeterPartySetupFilter>('standard')
   const [digimonRoleMap, setDigimonRoleMap] = useState<Map<string, string> | null>(null)
+  const [hideNonStandard, setHideNonStandard] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -668,34 +668,29 @@ export function MeterLeaderboardPreviewBoard({
         )}
 
         <section className="meter-lb-preview-section">
-          <div className="meter-lb-preview-section-head">
-            <div>
+          <div className="meter-lb-preview-section-head meter-lb-preview-section-head--tamer">
+            <div className="meter-lb-preview-section-head-row">
               <h3 className="meter-lb-preview-section-title">Tamer rankings</h3>
-              <p className="meter-lb-preview-section-note meter-parses-muted">
-                Best parse per tamer · top {VISIBLE_TAMERS} per role
-                {partySetupFilter === 'standard'
-                  ? ' · 1 tank, 1 healer parties'
-                  : ' · other party compositions'}
-              </p>
-            </div>
-            <div className="meter-lb-preview-kind-toggle" role="group" aria-label="Party setup">
               <button
                 type="button"
-                className={`meter-lb-preview-kind-btn${partySetupFilter === 'standard' ? ' meter-lb-preview-kind-btn--active' : ''}`}
-                aria-pressed={partySetupFilter === 'standard'}
-                onClick={() => setPartySetupFilter('standard')}
+                className={`meter-lb-preview-section-toggle${hideNonStandard ? ' meter-lb-preview-section-toggle--active' : ''}`}
+                aria-pressed={hideNonStandard}
+                onClick={() => setHideNonStandard((v) => !v)}
               >
-                Standard
-              </button>
-              <button
-                type="button"
-                className={`meter-lb-preview-kind-btn${partySetupFilter === 'non-standard' ? ' meter-lb-preview-kind-btn--active' : ''}`}
-                aria-pressed={partySetupFilter === 'non-standard'}
-                onClick={() => setPartySetupFilter('non-standard')}
-              >
-                Non Standard
+                {hideNonStandard ? 'Show non-standard' : 'Hide non-standard'}
               </button>
             </div>
+            <p className="meter-lb-preview-section-note meter-parses-muted meter-lb-preview-setup-legend">
+              <span>Best parse per tamer · top {VISIBLE_TAMERS} per role</span>
+              <span className="meter-lb-preview-setup-legend-item">
+                <span className="meter-lb-preview-setup-mark meter-lb-preview-setup-mark--standard" aria-hidden />
+                <span>= 1 healer + tank party</span>
+              </span>
+              <span className="meter-lb-preview-setup-legend-item">
+                <span className="meter-lb-preview-setup-mark meter-lb-preview-setup-mark--nonstandard" aria-hidden />
+                <span>= Non-standard setup</span>
+              </span>
+            </p>
           </div>
           <div className="meter-lb-preview-role-grid">
             {METER_ROLE_BUCKETS.map((bucket) => (
@@ -706,8 +701,8 @@ export function MeterLeaderboardPreviewBoard({
                 poolDps={stats.sortedDpsByBucket[bucket]}
                 partyMates={partyMates[bucket]}
                 meterContext={meterContext}
-                partySetupFilter={partySetupFilter}
                 digimonRoleMap={digimonRoleMap}
+                hideNonStandard={hideNonStandard}
               />
             ))}
           </div>
@@ -748,29 +743,26 @@ function RoleTamerCard({
   poolDps,
   partyMates,
   meterContext,
-  partySetupFilter,
   digimonRoleMap,
+  hideNonStandard,
 }: {
   bucket: MeterRoleBucket
   entries: PlayerRankEntry[]
   poolDps: number[]
   partyMates: Record<string, PlayerPartySnapshot>
   meterContext: { dungeonId: string; difficultyId: number }
-  partySetupFilter: MeterPartySetupFilter
   digimonRoleMap: Map<string, string> | null
+  hideNonStandard: boolean
 }) {
   const accent = ROLE_ACCENT[bucket]
-  const filteredEntries = filterTamerEntriesByPartySetup(
-    entries,
-    bucket,
-    partyMates,
-    partySetupFilter,
-    digimonRoleMap,
-  )
-  const filteredPoolDps = digimonRoleMap?.size
-    ? filteredEntries.map((entry) => entry.dps).sort((a, b) => a - b)
-    : poolDps
-  const visible = filteredEntries.slice(0, VISIBLE_TAMERS)
+  const rankedEntries = hideNonStandard
+    ? filterTamerEntriesByPartySetup(entries, bucket, partyMates, 'standard', digimonRoleMap)
+    : entries
+  const scorePoolDps =
+    hideNonStandard && digimonRoleMap?.size
+      ? rankedEntries.map((entry) => entry.dps).sort((a, b) => a - b)
+      : poolDps
+  const visible = rankedEntries.slice(0, VISIBLE_TAMERS)
 
   return (
     <article
@@ -786,6 +778,12 @@ function RoleTamerCard({
       ) : (
         <div className="meter-lb-preview-tamer-table">
           <div className="meter-lb-preview-tamer-columns" aria-hidden>
+            <span
+              className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--setup"
+              title="Green = 1 healer + tank · Red = non-standard"
+            >
+              NS
+            </span>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--rank">#</span>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--tamer">Tamer</span>
             <span className="meter-lb-preview-tamer-col meter-lb-preview-tamer-col--party">Time</span>
@@ -794,10 +792,17 @@ function RoleTamerCard({
           </div>
           <ol className="meter-lb-preview-tamer-list meter-scroll--themed">
           {visible.map((e, i) => {
-            const pct = dpsToPercentile(e.dps, filteredPoolDps)
+            const pct = dpsToPercentile(e.dps, scorePoolDps)
             const color = parseScoreColor(pct)
             const portrait = portraitForPlayer(e)
             const party = partyMates[e.playerKey] ?? { mates: [], durationSec: null }
+            const standard = entryIsStandardPartySetup(bucket, party, digimonRoleMap)
+            const setupLabel =
+              standard === null
+                ? 'Party setup unknown'
+                : standard
+                  ? '1 healer + tank party'
+                  : 'Non-standard setup'
             const rowKey = `${bucket}-${e.playerKey}-${i}`
             const selfTooltipId = `tamer-self-${rowKey}`
             const hasSelfTooltip = Boolean(e.digimonName.trim())
@@ -808,6 +813,17 @@ function RoleTamerCard({
                   state={{ displayName: e.displayName, fromMeter: meterContext }}
                   className="meter-lb-preview-tamer-row"
                 >
+                  <span
+                    className={`meter-lb-preview-setup-mark${
+                      standard === false
+                        ? ' meter-lb-preview-setup-mark--nonstandard'
+                        : standard === true
+                          ? ' meter-lb-preview-setup-mark--standard'
+                          : ' meter-lb-preview-setup-mark--unknown'
+                    }`}
+                    title={setupLabel}
+                    aria-label={setupLabel}
+                  />
                   <span className="meter-lb-preview-rank">{i + 1}</span>
                   <span className="meter-lb-preview-tamer-self">
                     {portrait ? (

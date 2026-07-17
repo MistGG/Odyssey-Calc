@@ -1094,12 +1094,13 @@ a.home-cta.home-cta--primary:focus-visible {
 }
 
 .lab-digimon-picker {
-  max-width: 28rem;
+  width: 100%;
   margin: 0.25rem 0 1.5rem;
   padding: 1rem 1.1rem;
   border: 1px solid rgba(56, 189, 248, 0.16);
   border-radius: var(--radius-sm);
   background: rgba(15, 23, 42, 0.4);
+  box-sizing: border-box;
 }
 
 .lab-digimon-picker__lead {
@@ -26545,6 +26546,20 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin-bottom: 0.85rem;
 }
 
+.meter-lb-preview-section-head--tamer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.meter-lb-preview-section-head-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
 .meter-lb-preview-section-title {
   margin: 0;
   font-family: var(--font-display);
@@ -26556,6 +26571,25 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-section-note {
   margin: 0;
   font-size: 0.82rem;
+}
+
+.meter-lb-preview-setup-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.85rem;
+  row-gap: 0.35rem;
+}
+
+.meter-lb-preview-setup-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.meter-lb-preview-setup-legend-item .meter-lb-preview-setup-mark {
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .meter-lb-preview-section-toggle {
@@ -26572,6 +26606,12 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 .meter-lb-preview-section-toggle:hover {
   color: var(--text-soft);
+}
+
+.meter-lb-preview-section-toggle--active {
+  color: var(--text);
+  border-color: rgba(56, 189, 248, 0.45);
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.18), rgba(56, 189, 248, 0.08));
 }
 
 .meter-lb-preview-digimon-reveal {
@@ -26697,33 +26737,6 @@ a.guidebook-monster-panel__loot-btn:hover {
   justify-content: center;
 }
 
-.meter-lb-preview-kind-toggle {
-  display: inline-flex;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.meter-lb-preview-kind-btn {
-  padding: 0.38rem 0.85rem;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.meter-lb-preview-kind-btn:hover {
-  color: var(--text-soft);
-}
-
-.meter-lb-preview-kind-btn--active {
-  color: var(--text);
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.18), rgba(56, 189, 248, 0.08));
-}
-
 .meter-lb-preview-tamer-list {
   list-style: none;
   margin: 0;
@@ -26741,6 +26754,8 @@ a.guidebook-monster-panel__loot-btn:hover {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  --tamer-col-setup: 0.85rem;
+  --tamer-col-rank: 1.35rem;
   --tamer-col-party: 3.65rem;
   --tamer-col-dps: 4.85rem;
   --tamer-col-score: 2.1rem;
@@ -26748,8 +26763,10 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 .meter-lb-preview-tamer-columns {
   display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr) var(--tamer-col-party) var(--tamer-col-dps) var(--tamer-col-score);
-  gap: 0.45rem;
+  grid-template-columns:
+    var(--tamer-col-setup) var(--tamer-col-rank) minmax(0, 1fr) var(--tamer-col-party)
+    var(--tamer-col-dps) var(--tamer-col-score);
+  gap: 0.4rem;
   align-items: end;
   padding: 0.35rem 0.75rem 0.22rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.15);
@@ -26764,6 +26781,14 @@ a.guidebook-monster-panel__loot-btn:hover {
   text-transform: uppercase;
   color: var(--muted);
   white-space: nowrap;
+}
+
+.meter-lb-preview-tamer-col--setup {
+  text-align: center;
+  letter-spacing: 0.04em;
+  font-size: 0.58rem;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .meter-lb-preview-tamer-col--rank {
@@ -27165,8 +27190,10 @@ a.guidebook-monster-panel__loot-btn:hover {
 .meter-lb-preview-tamer-row {
   position: relative;
   display: grid;
-  grid-template-columns: 1.6rem minmax(0, 1fr) var(--tamer-col-party) var(--tamer-col-dps) var(--tamer-col-score);
-  gap: 0.45rem;
+  grid-template-columns:
+    var(--tamer-col-setup) var(--tamer-col-rank) minmax(0, 1fr) var(--tamer-col-party)
+    var(--tamer-col-dps) var(--tamer-col-score);
+  gap: 0.4rem;
   align-items: center;
   min-width: 0;
   padding: 0.32rem 0.75rem;
@@ -27174,6 +27201,28 @@ a.guidebook-monster-panel__loot-btn:hover {
   text-decoration: none;
   color: inherit;
   transition: background 0.12s ease;
+}
+
+.meter-lb-preview-setup-mark {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin: 0 auto;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.meter-lb-preview-setup-mark--standard {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.45);
+}
+
+.meter-lb-preview-setup-mark--nonstandard {
+  background: #f87171;
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.45);
+}
+
+.meter-lb-preview-setup-mark--unknown {
+  background: rgba(148, 163, 184, 0.45);
 }
 
 .meter-lb-preview-tamer-self {
