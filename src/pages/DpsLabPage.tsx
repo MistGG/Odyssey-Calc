@@ -8,7 +8,9 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
+import { WikiDigimonSearchPicker } from '../components/communityGuides/WikiDigimonSearchPicker'
 import { fetchDigimonDetail } from '../api/digimonService'
 import {
   communityRotationMatchesLabSubmission,
@@ -525,6 +527,7 @@ const LAB_ROTATION_FILLER_DND_MIME = 'application/x-odyssey-lab-rotation-filler-
 
 export function DpsLabPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { user, supabase, profileDisplayName } = useAuth()
   const { search } = location
   const params = useMemo(() => new URLSearchParams(search), [search])
@@ -1477,26 +1480,38 @@ export function DpsLabPage() {
 
   return (
     <div className="lab lab-page">
-      <div className="lab-page-head">
-        <h1 className="lab-page-title">Lab</h1>
-        <div className="lab-page-head-actions">
-          <button type="button" className="lab-share-btn" onClick={onShareLabUrl}>
-            Share Lab Sim
-          </button>
-          {data && (
-            <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
-              Go back to {`${data.name}'s page`} →
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title="Lab"
+        lead="Theorycraft Digimon Odyssey DPS with rotation simulation."
+        actions={
+          <>
+            <button type="button" className="lab-share-btn" onClick={onShareLabUrl}>
+              Share
+            </button>
+            {data ? (
+              <Link className="lab-to-detail-btn" to={`/digimon/${encodeURIComponent(data.id)}`}>
+                {data.name} →
+              </Link>
+            ) : null}
+          </>
+        }
+      />
       {shareStatus ? <p className="muted lab-share-status">{shareStatus}</p> : null}
-      {!digimonId && (
-        <p className="error">
-          Open this page from the Digimon detail button (uses
-          <code> digimonId </code> in the URL).
-        </p>
-      )}
+      {!digimonId ? (
+        <section className="lab-digimon-picker" aria-label="Choose a Digimon">
+          <p className="muted lab-digimon-picker__lead">
+            Search for a Digimon to open the Lab simulator.
+          </p>
+          <WikiDigimonSearchPicker
+            label="Digimon"
+            onSelect={(digimon) => {
+              const next = new URLSearchParams(search)
+              next.set('digimonId', digimon.id)
+              navigate({ pathname: '/lab', search: `?${next.toString()}` }, { replace: false })
+            }}
+          />
+        </section>
+      ) : null}
       {loading && <p className="muted">Loading Digimon data…</p>}
       {error && <p className="error">{error}</p>}
       {simBusy && data && data.id === digimonId && (

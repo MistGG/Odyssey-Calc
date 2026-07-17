@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { fetchApprovedRotations, type CommunityRotation } from '../lib/communityRotations'
 import { useAuth } from '../auth/useAuth'
 import { fetchDigimonDetail } from '../api/digimonService'
@@ -1423,6 +1424,10 @@ export function TierListPage() {
 
   return (
     <div className="tier-page" data-tier-worker-state={tierWorkerState}>
+      <PageHeader
+        title="Tier List"
+        lead="Role rankings for Digimon Odyssey. Filter by stage, element, and more."
+      />
       <div className="tier-shell">
         <div className="tier-shell-nav">
           <div
@@ -1941,7 +1946,9 @@ export function TierListPage() {
               Some rows are missing healer scores. Run <strong>Update tier list</strong> to recalculate.
             </p>
           ) : null}
-          <div className="tier-filters-compact">
+          <details className="tier-filters-details">
+            <summary className="tier-filters-details-summary">Filters & options</summary>
+            <div className="tier-filters-compact">
             <div className="tier-filter-row" role="group" aria-labelledby="tier-filter-stage-label">
               <span className="tier-filter-label" id="tier-filter-stage-label">
                 Stage
@@ -2131,6 +2138,7 @@ export function TierListPage() {
               </span>
             </div>
           </div>
+          </details>
           {roles.length === 0 ? (
             <p className="muted tier-matrix-empty">
               No Digimon match this view. Try clearing filters

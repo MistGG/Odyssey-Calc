@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 
 const COMPANION_RELEASES_URL = 'https://github.com/MistGG/Odyssey-Companion/releases/latest'
 
@@ -45,32 +46,26 @@ const FEATURES = [
 export function CompanionPage() {
   return (
     <div className="companion-page">
-      <header className="companion-hero">
-        <div className="companion-hero__glow" aria-hidden />
-        <p className="companion-hero__eyebrow">Windows desktop app</p>
-        <h1 className="companion-hero__title">Odyssey Companion</h1>
-        <p className="companion-hero__lead">
-          Overlays for Digimon Odyssey: DPS meter, fight timelines, dungeon reference, and boss spawn
-          timers. Runs on top of the game while you play.
-        </p>
-        <div className="companion-hero__actions">
+      <PageHeader
+        className="companion-page-header"
+        kicker="Windows desktop app"
+        title="Odyssey Companion"
+        lead="Overlays for Digimon Odyssey: DPS meter, fight timelines, dungeon reference, and boss spawn timers. Runs on top of the game while you play."
+        actions={
           <a
             className="companion-cta companion-cta--primary"
             href={COMPANION_RELEASES_URL}
             target="_blank"
             rel="noreferrer noopener"
           >
-            Download companion from GitHub
+            Download from GitHub
           </a>
-          <Link className="companion-cta companion-cta--ghost" to="/meter">
-            View meter leaderboards
-          </Link>
-        </div>
-        <p className="companion-hero__disclaimer">
-          Third-party Windows app from GitHub (MistGG/Odyssey-Companion). Not the official game
-          installer or Digital Odyssey login. Auto-updates from GitHub releases.
-        </p>
-      </header>
+        }
+      />
+      <p className="companion-page__disclaimer muted">
+        Third-party Windows app from GitHub (MistGG/Odyssey-Companion). Not the official game
+        installer or Digital Odyssey login. Auto-updates from GitHub releases.
+      </p>
 
       <section className="companion-features" aria-labelledby="companion-features-heading">
         <h2 id="companion-features-heading" className="companion-section-title">
@@ -91,7 +86,7 @@ export function CompanionPage() {
 
       <section className="companion-flow" aria-labelledby="companion-flow-heading">
         <h2 id="companion-flow-heading" className="companion-section-title">
-          {'DPS parses ingame -> Website statistics'}
+          DPS parses in-game → website statistics
         </h2>
         <ol className="companion-flow__steps">
           <li>
@@ -118,26 +113,6 @@ export function CompanionPage() {
             </div>
           </li>
         </ol>
-      </section>
-
-      <section className="companion-download" aria-labelledby="companion-download-heading">
-        <div className="companion-download__card">
-          <h2 id="companion-download-heading" className="companion-download__title">
-            Get Odyssey Companion
-          </h2>
-          <p className="companion-download__text muted">
-            Install from GitHub, then use the tray icon for settings, meter, timeline, dungeons, or
-            boss timers.
-          </p>
-          <a
-            className="companion-cta companion-cta--primary"
-            href={COMPANION_RELEASES_URL}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            Open releases on GitHub
-          </a>
-        </div>
       </section>
     </div>
   )

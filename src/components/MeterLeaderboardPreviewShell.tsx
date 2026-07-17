@@ -50,6 +50,22 @@ export function MeterLeaderboardPreviewShell({
       </div>
 
       <div className="meter-lb-preview-shell-body">
+        <div className="meter-lb-preview-shell-context">
+          <h1 className="meter-lb-preview-shell-title">{dungeonName}</h1>
+          <div className="meter-lb-preview-shell-meta">
+            <span className="meter-lb-preview-shell-scope">{difficultyLabel}</span>
+            <span className={`meter-lb-preview-badge${cycleLive ? ' meter-lb-preview-badge--live' : ''}`}>
+              {leaderboardCycle.label}
+              {cycleLive ? ' · Live' : ''}
+            </span>
+          </div>
+          {cycleNote ? (
+            <p className="meter-lb-preview-shell-note meter-parses-muted" role="status">
+              {cycleNote}
+            </p>
+          ) : null}
+        </div>
+
         <div
           className={`meter-lb-preview-shell-filters${parsesRefreshing ? ' meter-lb-preview-shell-filters--refreshing' : ''}`}
         >
@@ -100,22 +116,6 @@ export function MeterLeaderboardPreviewShell({
             <span className="meter-lb-preview-shell-status" role="status">
               Updating…
             </span>
-          ) : null}
-        </div>
-
-        <div className="meter-lb-preview-shell-context">
-          <h1 className="meter-lb-preview-shell-title">{dungeonName}</h1>
-          <div className="meter-lb-preview-shell-meta">
-            <span className="meter-lb-preview-shell-scope">{difficultyLabel}</span>
-            <span className={`meter-lb-preview-badge${cycleLive ? ' meter-lb-preview-badge--live' : ''}`}>
-              {leaderboardCycle.label}
-              {cycleLive ? ' · Live' : ''}
-            </span>
-          </div>
-          {cycleNote ? (
-            <p className="meter-lb-preview-shell-note meter-parses-muted" role="status">
-              {cycleNote}
-            </p>
           ) : null}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { fetchDigimonPage } from '../api/digimonService'
 import { WIKI_DIGIMON_PER_PAGE } from '../config/env'
 import { peekBrowseFullListCache, storeBrowseFullListCache } from '../lib/browseFullListCache'
@@ -242,10 +243,15 @@ export function BrowsePage() {
     if (page > effectiveTotalPages - 1) setPageUrl(0)
   }, [effectiveTotalPages, allDigimonCache, page])
 
+  const activeFilterCount = FILTER_PARAM_KEYS.filter((k) => Boolean(filters[k])).length
+
   return (
     <div className="browse">
       <div className="browse-head">
-        <h1>Browse Digimon</h1>
+        <PageHeader
+          title="Digimon"
+          lead="Browse Digimon Odyssey partners by role, stage, element, and rank."
+        />
         <form className="search" onSubmit={onSearch}>
           <input
             type="search"
@@ -264,104 +270,109 @@ export function BrowsePage() {
           </button>
         </form>
 
-        <div className="filters" role="group" aria-label="Filter by role, stage, and attributes">
-          <label>
-            Role
-            <select
-              value={filters.role}
-              onChange={(e) => {
-                applyFilterPatch({ role: e.target.value })
-              }}
-            >
-              <option value="">Any</option>
-              {ROLE_OPTIONS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Stage
-            <select
-              value={filters.stage}
-              onChange={(e) => {
-                applyFilterPatch({ stage: e.target.value })
-              }}
-            >
-              <option value="">Any</option>
-              {STAGE_OPTIONS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Element
-            <select
-              value={filters.element}
-              onChange={(e) => {
-                applyFilterPatch({ element: e.target.value })
-              }}
-            >
-              <option value="">Any</option>
-              {ELEMENT_OPTIONS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Type / Attribute
-            <select
-              value={filters.attribute}
-              onChange={(e) => {
-                applyFilterPatch({ attribute: e.target.value })
-              }}
-            >
-              <option value="">Any</option>
-              {ATTRIBUTE_OPTIONS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Family
-            <select
-              value={filters.family}
-              onChange={(e) => {
-                applyFilterPatch({ family: e.target.value })
-              }}
-            >
-              <option value="">Any</option>
-              {WIKI_FAMILY_OPTIONS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Rank
-            <select
-              value={filters.rank}
-              onChange={(e) => {
-                applyFilterPatch({ rank: e.target.value })
-              }}
-            >
-              <option value="">All Ranks</option>
-              {WIKI_RANK_LABELS.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <details className="browse-filters-details">
+          <summary>
+            Filters{activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}
+          </summary>
+          <div className="filters" role="group" aria-label="Filter by role, stage, and attributes">
+            <label>
+              Role
+              <select
+                value={filters.role}
+                onChange={(e) => {
+                  applyFilterPatch({ role: e.target.value })
+                }}
+              >
+                <option value="">Any</option>
+                {ROLE_OPTIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Stage
+              <select
+                value={filters.stage}
+                onChange={(e) => {
+                  applyFilterPatch({ stage: e.target.value })
+                }}
+              >
+                <option value="">Any</option>
+                {STAGE_OPTIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Element
+              <select
+                value={filters.element}
+                onChange={(e) => {
+                  applyFilterPatch({ element: e.target.value })
+                }}
+              >
+                <option value="">Any</option>
+                {ELEMENT_OPTIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Type / Attribute
+              <select
+                value={filters.attribute}
+                onChange={(e) => {
+                  applyFilterPatch({ attribute: e.target.value })
+                }}
+              >
+                <option value="">Any</option>
+                {ATTRIBUTE_OPTIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Family
+              <select
+                value={filters.family}
+                onChange={(e) => {
+                  applyFilterPatch({ family: e.target.value })
+                }}
+              >
+                <option value="">Any</option>
+                {WIKI_FAMILY_OPTIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Rank
+              <select
+                value={filters.rank}
+                onChange={(e) => {
+                  applyFilterPatch({ rank: e.target.value })
+                }}
+              >
+                <option value="">All Ranks</option>
+                {WIKI_RANK_LABELS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </details>
         <p className="meta">
           {loading
             ? 'Loading…'

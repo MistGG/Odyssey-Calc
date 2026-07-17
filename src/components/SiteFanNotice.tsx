@@ -13,8 +13,13 @@ export function SiteFanFooter() {
       </p>
       <p className="site-fan-footer__meta">
         Odyssey Calc · Fan-made ·{' '}
-        <a href={OFFICIAL_GAME_URL} target="_blank" rel="noreferrer noopener">
-          Official game site
+        <a
+          className="site-fan-footer__official"
+          href={OFFICIAL_GAME_URL}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          Official Site
         </a>
       </p>
     </footer>

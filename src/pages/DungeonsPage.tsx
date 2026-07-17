@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { PageHeader } from '../components/PageHeader'
 import { wikiItemPageUrl } from '../api/itemService'
 import { wikiDungeonPageUrl } from '../api/dungeonService'
 import {
@@ -163,13 +164,10 @@ export function DungeonsPage() {
 
   return (
     <div className="dungeons-page">
-      <header className="dungeons-hero">
-        <h1 className="dungeons-hero__title">Dungeons</h1>
-        <p className="dungeons-hero__lead">
-          Browse instanced dungeons from the wiki with Dungeon Reward Points (DRP), bosses, and loot
-          search.
-        </p>
-      </header>
+      <PageHeader
+        title="Dungeons"
+        lead="Browse instanced dungeons from the wiki with Dungeon Reward Points (DRP), bosses, and loot search."
+      />
 
       <section className="dungeons-section" aria-labelledby="dungeons-list-heading">
         <div className="dungeons-section__head">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { LatestForumTeaserPanel } from '../LatestForumTeaserPanel'
+import { PageHeader } from '../PageHeader'
 import { OutlineMarkdown } from '../../lib/outlineMarkdown'
 import {
   loadPatchNotesCatalog,
@@ -94,19 +95,13 @@ export function PatchNotesBoard() {
 
   return (
     <div className="patch-notes-page patch-notes-scroll--themed">
-      <header className="patch-notes-hero">
-        <div className="patch-notes-hero__copy">
-          <p className="patch-notes-hero__kicker">Digital World Transmission</p>
-          <h1 className="patch-notes-hero__title">Patch Notes</h1>
-        </div>
-        {catalog?.syncedAt ? (
-          <div className="patch-notes-hero__meta">
-            <span className="patch-notes-hero__sync">Synced {formatSyncedAt(catalog.syncedAt)}</span>
-          </div>
-        ) : null}
-      </header>
-
-      <LatestForumTeaserPanel className="patch-notes-teaser" />
+      <PageHeader
+        kicker="Digital World Transmission"
+        title="Patch Notes"
+        lead={
+          catalog?.syncedAt ? `Synced ${formatSyncedAt(catalog.syncedAt)}` : undefined
+        }
+      />
 
       {loading ? (
         <p className="patch-notes-muted patch-notes-muted--center">Loading transmission log…</p>
@@ -150,6 +145,8 @@ export function PatchNotesBoard() {
           </article>
         </div>
       )}
+
+      <LatestForumTeaserPanel className="patch-notes-teaser patch-notes-teaser--below" />
     </div>
   )
 }

@@ -9,7 +9,7 @@ import {
   isInvalidMeterPartyParseRow,
   partyMembersFromPayload,
   raidTotalFromPayload,
-  sessionDurationFromPayload,
+  dpsDurationFromPayload,
 } from '../lib/meterParsePayload'
 import {
   fetchMyMeterParsePayload,
@@ -161,10 +161,10 @@ export function MeterMyParsesPage() {
     const raidTotal = hasPayload
       ? raidTotalFromPayload(hydrated.payload, members)
       : Math.round(row.total_damage ?? 0)
-    const sessionDur = hasPayload
-      ? sessionDurationFromPayload(hydrated.payload, row.duration_sec, members)
+    const dpsDur = hasPayload
+      ? dpsDurationFromPayload(hydrated.payload, row.duration_sec, members)
       : Math.max(row.duration_sec ?? 0, 0)
-    const raidDps = sessionDur > 0 ? raidTotal / sessionDur : 0
+    const raidDps = dpsDur > 0 ? raidTotal / dpsDur : 0
     const open = expandedIds.has(row.id)
     const memberKey = partyMemberByParseId[row.id]
     const payloadLoading = payloadLoadingIds.has(row.id)

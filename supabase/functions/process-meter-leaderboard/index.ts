@@ -13,6 +13,8 @@ type RoleBucket = (typeof ROLE_BUCKETS)[number]
 
 const MIN_PARTY_DAMAGE_SHARE = 0.02
 const PARTY_UPLOAD_DEDUPE_WINDOW_SEC = 10
+/** When the in-game clear time and meter session diverge by at least this, DPS uses the in-game clock. */
+const DPS_CLEAR_TIME_GAP_SEC = 30
 const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
 const DRAGON_DIMENSION_HARD_DIFFICULTY_ID = 3
 const DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC = 8 * 60
@@ -285,6 +287,20 @@ function clearTimeDuration(payload: DungeonPayload, rowDurationSec: number, memb
   return sessionDuration(payload, rowDurationSec, members)
 }
 
+/**
+ * Denominator for DPS: the meter session time, unless it diverges from the in-game clear
+ * time by {@link DPS_CLEAR_TIME_GAP_SEC} or more — in which case the in-game clear time is used
+ * (the meter combat window is unreliable when the two clocks disagree by that much).
+ */
+function dpsDurationSeconds(payload: DungeonPayload, rowDurationSec: number, members: StoredMember[]): number {
+  const session = sessionDuration(payload, rowDurationSec, members)
+  const cc = Number(payload.dungeon?.clientComplete?.timeSec)
+  if (Number.isFinite(cc) && cc > 0 && Math.abs(cc - session) >= DPS_CLEAR_TIME_GAP_SEC) {
+    return cc
+  }
+  return session
+}
+
 function memberDps(
   member: StoredMember,
   payload: DungeonPayload,
@@ -292,7 +308,7 @@ function memberDps(
   members: StoredMember[],
 ): number {
   const damage = memberDamageTotal(member)
-  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  const dur = Math.max(dpsDurationSeconds(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 
@@ -355,7 +371,7 @@ function memberDpsForLeaderboard(
   const digimons = memberDigimons(member)
   const damage =
     digimons.length > 1 ? primaryDigimonDamage(member, wikiCatalog) : memberDamageTotal(member)
-  const dur = Math.max(sessionDuration(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
+  const dur = Math.max(dpsDurationSeconds(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 

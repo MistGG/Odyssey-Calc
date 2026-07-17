@@ -333,6 +333,30 @@ export function parseClearTimeFromPayload(
   return clientCompleteTimeFromPayload(payload) ?? sessionDurationFromPayload(payload, rowDurationSec, members)
 }
 
+/**
+ * When the in-game clear time diverges from the meter session by at least this many seconds,
+ * the meter combat window is unreliable (e.g. only part of the fight was recorded), so DPS
+ * should be divided by the authoritative in-game clear clock instead of the meter session.
+ */
+export const DPS_CLEAR_TIME_GAP_SEC = 30
+
+/**
+ * Denominator for DPS: the meter session time, unless it diverges from the in-game clear
+ * time by {@link DPS_CLEAR_TIME_GAP_SEC} or more — in which case the in-game clear time is used.
+ */
+export function dpsDurationFromPayload(
+  payload: unknown,
+  rowDurationSec: number,
+  members: MeterPartyMemberStored[] = [],
+): number {
+  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
+  const clearSec = clientCompleteTimeFromPayload(payload)
+  if (clearSec != null && Math.abs(clearSec - sessionDur) >= DPS_CLEAR_TIME_GAP_SEC) {
+    return clearSec
+  }
+  return sessionDur
+}
+
 export const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
 export const DRAGON_DIMENSION_HARD_DIFFICULTY_ID = 3
 /** Full Dragon Dimension Hard clears below this in-game time are unranked. */

@@ -8,10 +8,10 @@ import {
 import { normalizeWikiRole } from './digimonRoleSkills'
 
 import {
+  dpsDurationFromPayload,
   isBrokenMeterPartyParse,
   memberDamageTotal,
   memberDigimonBreakdowns,
-  sessionDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
 
@@ -146,8 +146,8 @@ export function memberDpsInParse(
 ): number {
   if (isBrokenMeterPartyParse(payload, members)) return 0
   const damage = memberLeaderboardDamage(member, digimonRoleById)
-  const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
-  const dur = Math.max(sessionDur, member.durationSec, 1e-6)
+  const dpsDur = dpsDurationFromPayload(payload, rowDurationSec, members)
+  const dur = Math.max(dpsDur, member.durationSec, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
 

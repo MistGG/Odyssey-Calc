@@ -9,7 +9,7 @@ import {
   memberDigimonBreakdowns,
   partyMembersFromPayload,
   isDragonDimensionHardClearUnderMinTime,
-  sessionDurationFromPayload,
+  dpsDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
 import { collapseCoUploadedParseRows, excludeSupersededCoUploadParses } from './meterCoUploadMerge'
@@ -174,7 +174,7 @@ export function aggregatePublicMeterStats(
       continue
     }
 
-    const sessionDur = sessionDurationFromPayload(row.payload, row.duration_sec, members)
+    const dpsDur = dpsDurationFromPayload(row.payload, row.duration_sec, members)
 
     for (const member of members) {
       if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue
@@ -198,7 +198,7 @@ export function aggregatePublicMeterStats(
       }
 
       if (!primaryDigimonId) continue
-      const memberDur = Math.max(member.durationSec, sessionDur, 1e-6)
+      const memberDur = Math.max(member.durationSec, dpsDur, 1e-6)
       const primaryRows = memberDigimonBreakdowns(member).filter(
         (dg) => dg.digimonId.trim() === primaryDigimonId.trim(),
       )

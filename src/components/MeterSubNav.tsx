@@ -1,6 +1,5 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { NavMenuGroup } from './NavMenuGroup'
 
 function subNavClass({ isActive }: { isActive: boolean }) {
   return `meter-sub-nav-link${isActive ? ' meter-sub-nav-link--active' : ''}`
@@ -8,9 +7,6 @@ function subNavClass({ isActive }: { isActive: boolean }) {
 
 export function MeterSubNav() {
   const { user } = useAuth()
-  const location = useLocation()
-  const shopActive =
-    location.pathname.startsWith('/meter/shop') || location.pathname === '/meter/rewards'
 
   return (
     <nav className="meter-sub-nav" aria-label="Meter sections">
@@ -21,33 +17,16 @@ export function MeterSubNav() {
         Hall of Fame
       </NavLink>
       <NavLink to="/meter/search" className={subNavClass}>
-        Tamer search
+        Search
       </NavLink>
       {user ? (
-        <>
-          <NavLink to="/meter/my-parses" className={subNavClass}>
-            My parses
-          </NavLink>
-          <NavMenuGroup
-            triggerLabel="Shop"
-            menuLabel="Meter theme shop"
-            groupClassName="meter-sub-nav-menu"
-            triggerClassName={`meter-sub-nav-link meter-sub-nav-link--menu${shopActive ? ' meter-sub-nav-link--active' : ''}`}
-            items={[
-              { to: '/meter/shop/bar-themes/common', label: 'Theme shop', end: false },
-              { to: '/meter/rewards', label: 'My rewards', end: true },
-            ]}
-          />
-        </>
+        <NavLink to="/meter/my-parses" className={subNavClass}>
+          My parses
+        </NavLink>
       ) : (
-        <>
-          <NavLink to="/auth?returnTo=%2Fmeter%2Fmy-parses" className={subNavClass}>
-            Sign in for my parses
-          </NavLink>
-          <NavLink to="/auth?returnTo=%2Fmeter%2Fshop" className={subNavClass}>
-            Sign in for shop
-          </NavLink>
-        </>
+        <NavLink to="/auth?returnTo=%2Fmeter%2Fmy-parses" className={subNavClass}>
+          Sign in
+        </NavLink>
       )}
     </nav>
   )

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { useAuth } from '../auth/useAuth'
 import {
   dungeonFromPayload,
@@ -282,18 +283,15 @@ export function RotationAnalysisPage() {
 
   return (
     <div className="rotation-analysis-page lab browse">
-      <header className="rotation-analysis-header">
-        <div>
-          <h1>Rotation analysis</h1>
-          <p className="muted rotation-analysis-lede">
-            Compare your recent meter parses against the Lab auto rotation on the same Digimon and
-            fight length. See uptime vs downtime and where skill priority could improve.
-          </p>
-        </div>
-        <Link to={labHref} className="rotation-analysis-back">
-          Open DPS Lab
-        </Link>
-      </header>
+      <PageHeader
+        title="Rotation analysis"
+        lead="Compare your recent meter parses against the Lab auto rotation on the same Digimon and fight length."
+        actions={
+          <Link to={labHref} className="rotation-analysis-back">
+            Open DPS Lab
+          </Link>
+        }
+      />
 
       <div className="rotation-analysis-layout">
         <aside className="rotation-analysis-list-panel">

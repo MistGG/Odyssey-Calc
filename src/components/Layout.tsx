@@ -26,12 +26,23 @@ export function Layout() {
   }))
   const singleMeterProfile = meterProfileItems.length === 1 ? meterProfileItems[0] : null
   const multipleMeterProfiles = meterProfileItems.length > 1
-  const browseActive = pathname === '/' || pathname.startsWith('/digimon/')
+  const digimonActive = pathname === '/digimon' || pathname.startsWith('/digimon/')
+  const toolsActive = pathname.startsWith('/lab') || pathname.startsWith('/gear')
+  const tierActive = pathname.startsWith('/tier-list') || pathname.startsWith('/changes')
+  const guidesActive =
+    pathname.startsWith('/guidebook') ||
+    pathname.startsWith('/guides') ||
+    pathname.startsWith('/patch-notes') ||
+    pathname.startsWith('/dungeons')
+  const shopActive =
+    pathname.startsWith('/meter/shop') || pathname === '/meter/rewards'
+  const meterActive =
+    (pathname === '/meter' || pathname.startsWith('/meter/')) && !shopActive
 
   return (
     <div className="layout app-shell">
       <DigitalWorldBackdrop />
-      <header className="header header--compact">
+      <header className="header header--compact header--calm">
         <Link to="/" className="brand brand--compact">
           <img
             className="brand-logo"
@@ -46,98 +57,89 @@ export function Layout() {
 
         <div className="header__row">
           <div className="nav-scroll">
-          <nav className="nav nav--primary" aria-label="Main">
-            <NavLink to="/" end className={browseActive ? navLinkClass(true) : navLinkClass(false)}>
-              Browse
-            </NavLink>
+            <nav className="nav nav--primary" aria-label="Main">
+              <NavLink
+                to="/digimon"
+                className={digimonActive ? navLinkClass(true) : navLinkClass(false)}
+              >
+                Digimon
+              </NavLink>
 
-            <NavLink to="/dungeons" className={({ isActive }) => navLinkClass(isActive)}>
-              Dungeons
-            </NavLink>
+              <NavMenuGroup
+                triggerLabel="Tools"
+                menuLabel="Tools menu"
+                groupClassName={toolsActive ? 'nav-menu--active' : undefined}
+                items={[
+                  { to: '/lab', label: 'Lab' },
+                  { to: '/lab/rotation', label: 'Rotation analysis' },
+                  { to: '/gear', label: 'Gear' },
+                ]}
+              />
 
-            <NavLink
-              to="/patch-notes"
-              className={({ isActive }) => navLinkClass(isActive || pathname.startsWith('/patch-notes'))}
-            >
-              Patch Notes
-            </NavLink>
+              <NavMenuGroup
+                triggerLabel="Tier List"
+                menuLabel="Tier list menu"
+                groupClassName={tierActive ? 'nav-menu--active' : undefined}
+                items={[
+                  { to: '/tier-list', label: 'Tier List' },
+                  { to: '/changes', label: 'Changes' },
+                ]}
+              />
 
-            <NavMenuGroup
-              triggerLabel="Guides"
-              menuLabel="Guides menu"
-              items={[
-                {
-                  to: '/guidebook',
-                  label: 'Guidebook',
-                  className: 'nav-link-guidebook',
-                  isActive: (p) => p === '/guidebook' || p.startsWith('/guidebook/'),
-                },
-                {
-                  to: '/guides',
-                  label: 'Community Guides',
-                  isActive: (p) => p === '/guides' || p.startsWith('/guides/'),
-                },
-              ]}
-            />
+              <NavMenuGroup
+                triggerLabel="Guides"
+                menuLabel="Guides menu"
+                groupClassName={guidesActive ? 'nav-menu--active' : undefined}
+                items={[
+                  {
+                    to: '/guidebook',
+                    label: 'Guidebook',
+                    isActive: (p) => p === '/guidebook' || p.startsWith('/guidebook/'),
+                  },
+                  {
+                    to: '/guides',
+                    label: 'Community Guides',
+                    isActive: (p) => p === '/guides' || p.startsWith('/guides/'),
+                  },
+                  {
+                    to: '/patch-notes',
+                    label: 'Patch Notes',
+                    isActive: (p) => p === '/patch-notes' || p.startsWith('/patch-notes/'),
+                  },
+                  { to: '/dungeons', label: 'Dungeons' },
+                ]}
+              />
 
-            <NavMenuGroup
-              triggerLabel="Lab"
-              menuLabel="Lab menu"
-              items={[
-                { to: '/lab', label: 'Lab' },
-                { to: '/lab/rotation', label: 'Rotation analysis' },
-                { to: '/gear', label: 'Gear' },
-              ]}
-            />
+              <NavLink
+                to="/meter"
+                className={meterActive ? navLinkClass(true) : navLinkClass(false)}
+              >
+                Meter
+              </NavLink>
 
-            <NavMenuGroup
-              triggerLabel="Tier List"
-              menuLabel="Tier list menu"
-              items={[
-                { to: '/tier-list', label: 'Tier List' },
-                { to: '/changes', label: 'Changes' },
-              ]}
-            />
+              <NavMenuGroup
+                triggerLabel="Shop"
+                menuLabel="Shop menu"
+                groupClassName={shopActive ? 'nav-menu--active' : undefined}
+                items={[
+                  {
+                    to: '/meter/shop/bar-themes/common',
+                    label: 'Theme shop',
+                    end: false,
+                    isActive: (p) => p.startsWith('/meter/shop'),
+                  },
+                  {
+                    to: '/meter/rewards',
+                    label: 'My rewards',
+                    end: true,
+                  },
+                ]}
+              />
 
-            <NavLink
-              to="/meter"
-              className={({ isActive }) =>
-                navLinkClass(isActive || pathname.startsWith('/meter'))
-              }
-            >
-              Meter
-            </NavLink>
-
-            <NavLink
-              to="/event"
-              className={({ isActive }) =>
-                `nav-link-event nav-link--feat nav-link-event--disabled${isActive ? ' nav-link-event--active' : ''}`
-              }
-              title="Event is off"
-            >
-              <span className="nav-link-event__badge">OFF</span>
-              Event
-            </NavLink>
-
-            <NavLink
-              to="/companion"
-              className={({ isActive }) =>
-                `nav-link-companion nav-link--feat${isActive ? ' nav-link-companion--active' : ''}`
-              }
-            >
-              <span className="nav-link-companion__badge">App</span>
-              Companion
-            </NavLink>
-
-            <a
-              className="nav-link-official"
-              href="https://thedigitalodyssey.com/"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              Official Site
-            </a>
-          </nav>
+              <NavLink to="/companion" className={({ isActive }) => navLinkClass(isActive)}>
+                Companion
+              </NavLink>
+            </nav>
           </div>
 
           <div className="header__end">
@@ -194,7 +196,7 @@ export function Layout() {
                 className={({ isActive }) => navLinkClass(isActive, 'nav-sign-in')}
                 title="Sign in to your Odyssey-Calc account (not the official game)"
               >
-                Signin to Odyssey-Calc account
+                Sign in
               </NavLink>
             ) : null}
           </div>

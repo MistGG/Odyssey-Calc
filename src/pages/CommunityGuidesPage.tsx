@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { useAuth } from '../auth/useAuth'
 import { CommunityGuideThumbnail } from '../components/communityGuides/CommunityGuideThumbnail'
 import { wikiItemIconUrl } from '../lib/digimonImage'
@@ -171,20 +172,21 @@ export function CommunityGuidesPage() {
 
   return (
     <div className="community-guides-page">
-      <header className="community-guides-hero">
-        <div className="community-guides-hero__head">
-          <h1 className="community-guides-hero__title">Community Guides</h1>
-        </div>
-        {authReady && user ? (
-          <Link to="/guides/new" className="community-guides-btn community-guides-btn--primary">
-            Write a guide
-          </Link>
-        ) : (
-          <Link to="/auth" className="community-guides-btn community-guides-btn--ghost">
-            Sign in to write
-          </Link>
-        )}
-      </header>
+      <PageHeader
+        title="Community Guides"
+        lead="Player-written guides for Digimon Odyssey."
+        actions={
+          authReady && user ? (
+            <Link to="/guides/new" className="community-guides-btn community-guides-btn--primary">
+              Write a guide
+            </Link>
+          ) : (
+            <Link to="/auth" className="community-guides-btn community-guides-btn--ghost">
+              Sign in to write
+            </Link>
+          )
+        }
+      />
 
       {loading ? <p className="community-guides-status">Loading guides…</p> : null}
       {error ? <p className="community-guides-error">{error}</p> : null}

@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { PageHeader } from '../components/PageHeader'
 import { fetchPublishedTierChangeHistory } from '../lib/tierListPublished'
 import { contentStatusLabel, type DigimonContentStatus } from '../lib/contentStatus'
 import { loadTierListCache } from '../lib/tierList'
@@ -708,9 +709,10 @@ export function TierChangesPage() {
 
   return (
     <div className="lab tier-page">
-      <div className="tier-page-head">
-        <h1>Tier list changes</h1>
-      </div>
+      <PageHeader
+        title="Tier list changes"
+        lead="Published updates to Digimon Odyssey tier rankings."
+      />
       <section className="lab-result">
         <div className="tier-filter-panel tier-changes-filter-panel">
           <div className="tier-filter-row tier-filter-row--options" role="group" aria-label="Changes page options">

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { EditableNumberInput } from '../components/EditableNumberInput'
+import { PageHeader } from '../components/PageHeader'
 import {
   ACCESSORY_LINE_COUNT,
   ACCESSORY_STAT_OPTIONS,
@@ -374,15 +375,11 @@ export function GearPage() {
 
   return (
     <div className="gear-shell">
-      <header className="gear-shell__header">
-        <div>
-          <p className="gear-shell__eyebrow">Lab · Loadout</p>
-          <h1 className="gear-shell__title">Gear</h1>
-          <p className="gear-shell__lead muted">
-            Configure equipment, accessories, and seals. Values sync to DPS Lab automatically.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        kicker="Lab · Loadout"
+        title="Gear"
+        lead="Configure equipment, accessories, and seals. Values sync to DPS Lab automatically."
+      />
 
       <nav className="gear-tabs" aria-label="Gear sections">
         {GEAR_TABS.map((t) => (
