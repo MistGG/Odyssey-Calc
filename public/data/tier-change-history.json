@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-07-19T02:46:32.276Z",
+  "updated_at": "2026-07-19T08:24:23.814Z",
   "runs": [
+    {
+      "id": "2026-07-19T08:24:23.832Z-untf92",
+      "finishedAt": "2026-07-19T08:24:23.832Z",
+      "mode": "force",
+      "refreshedCount": 442,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-07-19T08:24:23.832Z",
+        "mode": "force",
+        "refreshedCount": 442,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-19T02:46:32.294Z-q0tbaj",
       "finishedAt": "2026-07-19T02:46:32.294Z",
@@ -10642,93 +10668,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-06-21T01:46:25.112Z",
-        "mode": "force",
-        "refreshedCount": 439,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-06-20T19:37:36.837Z-xbdtbc",
-      "finishedAt": "2026-06-20T19:37:36.837Z",
-      "mode": "force",
-      "refreshedCount": 439,
-      "apiCount": 0,
-      "tierCount": 439,
-      "sampleDigimon": [
-        {
-          "id": "d1hndr0k",
-          "name": "Aegisdramon",
-          "cause": "tier"
-        },
-        {
-          "id": "d1iab7dm",
-          "name": "AeroV-Dramon",
-          "cause": "tier"
-        },
-        {
-          "id": "d932np5",
-          "name": "Agnimon",
-          "cause": "tier"
-        },
-        {
-          "id": "dourljw",
-          "name": "Agumon",
-          "cause": "tier"
-        },
-        {
-          "id": "d1n28lsv",
-          "name": "Agumon(Black)",
-          "cause": "tier"
-        },
-        {
-          "id": "dfwwn6s",
-          "name": "Agumon(Classic)",
-          "cause": "tier"
-        },
-        {
-          "id": "dffhh64",
-          "name": "Alphamon",
-          "cause": "tier"
-        },
-        {
-          "id": "dxbmr4h",
-          "name": "AncientTroiamon",
-          "cause": "tier"
-        },
-        {
-          "id": "dr5unom",
-          "name": "Andromon",
-          "cause": "tier"
-        },
-        {
-          "id": "dqcps0z",
-          "name": "Angemon",
-          "cause": "tier"
-        },
-        {
-          "id": "d66odwa",
-          "name": "Angewomon",
-          "cause": "tier"
-        },
-        {
-          "id": "d1soic64",
-          "name": "Ankylomon",
-          "cause": "tier"
-        }
-      ],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-06-20T19:37:36.837Z",
         "mode": "force",
         "refreshedCount": 439,
         "dpsUp": [],
