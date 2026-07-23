@@ -32,7 +32,7 @@ export function WikiDigimonSearchPicker({
       setError(null)
       void loadGuidebookDigimonPage(0, 30, trimmed)
         .then((res) => {
-          if (!cancelled) setResults(res.data)
+          if (!cancelled) setResults(Array.isArray(res.data) ? res.data : [])
         })
         .catch((e: unknown) => {
           if (!cancelled) {

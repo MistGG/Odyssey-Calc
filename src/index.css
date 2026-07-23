@@ -30408,12 +30408,26 @@ a.guidebook-monster-panel__loot-btn:hover {
   color: var(--text-soft);
 }
 
-.community-guide-body__p {
+.community-guide-body.guidebook-prose > .community-guide-body__p {
   margin: 0 0 0.9rem;
+  white-space: pre-line;
 }
 
-.community-guide-body__p:last-child {
+.community-guide-body.guidebook-prose > .community-guide-body__p:last-child {
   margin-bottom: 0;
+}
+
+.community-guide-body__spacer {
+  display: block;
+  height: 0.9rem;
+}
+
+.community-guide-body__spacer--2 {
+  height: 1.8rem;
+}
+
+.community-guide-body__spacer--3 {
+  height: 2.7rem;
 }
 
 .community-guide-body > *:first-child {
@@ -30501,6 +30515,211 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 .community-guide-socials-editor__remove {
   white-space: nowrap;
+}
+
+.community-guides-editor__status-badge--collab {
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(34, 211, 238, 0.12);
+  color: #67e8f9;
+}
+
+.community-guides-editor__cache-note,
+.community-guides-editor__sync-note {
+  margin: 0 0 0.85rem;
+  color: var(--text-soft);
+  font-size: 0.875rem;
+}
+
+.community-guides-editor__conflict {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.community-guides-editor__conflict-text {
+  margin: 0 0 0.7rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.community-guides-editor__conflict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.community-guide-collab-editor {
+  margin: 0 0 1.15rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.28);
+  min-width: 0;
+}
+
+.community-guide-collab-editor__invite {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+}
+
+.community-guide-collab-editor__invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.community-guide-collab-editor__link {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.community-guide-collab-editor__link-url {
+  color: var(--accent, #67e8f9);
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.community-guide-collab-editor__list {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.community-guide-collab-editor__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-solid);
+}
+
+.community-guide-collab-editor__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  min-width: 0;
+}
+
+.community-guide-collab-editor__name {
+  font-weight: 600;
+}
+
+.community-guide-collab-editor__status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.community-guide-collab-editor__status--accepted {
+  color: #86efac;
+}
+
+.community-guide-collab-editor__status--pending {
+  color: #fcd34d;
+}
+
+.community-guide-collab-editor__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.community-guide-changelog {
+  margin: 0;
+  padding: 1.15rem 1.5rem 1.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.community-guide-changelog__title {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.community-guide-changelog__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.community-guide-changelog__item {
+  padding: 0.7rem 0.8rem;
+  border-left: 2px solid rgba(34, 211, 238, 0.45);
+  background: rgba(34, 211, 238, 0.04);
+}
+
+.community-guide-changelog__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.community-guide-changelog__sep {
+  opacity: 0.7;
+}
+
+.community-guide-changelog__editor {
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.community-guide-changelog__summary {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.community-guide-invite__head {
+  margin: 1rem 0 1.25rem;
+}
+
+.community-guide-invite__lead {
+  margin: 0.65rem 0 0;
+  color: var(--text-soft);
+  max-width: 38rem;
+  line-height: 1.5;
+}
+
+.community-guide-invite__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+@media (max-width: 640px) {
+  .community-guide-changelog {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .community-guide-collab-editor__row {
+    align-items: stretch;
+  }
+
+  .community-guide-collab-editor__row-actions {
+    width: 100%;
+  }
 }
 
 .community-guides-field__input,

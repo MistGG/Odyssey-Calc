@@ -192,6 +192,56 @@ export async function fetchPublishedCommunityGuides(
   )
 }
 
+async function fetchCommunityGuideListByIds(
+  supabase: SupabaseClient,
+  guideIds: string[],
+): Promise<CommunityGuideListItem[]> {
+  if (guideIds.length === 0) return []
+
+  let { data, error } = await supabase
+    .from('community_guides')
+    .select(COMMUNITY_GUIDE_LIST_SELECT)
+    .in('id', guideIds)
+
+  if (error && isMissingCommunityGuideColumnError(error.message)) {
+    const fallback = await supabase
+      .from('community_guides')
+      .select(`${COMMUNITY_GUIDE_LIST_SELECT_CORE}, status`)
+      .in('id', guideIds)
+    data = fallback.data as typeof data
+    error = fallback.error
+  }
+
+  if (error) throw new Error(formatCommunityGuideError(error.message))
+  return (data ?? []).map((row) =>
+    normalizeCommunityGuideListItem(row as Record<string, unknown>),
+  )
+}
+
+async function fetchAcceptedCollaboratingGuideIds(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('community_guide_collaborators')
+    .select('guide_id')
+    .eq('user_id', userId)
+    .eq('status', 'accepted')
+
+  if (error) {
+    const lower = error.message.toLowerCase()
+    if (
+      lower.includes('community_guide_collaborators') ||
+      lower.includes('42p01') ||
+      (lower.includes('relation') && lower.includes('does not exist'))
+    ) {
+      return []
+    }
+    throw new Error(formatCommunityGuideError(error.message))
+  }
+  return (data ?? []).map((row) => String((row as { guide_id: string }).guide_id))
+}
+
 export async function fetchAuthorCommunityGuides(
   supabase: SupabaseClient,
   userId: string,
@@ -213,9 +263,16 @@ export async function fetchAuthorCommunityGuides(
   }
 
   if (error) throw new Error(formatCommunityGuideError(error.message))
-  return (data ?? []).map((row) =>
+
+  const owned = (data ?? []).map((row) =>
     normalizeCommunityGuideListItem(row as Record<string, unknown>),
   )
+  const collabIds = await fetchAcceptedCollaboratingGuideIds(supabase, userId)
+  const ownedIds = new Set(owned.map((guide) => guide.id))
+  const missingCollabIds = collabIds.filter((id) => !ownedIds.has(id))
+  const collaborating = await fetchCommunityGuideListByIds(supabase, missingCollabIds)
+
+  return [...owned, ...collaborating].sort((a, b) => b.updated_at.localeCompare(a.updated_at))
 }
 
 export async function fetchCommunityGuideBySlug(
@@ -441,34 +498,45 @@ export async function createCommunityGuide(
   throw new Error('Could not allocate a unique guide URL. Try a different title.')
 }
 
+export type SaveCommunityGuideOptions = {
+  /** When false, leave the original author_name unchanged (collaborator edits). */
+  updateAuthorName?: boolean
+}
+
 export async function updateCommunityGuide(
   supabase: SupabaseClient,
   guideId: string,
   userId: string,
   input: SaveCommunityGuideInput,
+  options?: SaveCommunityGuideOptions,
 ): Promise<CommunityGuide> {
+  if (!userId) throw new Error('Not authenticated.')
+
   const status = input.status ?? 'published'
   const { title, body, authorName } = normalizeSaveCommunityGuideInput(input, status)
   const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
   const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
+  const updateAuthorName = options?.updateAuthorName !== false
 
   const updateRow: Record<string, unknown> = {
     title,
     body,
-    author_name: authorName,
     status,
     social_links: socialLinks,
     updated_at: new Date().toISOString(),
+  }
+  if (updateAuthorName) {
+    updateRow.author_name = authorName
   }
   if (thumbnailUrl !== null || input.thumbnailUrl === '') {
     updateRow.thumbnail_url = thumbnailUrl
   }
 
+  // RLS allows the owner or an accepted collaborator; do not filter by author_id.
   let { data, error } = await supabase
     .from('community_guides')
     .update(updateRow)
     .eq('id', guideId)
-    .eq('author_id', userId)
     .select('*')
     .single()
 
@@ -479,7 +547,6 @@ export async function updateCommunityGuide(
         .from('community_guides')
         .update(updateRowRetry)
         .eq('id', guideId)
-        .eq('author_id', userId)
         .select('*')
         .single()
       data = retry.data
@@ -488,9 +555,13 @@ export async function updateCommunityGuide(
   }
 
   if (error) throw new Error(formatCommunityGuideError(error.message))
+  if (!data) {
+    throw new Error('Guide not found or you do not have permission to edit it.')
+  }
   return normalizeCommunityGuide(data as Record<string, unknown>)
 }
 
+/** Load a guide for editing when the user is the owner or an accepted collaborator. */
 export async function fetchCommunityGuideForAuthor(
   supabase: SupabaseClient,
   guideId: string,
@@ -500,11 +571,17 @@ export async function fetchCommunityGuideForAuthor(
     .from('community_guides')
     .select('*')
     .eq('id', guideId)
-    .eq('author_id', userId)
     .maybeSingle()
 
   if (error) throw new Error(formatCommunityGuideError(error.message))
-  return data ? normalizeCommunityGuide(data as Record<string, unknown>) : null
+  if (!data) return null
+
+  const guide = normalizeCommunityGuide(data as Record<string, unknown>)
+  if (guide.author_id === userId) return guide
+
+  const collabIds = await fetchAcceptedCollaboratingGuideIds(supabase, userId)
+  if (collabIds.includes(guide.id)) return guide
+  return null
 }
 
 export async function deleteCommunityGuide(

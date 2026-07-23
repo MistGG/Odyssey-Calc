@@ -1,6 +1,7 @@
 import { WIKI_API_BASE } from '../config/env'
 import type { WikiDigimonDetail, WikiDigimonListResponse } from '../types/wikiApi'
 import { fetchJson, type FetchJsonOptions } from './http'
+import { normalizeWikiPagedList } from './wikiPagedList'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
 
@@ -63,10 +64,11 @@ export async function fetchDigimonPage(
   options?: WikiFetchOptions,
 ) {
   const page = pageZeroBased + 1
-  return fetchJson<WikiDigimonListResponse>(
+  const raw = await fetchJson<WikiDigimonListResponse>(
     wikiDigimonListUrl(page, perPage, searchQuery, filters),
     options,
   )
+  return normalizeWikiPagedList(raw)
 }
 
 export async function fetchDigimonDetail(id: string, options?: WikiFetchOptions) {

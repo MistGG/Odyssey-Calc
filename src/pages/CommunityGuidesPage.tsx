@@ -209,7 +209,7 @@ export function CommunityGuidesPage() {
             </summary>
             <div className="community-guides-details__body">
               <p className="community-guides-section__lead">
-                Drafts and published guides you have written.
+                Drafts and published guides you wrote or collaborate on.
               </p>
               <ul className="community-guides-grid">
                 {myGuides.map((guide) => (

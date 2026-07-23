@@ -1,6 +1,7 @@
 import { WIKI_API_BASE, WIKI_SITE_ORIGIN } from '../config/env'
 import type { WikiDungeonDetail, WikiDungeonListResponse } from '../types/wikiApi'
 import { fetchJson } from './http'
+import { normalizeWikiPagedList } from './wikiPagedList'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
 
@@ -18,7 +19,8 @@ export function wikiDungeonsListUrl(pageOneBased: number, perPage: number) {
 }
 
 export async function fetchWikiDungeonsPage(pageZeroBased = 0, perPage = 500) {
-  return fetchJson<WikiDungeonListResponse>(wikiDungeonsListUrl(pageZeroBased + 1, perPage))
+  const raw = await fetchJson<WikiDungeonListResponse>(wikiDungeonsListUrl(pageZeroBased + 1, perPage))
+  return normalizeWikiPagedList(raw)
 }
 
 export async function fetchAllWikiDungeons(perPage = 500) {

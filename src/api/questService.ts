@@ -1,6 +1,7 @@
 import { WIKI_API_BASE, WIKI_SITE_ORIGIN } from '../config/env'
 import type { WikiQuestDetail, WikiQuestListItem, WikiQuestListResponse } from '../types/wikiApi'
 import { fetchJson } from './http'
+import { normalizeWikiPagedList } from './wikiPagedList'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
 
@@ -30,7 +31,10 @@ export async function fetchWikiQuestDetail(id: string) {
 }
 
 export async function fetchWikiQuestsPage(pageZeroBased = 0, perPage = 500, searchQuery?: string) {
-  return fetchJson<WikiQuestListResponse>(wikiQuestsListUrl(pageZeroBased + 1, perPage, searchQuery))
+  const raw = await fetchJson<WikiQuestListResponse>(
+    wikiQuestsListUrl(pageZeroBased + 1, perPage, searchQuery),
+  )
+  return normalizeWikiPagedList(raw)
 }
 
 /** Fetches every quest page (used when browsing without a search query). */

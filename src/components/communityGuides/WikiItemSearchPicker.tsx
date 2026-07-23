@@ -29,7 +29,7 @@ export function WikiItemSearchPicker({ onSelect, label = 'Search items' }: WikiI
       setError(null)
       void loadGuidebookItemSearch(trimmed, 0, 50)
         .then((res) => {
-          if (!cancelled) setResults(res.data)
+          if (!cancelled) setResults(Array.isArray(res.data) ? res.data : [])
         })
         .catch((e: unknown) => {
           if (!cancelled) {

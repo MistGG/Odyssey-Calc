@@ -325,10 +325,17 @@ export function loadGuidebookDigimonPage(
   const key = digimonPageCacheKey(pageZeroBased, perPage, searchQuery, filters)
   return digimonListCache.load(key, () =>
     fetchDigimonPage(pageZeroBased, perPage, searchQuery, filters).then((res) => {
-      preloadGuidebookPortraitsFromList(res.data)
-      return res
+      const normalized = {
+        ...res,
+        data: Array.isArray(res.data) ? res.data : [],
+      }
+      preloadGuidebookPortraitsFromList(normalized.data)
+      return normalized
     }),
-  )
+  ).then((res) => ({
+    ...res,
+    data: Array.isArray(res.data) ? res.data : [],
+  }))
 }
 
 export function getGuidebookDungeonsCached(perPage = 500): WikiDungeonListItem[] | null {
@@ -365,7 +372,12 @@ export function loadGuidebookItemSearch(
   perPage = 50,
 ): Promise<WikiItemListResponse> {
   const key = itemSearchCacheKey(pageZeroBased, perPage, searchQuery)
-  return itemSearchCache.load(key, () => fetchWikiItemsPage(pageZeroBased, perPage, searchQuery))
+  return itemSearchCache
+    .load(key, () => fetchWikiItemsPage(pageZeroBased, perPage, searchQuery))
+    .then((res) => ({
+      ...res,
+      data: Array.isArray(res.data) ? res.data : [],
+    }))
 }
 
 export function getGuidebookQuestsCached(perPage = 500): WikiQuestListItem[] | null {
@@ -386,7 +398,12 @@ export function loadGuidebookQuestSearch(
   perPage = 500,
 ): Promise<WikiQuestListResponse> {
   const key = questSearchCacheKey(pageZeroBased, perPage, searchQuery)
-  return questSearchCache.load(key, () => fetchWikiQuestsPage(pageZeroBased, perPage, searchQuery))
+  return questSearchCache
+    .load(key, () => fetchWikiQuestsPage(pageZeroBased, perPage, searchQuery))
+    .then((res) => ({
+      ...res,
+      data: Array.isArray(res.data) ? res.data : [],
+    }))
 }
 
 export function getGuidebookMonsterDetailCached(id: string): WikiMonsterDetail | null {

@@ -2,8 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { CommunityGuideBody } from '../components/communityGuides/CommunityGuideBody'
+import { CommunityGuideChangelog } from '../components/communityGuides/CommunityGuideChangelog'
 import { CommunityGuideSocialLinks } from '../components/communityGuides/CommunityGuideSocialLinks'
 import { GuidebookWikiOverlayProvider } from '../components/guidebook/GuidebookWikiOverlay'
+import {
+  fetchAcceptedCommunityGuideCollaborators,
+  type CommunityGuideCollaborator,
+} from '../lib/communityGuideCollab'
 import {
   communityGuideShareUrl,
   copyCommunityGuideShareLink,
@@ -40,6 +45,8 @@ export function CommunityGuideDetailPage() {
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [shareLinkVisible, setShareLinkVisible] = useState(false)
+  const [collaborators, setCollaborators] = useState<CommunityGuideCollaborator[]>([])
+  const [canEdit, setCanEdit] = useState(false)
 
   const shareUrl = useMemo(() => (guide ? communityGuideShareUrl(guide.slug) : ''), [guide])
 
@@ -84,6 +91,32 @@ export function CommunityGuideDetailPage() {
       cancelled = true
     }
   }, [supabase, user, guide])
+
+  useEffect(() => {
+    if (!supabase || !guide) {
+      setCollaborators([])
+      setCanEdit(false)
+      return
+    }
+    let cancelled = false
+    void fetchAcceptedCommunityGuideCollaborators(supabase, guide.id)
+      .then((rows) => {
+        if (cancelled) return
+        setCollaborators(rows)
+        const isAuthor = user?.id === guide.author_id
+        const isCollab = Boolean(user && rows.some((row) => row.user_id === user.id))
+        setCanEdit(Boolean(isAuthor || isCollab))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCollaborators([])
+          setCanEdit(user?.id === guide.author_id)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, guide, user])
 
   useEffect(() => {
     if (!supabase || !guide) return
@@ -170,6 +203,9 @@ export function CommunityGuideDetailPage() {
 
   const isAuthor = user?.id === guide.author_id
   const viewCount = guide.view_count ?? 0
+  const collaboratorNames = collaborators
+    .map((row) => row.display_name.trim())
+    .filter(Boolean)
 
   return (
     <GuidebookWikiOverlayProvider>
@@ -196,7 +232,7 @@ export function CommunityGuideDetailPage() {
               >
                 {shareCopied ? 'Link copied' : 'Copy share link'}
               </button>
-              {isAuthor ? (
+              {canEdit ? (
                 <Link
                   to={`/guides/edit/${guide.id}`}
                   className="community-guides-btn community-guides-btn--ghost community-guides-detail__tool"
@@ -222,6 +258,16 @@ export function CommunityGuideDetailPage() {
             <p className="community-guides-detail__byline">
               by{' '}
               <span className="community-guides-detail__author-name">{guide.author_name}</span>
+              {collaboratorNames.length > 0 ? (
+                <>
+                  <span className="community-guides-detail__byline-sep" aria-hidden>
+                    ·
+                  </span>
+                  <span>
+                    with {collaboratorNames.join(', ')}
+                  </span>
+                </>
+              ) : null}
               <span className="community-guides-detail__byline-sep" aria-hidden>
                 ·
               </span>
@@ -248,6 +294,8 @@ export function CommunityGuideDetailPage() {
           <section className="community-guides-detail__content" aria-label="Guide content">
             <CommunityGuideBody body={guide.body} embedded />
           </section>
+
+          {supabase ? <CommunityGuideChangelog supabase={supabase} guideId={guide.id} /> : null}
         </div>
       </article>
     </GuidebookWikiOverlayProvider>

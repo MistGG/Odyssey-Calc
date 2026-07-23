@@ -13,7 +13,7 @@ import {
   type CommunityGuideEmbed,
 } from '../../lib/communityGuideEmbed'
 import { parseCommunityGuideImageMarkdown } from '../../lib/communityGuideImageUrl'
-import { parseCommunityGuideTableBlock, mergeCommunityGuideTableChunks } from '../../lib/communityGuideMarkdownTable'
+import { parseCommunityGuideTableBlock, isCommunityGuideTablePreamble } from '../../lib/communityGuideMarkdownTable'
 import { GuidebookDungeonPanel } from '../guidebook/GuidebookWidgets'
 import { useGuidebookWikiOverlay } from '../guidebook/GuidebookWikiOverlay'
 import { CommunityGuideImage } from './CommunityGuideImage'
@@ -211,13 +211,80 @@ function CommunityGuideDungeonBlock({ embed }: { embed: CommunityGuideEmbed }) {
   )
 }
 
+function normalizeGuideBodyNewlines(body: string): string {
+  // Windows editors store Enter as \r\n; treat those as real markdown newlines.
+  return body.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
+type GuideBodyBlock =
+  | { kind: 'chunk'; text: string }
+  | { kind: 'spacer'; blankLines: number }
+
+/**
+ * Split on blank lines while preserving extra empty lines as spacers.
+ * `\n\n` = paragraph break; additional `\n`s become visible gaps.
+ */
+function splitGuideBodyBlocks(body: string): GuideBodyBlock[] {
+  const normalized = normalizeGuideBodyNewlines(body)
+  if (!normalized.trim()) return []
+
+  const parts = normalized.split(/(\n{2,})/)
+  const blocks: GuideBodyBlock[] = []
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]!
+    if (!part) continue
+    if (/^\n+$/.test(part)) {
+      // One paragraph break consumes 2 newlines; keep the rest as blank lines.
+      const extraBlankLines = Math.max(0, part.length - 2)
+      if (extraBlankLines > 0 && blocks.length > 0) {
+        blocks.push({ kind: 'spacer', blankLines: extraBlankLines })
+      }
+      continue
+    }
+    const text = part.replace(/^\n+|\n+$/g, '')
+    if (text.trim()) {
+      blocks.push({ kind: 'chunk', text })
+    }
+  }
+
+  return blocks
+}
+
+function mergeGuideBodyBlocksWithTables(blocks: GuideBodyBlock[]): GuideBodyBlock[] {
+  const merged: GuideBodyBlock[] = []
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]!
+    if (block.kind !== 'chunk') {
+      merged.push(block)
+      continue
+    }
+    const next = blocks[i + 1]
+    if (
+      next?.kind === 'chunk' &&
+      isCommunityGuideTablePreamble(block.text) &&
+      parseCommunityGuideTableBlock(`${block.text}\n${next.text}`)
+    ) {
+      merged.push({ kind: 'chunk', text: `${block.text}\n${next.text}` })
+      i += 1
+      continue
+    }
+    merged.push(block)
+  }
+  return merged
+}
+
 function renderProseParagraph(lines: string[], key: number): ReactNode {
+  const visible = lines.map((line) => line.replace(/\s+$/g, ''))
+  while (visible.length > 1 && visible[visible.length - 1] === '') {
+    visible.pop()
+  }
   return (
     <p key={key} className="community-guide-body__p">
-      {lines.map((line, li) => (
+      {visible.map((line, li) => (
         <span key={li}>
           {li > 0 ? <br /> : null}
-          {renderLineWithEmbeds(line, `p${key}-l${li}`)}
+          {line.length > 0 ? renderLineWithEmbeds(line, `p${key}-l${li}`) : null}
         </span>
       ))}
     </p>
@@ -307,9 +374,7 @@ function renderMarkdownChunk(chunk: string, key: number): ReactNode | null {
 }
 
 export function CommunityGuideBody({ body, embedded = false }: { body: string; embedded?: boolean }) {
-  const chunks = mergeCommunityGuideTableChunks(
-    body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean),
-  )
+  const blocks = mergeGuideBodyBlocksWithTables(splitGuideBodyBlocks(body))
   const className = [
     'community-guide-body',
     'guidebook-prose',
@@ -319,12 +384,24 @@ export function CommunityGuideBody({ body, embedded = false }: { body: string; e
     .filter(Boolean)
     .join(' ')
 
-  if (!chunks.length) {
+  if (!blocks.length) {
     return <p className="community-guide-body__empty">This guide has no content yet.</p>
   }
   return (
     <div className={className}>
-      {chunks.map((chunk, i) => renderMarkdownChunk(chunk, i))}
+      {blocks.map((block, i) => {
+        if (block.kind === 'spacer') {
+          const size = Math.min(3, block.blankLines)
+          return (
+            <div
+              key={`sp-${i}`}
+              className={`community-guide-body__spacer community-guide-body__spacer--${size}`}
+              aria-hidden
+            />
+          )
+        }
+        return renderMarkdownChunk(block.text, i)
+      })}
     </div>
   )
 }

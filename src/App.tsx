@@ -27,6 +27,7 @@ import { CommunityGuidesPage } from './pages/CommunityGuidesPage'
 import { CommunityGuideDetailPage } from './pages/CommunityGuideDetailPage'
 import { CommunityGuideGearStatsPage } from './pages/CommunityGuideGearStatsPage'
 import { CommunityGuideEditorPage } from './pages/CommunityGuideEditorPage'
+import { CommunityGuideInvitePage } from './pages/CommunityGuideInvitePage'
 import { DungeonsPage } from './pages/DungeonsPage'
 import { PatchNotesPage } from './pages/PatchNotesPage'
 import { PatchPromoPage } from './pages/PatchPromoPage'
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="guides" element={<CommunityGuidesPage />} />
           <Route path="guides/new" element={<CommunityGuideEditorPage />} />
           <Route path="guides/edit/:id" element={<CommunityGuideEditorPage />} />
+          <Route path="guides/invite/:token" element={<CommunityGuideInvitePage />} />
           <Route path="guides/gear-stats" element={<CommunityGuideGearStatsPage />} />
           <Route path="guides/:slug" element={<CommunityGuideDetailPage />} />
           <Route path="patch-notes" element={<PatchNotesPage />} />

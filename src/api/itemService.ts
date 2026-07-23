@@ -1,6 +1,7 @@
 import { WIKI_API_BASE, WIKI_SITE_ORIGIN } from '../config/env'
 import type { WikiItemDetail, WikiItemListResponse } from '../types/wikiApi'
 import { fetchJson } from './http'
+import { normalizeWikiPagedList } from './wikiPagedList'
 
 const base = WIKI_API_BASE.replace(/\/$/, '')
 
@@ -31,7 +32,10 @@ export function wikiItemPageUrl(id: string) {
 }
 
 export async function fetchWikiItemsPage(pageZeroBased = 0, perPage = 50, searchQuery?: string) {
-  return fetchJson<WikiItemListResponse>(wikiItemsListUrl(pageZeroBased + 1, perPage, searchQuery))
+  const raw = await fetchJson<WikiItemListResponse>(
+    wikiItemsListUrl(pageZeroBased + 1, perPage, searchQuery),
+  )
+  return normalizeWikiPagedList(raw)
 }
 
 export async function fetchWikiItemDetail(id: string) {

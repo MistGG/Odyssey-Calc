@@ -68,7 +68,7 @@ export function WikiQuestSearchPicker({ onSelect, label = 'Search quests' }: Wik
       void loadGuidebookQuestSearch(trimmed, 0, 500)
         .then((res) => {
           if (!cancelled) {
-            setServerResults(res.data)
+            setServerResults(Array.isArray(res.data) ? res.data : [])
             setError(null)
           }
         })
