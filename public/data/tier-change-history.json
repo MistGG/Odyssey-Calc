@@ -1,6 +1,65 @@
 {
-  "updated_at": "2026-07-23T08:37:32.064Z",
+  "updated_at": "2026-07-23T14:06:22.794Z",
   "runs": [
+    {
+      "id": "2026-07-23T14:06:22.812Z-9i94oe",
+      "finishedAt": "2026-07-23T14:06:22.812Z",
+      "mode": "force",
+      "refreshedCount": 443,
+      "apiCount": 1,
+      "tierCount": 1,
+      "sampleDigimon": [
+        {
+          "id": "d1diof57",
+          "name": "Arkadimon Adult",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1diof57": [
+          "HP: 8276 -> 11076",
+          "Attack: 4337 -> 5947",
+          "Stats.ds: 9862 -> 13292",
+          "Stats.defense: 212 -> 282"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1diof57",
+          "name": "Arkadimon Adult",
+          "lines": [
+            "HP: 8276 -> 11076",
+            "Attack: 4337 -> 5947",
+            "Stats.ds: 9862 -> 13292",
+            "Stats.defense: 212 -> 282"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-07-23T14:06:22.812Z",
+        "mode": "force",
+        "refreshedCount": 443,
+        "dpsUp": [
+          {
+            "id": "d1diof57",
+            "name": "Arkadimon Adult",
+            "role": "Melee DPS",
+            "before": 9296.884174485618,
+            "after": 10226.79697874445,
+            "delta": 929.9128042588327
+          }
+        ],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-23T08:37:32.084Z-pol3pb",
       "finishedAt": "2026-07-23T08:37:32.084Z",
@@ -10936,32 +10995,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-06-25T03:43:16.998Z",
-        "mode": "force",
-        "refreshedCount": 439,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-06-24T19:58:36.214Z-0f21os",
-      "finishedAt": "2026-06-24T19:58:36.214Z",
-      "mode": "force",
-      "refreshedCount": 439,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-06-24T19:58:36.214Z",
         "mode": "force",
         "refreshedCount": 439,
         "dpsUp": [],
