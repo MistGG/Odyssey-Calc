@@ -6,6 +6,7 @@ import { buildThemePreviewRows, MeterThemePreview } from '../components/MeterThe
 import type { useMeterRewards } from '../hooks/useMeterRewards'
 import {
   isMagiaMeterShopTheme,
+  isVerdandiMeterShopTheme,
   meterThemeRewardsCardTitle,
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
@@ -86,14 +87,25 @@ export function MeterThemeShopBarThemesPage() {
             const canAfford = rewards.balance >= price
             const confirming = confirmThemeId === theme.id
             const isMagia = isMagiaMeterShopTheme(theme)
+            const isVerdandi = isVerdandiMeterShopTheme(theme)
+            const cycleShopMod = isVerdandi
+              ? ' meter-shop-card--verdandi'
+              : isMagia
+                ? ' meter-shop-card--magia'
+                : ''
+            const cycleTierMod = isVerdandi
+              ? ' meter-shop-tier--verdandi'
+              : isMagia
+                ? ' meter-shop-tier--magia'
+                : ''
             return (
               <li
                 key={theme.id}
-                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-card--legendary' : ''}${isMagia ? ' meter-shop-card--magia' : ''}`}
+                className={`meter-shop-card${theme.variant === 'rare' ? ' meter-shop-card--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-card--legendary' : ''}${cycleShopMod}`}
               >
                 <div className="meter-shop-card-head">
                   <span
-                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-tier--legendary' : ''}${isMagia ? ' meter-shop-tier--magia' : ''}`}
+                    className={`meter-shop-tier${theme.variant === 'rare' ? ' meter-shop-tier--rare' : ''}${theme.variant === 'legendary' ? ' meter-shop-tier--legendary' : ''}${cycleTierMod}`}
                   >
                     {meterThemeShopTierLabelForTheme(theme)}
                   </span>

@@ -5,7 +5,10 @@ import {
   fetchPlayerHofCycleCountsMap,
   METER_HOF_PROFILE_SCOPE_LIMIT,
 } from './meterHallOfFame'
-import { getMeterLeaderboardCycle } from './meterLeaderboardCycles'
+import {
+  getDefaultMeterLeaderboardCycle,
+  getMeterLeaderboardCycle,
+} from './meterLeaderboardCycles'
 import { normalizeRoutePlayerKey } from './meterPlayerProfile'
 import { fetchStoredConfirmedPlayerKey } from './meterPointGrants'
 import type { OlympusHofBreakForGrant } from './meterPointGrants'
@@ -13,6 +16,7 @@ import type { WikiDungeonListItem } from '../types/wikiApi'
 import {
   HALL_OF_FAME_THEME_ID,
   MAGIA_HALL_OF_FAME_THEME_ID,
+  VERDANDI_HALL_OF_FAME_THEME_ID,
   type MeterPartyBarThemeId,
 } from './meterPartyBarThemes'
 
@@ -22,10 +26,11 @@ export const HOF_PREVIEW_DEMO_RECORD_COUNT = 7
 function hofThemeCycleId(themeId: MeterPartyBarThemeId): string | null {
   if (themeId === HALL_OF_FAME_THEME_ID) return 'olympus'
   if (themeId === MAGIA_HALL_OF_FAME_THEME_ID) return 'magia'
+  if (themeId === VERDANDI_HALL_OF_FAME_THEME_ID) return 'verdandi'
   return null
 }
 
-/** Break count for a HoF reward theme card (Olympus vs Magia cycle). */
+/** Break count for a HoF reward theme card (per cycle). */
 export function hofRecordCountForThemeId(
   themeId: MeterPartyBarThemeId,
   counts: Record<string, number>,
@@ -44,7 +49,7 @@ export async function fetchMeterPlayerHofRecordCount(
   const key = playerKey.trim().toLowerCase()
   if (!key) return { count: 0, error: null }
 
-  const cycleId = options?.cycleId?.trim() || 'magia'
+  const cycleId = options?.cycleId?.trim() || getDefaultMeterLeaderboardCycle().id
   const { counts, error } = await fetchPlayerHofCycleCountsMap(key)
   if (error) return { count: 0, error }
 

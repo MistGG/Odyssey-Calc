@@ -35,6 +35,7 @@ import {
   meterLeaderboardCycleShortLabel,
   meterLeaderboardCycleWindow,
 } from '../lib/meterLeaderboardCycles'
+import { meterHofVariantForCycleId } from '../lib/meterHofVariant'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 
 type ProfileLocationState = {
@@ -218,7 +219,7 @@ export function MeterPlayerProfilePage() {
       favoriteDigimon,
       hallOfFameRecordCount: hofCurrentSeasonCount,
       cycleShortLabel: hofCurrentCycleShortLabel,
-      hofBadgeVariant: hofCurrentCycleId === 'magia' ? 'magia' : 'olympus',
+      hofBadgeVariant: meterHofVariantForCycleId(hofCurrentCycleId),
     }
   }, [
     loading,
@@ -250,7 +251,22 @@ export function MeterPlayerProfilePage() {
     return signedInIdentities.some((id) => id.playerKey === playerKey)
   }, [user, nav?.ownProfile, signedInLoading, signedInIdentities, playerKey])
 
-  const showIdentityNotice = isOwnProfile && !loading && bestParses.length === 0
+  /** True when this is your profile but no upload has marked you as self yet. */
+  const showIdentityNotice = useMemo(() => {
+    if (!isOwnProfile || loading || signedInLoading) return false
+    const match = signedInIdentities.find((id) => id.playerKey === playerKey)
+    // Profile display-name fallback is not upload-confirmed.
+    if (match) return !match.confirmedFromUpload
+    // Navigated as "own profile" without a resolved identity yet.
+    return Boolean(nav?.ownProfile)
+  }, [
+    isOwnProfile,
+    loading,
+    signedInLoading,
+    signedInIdentities,
+    playerKey,
+    nav?.ownProfile,
+  ])
 
   if (!playerKey) {
     return (
@@ -290,7 +306,7 @@ export function MeterPlayerProfilePage() {
         currentSeasonBadge={
           hofCurrentSeasonCount > 0
             ? {
-                variant: hofCurrentCycleId === 'magia' ? 'magia' : 'olympus',
+                variant: meterHofVariantForCycleId(hofCurrentCycleId),
                 recordCount: hofCurrentSeasonCount,
                 cycleShortLabel: hofCurrentCycleShortLabel,
               }

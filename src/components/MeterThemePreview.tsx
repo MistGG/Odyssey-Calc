@@ -1,5 +1,6 @@
 import {
   isHallOfFameMeterTheme,
+  isVerdandiSssLegendaryTheme,
   meterPartyBarThemeStyle,
   meterThemePreviewDigimonLine,
   shouldShowMeterThemeBadge,
@@ -12,7 +13,7 @@ function formatInt(n: number) {
   return Math.round(n).toLocaleString('en-US')
 }
 
-import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
+import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberSssFirstClass, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
 
 
 
@@ -50,15 +51,16 @@ export function MeterThemePreview({
   className = '',
   hofRecordCount = 0,
 }: MeterThemePreviewProps) {
+  const sssRuneEscape =
+    isVerdandiSssLegendaryTheme(theme) &&
+    (theme.barStyleId === 'alphamon-ouryuken' ||
+      theme.barStyleId === 'omegamon' ||
+      theme.barStyleId === 'ulforce-veemon-x')
 
   return (
-
     <div
-
-      className={`meter-theme-preview meter-parses-meter-chrome${theme.variant === 'rare' ? ' meter-theme-preview--rare' : ''}${theme.variant === 'legendary' ? ' meter-theme-preview--legendary' : ''}${className ? ` ${className}` : ''}`}
-
+      className={`meter-theme-preview meter-parses-meter-chrome${theme.variant === 'rare' ? ' meter-theme-preview--rare' : ''}${theme.variant === 'legendary' ? ' meter-theme-preview--legendary' : ''}${sssRuneEscape ? ' meter-theme-preview--sss-rune-escape' : ''}${className ? ` ${className}` : ''}`}
       aria-label={`${theme.label} party bar preview`}
-
     >
 
       {rows.map((row, index) => {
@@ -72,19 +74,16 @@ export function MeterThemePreview({
         const sharePct = row.fillPct
 
         const { dps, totalDamage, durationSec } = meterThemePreviewStats(sharePct, index)
+        const isFirstPlace = themed
+        const sssFirstClass = themed ? meterPartyMemberSssFirstClass(theme, isFirstPlace) : ''
+        // Live meter uses sss-bleed; previews must not — negative margins steal Equip/Buy clicks.
 
         return (
-
           <div
-
             key={rowKey}
-
-            className={`meter-party-member${themed ? ' meter-party-member--bar-theme' : ''}${themed ? meterPartyMemberThemeClass(theme) : ''}`}
-
+            className={`meter-party-member${themed ? ' meter-party-member--bar-theme' : ''}${themed ? meterPartyMemberThemeClass(theme) : ''}${sssFirstClass}`}
             style={themeStyle}
-
           >
-
             {themed ? (
               <MeterPartyThemedBar
                 theme={theme}
@@ -92,61 +91,37 @@ export function MeterThemePreview({
                 hofRecordCount={
                   isHallOfFameMeterTheme(theme) ? Math.max(hofRecordCount, 1) : hofRecordCount
                 }
+                isFirstPlace={isFirstPlace}
               />
             ) : (
               <MeterPartyPlainBar sharePct={sharePct} rowKey={rowKey} />
             )}
 
             <div className="meter-party-member-grid meter-party-member-grid--with-icon">
-
               <span className="meter-party-name">
-
                 <span className="meter-party-portrait meter-party-portrait--empty" aria-hidden />
-
                 <span className="meter-party-name-stack">
-
                   <span className="meter-party-name-text">
-
                     {row.tamerName}
-
                     {themed ? (
-
                       <span className="meter-theme-preview-you" aria-label="Your tamer">
-
                         You
-
                       </span>
-
                     ) : null}
-
                     {themed && shouldShowMeterThemeBadge(theme) ? (
-
                       <span className="meter-party-theme-badge" title={theme.label} aria-hidden>
-
                         {theme.badge}
-
                       </span>
-
                     ) : null}
-
                   </span>
-
                   <span className="meter-party-digimon">{row.digimonName}</span>
-
                 </span>
-
               </span>
-
               <span className="meter-party-num">{formatInt(dps)}</span>
-
               <span className="meter-party-num">{formatInt(totalDamage)}</span>
-
               <span className="meter-party-num">{durationSec.toFixed(0)}</span>
-
             </div>
-
           </div>
-
         )
 
       })}

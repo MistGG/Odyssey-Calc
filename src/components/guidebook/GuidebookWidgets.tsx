@@ -1302,13 +1302,13 @@ const UNCAP_DUNGEON_CARDS = [
     dungeonId: GUIDEBOOK_UNCAP_50_DUNGEON_ID,
     nameFallback: "Agumon's Madness",
     badgeLabel: 'Level 50 uncap',
-    difficulty: 'Normal' as const,
+    difficulty: 'Story' as const,
   },
   {
     dungeonId: GUIDEBOOK_UNCAP_70_DUNGEON_ID,
     nameFallback: 'The Rise of the Fallen Angel',
     badgeLabel: 'Level 70 uncap',
-    difficulty: 'Normal' as const,
+    difficulty: 'Story' as const,
   },
 ] as const
 

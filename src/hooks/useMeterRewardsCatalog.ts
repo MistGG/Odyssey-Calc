@@ -11,19 +11,33 @@ import {
 import {
   getMeterPartyBarTheme,
   HALL_OF_FAME_THEME_ID,
+  isHallOfFameMeterTheme,
   MAGIA_HALL_OF_FAME_THEME_ID,
+  VERDANDI_HALL_OF_FAME_THEME_ID,
 } from '../lib/meterPartyBarThemes'
 import {
   meterRewardsThemesForUser,
   type MeterRewardTheme,
 } from '../lib/meterThemeShop'
 
+const HOF_GRANT_THEME_IDS = [
+  HALL_OF_FAME_THEME_ID,
+  MAGIA_HALL_OF_FAME_THEME_ID,
+  VERDANDI_HALL_OF_FAME_THEME_ID,
+] as const
+
+const HOF_GRANT_CYCLE_BY_THEME = {
+  [HALL_OF_FAME_THEME_ID]: 'olympus',
+  [MAGIA_HALL_OF_FAME_THEME_ID]: 'magia',
+  [VERDANDI_HALL_OF_FAME_THEME_ID]: 'verdandi',
+} as const
+
 function withHofRecordCounts(
   themes: MeterRewardTheme[],
   hofRecordCounts: Record<string, number>,
 ): MeterRewardTheme[] {
   return themes.map((theme) => {
-    if (theme.id === HALL_OF_FAME_THEME_ID || theme.id === MAGIA_HALL_OF_FAME_THEME_ID) {
+    if (isHallOfFameMeterTheme(theme)) {
       return { ...theme, hofRecordCount: hofRecordCountForThemeId(theme.id, hofRecordCounts) }
     }
     return theme
@@ -80,20 +94,15 @@ export function useMeterRewardsCatalog(
   }, [supabase, profileDisplayName])
 
   const rewardThemes = useMemo((): MeterRewardTheme[] => {
-    const olympusCount = hofRecordCounts.olympus ?? 0
-    const magiaCount = hofRecordCounts.magia ?? 0
     const themes: MeterRewardTheme[] = withHofRecordCounts([...purchasedThemes], hofRecordCounts)
 
-    if (userQualifiesForHallOfFameTheme(olympusCount)) {
-      const hof = getMeterPartyBarTheme(HALL_OF_FAME_THEME_ID)
-      if (hof && !themes.some((t) => t.id === hof.id)) {
-        themes.push({ ...hof, hofRecordCount: olympusCount })
-      }
-    }
-    if (userQualifiesForHallOfFameTheme(magiaCount)) {
-      const magia = getMeterPartyBarTheme(MAGIA_HALL_OF_FAME_THEME_ID)
-      if (magia && !themes.some((t) => t.id === magia.id)) {
-        themes.push({ ...magia, hofRecordCount: magiaCount })
+    for (const themeId of HOF_GRANT_THEME_IDS) {
+      const cycleId = HOF_GRANT_CYCLE_BY_THEME[themeId]
+      const count = hofRecordCounts[cycleId] ?? 0
+      if (!userQualifiesForHallOfFameTheme(count)) continue
+      const theme = getMeterPartyBarTheme(themeId)
+      if (theme && !themes.some((t) => t.id === theme.id)) {
+        themes.push({ ...theme, hofRecordCount: count })
       }
     }
 

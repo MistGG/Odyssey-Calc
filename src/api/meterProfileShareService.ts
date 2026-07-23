@@ -43,7 +43,11 @@ function parseSnapshot(raw: unknown): MeterProfileShareSnapshot | null {
       typeof o.hallOfFameRecordCount === 'number' ? Math.max(0, o.hallOfFameRecordCount) : 0,
     cycleShortLabel: typeof o.cycleShortLabel === 'string' ? o.cycleShortLabel : undefined,
     hofBadgeVariant:
-      o.hofBadgeVariant === 'magia' || o.hofBadgeVariant === 'olympus' ? o.hofBadgeVariant : undefined,
+      o.hofBadgeVariant === 'magia' ||
+      o.hofBadgeVariant === 'olympus' ||
+      o.hofBadgeVariant === 'verdandi'
+        ? o.hofBadgeVariant
+        : undefined,
     shareCacheKey:
       typeof o.shareCacheKey === 'string' && o.shareCacheKey.trim() ? o.shareCacheKey.trim() : undefined,
   }

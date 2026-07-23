@@ -8,6 +8,7 @@ import {
   METER_LEADERBOARD_CYCLES,
   meterLeaderboardCycleShortLabel,
 } from '../lib/meterLeaderboardCycles'
+import { meterHofVariantForCycleId } from '../lib/meterHofVariant'
 import { MeterProfileHallOfFameBadge } from './MeterProfileHallOfFameBadge'
 
 export function MeterPlayerPastSeasonsPanel({
@@ -92,7 +93,7 @@ export function MeterPlayerPastSeasonsPanel({
 }
 
 function PastSeasonBadge({ row }: { row: PlayerHallOfFameCycleSummary }) {
-  const variant = row.cycle.id === 'magia' ? 'magia' : 'olympus'
+  const variant = meterHofVariantForCycleId(row.cycle.id)
   const shortLabel = meterLeaderboardCycleShortLabel(row.cycle)
   return (
     <MeterProfileHallOfFameBadge

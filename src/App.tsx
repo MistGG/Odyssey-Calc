@@ -16,9 +16,11 @@ import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
 import { MeterMagiaThemePreviewPage } from './pages/MeterMagiaThemePreviewPage'
 import { MeterCycleThemePreviewPage } from './pages/MeterCycleThemePreviewPage'
+import { MeterVerdandiThemePreviewPage } from './pages/MeterVerdandiThemePreviewPage'
 import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
 import { CompanionPage } from './pages/CompanionPage'
+
 import { MayClearEventPage } from './pages/MayClearEventPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
@@ -68,6 +70,7 @@ export default function App() {
             <Route path=":categoryId/:subcategoryId" element={<MeterThemeShopBarThemesPage />} />
           </Route>
           <Route path="meter/magia-theme-preview" element={<MeterMagiaThemePreviewPage />} />
+          <Route path="meter/verdandi-theme-preview" element={<MeterVerdandiThemePreviewPage />} />
           <Route path="meter/rewards" element={<MeterMyRewardsPage />} />
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />

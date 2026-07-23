@@ -1,4 +1,4 @@
-export type MeterShopCategoryId = 'bar-themes' | 'magia-bar-themes'
+export type MeterShopCategoryId = 'bar-themes' | 'magia-bar-themes' | 'verdandi-bar-themes'
 
 export type MeterShopSubcategoryId = 'common' | 'rare' | 'legendary'
 
@@ -28,6 +28,11 @@ const MAGIA_SHOP_SUBCATEGORIES = (parentId: 'magia-bar-themes'): MeterShopSubcat
   { id: 'legendary', parentId, label: 'Legendary', available: true },
 ]
 
+const VERDANDI_SHOP_SUBCATEGORIES = (parentId: 'verdandi-bar-themes'): MeterShopSubcategory[] => [
+  { id: 'rare', parentId, label: 'Rare', available: true },
+  { id: 'legendary', parentId, label: 'SSS Legendary', available: true },
+]
+
 export const METER_SHOP_CATEGORIES: MeterShopCategory[] = [
   {
     id: 'bar-themes',
@@ -42,6 +47,13 @@ export const METER_SHOP_CATEGORIES: MeterShopCategory[] = [
     available: true,
     defaultPath: '/meter/shop/magia-bar-themes/rare',
     subcategories: MAGIA_SHOP_SUBCATEGORIES('magia-bar-themes'),
+  },
+  {
+    id: 'verdandi-bar-themes',
+    label: 'Verdandi Bar Themes',
+    available: true,
+    defaultPath: '/meter/shop/verdandi-bar-themes/rare',
+    subcategories: VERDANDI_SHOP_SUBCATEGORIES('verdandi-bar-themes'),
   },
 ]
 

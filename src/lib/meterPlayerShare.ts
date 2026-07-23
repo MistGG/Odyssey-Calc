@@ -3,11 +3,12 @@ import {
   resolveAppSiteOrigin,
 } from '../config/site'
 import type { PlayerFavoriteDigimon } from './meterPlayerProfile'
+import { meterHofCycleEyebrow, meterHofCycleEyebrowUpper } from './meterHofVariant'
 import { proxiedWikiAssetUrl } from './wikiAssetProxy'
 
 export const METER_PROFILE_SHARE_BUCKET = 'meter-profile-shares'
 
-export type MeterProfileShareHofVariant = 'olympus' | 'magia'
+export type MeterProfileShareHofVariant = 'olympus' | 'magia' | 'verdandi'
 
 export type MeterProfileShareSnapshot = {
   displayName: string
@@ -349,9 +350,15 @@ const HOF_GOLD = '#e5cc80'
 const HOF_GOLD_LIGHT = '#f0ddb0'
 const HOF_MAGIA = '#a78bfa'
 const HOF_MAGIA_LIGHT = '#ddd6fe'
+const HOF_VERDANDI = '#4ade80'
+const HOF_VERDANDI_LIGHT = '#86efac'
 
 function shareHofVariant(snapshot: MeterProfileShareSnapshot): MeterProfileShareHofVariant {
-  if (snapshot.hofBadgeVariant === 'magia' || snapshot.hofBadgeVariant === 'olympus') {
+  if (
+    snapshot.hofBadgeVariant === 'magia' ||
+    snapshot.hofBadgeVariant === 'olympus' ||
+    snapshot.hofBadgeVariant === 'verdandi'
+  ) {
     return snapshot.hofBadgeVariant
   }
   return 'olympus'
@@ -360,7 +367,19 @@ function shareHofVariant(snapshot: MeterProfileShareSnapshot): MeterProfileShare
 function shareCycleShortLabel(snapshot: MeterProfileShareSnapshot): string {
   const label = snapshot.cycleShortLabel?.trim()
   if (label) return label
-  return shareHofVariant(snapshot) === 'magia' ? 'Magia Cycle' : 'Olympus Cycle'
+  return meterHofCycleEyebrow(shareHofVariant(snapshot))
+}
+
+function hofAccent(variant: MeterProfileShareHofVariant): string {
+  if (variant === 'verdandi') return HOF_VERDANDI
+  if (variant === 'magia') return HOF_MAGIA
+  return HOF_GOLD
+}
+
+function hofAccentLight(variant: MeterProfileShareHofVariant): string {
+  if (variant === 'verdandi') return HOF_VERDANDI_LIGHT
+  if (variant === 'magia') return HOF_MAGIA_LIGHT
+  return HOF_GOLD_LIGHT
 }
 
 function drawHallOfFameMedallion(
@@ -375,7 +394,11 @@ function drawHallOfFameMedallion(
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
   const grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
-  if (variant === 'magia') {
+  if (variant === 'verdandi') {
+    grad.addColorStop(0, '#86efac')
+    grad.addColorStop(0.45, HOF_VERDANDI)
+    grad.addColorStop(1, '#15803d')
+  } else if (variant === 'magia') {
     grad.addColorStop(0, '#e9d5ff')
     grad.addColorStop(0.45, HOF_MAGIA)
     grad.addColorStop(1, '#6d28d9')
@@ -386,10 +409,10 @@ function drawHallOfFameMedallion(
   }
   ctx.fillStyle = grad
   ctx.fill()
-  ctx.strokeStyle = variant === 'magia' ? HOF_MAGIA_LIGHT : HOF_GOLD_LIGHT
+  ctx.strokeStyle = hofAccentLight(variant)
   ctx.lineWidth = 3
   ctx.stroke()
-  ctx.fillStyle = variant === 'magia' ? '#120818' : '#1a1204'
+  ctx.fillStyle = variant === 'magia' ? '#120818' : variant === 'verdandi' ? '#052e16' : '#1a1204'
   ctx.font = '900 16px Segoe UI, system-ui, sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -417,7 +440,11 @@ function drawHallOfFameCrestIcon(
   }
   ctx.closePath()
   const grad = ctx.createLinearGradient(-s, -s, s, s)
-  if (variant === 'magia') {
+  if (variant === 'verdandi') {
+    grad.addColorStop(0, '#86efac')
+    grad.addColorStop(0.5, HOF_VERDANDI)
+    grad.addColorStop(1, '#15803d')
+  } else if (variant === 'magia') {
     grad.addColorStop(0, '#e9d5ff')
     grad.addColorStop(0.5, HOF_MAGIA)
     grad.addColorStop(1, '#6d28d9')
@@ -428,12 +455,17 @@ function drawHallOfFameCrestIcon(
   }
   ctx.fillStyle = grad
   ctx.fill()
-  ctx.strokeStyle = variant === 'magia' ? 'rgba(196, 181, 253, 0.5)' : 'rgba(240, 221, 176, 0.5)'
+  ctx.strokeStyle =
+    variant === 'verdandi'
+      ? 'rgba(134, 239, 172, 0.5)'
+      : variant === 'magia'
+        ? 'rgba(196, 181, 253, 0.5)'
+        : 'rgba(240, 221, 176, 0.5)'
   ctx.lineWidth = 1.5
   ctx.stroke()
   ctx.beginPath()
   ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2)
-  ctx.fillStyle = variant === 'magia' ? HOF_MAGIA_LIGHT : HOF_GOLD
+  ctx.fillStyle = variant === 'olympus' ? HOF_GOLD : hofAccentLight(variant)
   ctx.fill()
   ctx.restore()
 }
@@ -449,7 +481,11 @@ function drawHallOfFameBadge(
 ) {
   roundRect(ctx, x, y, w, h, 10)
   const bg = ctx.createLinearGradient(x, y, x + w, y + h)
-  if (variant === 'magia') {
+  if (variant === 'verdandi') {
+    bg.addColorStop(0, 'rgba(74, 222, 128, 0.18)')
+    bg.addColorStop(0.4, 'rgba(21, 128, 61, 0.1)')
+    bg.addColorStop(1, 'rgba(0, 0, 0, 0.35)')
+  } else if (variant === 'magia') {
     bg.addColorStop(0, 'rgba(167, 139, 250, 0.18)')
     bg.addColorStop(0.4, 'rgba(91, 33, 182, 0.1)')
     bg.addColorStop(1, 'rgba(0, 0, 0, 0.35)')
@@ -460,7 +496,12 @@ function drawHallOfFameBadge(
   }
   ctx.fillStyle = bg
   ctx.fill()
-  ctx.strokeStyle = variant === 'magia' ? 'rgba(167, 139, 250, 0.45)' : 'rgba(229, 204, 128, 0.45)'
+  ctx.strokeStyle =
+    variant === 'verdandi'
+      ? 'rgba(74, 222, 128, 0.45)'
+      : variant === 'magia'
+        ? 'rgba(167, 139, 250, 0.45)'
+        : 'rgba(229, 204, 128, 0.45)'
   ctx.lineWidth = 1.5
   ctx.stroke()
 
@@ -469,9 +510,9 @@ function drawHallOfFameBadge(
   drawHallOfFameCrestIcon(ctx, crestCx, crestCy, 34, variant)
 
   const textX = x + 54
-  const accent = variant === 'magia' ? HOF_MAGIA : HOF_GOLD
-  const accentLight = variant === 'magia' ? HOF_MAGIA_LIGHT : HOF_GOLD_LIGHT
-  const eyebrow = variant === 'magia' ? 'MAGIA CYCLE' : 'OLYMPUS CYCLE'
+  const accent = hofAccent(variant)
+  const accentLight = hofAccentLight(variant)
+  const eyebrow = meterHofCycleEyebrowUpper(variant)
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'

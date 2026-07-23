@@ -17,7 +17,7 @@ export type MeterLeaderboardCycle = {
   endsAt?: string | null
   note?: string
   /** Party bar / rewards theme granted for HoF breaks in this cycle. */
-  hofThemeId: 'hall-of-fame' | 'magia-hall-of-fame'
+  hofThemeId: 'hall-of-fame' | 'magia-hall-of-fame' | 'verdandi-hall-of-fame'
   hofThemeLabel: string
 }
 
@@ -26,6 +26,12 @@ export type MeterLeaderboardCycle = {
  * Olympus cycle end.
  */
 export const MAGIA_CYCLE_START_UTC = '2026-06-16T00:30:00.000Z'
+
+/**
+ * July 23, 2026 00:00 Arizona (America/Phoenix, UTC−7) — Verdandi cycle start /
+ * Magia cycle end. Magia includes all of July 22 Arizona.
+ */
+export const VERDANDI_CYCLE_START_UTC = '2026-07-23T07:00:00.000Z'
 
 /** April 20, 2026 00:00 Arizona (America/Phoenix, UTC−7) — Olympus cycle start. */
 export const OLYMPUS_CYCLE_START_UTC = '2026-04-20T07:00:00.000Z'
@@ -41,10 +47,18 @@ export const METER_LEADERBOARD_CYCLES: MeterLeaderboardCycle[] = [
   },
   {
     id: 'magia',
-    label: 'Magia Cycle: June 15 - Current',
+    label: 'Magia Cycle: June 15 - July 22',
     startsAt: MAGIA_CYCLE_START_UTC,
+    endsAt: VERDANDI_CYCLE_START_UTC,
     hofThemeId: 'magia-hall-of-fame',
     hofThemeLabel: 'Magia Breaker',
+  },
+  {
+    id: 'verdandi',
+    label: 'Verdandi Cycle: July 23 - Current',
+    startsAt: VERDANDI_CYCLE_START_UTC,
+    hofThemeId: 'verdandi-hall-of-fame',
+    hofThemeLabel: 'Verdandi Breaker',
   },
 ]
 

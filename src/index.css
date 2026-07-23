@@ -178,14 +178,14 @@ code {
   }
 }
 
-/* Compact top bar — single row, scrollable primary links */
+/* Compact top bar â€” single row, scrollable primary links */
 .header--compact {
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.65rem 0.85rem;
-  padding-top: 0.45rem;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.15rem;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.35rem;
   overflow: visible;
 }
 
@@ -224,6 +224,9 @@ code {
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
+  /* Keep tall/glowing nav pills (Promo) from clipping when overflow-x creates a scrollport */
+  padding-block: 0.28rem;
+  margin-block: -0.28rem;
 }
 
 .nav--primary {
@@ -380,7 +383,7 @@ code {
   font-size: 0.74rem;
 }
 
-/* Grouped nav: full pill opens menu (Lab, Tier List, Event, …) */
+/* Grouped nav: full pill opens menu (Lab, Tier List, Event, â€¦) */
 .nav-menu {
   position: relative;
   display: inline-block;
@@ -611,7 +614,7 @@ code {
   box-shadow: 0 0 0 1px rgba(252, 211, 77, 0.2), 0 4px 18px rgba(245, 158, 11, 0.22);
 }
 
-/* In-app Companion feature page — stands out from calc tools */
+/* In-app Companion feature page â€” stands out from calc tools */
 .nav a.nav-link-companion,
 .nav .nav-link-companion {
   display: inline-flex;
@@ -1573,7 +1576,7 @@ a.home-cta.home-cta--primary:focus-visible {
 }
 
 .tier-tools-details > .tier-tools-details-summary::before {
-  content: '▸ ';
+  content: 'â–¸ ';
   display: inline-block;
   transition: transform 0.15s ease;
   opacity: 0.75;
@@ -1606,7 +1609,7 @@ a.home-cta.home-cta--primary:focus-visible {
 }
 
 .tier-filters-details > .tier-filters-details-summary::before {
-  content: '▸ ';
+  content: 'â–¸ ';
   display: inline-block;
   transition: transform 0.15s ease;
   opacity: 0.7;
@@ -1622,7 +1625,7 @@ a.home-cta.home-cta--primary:focus-visible {
   margin-bottom: 0;
 }
 
-/* Tier list page shell — centered tabs + actions */
+/* Tier list page shell â€” centered tabs + actions */
 .tier-shell {
   margin-bottom: 0.85rem;
 }
@@ -2947,7 +2950,7 @@ a.home-cta.home-cta--primary:focus-visible {
   color: #93c5fd;
 }
 
-/* Status chips + arrow: one row, no scrollbars—compact copy + ellipsis for odd raw values */
+/* Status chips + arrow: one row, no scrollbarsâ€”compact copy + ellipsis for odd raw values */
 .tier-change-summary.tier-change-summary--status {
   flex-wrap: nowrap;
   align-items: center;
@@ -3225,7 +3228,7 @@ a.home-cta.home-cta--primary:focus-visible {
 }
 
 .tier-score-explainer summary::before {
-  content: '▸ ';
+  content: 'â–¸ ';
   display: inline-block;
   margin-right: 0.35rem;
   opacity: 0.75;
@@ -4381,7 +4384,7 @@ a.home-cta.home-cta--primary:focus-visible {
   position: relative;
 }
 
-/* Browse grid: circular portrait (aligned with Digimon detail “detail-art”). */
+/* Browse grid: circular portrait (aligned with Digimon detail â€œdetail-artâ€). */
 .thumb.browse-thumb {
   display: flex;
   align-items: center;
@@ -7315,7 +7318,7 @@ a.home-cta.home-cta--primary:focus-visible {
 }
 
 .lab-kv-details-summary::before {
-  content: '▸';
+  content: 'â–¸';
   flex-shrink: 0;
   width: 1em;
   text-align: center;
@@ -7325,7 +7328,7 @@ a.home-cta.home-cta--primary:focus-visible {
 }
 
 .lab-kv-details[open] > .lab-kv-details-summary::before {
-  content: '▾';
+  content: 'â–¾';
 }
 
 .lab-kv-details-summary:hover {
@@ -8966,7 +8969,7 @@ button.evo-tree__node {
   cursor: default;
 }
 
-/* --- Meter parses (Supabase) — logged-in list --- */
+/* --- Meter parses (Supabase) â€” logged-in list --- */
 .meter-parses-page {
   max-width: 52rem;
 }
@@ -9284,8 +9287,9 @@ button.evo-tree__node {
 
 .meter-parses-meter-chrome .meter-breakdown-scroll {
   max-height: min(42vh, 360px);
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 2px 4px 5px;
+  padding: 8px 10px 10px;
 }
 
 .meter-parses-meter-chrome .meter-breakdown-row {
@@ -10216,7 +10220,7 @@ button.evo-tree__node {
   max-width: 22rem;
 }
 
-/* —— Forum “News” teaser (Proboards announcement image) —— */
+/* â€”â€” Forum â€œNewsâ€ teaser (Proboards announcement image) â€”â€” */
 @keyframes forum-teaser-in-tl {
   from {
     opacity: 0;
@@ -10369,7 +10373,7 @@ button.evo-tree__node {
   overflow: hidden;
   border-radius: 15px;
   border: 1px solid rgba(30, 41, 59, 0.85);
-  /* Must stay transparent so “bands only” canvas pixels (alpha 0) reveal the <img> beneath. */
+  /* Must stay transparent so â€œbands onlyâ€ canvas pixels (alpha 0) reveal the <img> beneath. */
   background: transparent;
 }
 
@@ -10427,7 +10431,7 @@ button.evo-tree__node {
   }
 }
 
-/* Mechanorimon rush — zoom layer moves image + red eye together. */
+/* Mechanorimon rush â€” zoom layer moves image + red eye together. */
 .forum-teaser-frame--mechano-approach .forum-teaser-zoom--approach {
   transform-origin: var(--mechano-approach-origin, 54% 68%);
   animation: teaser-mechano-approach var(--mechano-approach-ms, 2.4s)
@@ -10525,7 +10529,7 @@ button.evo-tree__node {
   opacity: 0;
 }
 
-/* Meter parse replay — match companion meter layout */
+/* Meter parse replay â€” match companion meter layout */
 .meter-parses-meter-chrome .meter-run-meta--replay {
   margin: 0 0 10px;
   padding: 6px 0 4px;
@@ -10967,7 +10971,7 @@ button.evo-tree__node {
   filter: drop-shadow(0 1px 0 rgba(255, 236, 179, 0.2)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.95));
 }
 
-/* Magia cycle HoF — same layout as gold Record Breaker, arcane purple/cyan palette */
+/* Magia cycle HoF â€” same layout as gold Record Breaker, arcane purple/cyan palette */
 .meter-parses-meter-chrome .meter-party-member--magia-hall-of-fame {
   background: linear-gradient(90deg, rgba(14, 8, 28, 0.9) 0%, rgba(24, 12, 44, 0.84) 100%);
   box-shadow:
@@ -11038,6 +11042,81 @@ button.evo-tree__node {
   filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35)) drop-shadow(0 0 8px rgba(196, 181, 253, 0.45));
 }
 
+/* Verdandi cycle HoF â€” Magia layout, cycle green palette (matches Verdandi crest) */
+.meter-parses-meter-chrome .meter-party-member--verdandi-hall-of-fame {
+  background: linear-gradient(90deg, rgba(5, 46, 22, 0.9) 0%, rgba(20, 83, 45, 0.84) 100%);
+  box-shadow:
+    inset 3px 0 0 #4ade80,
+    inset 0 0 0 1px rgba(74, 222, 128, 0.24),
+    0 0 14px rgba(21, 128, 61, 0.35);
+}
+
+.meter-parses-meter-chrome .meter-party-member-bar.meter-party-bar-theme--verdandi-hall-of-fame {
+  background:
+    repeating-linear-gradient(
+      125deg,
+      transparent 0,
+      transparent 7px,
+      rgba(74, 222, 128, 0.05) 7px,
+      rgba(74, 222, 128, 0.05) 8px
+    ),
+    linear-gradient(
+      92deg,
+      #052e16 0%,
+      #14532d 22%,
+      #15803d 48%,
+      #166534 58%,
+      #14532d 78%,
+      #052e16 100%
+    );
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(187, 247, 208, 0.14);
+}
+
+.meter-parses-meter-chrome .meter-party-bar-hof-layer--verdandi {
+  isolation: isolate;
+}
+
+.meter-parses-meter-chrome .meter-party-hof-count-fx--verdandi .meter-party-hof-count-fx__arch {
+  filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.5));
+}
+
+.meter-parses-meter-chrome .meter-party-hof-sparkles--verdandi .meter-party-hof-sparkle-ray {
+  background: linear-gradient(
+    180deg,
+    rgba(236, 253, 245, 1) 0%,
+    rgba(134, 239, 172, 0.95) 45%,
+    rgba(21, 128, 61, 0.85) 100%
+  );
+}
+
+.meter-parses-meter-chrome .meter-party-hof-count-hero--verdandi .meter-party-hof-plaque {
+  background: linear-gradient(180deg, #15803d 0%, #14532d 38%, #052e16 72%, #022c22 100%);
+  border-color: rgba(74, 222, 128, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(187, 247, 208, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.65),
+    0 1px 4px rgba(21, 128, 61, 0.45);
+}
+
+.meter-parses-meter-chrome .meter-party-hof-count-hero--verdandi .meter-party-hof-plaque__value {
+  color: #bbf7d0;
+  background: linear-gradient(
+    180deg,
+    #4ade80 0%,
+    #86efac 22%,
+    #ecfdf5 46%,
+    #ffffff 50%,
+    #d1fae5 54%,
+    #4ade80 72%,
+    #22c55e 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35)) drop-shadow(0 0 8px rgba(134, 239, 172, 0.45));
+}
+
 @keyframes meter-hof-count-arch-shimmer {
   0%,
   100% {
@@ -11097,7 +11176,7 @@ button.evo-tree__node {
   overflow: hidden;
 }
 
-/* Scene + wash: track moves left → motion reads as endless flow to the right. */
+/* Scene + wash: track moves left â†’ motion reads as endless flow to the right. */
 @keyframes meter-iliad-scene-stream {
   from {
     transform: translateX(0);
@@ -11404,7 +11483,7 @@ button.evo-tree__node {
     linear-gradient(90deg, rgba(40, 18, 8, 0.88) 0%, rgba(160, 70, 22, 0.65) 50%, rgba(255, 150, 60, 0.4) 100%);
 }
 
-/* —— Legendary Olympos XII: light CSS motion per deity —— */
+/* â€”â€” Legendary Olympos XII: light CSS motion per deity â€”â€” */
 @keyframes meter-legend-shimmer-x {
   from {
     transform: translateX(-120%);
@@ -11508,7 +11587,7 @@ button.evo-tree__node {
   display: none;
 }
 
-/* Legendary Apollomon — heavenly halo that wraps the fill and breathes outward. */
+/* Legendary Apollomon â€” heavenly halo that wraps the fill and breathes outward. */
 .meter-parses-meter-chrome .meter-party-apollo-heavenly-glow {
   position: absolute;
   inset: 0;
@@ -11650,7 +11729,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Bacchusmon — soda-pop bubbles rising through the fill. */
+/* Legendary Bacchusmon â€” soda-pop bubbles rising through the fill. */
 .meter-parses-meter-chrome .meter-party-bacchus-bubbles {
   position: absolute;
   inset: 0;
@@ -11749,7 +11828,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Ceresmon — small spores that pop up across the fill. */
+/* Legendary Ceresmon â€” small spores that pop up across the fill. */
 .meter-parses-meter-chrome .meter-party-ceresmon-spores {
   position: absolute;
   inset: 0;
@@ -11880,7 +11959,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Dianamon — diagonal snow and a glowing crescent moon. */
+/* Legendary Dianamon â€” diagonal snow and a glowing crescent moon. */
 .meter-parses-meter-chrome .meter-party-dianamon-fx {
   position: absolute;
   inset: 0;
@@ -12086,7 +12165,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Junomon — star sparkles across the fill. */
+/* Legendary Junomon â€” star sparkles across the fill. */
 .meter-parses-meter-chrome .meter-party-junomon-sparkles {
   position: absolute;
   inset: 0;
@@ -12240,7 +12319,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Jupitermon — soft thunder flashes and lightning crackles. */
+/* Legendary Jupitermon â€” soft thunder flashes and lightning crackles. */
 .meter-parses-meter-chrome .meter-party-jupiter-thunder {
   position: absolute;
   inset: 0;
@@ -12493,7 +12572,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Marsmon — flame crackles drifting up toward the top-right. */
+/* Legendary Marsmon â€” flame crackles drifting up toward the top-right. */
 .meter-parses-meter-chrome .meter-party-marsmon-flames {
   position: absolute;
   inset: 0;
@@ -12664,7 +12743,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Mercurymon — liquid mirror reflections. */
+/* Legendary Mercurymon â€” liquid mirror reflections. */
 .meter-parses-meter-chrome .meter-party-bar-fill-stack--mercurymon-legendary .meter-party-bar-theme--mercurymon {
   background:
     linear-gradient(
@@ -12858,7 +12937,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Minervamon — greatsword strike opens a horizontal ground split. */
+/* Legendary Minervamon â€” greatsword strike opens a horizontal ground split. */
 .meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--minervamon::before,
 .meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--minervamon::after {
   content: none;
@@ -12994,7 +13073,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Neptunemon — seamless rolling waves across the fill. */
+/* Legendary Neptunemon â€” seamless rolling waves across the fill. */
 .meter-parses-meter-chrome .meter-party-bar-fill-stack--neptunemon-legendary .meter-party-bar-theme--neptunemon {
   background: linear-gradient(
     180deg,
@@ -13132,7 +13211,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Venusmon — diagonal hearts that pop in across the fill. */
+/* Legendary Venusmon â€” diagonal hearts that pop in across the fill. */
 .meter-parses-meter-chrome .meter-party-venus-hearts {
   position: absolute;
   inset: 0;
@@ -13350,7 +13429,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Vulcanusmon — side hammer from the right; bar sparks on strike. */
+/* Legendary Vulcanusmon â€” side hammer from the right; bar sparks on strike. */
 .meter-parses-meter-chrome .meter-party-vulcan-forge {
   position: absolute;
   inset: -2px -6px -2px 0;
@@ -13759,12 +13838,12 @@ button.evo-tree__node {
   transform: translate(-50%, -50%);
 }
 
-/* Top-right → bottom-left */
+/* Top-right â†’ bottom-left */
 .meter-parses-meter-chrome .meter-party-raguelmon-claw-bundle--ne-sw {
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* Top-left → bottom-right */
+/* Top-left â†’ bottom-right */
 .meter-parses-meter-chrome .meter-party-raguelmon-claw-bundle--nw-se {
   transform: translate(-50%, -50%) rotate(45deg);
 }
@@ -13795,7 +13874,7 @@ button.evo-tree__node {
   clip-path: inset(0 0 100% 0);
 }
 
-/* First slash: top-left → bottom-right (right-leaning /) */
+/* First slash: top-left â†’ bottom-right (right-leaning /) */
 .meter-parses-meter-chrome .meter-party-raguelmon-claw-bundle--nw-se .meter-party-raguelmon-claw {
   animation: meter-raguelmon-claw-slash-first 4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
@@ -13816,7 +13895,7 @@ button.evo-tree__node {
   animation-delay: 0.1s;
 }
 
-/* Second slash: top-right → bottom-left (left-leaning \) */
+/* Second slash: top-right â†’ bottom-left (left-leaning \) */
 .meter-parses-meter-chrome .meter-party-raguelmon-claw-bundle--ne-sw .meter-party-raguelmon-claw {
   animation: meter-raguelmon-claw-slash-second 4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
@@ -13898,7 +13977,7 @@ button.evo-tree__node {
   }
 }
 
-/* Legendary Plesiomon — hydro blast sweep */
+/* Legendary Plesiomon â€” hydro blast sweep */
 .meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--plesiomon::before,
 .meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--plesiomon::after {
   content: none;
@@ -14237,7 +14316,7 @@ button.evo-tree__node {
   animation-delay: 0.2s;
 }
 
-/* Legendary Zhuqiaomon — phoenix feathers */
+/* Legendary Zhuqiaomon â€” phoenix feathers */
 .meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--zhuqiaomon::before,
 .meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--zhuqiaomon::after {
   content: none;
@@ -14600,6 +14679,1175 @@ button.evo-tree__node {
   );
 }
 
+/* â€”â€”â€” Verdandi cycle bar themes + legendary FX (Magia-parity, cyan/teal) â€”â€”â€” */
+.meter-parses-meter-chrome .meter-party-bar-verdandi-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-verdandi-layer .meter-party-verdandi-digimon-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: auto;
+  height: 210%;
+  min-width: 100%;
+  min-height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  opacity: 0.52;
+  -webkit-mask-image: radial-gradient(ellipse 90% 100% at 50% 46%, #000 38%, transparent 95%);
+  mask-image: radial-gradient(ellipse 90% 100% at 50% 46%, #000 38%, transparent 95%);
+}
+
+.meter-parses-meter-chrome .meter-party-verdandi-digimon-overlay--omegamon {
+  filter: drop-shadow(0 2px 10px rgba(180, 150, 60, 0.45));
+}
+
+.meter-parses-meter-chrome .meter-party-verdandi-digimon-overlay--ulforce-veemon-x {
+  /* Pull back zoom so head/torso frame instead of top wing tip */
+  height: 165%;
+  filter: drop-shadow(0 2px 10px rgba(8, 72, 120, 0.5));
+}
+
+.meter-parses-meter-chrome .meter-party-verdandi-digimon-overlay--alphamon-ouryuken {
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.65));
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--omegamon {
+  background:
+    repeating-linear-gradient(
+      118deg,
+      transparent 0,
+      transparent 9px,
+      rgba(255, 248, 230, 0.08) 9px,
+      rgba(255, 248, 230, 0.08) 10px
+    ),
+    radial-gradient(ellipse 85% 130% at 20% 50%, rgba(255, 252, 245, 0.55) 0%, transparent 58%),
+    radial-gradient(ellipse 60% 90% at 78% 40%, rgba(232, 200, 114, 0.32) 0%, transparent 55%),
+    linear-gradient(
+      90deg,
+      rgba(42, 36, 28, 0.72) 0%,
+      rgba(210, 200, 175, 0.55) 38%,
+      rgba(255, 250, 240, 0.62) 62%,
+      rgba(200, 170, 90, 0.48) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--ulforce-veemon-x {
+  background:
+    repeating-linear-gradient(
+      118deg,
+      transparent 0,
+      transparent 9px,
+      rgba(56, 189, 248, 0.08) 9px,
+      rgba(56, 189, 248, 0.08) 10px
+    ),
+    radial-gradient(ellipse 85% 130% at 22% 50%, rgba(56, 189, 248, 0.44) 0%, transparent 58%),
+    radial-gradient(ellipse 60% 90% at 76% 42%, rgba(14, 165, 233, 0.26) 0%, transparent 55%),
+    linear-gradient(
+      90deg,
+      rgba(4, 20, 48, 0.86) 0%,
+      rgba(12, 74, 140, 0.58) 40%,
+      rgba(34, 150, 210, 0.42) 68%,
+      rgba(8, 32, 64, 0.58) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--alphamon-ouryuken {
+  background:
+    repeating-linear-gradient(
+      118deg,
+      transparent 0,
+      transparent 9px,
+      rgba(212, 175, 55, 0.08) 9px,
+      rgba(212, 175, 55, 0.08) 10px
+    ),
+    radial-gradient(ellipse 85% 130% at 20% 50%, rgba(212, 175, 55, 0.28) 0%, transparent 58%),
+    radial-gradient(ellipse 60% 90% at 78% 40%, rgba(80, 64, 24, 0.4) 0%, transparent 55%),
+    linear-gradient(
+      90deg,
+      rgba(4, 4, 6, 0.96) 0%,
+      rgba(18, 14, 8, 0.92) 36%,
+      rgba(58, 46, 18, 0.72) 62%,
+      rgba(8, 6, 4, 0.94) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--omegamon::before,
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--omegamon::after {
+  content: none;
+  display: none;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--omegamon {
+  background:
+    radial-gradient(ellipse 70% 120% at 50% 50%, rgba(255, 252, 245, 0.28) 0%, transparent 62%),
+    radial-gradient(ellipse 90% 140% at 22% 50%, rgba(232, 200, 114, 0.42) 0%, transparent 58%),
+    linear-gradient(
+      92deg,
+      rgba(32, 28, 22, 0.92) 0%,
+      rgba(190, 175, 140, 0.7) 32%,
+      rgba(255, 250, 240, 0.78) 52%,
+      rgba(220, 185, 90, 0.62) 74%,
+      rgba(40, 34, 24, 0.9) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-fill-stack--omegamon-legendary {
+  min-height: 36px;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-fill-stack--omegamon-legendary .meter-party-bar-verdandi-layer {
+  z-index: 2;
+}
+
+@keyframes meter-omegamon-blade-slash-grey {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(2.4);
+  }
+  5% {
+    opacity: 1;
+    clip-path: inset(0 0 30% 0);
+    filter: brightness(1.9);
+  }
+  10% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1.25);
+  }
+  14%,
+  62% {
+    opacity: 0.92;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1);
+  }
+  78%,
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1);
+  }
+}
+
+@keyframes meter-omegamon-blade-slash-garuru {
+  0%,
+  28% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(2.4);
+  }
+  33% {
+    opacity: 1;
+    clip-path: inset(0 0 30% 0);
+    filter: brightness(1.9);
+  }
+  38% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1.25);
+  }
+  42%,
+  62% {
+    opacity: 0.92;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1);
+  }
+  78%,
+  100% {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-omegamon-blades {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.meter-parses-meter-chrome .meter-party-omegamon-blade {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  bottom: 4%;
+  width: 2.5px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+  box-shadow:
+    0 0 6px rgba(255, 255, 255, 0.7),
+    0 0 14px rgba(232, 200, 114, 0.75),
+    0 0 22px rgba(184, 148, 48, 0.4);
+}
+
+.meter-parses-meter-chrome .meter-party-omegamon-blade--grey {
+  transform: translateX(-50%) rotate(42deg);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 252, 245, 0.25) 12%,
+    rgba(255, 255, 255, 0.98) 38%,
+    rgba(245, 230, 190, 0.92) 52%,
+    rgba(232, 200, 114, 0.8) 68%,
+    rgba(184, 148, 48, 0.4) 86%,
+    transparent 100%
+  );
+  animation: meter-omegamon-blade-slash-grey 4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-omegamon-blade--garuru {
+  transform: translateX(-50%) rotate(-42deg);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 248, 230, 0.2) 12%,
+    rgba(255, 255, 255, 0.95) 36%,
+    rgba(232, 200, 114, 0.9) 50%,
+    rgba(196, 160, 60, 0.72) 66%,
+    rgba(120, 90, 30, 0.4) 86%,
+    transparent 100%
+  );
+  animation: meter-omegamon-blade-slash-garuru 4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--ulforce-veemon-x::before,
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--ulforce-veemon-x::after {
+  content: none;
+  display: none;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--ulforce-veemon-x {
+  background:
+    radial-gradient(ellipse 72% 120% at 50% 50%, rgba(56, 189, 248, 0.22) 0%, transparent 62%),
+    radial-gradient(ellipse 90% 140% at 24% 50%, rgba(34, 211, 238, 0.48) 0%, transparent 58%),
+    linear-gradient(
+      92deg,
+      rgba(4, 16, 40, 0.95) 0%,
+      rgba(8, 60, 120, 0.8) 34%,
+      rgba(14, 140, 200, 0.58) 56%,
+      rgba(12, 90, 160, 0.72) 78%,
+      rgba(4, 24, 52, 0.92) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-fill-stack--ulforce-veemon-x-legendary {
+  min-height: 36px;
+}
+
+.meter-parses-meter-chrome
+  .meter-party-bar-fill-stack--ulforce-veemon-x-legendary
+  .meter-party-bar-verdandi-layer {
+  z-index: 2;
+}
+
+@keyframes meter-ulforce-speed-dash {
+  0%,
+  58%,
+  100% {
+    opacity: 0;
+    transform: translateX(-40%) scaleX(0.35);
+  }
+  64% {
+    opacity: 0.85;
+    transform: translateX(-8%) scaleX(0.85);
+  }
+  72% {
+    opacity: 1;
+    transform: translateX(18%) scaleX(1.05);
+  }
+  82% {
+    opacity: 0.55;
+    transform: translateX(48%) scaleX(0.9);
+  }
+  90% {
+    opacity: 0;
+    transform: translateX(72%) scaleX(0.4);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-speed {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-speed-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(186, 230, 253, 0.35) 12%,
+    rgba(255, 255, 255, 0.95) 42%,
+    rgba(103, 232, 249, 0.9) 58%,
+    rgba(34, 211, 238, 0.55) 78%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 6px rgba(165, 243, 252, 0.65),
+    0 0 12px rgba(56, 189, 248, 0.4);
+  opacity: 0;
+  transform-origin: left center;
+  animation: meter-ulforce-speed-dash 3.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-speed-line--1 {
+  top: 22%;
+  height: 1.5px;
+  animation-delay: 0s;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-speed-line--2 {
+  top: 40%;
+  height: 2.5px;
+  animation-delay: 0.12s;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-speed-line--3 {
+  top: 58%;
+  height: 2px;
+  width: 78%;
+  animation-delay: 0.22s;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-speed-line--4 {
+  top: 74%;
+  height: 1.5px;
+  width: 70%;
+  animation-delay: 0.34s;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--alphamon-ouryuken::before,
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--alphamon-ouryuken::after {
+  content: none;
+  display: none;
+}
+
+.meter-parses-meter-chrome .meter-party-bar-theme--legendary.meter-party-bar-theme--alphamon-ouryuken {
+  background:
+    radial-gradient(ellipse 70% 120% at 50% 50%, rgba(212, 175, 55, 0.22) 0%, transparent 62%),
+    radial-gradient(ellipse 90% 140% at 22% 50%, rgba(40, 32, 12, 0.7) 0%, transparent 58%),
+    linear-gradient(
+      92deg,
+      rgba(2, 2, 4, 0.98) 0%,
+      rgba(14, 12, 8, 0.94) 28%,
+      rgba(72, 56, 18, 0.78) 52%,
+      rgba(160, 128, 40, 0.55) 72%,
+      rgba(4, 4, 6, 0.96) 100%
+    );
+}
+
+.meter-parses-meter-chrome .meter-party-bar-fill-stack--alphamon-ouryuken-legendary {
+  min-height: 36px;
+}
+
+.meter-parses-meter-chrome
+  .meter-party-bar-fill-stack--alphamon-ouryuken-legendary
+  .meter-party-bar-verdandi-layer {
+  z-index: 2;
+}
+
+@keyframes meter-alphamon-blade-sweep {
+  0%,
+  55%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60%) scaleY(0.2);
+  }
+  62% {
+    opacity: 0.9;
+    transform: translate(-50%, -20%) scaleY(0.7);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, 0%) scaleY(1);
+  }
+  82% {
+    opacity: 0.7;
+    transform: translate(-50%, 18%) scaleY(1.05);
+  }
+  92% {
+    opacity: 0;
+    transform: translate(-50%, 42%) scaleY(0.45);
+  }
+}
+
+@keyframes meter-alphamon-blade-spark {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  68% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  78% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  88% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-alphamon-blade {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.meter-parses-meter-chrome .meter-party-alphamon-blade__core {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  bottom: 6%;
+  width: 3px;
+  border-radius: 2px;
+  transform: translate(-50%, -60%) scaleY(0.2);
+  transform-origin: center top;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 236, 170, 0.35) 10%,
+    rgba(255, 248, 220, 0.95) 36%,
+    rgba(232, 200, 114, 0.9) 52%,
+    rgba(184, 148, 48, 0.7) 72%,
+    rgba(40, 30, 8, 0.45) 88%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 8px rgba(255, 236, 170, 0.55),
+    0 0 16px rgba(212, 175, 55, 0.7),
+    0 0 24px rgba(120, 90, 20, 0.45);
+  opacity: 0;
+  animation: meter-alphamon-blade-sweep 4.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-alphamon-blade__spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff8e0 0%,
+    #e8c872 40%,
+    #b8860b 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.85);
+  opacity: 0;
+  animation: meter-alphamon-blade-spark 4.2s ease-out infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-alphamon-blade__spark--1 {
+  left: 42%;
+  top: 28%;
+  animation-delay: 0.08s;
+}
+
+.meter-parses-meter-chrome .meter-party-alphamon-blade__spark--2 {
+  left: 56%;
+  top: 48%;
+  width: 4px;
+  height: 4px;
+  animation-delay: 0.16s;
+}
+
+.meter-parses-meter-chrome .meter-party-alphamon-blade__spark--3 {
+  left: 48%;
+  top: 68%;
+  width: 3.5px;
+  height: 3.5px;
+  animation-delay: 0.24s;
+}
+
+.meter-parses-meter-chrome .meter-party-member--legendary-verdandi,
+.meter-parses-meter-chrome .meter-party-member--legendary-verdandi-omegamon {
+  box-shadow:
+    inset 3px 0 0 #fff8e8,
+    inset 0 0 0 1px rgba(232, 200, 114, 0.35),
+    0 0 16px rgba(200, 170, 80, 0.35);
+}
+
+.meter-parses-meter-chrome .meter-party-member--rare-verdandi,
+.meter-parses-meter-chrome .meter-party-member--rare-verdandi-omegamon {
+  box-shadow:
+    inset 3px 0 0 #e8c872,
+    inset 0 0 0 1px rgba(255, 248, 230, 0.28),
+    0 0 12px rgba(180, 150, 70, 0.28);
+}
+
+.meter-parses-meter-chrome .meter-party-member--legendary-verdandi-ulforce-veemon-x {
+  box-shadow:
+    inset 3px 0 0 #bae6fd,
+    inset 0 0 0 1px rgba(56, 189, 248, 0.28),
+    0 0 16px rgba(12, 74, 140, 0.38);
+}
+
+.meter-parses-meter-chrome .meter-party-member--rare-verdandi-ulforce-veemon-x {
+  box-shadow:
+    inset 3px 0 0 #38bdf8,
+    inset 0 0 0 1px rgba(56, 189, 248, 0.24),
+    0 0 12px rgba(12, 74, 140, 0.32);
+}
+
+.meter-parses-meter-chrome .meter-party-member--legendary-verdandi-alphamon-ouryuken {
+  box-shadow:
+    inset 3px 0 0 #d4af37,
+    inset 0 0 0 1px rgba(212, 175, 55, 0.32),
+    0 0 16px rgba(0, 0, 0, 0.55);
+}
+
+.meter-parses-meter-chrome .meter-party-member--rare-verdandi-alphamon-ouryuken {
+  box-shadow:
+    inset 3px 0 0 #b8860b,
+    inset 0 0 0 1px rgba(184, 148, 48, 0.28),
+    0 0 12px rgba(0, 0, 0, 0.45);
+}
+
+/* Verdandi SSS Legendary â€” 1st place pulsating border glow */
+@keyframes meter-verdandi-sss-border-pulse-omegamon-blue {
+  0%,
+  100% {
+    border-color: rgba(26, 111, 184, 0.6);
+    box-shadow:
+      -2px 0 0 1px rgba(14, 74, 140, 0.35),
+      -4px 0 12px rgba(26, 111, 184, 0.35),
+      -2px 0 20px rgba(14, 116, 200, 0.22);
+  }
+  50% {
+    border-color: rgba(42, 143, 224, 0.95);
+    box-shadow:
+      -2px 0 0 1px rgba(56, 189, 248, 0.55),
+      -6px 0 16px rgba(56, 189, 248, 0.55),
+      -2px 0 28px rgba(14, 116, 200, 0.4);
+  }
+}
+
+@keyframes meter-verdandi-sss-border-pulse-omegamon-red {
+  0%,
+  100% {
+    border-color: rgba(196, 58, 18, 0.6);
+    box-shadow:
+      2px 0 0 1px rgba(122, 18, 8, 0.35),
+      4px 0 12px rgba(196, 58, 18, 0.35),
+      2px 0 20px rgba(180, 40, 12, 0.22);
+  }
+  50% {
+    border-color: rgba(232, 90, 36, 0.95);
+    box-shadow:
+      2px 0 0 1px rgba(255, 120, 50, 0.5),
+      6px 0 16px rgba(255, 106, 42, 0.5),
+      2px 0 28px rgba(180, 40, 12, 0.4);
+  }
+}
+
+@keyframes meter-verdandi-sss-border-pulse-ulforce {
+  0%,
+  100% {
+    border-color: rgba(125, 211, 252, 0.5);
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.35),
+      0 0 10px rgba(125, 211, 252, 0.3),
+      0 0 18px rgba(14, 116, 200, 0.25);
+  }
+  50% {
+    border-color: rgba(186, 230, 253, 0.95);
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.75),
+      0 0 16px rgba(125, 211, 252, 0.75),
+      0 0 32px rgba(14, 116, 200, 0.55);
+  }
+}
+
+@keyframes meter-verdandi-sss-border-pulse-alphamon {
+  0%,
+  100% {
+    border-color: rgba(184, 148, 48, 0.55);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.55),
+      0 0 10px rgba(212, 175, 55, 0.28),
+      0 0 18px rgba(0, 0, 0, 0.45);
+  }
+  50% {
+    border-color: rgba(232, 200, 114, 0.95);
+    box-shadow:
+      0 0 0 1px rgba(212, 175, 55, 0.85),
+      0 0 14px rgba(212, 175, 55, 0.55),
+      0 0 28px rgba(0, 0, 0, 0.75);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first {
+  overflow: visible;
+  z-index: 2;
+}
+
+.meter-parses-meter-chrome .meter-party-row {
+  position: relative;
+  margin: 0 0 3px;
+}
+
+.meter-parses-meter-chrome .meter-party-row > .meter-party-member {
+  margin-bottom: 0;
+}
+
+.meter-parses-meter-chrome .meter-party-row--sss-bleed {
+  z-index: 2;
+  overflow: hidden;
+  /* Tall pad so Ulforce blades + Omegamon/Alphamon runes can sit past the row. */
+  padding: 52px 18px;
+  margin: -52px -14px -49px;
+  pointer-events: none;
+}
+
+.meter-parses-meter-chrome .meter-party-row--sss-bleed > .meter-party-member {
+  pointer-events: auto;
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::before,
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::before {
+  clip-path: inset(0 50% 0 0);
+  animation: meter-verdandi-sss-border-pulse-omegamon-blue 2.2s ease-in-out infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::after {
+  clip-path: inset(0 0 0 50%);
+  animation: meter-verdandi-sss-border-pulse-omegamon-red 2.2s ease-in-out infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-ulforce-veemon-x::after {
+  animation: meter-verdandi-sss-border-pulse-ulforce 2.2s ease-in-out infinite;
+}
+
+/* Ulforce SSS 1st â€” thick greatsword; fast 90Â° swing in place, then reappear elsewhere */
+@keyframes meter-ulforce-sss-sword-snap {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(calc(var(--ulforce-sword-mid, 45deg) - 45deg));
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate(-50%, -50%) rotate(calc(var(--ulforce-sword-mid, 45deg) + 45deg));
+  }
+}
+
+@keyframes meter-ulforce-sss-arc-smear {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.25) rotate(-6deg);
+  }
+  18% {
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0.55;
+    transform: scaleX(1.1) rotate(8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0.85) rotate(14deg);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-swipes {
+  position: absolute;
+  inset: -14px -10px;
+  pointer-events: none;
+  z-index: 7;
+  overflow: visible;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-sword {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 108px;
+  margin: 0;
+  opacity: 0;
+  /* Pivot near the gauntlet / hilt â€” single fast 90Â° swing */
+  transform-origin: 50% 92%;
+  transform: translate(-50%, -50%) rotate(calc(var(--ulforce-sword-mid, 45deg) - 45deg));
+  animation: meter-ulforce-sss-sword-snap 0.42s cubic-bezier(0.15, 0.85, 0.25, 1) both;
+  filter: drop-shadow(0 0 7px rgba(34, 211, 238, 0.8)) drop-shadow(0 0 14px rgba(8, 145, 178, 0.5));
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-sword__svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-sword__arc {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  width: 96px;
+  height: 96px;
+  margin-left: -48px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 190deg,
+    transparent 0deg,
+    rgba(34, 211, 238, 0.1) 15deg,
+    rgba(165, 243, 252, 0.55) 50deg,
+    rgba(34, 211, 238, 0.18) 85deg,
+    transparent 100deg
+  );
+  mask-image: radial-gradient(circle, transparent 38%, #000 48%, #000 74%, transparent 80%);
+  filter: blur(1.1px);
+  opacity: 0;
+  transform-origin: 50% 88%;
+  animation: meter-ulforce-sss-arc-smear 0.42s cubic-bezier(0.15, 0.85, 0.25, 1) both;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-sword__svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-sword__arc {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  width: 78px;
+  height: 78px;
+  margin-left: -39px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 200deg,
+    transparent 0deg,
+    rgba(34, 211, 238, 0.08) 20deg,
+    rgba(165, 243, 252, 0.45) 55deg,
+    rgba(34, 211, 238, 0.12) 90deg,
+    transparent 110deg
+  );
+  mask-image: radial-gradient(circle, transparent 42%, #000 52%, #000 72%, transparent 78%);
+  filter: blur(1.2px);
+  opacity: 0;
+  transform-origin: 50% 85%;
+  animation: meter-ulforce-sss-arc-smear 2.55s cubic-bezier(0.28, 0.05, 0.2, 1) both;
+}
+
+.meter-parses-meter-chrome .meter-party-ulforce-sss-sword--mirror-arc .meter-party-ulforce-sss-sword__arc {
+  transform: scaleX(-1);
+  animation-name: meter-ulforce-sss-arc-smear-mirror;
+}
+
+@keyframes meter-ulforce-sss-arc-smear-mirror {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scaleX(-1) scaleY(1) rotate(0deg);
+  }
+  10% {
+    opacity: 0.35;
+  }
+  28% {
+    opacity: 0.7;
+    transform: scaleX(-1) rotate(-8deg);
+  }
+  42% {
+    opacity: 0.45;
+    transform: scaleX(-1) rotate(-14deg);
+  }
+  52% {
+    opacity: 0;
+    transform: scaleX(-1) rotate(-18deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-parses-meter-chrome .meter-party-ulforce-sss-sword,
+  .meter-parses-meter-chrome .meter-party-ulforce-sss-sword__arc {
+    animation: none;
+  }
+
+  .meter-parses-meter-chrome .meter-party-ulforce-sss-sword {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) rotate(var(--ulforce-sword-mid, 45deg));
+  }
+
+  .meter-parses-meter-chrome .meter-party-ulforce-sss-sword__arc {
+    opacity: 0;
+  }
+
+  .meter-parses-meter-chrome .meter-party-sss-runes--alphamon .meter-party-sss-rune--alpha-pop,
+  .meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-pop {
+    animation: none;
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-alphamon-ouryuken::after {
+  animation: meter-verdandi-sss-border-pulse-alphamon 2.2s ease-in-out infinite;
+}
+
+/* Soft gold bloom at row center for Alphamon SSS 1st (with red side runes) */
+.meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-alphamon-ouryuken::before {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 10%;
+  bottom: 10%;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 236, 170, 0.22) 0%,
+    rgba(212, 175, 55, 0.1) 42%,
+    transparent 72%
+  );
+  animation: meter-alphamon-sss-center-gold 2.2s ease-in-out infinite;
+}
+
+@keyframes meter-alphamon-sss-center-gold {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Verdandi SSS 1st â€” runic circles that sit slightly outside the meter border */
+@keyframes meter-sss-rune-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 9px currentColor);
+  }
+}
+
+@keyframes meter-sss-rune-spin-cw {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes meter-sss-rune-spin-ccw {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+  overflow: visible;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune {
+  position: absolute;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  animation: meter-sss-rune-breathe 2.8s ease-in-out infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune--left {
+  left: -18px;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune--right {
+  right: -18px;
+  animation-delay: 0.35s;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune--omega-blue {
+  color: #0d4a8a;
+  filter:
+    drop-shadow(0 0 3px rgba(30, 100, 170, 0.55))
+    drop-shadow(0 0 8px rgba(14, 80, 150, 0.28));
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune--omega-fire {
+  color: #9a2a0c;
+  filter:
+    drop-shadow(0 0 3px rgba(180, 70, 25, 0.55))
+    drop-shadow(0 0 8px rgba(140, 40, 12, 0.28));
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune--alpha-red {
+  color: #5c1212;
+  filter:
+    drop-shadow(0 0 3px rgba(160, 40, 40, 0.5))
+    drop-shadow(0 0 8px rgba(100, 20, 20, 0.28));
+}
+
+/* Subtle darker bloom behind pop runes */
+.meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-pop::before,
+.meter-parses-meter-chrome .meter-party-sss-runes--alphamon .meter-party-sss-rune--alpha-pop::before {
+  content: '';
+  position: absolute;
+  inset: -28%;
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-blue::before {
+  background: radial-gradient(
+    circle at center,
+    rgba(20, 70, 130, 0.35) 0%,
+    rgba(12, 50, 100, 0.14) 50%,
+    transparent 72%
+  );
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-fire::before {
+  background: radial-gradient(
+    circle at center,
+    rgba(140, 45, 15, 0.32) 0%,
+    rgba(100, 28, 8, 0.12) 50%,
+    transparent 72%
+  );
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--alphamon .meter-party-sss-rune--alpha-red::before {
+  background: radial-gradient(
+    circle at center,
+    rgba(110, 25, 25, 0.32) 0%,
+    rgba(70, 14, 14, 0.12) 50%,
+    transparent 72%
+  );
+}
+
+/* Legacy whole-rune spin (unused by Omegamon pops; keep for any leftover markup) */
+.meter-parses-meter-chrome .meter-party-sss-rune--spin-cw {
+  animation:
+    meter-sss-rune-breathe 2.8s ease-in-out infinite,
+    meter-sss-rune-spin-cw 14s linear infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune--spin-ccw {
+  animation:
+    meter-sss-rune-breathe 2.8s ease-in-out infinite 0.35s,
+    meter-sss-rune-spin-ccw 16s linear infinite;
+}
+
+/* Alphamon / Omegamon â€” runes pop at random spots, fade in / hold / fade out */
+@keyframes meter-alpha-rune-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  18% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--alphamon .meter-party-sss-rune--alpha-pop,
+.meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-pop {
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  margin-top: 0;
+  isolation: isolate;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--alphamon .meter-party-sss-rune--alpha-pop {
+  animation: meter-alpha-rune-pop var(--alpha-rune-duration, 3.6s) ease-in-out both;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-pop {
+  animation: meter-alpha-rune-pop var(--omega-rune-duration, 3.6s) ease-in-out both;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-runes--alphamon .meter-party-sss-rune--alpha-pop svg,
+.meter-parses-meter-chrome .meter-party-sss-runes--omegamon .meter-party-sss-rune--omega-pop svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune__spin {
+  transform-origin: 50px 50px;
+  transform-box: view-box;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune__spin--cw {
+  animation: meter-sss-rune-spin-cw 10s linear infinite;
+}
+
+.meter-parses-meter-chrome .meter-party-sss-rune__spin--ccw {
+  animation: meter-sss-rune-spin-ccw 18s linear infinite;
+}
+
+.meter-theme-preview--sss-rune-escape {
+  overflow: visible;
+  padding: 14px 22px;
+}
+
+.meter-shop-card-preview.meter-theme-preview--sss-rune-escape {
+  overflow: hidden;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::before,
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::after,
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-ulforce-veemon-x::after,
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-alphamon-ouryuken::after {
+    animation: none;
+  }
+
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::before {
+    border-color: rgba(42, 143, 224, 0.9);
+    box-shadow: -4px 0 12px rgba(26, 111, 184, 0.45);
+  }
+
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-omegamon::after {
+    border-color: rgba(232, 90, 36, 0.9);
+    box-shadow: 4px 0 12px rgba(196, 58, 18, 0.45);
+  }
+
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-ulforce-veemon-x::after {
+    border-color: rgba(186, 230, 253, 0.85);
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.6),
+      0 0 14px rgba(125, 211, 252, 0.55);
+  }
+
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-alphamon-ouryuken::after {
+    border-color: rgba(232, 200, 114, 0.85);
+    box-shadow:
+      0 0 0 1px rgba(212, 175, 55, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.65);
+  }
+
+  .meter-parses-meter-chrome .meter-party-member--verdandi-sss-first-alphamon-ouryuken::before {
+    animation: none;
+    opacity: 0.75;
+  }
+
+  .meter-parses-meter-chrome .meter-party-sss-rune,
+  .meter-parses-meter-chrome .meter-party-sss-rune--spin-cw,
+  .meter-parses-meter-chrome .meter-party-sss-rune--spin-ccw,
+  .meter-parses-meter-chrome .meter-party-sss-rune__spin--cw,
+  .meter-parses-meter-chrome .meter-party-sss-rune__spin--ccw {
+    animation: none;
+    opacity: 0.9;
+  }
+}
+
+.meter-shop-tier--verdandi {
+  color: rgba(187, 247, 208, 0.96);
+  border-color: rgba(74, 222, 128, 0.38);
+  background: rgba(21, 128, 61, 0.12);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.12);
+}
+
+.meter-shop-card--verdandi {
+  border-color: rgba(74, 222, 128, 0.34);
+  background: linear-gradient(
+    155deg,
+    rgba(21, 128, 61, 0.26) 0%,
+    rgba(20, 83, 45, 0.22) 45%,
+    rgba(5, 46, 22, 0.55) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(74, 222, 128, 0.1),
+    inset 0 1px 0 rgba(187, 247, 208, 0.07);
+}
+
+.meter-cycle-theme-preview-card--verdandi {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: linear-gradient(
+    165deg,
+    rgba(21, 128, 61, 0.35) 0%,
+    rgba(5, 46, 22, 0.5) 100%
+  );
+}
+
 .meter-shop-tier--rare {
   color: rgba(168, 228, 255, 0.96);
   border-color: rgba(62, 224, 255, 0.38);
@@ -14719,7 +15967,7 @@ button.evo-tree__node {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
 }
 
-/* Readable text over animated bar fills — dark outline only (no scrim). */
+/* Readable text over animated bar fills â€” dark outline only (no scrim). */
 .meter-parses-meter-chrome .meter-party-member--bar-theme .meter-party-name-text,
 .meter-parses-meter-chrome .meter-party-member--bar-theme .meter-party-digimon,
 .meter-parses-meter-chrome .meter-party-member--bar-theme .meter-party-num {
@@ -16278,7 +17526,7 @@ button.evo-tree__node {
   font-weight: 600;
 }
 
-/* Digimon DPS bars — same full-width overlay pattern as skill meter rows */
+/* Digimon DPS bars â€” same full-width overlay pattern as skill meter rows */
 .meter-public-chart.meter-parses-meter-chrome .meter-public-digimon-scroll {
   max-height: min(36vh, 320px);
 }
@@ -16750,6 +17998,43 @@ a.meter-profile-hof-badge {
   text-shadow: 0 0 12px rgba(196, 181, 253, 0.55);
 }
 
+.meter-profile-hof-badge--verdandi {
+  border-color: rgba(74, 222, 128, 0.45);
+  background:
+    linear-gradient(135deg, rgba(74, 222, 128, 0.18) 0%, rgba(21, 128, 61, 0.12) 40%, rgba(0, 0, 0, 0.35) 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25) inset,
+    0 0 20px rgba(34, 197, 94, 0.16);
+}
+
+.meter-profile-hof-badge--verdandi:hover {
+  border-color: rgba(134, 239, 172, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25) inset,
+    0 0 28px rgba(34, 197, 94, 0.28);
+}
+
+.meter-profile-hof-badge--verdandi:focus-visible {
+  outline-color: #4ade80;
+}
+
+.meter-profile-hof-badge--verdandi .meter-profile-hof-badge__crest-ring {
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.meter-profile-hof-badge--verdandi .meter-profile-hof-badge__crest-svg {
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.5));
+}
+
+.meter-profile-hof-badge--verdandi .meter-profile-hof-badge__eyebrow {
+  color: #4ade80;
+}
+
+.meter-profile-hof-badge--verdandi .meter-profile-hof-badge__count {
+  color: #ecfdf5;
+  text-shadow: 0 0 12px rgba(134, 239, 172, 0.55);
+}
+
 .meter-profile-card__hof-medallion--magia {
   border-color: #c4b5fd;
   background: linear-gradient(145deg, #e9d5ff 0%, #a78bfa 45%, #6d28d9 100%);
@@ -16937,7 +18222,7 @@ a.meter-profile-hof-badge {
   }
 }
 
-/* Profile — Hall of Fame */
+/* Profile â€” Hall of Fame */
 .meter-profile-hof {
   margin-bottom: 1rem;
   border-radius: 12px;
@@ -18843,7 +20128,7 @@ a.meter-profile-hof-badge {
   display: block;
 }
 
-/* GrayFog effect — event embed (see GRAY_FOG_TEASER_IMGUR_ID in effects/grayFogConfig). */
+/* GrayFog effect â€” event embed (see GRAY_FOG_TEASER_IMGUR_ID in effects/grayFogConfig). */
 .forum-teaser-embedded--gray-fog .gray-fog,
 .forum-teaser-embedded--corner-fog .gray-fog {
   position: absolute;
@@ -18872,7 +20157,7 @@ a.meter-profile-hof-badge {
   }
 }
 
-/* TeaserRedEyeGlow — fog phase only; see supportsTeaserRedEyeGlow. */
+/* TeaserRedEyeGlow â€” fog phase only; see supportsTeaserRedEyeGlow. */
 .teaser-red-eye-glow {
   position: absolute;
   z-index: 3;
@@ -18930,7 +20215,7 @@ a.meter-profile-hof-badge {
   animation: teaser-red-eye-active-core 2.8s ease-in-out infinite;
 }
 
-/* Post mid-cycle: softer bloom — eye looks awake / online. */
+/* Post mid-cycle: softer bloom â€” eye looks awake / online. */
 .teaser-red-eye-glow--awakened {
   width: 3.5%;
   filter: blur(0.15px);
@@ -19032,7 +20317,7 @@ a.meter-profile-hof-badge {
   }
 }
 
-/* Marsmon plain teaser (6JQlbLZ) — center radiance + arm flames */
+/* Marsmon plain teaser (6JQlbLZ) â€” center radiance + arm flames */
 .forum-teaser-frame--plain .forum-teaser-zoom {
   position: relative;
   display: block;
@@ -19054,7 +20339,7 @@ a.meter-profile-hof-badge {
   pointer-events: none;
 }
 
-/* Rune inscription: one English letter per rune, left → right flip reveal */
+/* Rune inscription: one English letter per rune, left â†’ right flip reveal */
 .teaser-marsmon-runes {
   position: absolute;
   inset: 0;
@@ -19221,7 +20506,7 @@ a.meter-profile-hof-badge {
   }
 }
 
-/* Sun burst after rune reveal (8s hold → slow expand → fast golden flash → replay) */
+/* Sun burst after rune reveal (8s hold â†’ slow expand â†’ fast golden flash â†’ replay) */
 .teaser-marsmon-sunburst {
   position: absolute;
   transform: translate(-50%, -50%) scale(0.2);
@@ -19267,7 +20552,7 @@ a.meter-profile-hof-badge {
   animation: marsmon-runes-sun-swallow 3.4s cubic-bezier(0.45, 0.05, 0.85, 1) forwards;
 }
 
-/* Fadeout: slow envelope → faster mid cover → slow clear for replay */
+/* Fadeout: slow envelope â†’ faster mid cover â†’ slow clear for replay */
 .teaser-marsmon-envelope {
   position: absolute;
   inset: -15%;
@@ -24093,7 +25378,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   }
 }
 
-/* Meter — Hall of Fame */
+/* Meter â€” Hall of Fame */
 .meter-hof-page-head {
   display: flex;
   flex-direction: column;
@@ -24716,7 +26001,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   .meter-hof-table__col--date { grid-area: date; text-align: left; }
 }
 
-/* Guidebook — progression board */
+/* Guidebook â€” progression board */
 .guidebook-page--board {
   max-width: 76rem;
 }
@@ -25398,7 +26683,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 }
 
-/* Guidebook — Digimon Seal Boxes by stat */
+/* Guidebook â€” Digimon Seal Boxes by stat */
 .guidebook-seals {
   display: flex;
   flex-direction: column;
@@ -25497,7 +26782,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   font-size: 0.82rem;
 }
 
-/* Guidebook — Early Gear clothes (DigiEgg scan sources) */
+/* Guidebook â€” Early Gear clothes (DigiEgg scan sources) */
 .guidebook-clothes {
   display: flex;
   flex-direction: column;
@@ -27488,7 +28773,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   }
 }
 
-/* Patch notes — Digital Odyssey transmission log */
+/* Patch notes â€” Digital Odyssey transmission log */
 .patch-notes-page {
   max-width: 1180px;
   margin: 0 auto;
@@ -28803,7 +30088,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .community-guides-details__summary::before {
-  content: '▸';
+  content: 'â–¸';
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

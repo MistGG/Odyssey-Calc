@@ -16,10 +16,10 @@ export const GUIDEBOOK_MASTEMON_REPORT_QUEST_ID = 'q1e0s4a0'
 /** Hikari Sees Odaiba — level 70 uncap gate in Odaiba (Early Game 50-70). */
 export const GUIDEBOOK_HIKARI_SEES_ODAIBA_QUEST_ID = 'q182jhml'
 
-/** Level 50 uncap dungeon (Normal). */
+/** Level 50 uncap dungeon (Story). */
 export const GUIDEBOOK_UNCAP_50_DUNGEON_ID = 'u2ooqoe'
 
-/** Level 70 uncap dungeon (Normal). */
+/** Level 70 uncap dungeon (Story). */
 export const GUIDEBOOK_UNCAP_70_DUNGEON_ID = 'urb9jgm'
 
 /** The Dark Roar — EXP farm in Big Sight (Story). */

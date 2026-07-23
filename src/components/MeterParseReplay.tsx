@@ -18,7 +18,7 @@ import {
   shouldShowMeterThemeBadge,
 } from '../lib/meterPartyBarThemes'
 import { partyMemberChromeStyle } from '../lib/meterPartyColor'
-import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
+import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberSssFirstClass, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -237,7 +237,7 @@ export function MeterPartyRoster({
         <span className="meter-col-hits">s</span>
       </div>
       <div className="meter-breakdown-scroll meter-breakdown-scroll--compact meter-scroll--themed">
-        {sorted.map((m) => {
+        {sorted.map((m, index) => {
           const dps = m.durationSec > 0 ? m.totalDamage / m.durationSec : 0
           const chrome = partyMemberChromeStyle(m.memberKey)
           const sharePct = raidTotal > 0 ? (100 * m.totalDamage) / raidTotal : 0
@@ -251,11 +251,16 @@ export function MeterPartyRoster({
             remoteThemeId: equippedThemeIdForTamer(equippedThemes, tamer),
           })
           const themeStyle = barTheme ? meterPartyBarThemeStyle(barTheme) : undefined
+          const isFirstPlace = index === 0
+          const sssBleedClass = meterPartyMemberSssFirstClass(barTheme, isFirstPlace)
           return (
-            <button
+            <div
               key={m.memberKey}
+              className={`meter-party-row${sssBleedClass ? ' meter-party-row--sss-bleed' : ''}`}
+            >
+            <button
               type="button"
-              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberThemeClass(barTheme)}`}
+              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberThemeClass(barTheme)}${sssBleedClass}`}
               style={{
                 ...(barTheme ? themeStyle : {}),
                 boxShadow: barTheme ? undefined : `inset 3px 0 0 ${chrome.borderLeftColor}`,
@@ -263,7 +268,11 @@ export function MeterPartyRoster({
               onClick={() => onSelectMember(m.memberKey)}
             >
               {barTheme ? (
-                <MeterPartyThemedBar theme={barTheme} sharePct={sharePct} />
+                <MeterPartyThemedBar
+                  theme={barTheme}
+                  sharePct={sharePct}
+                  isFirstPlace={isFirstPlace}
+                />
               ) : (
                 <MeterPartyPlainBar sharePct={sharePct} rowKey={m.memberKey} />
               )}
@@ -307,6 +316,7 @@ export function MeterPartyRoster({
                 <span className="meter-party-num">{m.durationSec.toFixed(0)}</span>
               </div>
             </button>
+            </div>
           )
         })}
       </div>

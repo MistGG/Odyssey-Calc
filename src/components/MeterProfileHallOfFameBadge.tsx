@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
+import { meterHofCycleEyebrow } from '../lib/meterHofVariant'
 
-export type MeterProfileHofBadgeVariant = 'olympus' | 'magia'
+export type MeterProfileHofBadgeVariant = 'olympus' | 'magia' | 'verdandi'
 
 function HallOfFameCrestIcon({ variant }: { variant: MeterProfileHofBadgeVariant }) {
   if (variant === 'magia') {
@@ -55,6 +56,58 @@ function HallOfFameCrestIcon({ variant }: { variant: MeterProfileHofBadgeVariant
           strokeWidth={1}
           strokeLinecap="round"
           opacity={0.55}
+        />
+      </svg>
+    )
+  }
+
+  if (variant === 'verdandi') {
+    return (
+      <svg
+        className="meter-profile-hof-badge__crest-svg"
+        viewBox="0 0 48 48"
+        width={40}
+        height={40}
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="verdandi-crest-frame" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#bbf7d0" />
+            <stop offset="45%" stopColor="#4ade80" />
+            <stop offset="100%" stopColor="#15803d" />
+          </linearGradient>
+          <linearGradient id="verdandi-crest-core" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stopColor="#052e16" />
+            <stop offset="100%" stopColor="#022c22" />
+          </linearGradient>
+          <linearGradient id="verdandi-crest-x" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ecfdf5" />
+            <stop offset="50%" stopColor="#86efac" />
+            <stop offset="100%" stopColor="#22c55e" />
+          </linearGradient>
+          <filter id="verdandi-crest-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="1.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <path
+          d="M24 2 L42 12 V28 L24 46 L6 28 V12 Z"
+          fill="url(#verdandi-crest-frame)"
+          opacity={0.95}
+        />
+        <path
+          d="M24 6 L38 14 V26 L24 40 L10 26 V14 Z"
+          fill="url(#verdandi-crest-core)"
+          stroke="rgba(74, 222, 128, 0.5)"
+          strokeWidth={0.75}
+        />
+        <path
+          d="M16 14 L24 22 L32 14 L35 17 L27 25 L35 33 L32 36 L24 28 L16 36 L13 33 L21 25 L13 17 Z"
+          fill="url(#verdandi-crest-x)"
+          filter="url(#verdandi-crest-glow)"
         />
       </svg>
     )
@@ -131,8 +184,14 @@ type MeterProfileHallOfFameBadgeProps = {
 
 function badgeCopy(variant: MeterProfileHofBadgeVariant, recordCount: number) {
   const label = recordCount === 1 ? 'Record break' : 'Record breaks'
-  const eyebrow = variant === 'magia' ? 'Magia Cycle' : 'Olympus Cycle'
+  const eyebrow = meterHofCycleEyebrow(variant)
   return { label, eyebrow }
+}
+
+function badgeModifierClass(variant: MeterProfileHofBadgeVariant): string {
+  if (variant === 'magia') return ' meter-profile-hof-badge--magia'
+  if (variant === 'verdandi') return ' meter-profile-hof-badge--verdandi'
+  return ''
 }
 
 function BadgeInner({
@@ -170,7 +229,7 @@ export function MeterProfileHallOfFameBadge({
   if (recordCount <= 0) return null
 
   const { label } = badgeCopy(variant, recordCount)
-  const className = `meter-profile-hof-badge${variant === 'magia' ? ' meter-profile-hof-badge--magia' : ''}`
+  const className = `meter-profile-hof-badge${badgeModifierClass(variant)}`
   const title = `${recordCount} ${cycleShortLabel} ${label.toLowerCase()}`
 
   if (hallOfFameCycleId) {

@@ -11,9 +11,10 @@ import type { MeterPartyBarThemeId } from '../lib/meterPartyBarThemes'
 import { isGrantOnlyMeterThemeId, isShopPurchasableMeterThemeId } from '../lib/meterThemeGrants'
 import {
   clearEquippedMeterPartyBarThemeId,
-  HALL_OF_FAME_THEME_ID,
+  isHallOfFameMeterTheme,
   MAGIA_HALL_OF_FAME_THEME_ID,
   MIST_DEV_REWARD_THEME_ID,
+  VERDANDI_HALL_OF_FAME_THEME_ID,
   writeEquippedMeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
 
@@ -67,7 +68,7 @@ export async function equipMeterTheme(
       await upsertEquippedTheme(supabase, themeId)
       return { ok: true, error: null }
     }
-    if (themeId === HALL_OF_FAME_THEME_ID || themeId === MAGIA_HALL_OF_FAME_THEME_ID) {
+    if (isHallOfFameMeterTheme(getMeterPartyBarTheme(themeId))) {
       const playerKey = await resolveMeterPlayerKeyForHof(
         supabase,
         options?.profileDisplayName ?? null,
@@ -82,9 +83,11 @@ export async function equipMeterTheme(
       return {
         ok: false,
         error:
-          themeId === MAGIA_HALL_OF_FAME_THEME_ID
-            ? 'Earn a Magia cycle record break to unlock this theme.'
-            : 'Earn a Hall of Fame record break to unlock this theme.',
+          themeId === VERDANDI_HALL_OF_FAME_THEME_ID
+            ? 'Earn a Verdandi cycle record break to unlock this theme.'
+            : themeId === MAGIA_HALL_OF_FAME_THEME_ID
+              ? 'Earn a Magia cycle record break to unlock this theme.'
+              : 'Earn a Hall of Fame record break to unlock this theme.',
       }
     }
     if (isGrantOnlyMeterThemeId(themeId)) {
