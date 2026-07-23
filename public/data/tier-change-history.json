@@ -1,6 +1,169 @@
 {
-  "updated_at": "2026-07-23T02:53:29.856Z",
+  "updated_at": "2026-07-23T08:37:32.064Z",
   "runs": [
+    {
+      "id": "2026-07-23T08:37:32.084Z-pol3pb",
+      "finishedAt": "2026-07-23T08:37:32.084Z",
+      "mode": "force",
+      "refreshedCount": 443,
+      "apiCount": 4,
+      "tierCount": 4,
+      "sampleDigimon": [
+        {
+          "id": "doq2524",
+          "name": "Asuramon",
+          "cause": "api"
+        },
+        {
+          "id": "daknlcd",
+          "name": "Bakemon",
+          "cause": "api"
+        },
+        {
+          "id": "d147goj4",
+          "name": "Ballistamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1pya1h2",
+          "name": "Ballistamon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "doq2524": [
+          "HP: 16640 -> 12640",
+          "Attack: 8612 -> 6312",
+          "Stats.ds: 19337 -> 14437",
+          "Stats.defense: 439 -> 339"
+        ],
+        "daknlcd": [
+          "HP: 16770 -> 12570",
+          "Attack: 4108 -> 2988",
+          "Stats.ds: 22749 -> 16799",
+          "Stats.defense: 572 -> 432"
+        ],
+        "d1pya1h2": [
+          "HP: 10795 -> 7795",
+          "Attack: 1502 -> 1102",
+          "Stats.ds: 6570 -> 4610",
+          "Stats.defense: 439 -> 319"
+        ],
+        "d147goj4": [
+          "HP: 37570 -> 28570",
+          "Attack: 4911 -> 3711",
+          "Stats.ds: 19820 -> 13940",
+          "Stats.defense: 5720 -> 5360"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "doq2524",
+          "name": "Asuramon",
+          "lines": [
+            "HP: 16640 -> 12640",
+            "Attack: 8612 -> 6312",
+            "Stats.ds: 19337 -> 14437",
+            "Stats.defense: 439 -> 339"
+          ]
+        },
+        {
+          "id": "daknlcd",
+          "name": "Bakemon",
+          "lines": [
+            "HP: 16770 -> 12570",
+            "Attack: 4108 -> 2988",
+            "Stats.ds: 22749 -> 16799",
+            "Stats.defense: 572 -> 432"
+          ]
+        },
+        {
+          "id": "d1pya1h2",
+          "name": "Ballistamon",
+          "lines": [
+            "HP: 10795 -> 7795",
+            "Attack: 1502 -> 1102",
+            "Stats.ds: 6570 -> 4610",
+            "Stats.defense: 439 -> 319"
+          ]
+        },
+        {
+          "id": "d147goj4",
+          "name": "Ballistamon",
+          "lines": [
+            "HP: 37570 -> 28570",
+            "Attack: 4911 -> 3711",
+            "Stats.ds: 19820 -> 13940",
+            "Stats.defense: 5720 -> 5360"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-07-23T08:37:32.084Z",
+        "mode": "force",
+        "refreshedCount": 443,
+        "dpsUp": [],
+        "dpsDown": [
+          {
+            "id": "doq2524",
+            "name": "Asuramon",
+            "role": "Melee DPS",
+            "before": 14280.305821458978,
+            "after": 13169.235364209593,
+            "delta": -1111.070457249385
+          },
+          {
+            "id": "daknlcd",
+            "name": "Bakemon",
+            "role": "Hybrid",
+            "before": 6134.80896719307,
+            "after": 5774.614734410756,
+            "delta": -360.19423278231443
+          },
+          {
+            "id": "d1pya1h2",
+            "name": "Ballistamon",
+            "role": "Tank",
+            "before": 1393.629688888887,
+            "after": 1214.5808000000009,
+            "delta": -179.04888888888604
+          },
+          {
+            "id": "d147goj4",
+            "name": "Ballistamon",
+            "role": "Tank",
+            "before": 4973.051502768555,
+            "after": 4368.670107419714,
+            "delta": -604.3813953488407
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [
+          {
+            "id": "d1pya1h2",
+            "name": "Ballistamon",
+            "role": "Tank",
+            "before": 2.023039960898525,
+            "after": 1.8123972897648621,
+            "delta": -0.21064267113366286
+          },
+          {
+            "id": "d147goj4",
+            "name": "Ballistamon",
+            "role": "Tank",
+            "before": 3.0038515446504257,
+            "after": 2.825457705627008,
+            "delta": -0.17839383902341766
+          }
+        ],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-23T02:53:29.877Z-lyabae",
       "finishedAt": "2026-07-23T02:53:29.877Z",
@@ -10799,32 +10962,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-06-24T19:58:36.214Z",
-        "mode": "force",
-        "refreshedCount": 439,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-06-24T14:40:48.115Z-9dcgmd",
-      "finishedAt": "2026-06-24T14:40:48.115Z",
-      "mode": "force",
-      "refreshedCount": 439,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-06-24T14:40:48.115Z",
         "mode": "force",
         "refreshedCount": 439,
         "dpsUp": [],
