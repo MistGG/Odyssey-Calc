@@ -15,12 +15,10 @@ import { MeterPlayerProfilePage } from './pages/MeterPlayerProfilePage'
 import { MeterParsesPage } from './pages/MeterParsesPage'
 import { MeterPublicPage } from './pages/MeterPublicPage'
 import { MeterMagiaThemePreviewPage } from './pages/MeterMagiaThemePreviewPage'
-import { MeterCycleThemePreviewPage } from './pages/MeterCycleThemePreviewPage'
 import { MeterVerdandiThemePreviewPage } from './pages/MeterVerdandiThemePreviewPage'
 import { MeterHallOfFamePage } from './pages/MeterHallOfFamePage'
 import { MeterTamerSearchPage } from './pages/MeterTamerSearchPage'
 import { CompanionPage } from './pages/CompanionPage'
-
 import { MayClearEventPage } from './pages/MayClearEventPage'
 import { TierChangesPage } from './pages/TierChangesPage'
 import { TierListPage } from './pages/TierListPage'
@@ -31,6 +29,7 @@ import { CommunityGuideGearStatsPage } from './pages/CommunityGuideGearStatsPage
 import { CommunityGuideEditorPage } from './pages/CommunityGuideEditorPage'
 import { DungeonsPage } from './pages/DungeonsPage'
 import { PatchNotesPage } from './pages/PatchNotesPage'
+import { PatchPromoPage } from './pages/PatchPromoPage'
 
 export default function App() {
   return (
@@ -59,7 +58,6 @@ export default function App() {
           <Route path="meter/leaderboard" element={<Navigate to="/meter" replace />} />
           <Route path="meter/activity" element={<Navigate to="/meter" replace />} />
           <Route path="meter/hall-of-fame" element={<MeterHallOfFamePage />} />
-          <Route path="meter/cycle-theme-preview" element={<MeterCycleThemePreviewPage />} />
           <Route path="meter/leaderboard-preview" element={<Navigate to="/meter" replace />} />
           <Route path="meter/search" element={<MeterTamerSearchPage />} />
           <Route path="meter/player/:playerKey" element={<MeterPlayerProfilePage />} />
@@ -75,6 +73,7 @@ export default function App() {
           <Route path="meter-parses" element={<MeterParsesPage />} />
           <Route path="companion" element={<CompanionPage />} />
           <Route path="event" element={<MayClearEventPage />} />
+          <Route path="promo" element={<PatchPromoPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

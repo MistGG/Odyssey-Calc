@@ -20,6 +20,7 @@
     "process:magia-overlays": "node scripts/process-magia-overlays.mjs",
     "process:verdandi-overlays": "node scripts/process-verdandi-overlays.mjs",
     "process:iliad-overlay": "node scripts/process-iliad-overlay.mjs",
+    "process:promo-new-century": "node scripts/process-promo-new-century.mjs",
     "build": "npm run generate:guidebook-share && npm run generate:event-discord-teaser && npm run generate:event-share && npm run sync:patch-notes && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

@@ -34,6 +34,7 @@ export function Layout() {
     pathname.startsWith('/guides') ||
     pathname.startsWith('/patch-notes') ||
     pathname.startsWith('/dungeons')
+  const promoActive = pathname === '/promo' || pathname.startsWith('/promo/')
   const shopActive =
     pathname.startsWith('/meter/shop') || pathname === '/meter/rewards'
   const meterActive =
@@ -58,6 +59,18 @@ export function Layout() {
         <div className="header__row">
           <div className="nav-scroll">
             <nav className="nav nav--primary" aria-label="Main">
+              <NavLink
+                to="/promo"
+                className={
+                  promoActive
+                    ? 'nav-link nav-link-promo nav-link-promo--active'
+                    : 'nav-link nav-link-promo'
+                }
+              >
+                Promo
+                <span className="nav-link-promo__badge">New</span>
+              </NavLink>
+
               <NavLink
                 to="/digimon"
                 className={digimonActive ? navLinkClass(true) : navLinkClass(false)}
