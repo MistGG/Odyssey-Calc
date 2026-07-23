@@ -1,6 +1,1295 @@
 {
-  "updated_at": "2026-07-23T14:06:22.794Z",
+  "updated_at": "2026-07-23T18:36:55.214Z",
   "runs": [
+    {
+      "id": "2026-07-23T18:36:55.259Z-uw4kkm",
+      "finishedAt": "2026-07-23T18:36:55.259Z",
+      "mode": "force",
+      "refreshedCount": 467,
+      "apiCount": 122,
+      "tierCount": 41,
+      "sampleDigimon": [
+        {
+          "id": "d1iab7dm",
+          "name": "AeroV-Dramon",
+          "cause": "api"
+        },
+        {
+          "id": "d1r6hxc2",
+          "name": "Agumon X",
+          "cause": "api"
+        },
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "cause": "api"
+        },
+        {
+          "id": "dnwhdoz",
+          "name": "Alphamon Ouryuken",
+          "cause": "api"
+        },
+        {
+          "id": "dr5unom",
+          "name": "Andromon",
+          "cause": "api"
+        },
+        {
+          "id": "dl70hc3",
+          "name": "Antylamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1yl8rpf",
+          "name": "Antylamon Deva",
+          "cause": "api"
+        },
+        {
+          "id": "dgnvjhe",
+          "name": "Archnemon",
+          "cause": "api"
+        },
+        {
+          "id": "d18ucac6",
+          "name": "Argomon",
+          "cause": "api"
+        },
+        {
+          "id": "d1diof57",
+          "name": "Arkadimon Adult",
+          "cause": "api"
+        },
+        {
+          "id": "d1tcema",
+          "name": "Arkadimon Perfect",
+          "cause": "api"
+        },
+        {
+          "id": "d1pduht4",
+          "name": "Astamon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1hndr0k": [
+          "Skill Citadel Core Protocol description: \"Activates its defensive core to stabilize allies, converting barrier energy into power. Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Activates its defensive core to stabilize allies, converting barrier energy into power. Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\"",
+          "Skill Citadel Core Protocol buff description: \"Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\""
+        ],
+        "d1iab7dm": [
+          "Rank: 3 -> 4",
+          "Skill Sky Dominance description: \"Heightens reflexes. Increases Evasion by 1% (+0.14% per Skill Level), reduces damage taken by 22%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"AeroV-Dramon compresses the surrounding air into a hardened barrier. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+          "Skill Sky Dominance buff name: \"Magnum Mirage\" -> \"Sky Dominance\"",
+          "Skill Sky Dominance buff description: \"Increases Evasion by 1% (+0.14% per Skill Level), reduces damage taken by 22%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+        ],
+        "dr5unom": [
+          "Rank: 3 -> 4"
+        ],
+        "dl70hc3": [
+          "Rank: 3 -> 4"
+        ],
+        "d1yl8rpf": [
+          "Rank: 3 -> 4"
+        ],
+        "dc0pdvu": [
+          "Skill Guardian of the Threshold cooldown: 80 -> 65"
+        ],
+        "dgnvjhe": [
+          "Rank: 3 -> 4"
+        ],
+        "d18ucac6": [
+          "Rank: 3 -> 4",
+          "Skill Neural Overgrowth description: \"Argomon unleashes Neural Overgrowth. Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"Argomon spreads a lattice of neural overgrowth. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+          "Skill Neural Overgrowth buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+        ],
+        "d1diof57": [
+          "HP: 11076 -> 8276",
+          "Attack: 5947 -> 4337",
+          "Stats.ds: 13292 -> 9862",
+          "Stats.defense: 282 -> 212"
+        ],
+        "d1tcema": [
+          "Rank: 3 -> 4"
+        ],
+        "d1pduht4": [
+          "Rank: 3 -> 4"
+        ],
+        "doq2524": [
+          "Rank: 3 -> 4"
+        ],
+        "d14va304": [
+          "Rank: 3 -> 4"
+        ],
+        "d10d0snt": [
+          "Skill Devil's Impulse description: \"Infuses allies with demonic fury. Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Infuses allies with demonic fury. Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\"",
+          "Skill Devil's Impulse buff description: \"Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\""
+        ],
+        "d31fxga": [
+          "Skill Devil's Resolve description: \"Beelzemon BlastMode steels his demonic resolve. Increases Attack Speed by -13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\" -> \"Beelzemon BlastMode steels his demonic resolve. Increases Attack Speed by 13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\"",
+          "Skill Devil's Resolve buff description: \"Increases Attack Speed by -13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\""
+        ],
+        "d1s6qnpj": [
+          "Skill Meteor Wing Anthem description: \"Birdramon rallies the party. Increases Attack Power by 430, increases Attack Speed by -2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"Birdramon rallies the party. Increases Attack Power by 430, increases Attack Speed by 2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\"",
+          "Skill Meteor Wing Anthem buff description: \"Increases Attack Power by 430, increases Attack Speed by -2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 430, increases Attack Speed by 2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\""
+        ],
+        "d6piz7q": [
+          "Rank: 3 -> 4",
+          "Skill Sacred Formation description: \"BishopChessmon unleashes Sacred Formation. Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"BishopChessmon raises a sacred defensive formation. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+          "Skill Sacred Formation buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+        ],
+        "de7i5eu": [
+          "Rank: 3 -> 4"
+        ],
+        "d1j9f992": [
+          "Rank: 3 -> 4"
+        ],
+        "dok71k3": [
+          "Rank: 3 -> 4"
+        ],
+        "ds0vzxi": [
+          "Rank: 3 -> 4"
+        ],
+        "d1p8vik": [
+          "Skill Heavenly Harmony cooldown: 50 -> 35",
+          "Skill Sanctuary of Virtue cooldown: 70 -> 65"
+        ],
+        "d1q0aohx": [
+          "Rank: 3 -> 4"
+        ],
+        "d1q84jvw": [
+          "Rank: 3 -> 4"
+        ],
+        "d1x70xm0": [
+          "Rank: 3 -> 4"
+        ],
+        "dsj63yb": [
+          "Rank: 3 -> 4"
+        ],
+        "d89gux7": [
+          "Rank: 3 -> 4"
+        ],
+        "d1ql4gn6": [
+          "Skill X-Evolution description: \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\"",
+          "Skill X-Evolution buff description: \"Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\""
+        ],
+        "dbzt6ro": [
+          "Skill X-Evolution description: \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\"",
+          "Skill X-Evolution buff description: \"Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\""
+        ],
+        "d1hxpawa": [
+          "Skill X-Evolution description: \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\"",
+          "Skill X-Evolution buff description: \"Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\""
+        ],
+        "dwnitdh": [
+          "Rank: 0 -> 4"
+        ],
+        "d3xqja6": [
+          "Rank: 3 -> 4"
+        ],
+        "d190qtot": [
+          "Skill Ninja Stealth description: \"Falcomon's talons blur, every Falcon Wing slash flicked at striking speed. Increases Attack Speed by -6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\" -> \"Falcomon's talons blur, every Falcon Wing slash flicked at striking speed. Increases Attack Speed by 6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\"",
+          "Skill Ninja Stealth buff description: \"Increases Attack Speed by -6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\""
+        ],
+        "d18czwbu": [
+          "Skill Rapid Fire Focus description: \"Galgomon's twin gatling guns spin up, every Gatling Arm spitting at striking speed. Increases Attack Speed by -9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\" -> \"Galgomon's twin gatling guns spin up, every Gatling Arm spitting at striking speed. Increases Attack Speed by 9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\"",
+          "Skill Rapid Fire Focus buff description: \"Increases Attack Speed by -9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\""
+        ],
+        "d1lk2vyj": [
+          "Skill Heavenbreaker Fist description: \"Releases a shockwave of pure physical mastery, devastating all enemies within range. Increases Attack Speed by -20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\" -> \"Releases a shockwave of pure physical mastery, devastating all enemies within range. Increases Attack Speed by 20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\"",
+          "Skill Heavenbreaker Fist buff description: \"Increases Attack Speed by -20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\""
+        ],
+        "d1qh4gms": [
+          "Rank: 3 -> 4",
+          "Skill Solar Anthem description: \"Garudamon rallies the party. Increases Attack Power by 630, increases Attack Speed by -2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\" -> \"Garudamon rallies the party. Increases Attack Power by 630, increases Attack Speed by 2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\"",
+          "Skill Solar Anthem buff description: \"Increases Attack Power by 630, increases Attack Speed by -2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 630, increases Attack Speed by 2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\""
+        ],
+        "d1i8znp9": [
+          "Skill Dark Pounce description: \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\"",
+          "Skill Dark Pounce buff description: \"Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\""
+        ],
+        "dab16l9": [
+          "Skill Dark Pounce description: \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\"",
+          "Skill Dark Pounce buff description: \"Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\""
+        ],
+        "d1g7rwn6": [
+          "Rank: 3 -> 4",
+          "Skill Chaos Protocol description: \"Unleashes a jarring chaos subroutine that erratically deflects incoming damage. Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"Giromon runs a chaos subroutine that deflects incoming damage. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+          "Skill Chaos Protocol buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+        ],
+        "d6qqfrg": [
+          "Skill Goblin War Drum description: \"Goblimon rallies the party. Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Goblimon rallies the party. Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\"",
+          "Skill Goblin War Drum buff description: \"Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\""
+        ],
+        "d9qh2rg": [
+          "Rank: 3 -> 4"
+        ],
+        "d10zw390": [
+          "Rank: 3 -> 4"
+        ],
+        "dugg62m": [
+          "Rank: 3 -> 4",
+          "Skill Tectonic Surge description: \"Groundramon channels the deep tectonics of the earth into the party. Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 80 (+8 per Skill Level) for 15 seconds.\" -> \"Groundramon channels the deep tectonics of the earth. Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\"",
+          "Skill Tectonic Surge buff description: \"Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 80 (+8 per Skill Level) for 15 seconds.\" -> \"Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\""
+        ],
+        "d1n1ayys": [
+          "Skill Abyssal Current description: \"Gulfmon rallies the party. Increases Attack Power by 790, increases Attack Speed by -2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\" -> \"Gulfmon rallies the party. Increases Attack Power by 790, increases Attack Speed by 2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\"",
+          "Skill Abyssal Current buff description: \"Increases Attack Power by 790, increases Attack Speed by -2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 790, increases Attack Speed by 2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\""
+        ],
+        "dkp5zw7": [
+          "Skill Hawk Focus description: \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\"",
+          "Skill Hawk Focus buff description: \"Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\""
+        ],
+        "de49mfw": [
+          "Skill Hawk Focus description: \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\"",
+          "Skill Hawk Focus buff description: \"Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\""
+        ],
+        "d1iu46ij": [
+          "Rank: 3 -> 4"
+        ],
+        "dli2qnl": [
+          "Skill Infernal Power description: \"Impmon's grin sharpens to a demon's leer, every Bada Boom siphoning life-force. Increases Attack Speed by -12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Impmon's grin sharpens to a demon's leer, every Bada Boom siphoning life-force. Increases Attack Speed by 12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\"",
+          "Skill Infernal Power buff description: \"Increases Attack Speed by -12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Increases Attack Speed by 12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\""
+        ],
+        "d1bqx9nw": [
+          "Rank: 3 -> 4",
+          "Skill Web Dominion description: \"Weaves a shifting web lattice around itself, deflecting blows with predatory precision. Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.50% (+2.50% per Skill Level) for 15 seconds.\" -> \"Infermon weaves a shifting web lattice around itself. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+          "Skill Web Dominion buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.50% (+2.50% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+        ],
+        "d2h1vgh": [
+          "Skill System Overclock description: \"Keramon pulses with corrupted data, every Crazy Giggle drawn out for sustained menace. Increases Attack Speed by -6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Keramon pulses with corrupted data, every Crazy Giggle drawn out for sustained menace. Increases Attack Speed by 6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\"",
+          "Skill System Overclock buff description: \"Increases Attack Speed by -6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Increases Attack Speed by 6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\""
+        ],
+        "dncnwga": [
+          "Rank: 3 -> 4",
+          "Skill Knight Vigil description: \"Instantly. Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"Knightmon takes up an unyielding knight's vigil. Restores 1,500 HP (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\"",
+          "Skill Knight Vigil buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"Restores 1,500 HP (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\""
+        ],
+        "d1dkukn": [
+          "Rank: 3 -> 4"
+        ],
+        "dzu1hgw": [
+          "Rank: 3 -> 4"
+        ],
+        "d1an27y2": [
+          "Rank: 3 -> 4"
+        ],
+        "d1vjr1ha": [
+          "Rank: 3 -> 4"
+        ],
+        "dksl5x6": [
+          "Rank: 3 -> 4"
+        ],
+        "d1ltfl6m": [
+          "Rank: 3 -> 4",
+          "Skill Permafrost Aura description: \"Emits an aura of ancient glacial cold that hardens the mammoth hide into living permafrost armor. Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 300 (+95 per Skill Level) for 15 seconds.\" -> \"Ancient glacial cold hardens Mammothmon's hide into living permafrost. Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\"",
+          "Skill Permafrost Aura buff description: \"Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 300 (+95 per Skill Level) for 15 seconds.\" -> \"Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\""
+        ],
+        "d1ddyiem": [
+          "Rank: 3 -> 4",
+          "Skill Abyssal Surge description: \"Channels the crushing pressure of the abyssal depths into a living shell of darkness. Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"MarineDevimon shrouds itself in crushing abyssal pressure. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+          "Skill Abyssal Surge buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+        ],
+        "deixc9j": [
+          "Rank: 3 -> 4"
+        ],
+        "d1ty5lv4": [
+          "Rank: 3 -> 4"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1hndr0k",
+          "name": "Aegisdramon",
+          "lines": [
+            "Skill Citadel Core Protocol description: \"Activates its defensive core to stabilize allies, converting barrier energy into power. Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Activates its defensive core to stabilize allies, converting barrier energy into power. Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\"",
+            "Skill Citadel Core Protocol buff description: \"Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1iab7dm",
+          "name": "AeroV-Dramon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Sky Dominance description: \"Heightens reflexes. Increases Evasion by 1% (+0.14% per Skill Level), reduces damage taken by 22%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"AeroV-Dramon compresses the surrounding air into a hardened barrier. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+            "Skill Sky Dominance buff name: \"Magnum Mirage\" -> \"Sky Dominance\"",
+            "Skill Sky Dominance buff description: \"Increases Evasion by 1% (+0.14% per Skill Level), reduces damage taken by 22%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "dr5unom",
+          "name": "Andromon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dl70hc3",
+          "name": "Antylamon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1yl8rpf",
+          "name": "Antylamon Deva",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dc0pdvu",
+          "name": "Anubimon",
+          "lines": [
+            "Skill Guardian of the Threshold cooldown: 80 -> 65"
+          ]
+        },
+        {
+          "id": "dgnvjhe",
+          "name": "Archnemon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d18ucac6",
+          "name": "Argomon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Neural Overgrowth description: \"Argomon unleashes Neural Overgrowth. Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"Argomon spreads a lattice of neural overgrowth. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+            "Skill Neural Overgrowth buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1diof57",
+          "name": "Arkadimon Adult",
+          "lines": [
+            "HP: 11076 -> 8276",
+            "Attack: 5947 -> 4337",
+            "Stats.ds: 13292 -> 9862",
+            "Stats.defense: 282 -> 212"
+          ]
+        },
+        {
+          "id": "d1tcema",
+          "name": "Arkadimon Perfect",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1pduht4",
+          "name": "Astamon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "doq2524",
+          "name": "Asuramon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d14va304",
+          "name": "Bastemon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d10d0snt",
+          "name": "Beelzebumon",
+          "lines": [
+            "Skill Devil's Impulse description: \"Infuses allies with demonic fury. Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Infuses allies with demonic fury. Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\"",
+            "Skill Devil's Impulse buff description: \"Increases Attack Speed by -12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\" -> \"Increases Attack Speed by 12%, increases Critical Rate by 3.34% (+1.70% per Skill Level), and Restores 1122 HP for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d31fxga",
+          "name": "Beelzebumon BlastMode",
+          "lines": [
+            "Skill Devil's Resolve description: \"Beelzemon BlastMode steels his demonic resolve. Increases Attack Speed by -13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\" -> \"Beelzemon BlastMode steels his demonic resolve. Increases Attack Speed by 13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\"",
+            "Skill Devil's Resolve buff description: \"Increases Attack Speed by -13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 13% and increases Skill Damage by 5% (+1% per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1s6qnpj",
+          "name": "Birdramon",
+          "lines": [
+            "Skill Meteor Wing Anthem description: \"Birdramon rallies the party. Increases Attack Power by 430, increases Attack Speed by -2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"Birdramon rallies the party. Increases Attack Power by 430, increases Attack Speed by 2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\"",
+            "Skill Meteor Wing Anthem buff description: \"Increases Attack Power by 430, increases Attack Speed by -2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 430, increases Attack Speed by 2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d6piz7q",
+          "name": "BishopChessmon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Sacred Formation description: \"BishopChessmon unleashes Sacred Formation. Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"BishopChessmon raises a sacred defensive formation. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+            "Skill Sacred Formation buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 4.41% (+4.41% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "de7i5eu",
+          "name": "Blossomon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1j9f992",
+          "name": "CannonBeemon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dok71k3",
+          "name": "Cerberumon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "ds0vzxi",
+          "name": "Cherrymon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1p8vik",
+          "name": "Cherubimon White",
+          "lines": [
+            "Skill Heavenly Harmony cooldown: 50 -> 35",
+            "Skill Sanctuary of Virtue cooldown: 70 -> 65"
+          ]
+        },
+        {
+          "id": "d1q0aohx",
+          "name": "Chimairamon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1q84jvw",
+          "name": "Crowmon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1x70xm0",
+          "name": "CyberDramon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dsj63yb",
+          "name": "DexDoruGreymon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d89gux7",
+          "name": "DoruGreymon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1ql4gn6",
+          "name": "Dorumon",
+          "lines": [
+            "Skill X-Evolution description: \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\"",
+            "Skill X-Evolution buff description: \"Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "dbzt6ro",
+          "name": "Dorumon",
+          "lines": [
+            "Skill X-Evolution description: \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\"",
+            "Skill X-Evolution buff description: \"Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1hxpawa",
+          "name": "Dorumon[Dex]",
+          "lines": [
+            "Skill X-Evolution description: \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Dorumon's metal-clad fangs flicker, every Metal Cannon blast launched at striking speed. Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\"",
+            "Skill X-Evolution buff description: \"Increases Attack Speed by -12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 12% and increases Attack Power by 300 (+28 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "dwnitdh",
+          "name": "Eosmon_LV5",
+          "lines": [
+            "Rank: 0 -> 4"
+          ]
+        },
+        {
+          "id": "d3xqja6",
+          "name": "Etemon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d190qtot",
+          "name": "Falcomon",
+          "lines": [
+            "Skill Ninja Stealth description: \"Falcomon's talons blur, every Falcon Wing slash flicked at striking speed. Increases Attack Speed by -6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\" -> \"Falcomon's talons blur, every Falcon Wing slash flicked at striking speed. Increases Attack Speed by 6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\"",
+            "Skill Ninja Stealth buff description: \"Increases Attack Speed by -6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 6% and increases Attack Power by 292 (+27 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d18czwbu",
+          "name": "Galgomon",
+          "lines": [
+            "Skill Rapid Fire Focus description: \"Galgomon's twin gatling guns spin up, every Gatling Arm spitting at striking speed. Increases Attack Speed by -9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\" -> \"Galgomon's twin gatling guns spin up, every Gatling Arm spitting at striking speed. Increases Attack Speed by 9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\"",
+            "Skill Rapid Fire Focus buff description: \"Increases Attack Speed by -9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1lk2vyj",
+          "name": "Gankoomon",
+          "lines": [
+            "Skill Heavenbreaker Fist description: \"Releases a shockwave of pure physical mastery, devastating all enemies within range. Increases Attack Speed by -20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\" -> \"Releases a shockwave of pure physical mastery, devastating all enemies within range. Increases Attack Speed by 20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\"",
+            "Skill Heavenbreaker Fist buff description: \"Increases Attack Speed by -20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 20% and increases Critical Damage by 2% (+2% per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1qh4gms",
+          "name": "Garudamon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Solar Anthem description: \"Garudamon rallies the party. Increases Attack Power by 630, increases Attack Speed by -2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\" -> \"Garudamon rallies the party. Increases Attack Power by 630, increases Attack Speed by 2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\"",
+            "Skill Solar Anthem buff description: \"Increases Attack Power by 630, increases Attack Speed by -2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 630, increases Attack Speed by 2%, and increases Attack Power by 1135 (+106 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1i8znp9",
+          "name": "Gazimon",
+          "lines": [
+            "Skill Dark Pounce description: \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\"",
+            "Skill Dark Pounce buff description: \"Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "dab16l9",
+          "name": "Gazimon[Millenniumon]",
+          "lines": [
+            "Skill Dark Pounce description: \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Gazimon rallies the party. Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\"",
+            "Skill Dark Pounce buff description: \"Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1g7rwn6",
+          "name": "Giromon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Chaos Protocol description: \"Unleashes a jarring chaos subroutine that erratically deflects incoming damage. Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"Giromon runs a chaos subroutine that deflects incoming damage. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+            "Skill Chaos Protocol buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d6qqfrg",
+          "name": "Goblimon",
+          "lines": [
+            "Skill Goblin War Drum description: \"Goblimon rallies the party. Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Goblimon rallies the party. Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\"",
+            "Skill Goblin War Drum buff description: \"Increases Attack Power by 240, increases Attack Speed by -2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 240, increases Attack Speed by 2%, and increases Attack Power by 440 (+40 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d9qh2rg",
+          "name": "Grademon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d10zw390",
+          "name": "Grapleomon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dugg62m",
+          "name": "Groundramon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Tectonic Surge description: \"Groundramon channels the deep tectonics of the earth into the party. Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 80 (+8 per Skill Level) for 15 seconds.\" -> \"Groundramon channels the deep tectonics of the earth. Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\"",
+            "Skill Tectonic Surge buff description: \"Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 80 (+8 per Skill Level) for 15 seconds.\" -> \"Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1n1ayys",
+          "name": "Gulfmon",
+          "lines": [
+            "Skill Abyssal Current description: \"Gulfmon rallies the party. Increases Attack Power by 790, increases Attack Speed by -2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\" -> \"Gulfmon rallies the party. Increases Attack Power by 790, increases Attack Speed by 2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\"",
+            "Skill Abyssal Current buff description: \"Increases Attack Power by 790, increases Attack Speed by -2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\" -> \"Increases Attack Power by 790, increases Attack Speed by 2%, and increases Attack Power by 1420 (+133 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "dkp5zw7",
+          "name": "Hawkmon",
+          "lines": [
+            "Skill Hawk Focus description: \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\"",
+            "Skill Hawk Focus buff description: \"Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "de49mfw",
+          "name": "Hawkmon",
+          "lines": [
+            "Skill Hawk Focus description: \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Hawkmon's wings beat to a fast hunting rhythm, every Feather Slash flicked in a blur. Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\"",
+            "Skill Hawk Focus buff description: \"Increases Attack Speed by -6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\" -> \"Increases Attack Speed by 6% and increases Attack Power by 289 (+27 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1iu46ij",
+          "name": "HishaRyuumon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dli2qnl",
+          "name": "Impmon",
+          "lines": [
+            "Skill Infernal Power description: \"Impmon's grin sharpens to a demon's leer, every Bada Boom siphoning life-force. Increases Attack Speed by -12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Impmon's grin sharpens to a demon's leer, every Bada Boom siphoning life-force. Increases Attack Speed by 12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\"",
+            "Skill Infernal Power buff description: \"Increases Attack Speed by -12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Increases Attack Speed by 12%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1bqx9nw",
+          "name": "Infermon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Web Dominion description: \"Weaves a shifting web lattice around itself, deflecting blows with predatory precision. Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.50% (+2.50% per Skill Level) for 15 seconds.\" -> \"Infermon weaves a shifting web lattice around itself. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+            "Skill Web Dominion buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.50% (+2.50% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d2h1vgh",
+          "name": "Keramon",
+          "lines": [
+            "Skill System Overclock description: \"Keramon pulses with corrupted data, every Crazy Giggle drawn out for sustained menace. Increases Attack Speed by -6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Keramon pulses with corrupted data, every Crazy Giggle drawn out for sustained menace. Increases Attack Speed by 6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\"",
+            "Skill System Overclock buff description: \"Increases Attack Speed by -6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\" -> \"Increases Attack Speed by 6%, increases Critical Rate by 1.50% (+0.80% per Skill Level), and Restores 200 HP for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "dncnwga",
+          "name": "Knightmon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Knight Vigil description: \"Instantly. Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"Knightmon takes up an unyielding knight's vigil. Restores 1,500 HP (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\"",
+            "Skill Knight Vigil buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"Restores 1,500 HP (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1dkukn",
+          "name": "LadyDevimon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dzu1hgw",
+          "name": "Lilamon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1an27y2",
+          "name": "Lillymon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1vjr1ha",
+          "name": "MagnaAngemon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "dksl5x6",
+          "name": "Mamemon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1ltfl6m",
+          "name": "Mammothmon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Permafrost Aura description: \"Emits an aura of ancient glacial cold that hardens the mammoth hide into living permafrost armor. Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 300 (+95 per Skill Level) for 15 seconds.\" -> \"Ancient glacial cold hardens Mammothmon's hide into living permafrost. Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\"",
+            "Skill Permafrost Aura buff description: \"Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 300 (+95 per Skill Level) for 15 seconds.\" -> \"Increases MaxHP by 1,500 (+500 per Skill Level), reduces damage taken by 25%, and restores 500 HP every second for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1ddyiem",
+          "name": "MarineDevimon",
+          "lines": [
+            "Rank: 3 -> 4",
+            "Skill Abyssal Surge description: \"Channels the crushing pressure of the abyssal depths into a living shell of darkness. Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"MarineDevimon shrouds itself in crushing abyssal pressure. Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\"",
+            "Skill Abyssal Surge buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 3% (+3% per Skill Level) for 15 seconds.\" -> \"Gains a Shield of 1,875 (+625 per Skill Level) and reduces damage taken by 25% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "deixc9j",
+          "name": "Matadormon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        },
+        {
+          "id": "d1ty5lv4",
+          "name": "MegaDramon",
+          "lines": [
+            "Rank: 3 -> 4"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-07-23T18:36:55.259Z",
+        "mode": "force",
+        "refreshedCount": 467,
+        "dpsUp": [
+          {
+            "id": "d1p8vik",
+            "name": "Cherubimon White",
+            "role": "Support",
+            "before": 14452.179345999994,
+            "after": 14501.162400999996,
+            "delta": 48.98305500000242
+          },
+          {
+            "id": "d1myywqm",
+            "name": "Meicrackmon: Vicious Mode",
+            "role": "Caster",
+            "before": 16680.699269818113,
+            "after": 38180.9283478501,
+            "delta": 21500.22907803199
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1diof57",
+            "name": "Arkadimon Adult",
+            "role": "Melee DPS",
+            "before": 10226.79697874445,
+            "after": 9296.884174485618,
+            "delta": -929.9128042588327
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d1r6hxc2",
+            "name": "Agumon X",
+            "role": "Ranged DPS",
+            "after": 5377.203363145288
+          },
+          {
+            "id": "dnwhdoz",
+            "name": "Alphamon Ouryuken",
+            "role": "Melee DPS",
+            "after": 97961.22382961937
+          },
+          {
+            "id": "d1k8ts4t",
+            "name": "BlackWarGreymon X",
+            "role": "Melee DPS",
+            "after": 47032.34207621351
+          },
+          {
+            "id": "d1dhpfhd",
+            "name": "Gabumon X",
+            "role": "Hybrid",
+            "after": 3382.9112065429517
+          },
+          {
+            "id": "dionc7u",
+            "name": "Garurumon X",
+            "role": "Tank",
+            "after": 3494.1617340720218
+          },
+          {
+            "id": "d1hjnjx",
+            "name": "Greymon X",
+            "role": "Melee DPS",
+            "after": 3348.466769141935
+          },
+          {
+            "id": "d1jinqt3",
+            "name": "Growlmon X",
+            "role": "Tank",
+            "after": 3137.639692095079
+          },
+          {
+            "id": "d1rs2wlk",
+            "name": "Guilmon X",
+            "role": "Tank",
+            "after": 2662.8020535469377
+          },
+          {
+            "id": "d1js7yed",
+            "name": "Lilimon X",
+            "role": "Support",
+            "after": 4133.665500662248
+          },
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "after": 89257.1163475563
+          },
+          {
+            "id": "dko51ol",
+            "name": "MetalGarurumon X",
+            "role": "Tank",
+            "after": 13443.687731715396
+          },
+          {
+            "id": "d1fhvv9z",
+            "name": "MetalGreymon X",
+            "role": "Melee DPS",
+            "after": 4778.24285999114
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "after": 100284.05906920387
+          },
+          {
+            "id": "d11bvsf4",
+            "name": "Palmon X",
+            "role": "Hybrid",
+            "after": 4143.29770981021
+          },
+          {
+            "id": "d14trauw",
+            "name": "Rosemon X",
+            "role": "Support",
+            "after": 19738.388242422592
+          },
+          {
+            "id": "dhp0omc",
+            "name": "Togemon X",
+            "role": "Support",
+            "after": 2587.232960000002
+          },
+          {
+            "id": "dn0vuxa",
+            "name": "Ulforce V-Dramon X",
+            "role": "Hybrid",
+            "after": 59831.24709502556
+          },
+          {
+            "id": "d1jpeu3d",
+            "name": "WarGreymon X",
+            "role": "Melee DPS",
+            "after": 47032.34207621351
+          },
+          {
+            "id": "dk8fjur",
+            "name": "WarGrowlmon X",
+            "role": "Tank",
+            "after": 6557.48378366446
+          },
+          {
+            "id": "d6z9a7u",
+            "name": "WereGarurumon X",
+            "role": "Tank",
+            "after": 6190.095090518187
+          },
+          {
+            "id": "d1ajjnwd",
+            "name": "Alphamon Ouryuken",
+            "role": "Tank",
+            "after": 41747.084508606385
+          },
+          {
+            "id": "d1vnmxm9",
+            "name": "Mastemon",
+            "role": "Support",
+            "after": 32879.76808318681
+          },
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "after": 91032.96997976047
+          },
+          {
+            "id": "dd3xj39",
+            "name": "Ulforce V-Dramon X",
+            "role": "Tank",
+            "after": 49475.935956738824
+          }
+        ],
+        "tankUp": [
+          {
+            "id": "d6piz7q",
+            "name": "BishopChessmon",
+            "role": "Tank",
+            "before": 3.084263001460379,
+            "after": 3.1126809437663483,
+            "delta": 0.02841794230596939
+          },
+          {
+            "id": "d1g7rwn6",
+            "name": "Giromon",
+            "role": "Tank",
+            "before": 3.057806287739473,
+            "after": 3.0896048206478515,
+            "delta": 0.03179853290837853
+          },
+          {
+            "id": "d1ddyiem",
+            "name": "MarineDevimon",
+            "role": "Tank",
+            "before": 3.116466182094106,
+            "after": 3.143795597695889,
+            "delta": 0.027329415601783147
+          },
+          {
+            "id": "d1wxrac1",
+            "name": "MegaSeadramon",
+            "role": "Tank",
+            "before": 3.17692657744446,
+            "after": 3.2008340862060782,
+            "delta": 0.023907508761618068
+          },
+          {
+            "id": "d1kr5ien",
+            "name": "Meteormon",
+            "role": "Tank",
+            "before": 3.084263001460379,
+            "after": 3.1126809437663483,
+            "delta": 0.02841794230596939
+          },
+          {
+            "id": "d1txi0jq",
+            "name": "Myotismon",
+            "role": "Tank",
+            "before": 3.066262451510976,
+            "after": 3.1435654653822116,
+            "delta": 0.0773030138712354
+          },
+          {
+            "id": "d1s8sxz0",
+            "name": "Shawujingmon",
+            "role": "Tank",
+            "before": 3.1519497619523067,
+            "after": 3.1926096766369265,
+            "delta": 0.040659914684619824
+          },
+          {
+            "id": "d1f70bhk",
+            "name": "Zudomon",
+            "role": "Tank",
+            "before": 3.1341450158871424,
+            "after": 3.1849507180140977,
+            "delta": 0.05080570212695523
+          }
+        ],
+        "tankDown": [
+          {
+            "id": "dxqhxfb",
+            "name": "ToyAgumon",
+            "role": "Tank",
+            "before": 3.131924731620994,
+            "after": 3.1091460386546204,
+            "delta": -0.022778692966373804
+          }
+        ],
+        "tankNew": [
+          {
+            "id": "dionc7u",
+            "name": "Garurumon X",
+            "role": "Tank",
+            "after": 2.9682492821308664
+          },
+          {
+            "id": "d1jinqt3",
+            "name": "Growlmon X",
+            "role": "Tank",
+            "after": 3.067776454967869
+          },
+          {
+            "id": "d1rs2wlk",
+            "name": "Guilmon X",
+            "role": "Tank",
+            "after": 2.671608966669253
+          },
+          {
+            "id": "dko51ol",
+            "name": "MetalGarurumon X",
+            "role": "Tank",
+            "after": 3.6370102593495606
+          },
+          {
+            "id": "dk8fjur",
+            "name": "WarGrowlmon X",
+            "role": "Tank",
+            "after": 3.4063345911472442
+          },
+          {
+            "id": "d6z9a7u",
+            "name": "WereGarurumon X",
+            "role": "Tank",
+            "after": 3.279695960787459
+          },
+          {
+            "id": "d1ajjnwd",
+            "name": "Alphamon Ouryuken",
+            "role": "Tank",
+            "after": 3.9325323377095454
+          },
+          {
+            "id": "dd3xj39",
+            "name": "Ulforce V-Dramon X",
+            "role": "Tank",
+            "after": 3.903466713996443
+          }
+        ],
+        "healerUp": [
+          {
+            "id": "dc0pdvu",
+            "name": "Anubimon",
+            "role": "Support",
+            "before": 5.876357839003154,
+            "after": 5.951071391553723,
+            "delta": 0.07471355255056888
+          },
+          {
+            "id": "d1p8vik",
+            "name": "Cherubimon White",
+            "role": "Support",
+            "before": 5.601420377190127,
+            "after": 5.749542083757112,
+            "delta": 0.1481217065669851
+          },
+          {
+            "id": "dymipyb",
+            "name": "Prince Mamemon",
+            "role": "Support",
+            "before": 5.738150191164364,
+            "after": 5.883536081729934,
+            "delta": 0.14538589056556983
+          },
+          {
+            "id": "ds43htf",
+            "name": "ShadowSeraphimon",
+            "role": "Support",
+            "before": 5.492352530521499,
+            "after": 5.6333620036880925,
+            "delta": 0.1410094731665934
+          },
+          {
+            "id": "d15cu3bt",
+            "name": "Parasimon",
+            "role": "Support",
+            "before": 5.599895444939727,
+            "after": 5.80761426830469,
+            "delta": 0.20771882336496272
+          }
+        ],
+        "healerDown": [
+          {
+            "id": "d1assrjo",
+            "name": "Ophanimon",
+            "role": "Support",
+            "before": 6.0688035234922815,
+            "after": 6.038862305118068,
+            "delta": -0.029941218374213818
+          }
+        ],
+        "healerNew": [
+          {
+            "id": "d1js7yed",
+            "name": "Lilimon X",
+            "role": "Support",
+            "after": 5.212099706306741
+          },
+          {
+            "id": "d14trauw",
+            "name": "Rosemon X",
+            "role": "Support",
+            "after": 5.7522356992074455
+          },
+          {
+            "id": "dhp0omc",
+            "name": "Togemon X",
+            "role": "Support",
+            "after": 4.750807994367341
+          },
+          {
+            "id": "d1vnmxm9",
+            "name": "Mastemon",
+            "role": "Support",
+            "after": 6.242911304178447
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d1r6hxc2",
+            "name": "Agumon X",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dnwhdoz",
+            "name": "Alphamon Ouryuken",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1k8ts4t",
+            "name": "BlackWarGreymon X",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1dhpfhd",
+            "name": "Gabumon X",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "dionc7u",
+            "name": "Garurumon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1hjnjx",
+            "name": "Greymon X",
+            "role": "Melee DPS",
+            "to": "incomplete"
+          },
+          {
+            "id": "d1jinqt3",
+            "name": "Growlmon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1rs2wlk",
+            "name": "Guilmon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1js7yed",
+            "name": "Lilimon X",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "dko51ol",
+            "name": "MetalGarurumon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1fhvv9z",
+            "name": "MetalGreymon X",
+            "role": "Melee DPS",
+            "to": "incomplete"
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d11bvsf4",
+            "name": "Palmon X",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d14trauw",
+            "name": "Rosemon X",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dhp0omc",
+            "name": "Togemon X",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dn0vuxa",
+            "name": "Ulforce V-Dramon X",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d1jpeu3d",
+            "name": "WarGreymon X",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dk8fjur",
+            "name": "WarGrowlmon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d6z9a7u",
+            "name": "WereGarurumon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1ajjnwd",
+            "name": "Alphamon Ouryuken",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1vnmxm9",
+            "name": "Mastemon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dd3xj39",
+            "name": "Ulforce V-Dramon X",
+            "role": "Tank",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-07-23T14:06:22.812Z-9i94oe",
       "finishedAt": "2026-07-23T14:06:22.812Z",
@@ -10969,32 +12258,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-06-25T04:05:03.924Z",
-        "mode": "force",
-        "refreshedCount": 439,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-06-25T03:43:16.998Z-r8uifd",
-      "finishedAt": "2026-06-25T03:43:16.998Z",
-      "mode": "force",
-      "refreshedCount": 439,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-06-25T03:43:16.998Z",
         "mode": "force",
         "refreshedCount": 439,
         "dpsUp": [],
