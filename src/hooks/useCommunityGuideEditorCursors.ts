@@ -102,7 +102,7 @@ export function useCommunityGuideEditorCursors(options: {
 
     channel
       .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        for (const row of leftPresences as PresenceMeta[]) {
+        for (const row of leftPresences as unknown as PresenceMeta[]) {
           if (row?.userId) removeRemote(row.userId)
         }
       })
