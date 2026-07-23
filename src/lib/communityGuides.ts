@@ -501,6 +501,18 @@ export async function createCommunityGuide(
 export type SaveCommunityGuideOptions = {
   /** When false, leave the original author_name unchanged (collaborator edits). */
   updateAuthorName?: boolean
+  /**
+   * Optimistic concurrency: only write when remote `updated_at` still matches.
+   * Used by live autosave so collaborators do not silently overwrite each other.
+   */
+  expectedUpdatedAt?: string | null
+}
+
+export class CommunityGuideVersionConflictError extends Error {
+  constructor() {
+    super('Guide was updated by someone else.')
+    this.name = 'CommunityGuideVersionConflictError'
+  }
 }
 
 export async function updateCommunityGuide(
@@ -517,6 +529,7 @@ export async function updateCommunityGuide(
   const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
   const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
   const updateAuthorName = options?.updateAuthorName !== false
+  const expectedUpdatedAt = options?.expectedUpdatedAt
 
   const updateRow: Record<string, unknown> = {
     title,
@@ -533,22 +546,20 @@ export async function updateCommunityGuide(
   }
 
   // RLS allows the owner or an accepted collaborator; do not filter by author_id.
-  let { data, error } = await supabase
-    .from('community_guides')
-    .update(updateRow)
-    .eq('id', guideId)
-    .select('*')
-    .single()
+  const runUpdate = (row: Record<string, unknown>) => {
+    let query = supabase.from('community_guides').update(row).eq('id', guideId)
+    if (expectedUpdatedAt) {
+      query = query.eq('updated_at', expectedUpdatedAt)
+    }
+    return expectedUpdatedAt ? query.select('*').maybeSingle() : query.select('*').single()
+  }
+
+  let { data, error } = await runUpdate(updateRow)
 
   if (error && isMissingCommunityGuideColumnError(error.message)) {
     const updateRowRetry = { ...updateRow }
     if (stripOptionalCommunityGuideFields(updateRowRetry, error.message)) {
-      const retry = await supabase
-        .from('community_guides')
-        .update(updateRowRetry)
-        .eq('id', guideId)
-        .select('*')
-        .single()
+      const retry = await runUpdate(updateRowRetry)
       data = retry.data
       error = retry.error
     }
@@ -556,6 +567,7 @@ export async function updateCommunityGuide(
 
   if (error) throw new Error(formatCommunityGuideError(error.message))
   if (!data) {
+    if (expectedUpdatedAt) throw new CommunityGuideVersionConflictError()
     throw new Error('Guide not found or you do not have permission to edit it.')
   }
   return normalizeCommunityGuide(data as Record<string, unknown>)

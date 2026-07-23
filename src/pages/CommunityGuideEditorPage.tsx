@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { CommunityGuideBody } from '../components/communityGuides/CommunityGuideBody'
 import { CommunityGuideCollaboratorsEditor } from '../components/communityGuides/CommunityGuideCollaboratorsEditor'
+import { CommunityGuideEditorCursorOverlay } from '../components/communityGuides/CommunityGuideEditorCursorOverlay'
 import { CommunityGuideMarkdownToolbar } from '../components/communityGuides/CommunityGuideMarkdownToolbar'
 import { CommunityGuideThumbnail } from '../components/communityGuides/CommunityGuideThumbnail'
 import { WikiItemSearchPicker } from '../components/communityGuides/WikiItemSearchPicker'
@@ -29,8 +30,10 @@ import {
   writeCommunityGuideEditorCache,
   type CommunityGuideEditorCacheSocial,
 } from '../lib/communityGuideEditorCache'
+import { useCommunityGuideEditorCursors } from '../hooks/useCommunityGuideEditorCursors'
 import { isAllowedCommunityGuideImageUrl } from '../lib/communityGuideImageUrl'
 import {
+  CommunityGuideVersionConflictError,
   createCommunityGuide,
   deleteCommunityGuide,
   fetchCommunityGuideForAuthor,
@@ -123,6 +126,7 @@ export function CommunityGuideEditorPage() {
   const [restoredFromCache, setRestoredFromCache] = useState(false)
   const [remoteConflict, setRemoteConflict] = useState<CommunityGuide | null>(null)
   const [syncNotice, setSyncNotice] = useState<string | null>(null)
+  const [liveSaveLabel, setLiveSaveLabel] = useState<string | null>(null)
 
   const serverUpdatedAtRef = useRef<string | null>(null)
   const dirtyRef = useRef(false)
@@ -135,8 +139,18 @@ export function CommunityGuideEditorPage() {
     socialLinks: [] as CommunityGuideEditorCacheSocial[],
     changelogNote: '',
   })
+  const lastSyncedContentRef = useRef<{
+    title: string
+    body: string
+    thumbnailUrl: string
+    socialLinks: CommunityGuideEditorCacheSocial[]
+  } | null>(null)
   const remoteConflictRef = useRef<CommunityGuide | null>(null)
   const syncBusyRef = useRef(false)
+  const savingRef = useRef(false)
+  const guideStatusRef = useRef<'draft' | 'published'>(guideStatus)
+  const authorIdRef = useRef<string | null>(authorId)
+  const profileDisplayNameRef = useRef(profileDisplayName)
 
   useEffect(() => {
     formSnapshotRef.current = {
@@ -151,6 +165,22 @@ export function CommunityGuideEditorPage() {
   useEffect(() => {
     remoteConflictRef.current = remoteConflict
   }, [remoteConflict])
+
+  useEffect(() => {
+    guideStatusRef.current = guideStatus
+  }, [guideStatus])
+
+  useEffect(() => {
+    authorIdRef.current = authorId
+  }, [authorId])
+
+  useEffect(() => {
+    profileDisplayNameRef.current = profileDisplayName
+  }, [profileDisplayName])
+
+  useEffect(() => {
+    savingRef.current = saving
+  }, [saving])
 
   useEffect(() => {
     if (!authReady) return
@@ -184,6 +214,34 @@ export function CommunityGuideEditorPage() {
     [guideKey, userId],
   )
 
+  const rememberSyncedContent = useCallback(
+    (content: {
+      title: string
+      body: string
+      thumbnailUrl: string
+      socialLinks: CommunityGuideEditorCacheSocial[]
+    }) => {
+      lastSyncedContentRef.current = {
+        title: content.title,
+        body: content.body,
+        thumbnailUrl: content.thumbnailUrl,
+        socialLinks: content.socialLinks.map((link) => ({ ...link })),
+      }
+    },
+    [],
+  )
+
+  const contentDiffersFromLastSync = useCallback(() => {
+    const last = lastSyncedContentRef.current
+    if (!last) return dirtyRef.current
+    return !editorDraftMatchesGuide(formSnapshotRef.current, {
+      title: last.title,
+      body: last.body,
+      thumbnail_url: last.thumbnailUrl || null,
+      social_links: last.socialLinks,
+    })
+  }, [])
+
   const applyServerGuide = useCallback(
     (guide: CommunityGuide, options?: { keepChangelog?: boolean }) => {
       applyGuideToForm(guide, {
@@ -197,6 +255,12 @@ export function CommunityGuideEditorPage() {
       if (!options?.keepChangelog) setChangelogNote('')
       serverUpdatedAtRef.current = guide.updated_at
       dirtyRef.current = false
+      rememberSyncedContent({
+        title: guide.title,
+        body: guide.body,
+        thumbnailUrl: guide.thumbnail_url ?? '',
+        socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+      })
       setRemoteConflict(null)
       setRestoredFromCache(false)
       if (userId) {
@@ -213,7 +277,7 @@ export function CommunityGuideEditorPage() {
         })
       }
     },
-    [userId],
+    [userId, rememberSyncedContent],
   )
 
   // Initial load (and restore local cache). Depends on userId string, not user object identity.
@@ -232,6 +296,8 @@ export function CommunityGuideEditorPage() {
     setRemoteConflict(null)
     setSyncNotice(null)
     setRestoredFromCache(false)
+    setLiveSaveLabel(null)
+    lastSyncedContentRef.current = null
 
     const finishNewGuide = () => {
       const cached = readCommunityGuideEditorCache(userId, 'new')
@@ -290,6 +356,12 @@ export function CommunityGuideEditorPage() {
           setChangelogNote(cached.changelogNote)
           serverUpdatedAtRef.current = guide.updated_at
           dirtyRef.current = true
+          rememberSyncedContent({
+            title: guide.title,
+            body: guide.body,
+            thumbnailUrl: guide.thumbnail_url ?? '',
+            socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+          })
           setRestoredFromCache(true)
         } else if (
           cached?.dirty &&
@@ -307,6 +379,12 @@ export function CommunityGuideEditorPage() {
           setChangelogNote(cached.changelogNote)
           serverUpdatedAtRef.current = cached.baseUpdatedAt
           dirtyRef.current = true
+          rememberSyncedContent({
+            title: guide.title,
+            body: guide.body,
+            thumbnailUrl: guide.thumbnail_url ?? '',
+            socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+          })
           setRemoteConflict(guide)
           setRestoredFromCache(true)
         } else {
@@ -325,7 +403,7 @@ export function CommunityGuideEditorPage() {
     return () => {
       cancelled = true
     }
-  }, [id, guideKey, supabase, userId, applyServerGuide])
+  }, [id, guideKey, supabase, userId, applyServerGuide, rememberSyncedContent])
 
   // Debounced local cache while editing.
   useEffect(() => {
@@ -336,45 +414,148 @@ export function CommunityGuideEditorPage() {
     return () => window.clearTimeout(timer)
   }, [userId, loading, title, body, thumbnailUrl, socialLinks, changelogNote, persistCache])
 
-  // Collaborator sync: cheap updated_at peek every 10s; full body only when changed.
+  // Live collab: every 10s push local content changes, else pull remote if updated_at moved.
   useEffect(() => {
     if (!id || !supabase || !userId || loading) return
 
+    const showLiveSaved = () => {
+      setLiveSaveLabel('Live-saved for collaborators')
+      window.setTimeout(() => {
+        setLiveSaveLabel((current) =>
+          current === 'Live-saved for collaborators' ? null : current,
+        )
+      }, 3500)
+    }
+
+    const pullRemoteIfChanged = async () => {
+      const remoteUpdatedAt = await peekCommunityGuideUpdatedAt(supabase, id)
+      if (!remoteUpdatedAt || remoteUpdatedAt === serverUpdatedAtRef.current) return
+
+      const guide = await fetchCommunityGuideForAuthor(supabase, id, userId)
+      if (!guide || guide.updated_at === serverUpdatedAtRef.current) return
+
+      if (!contentDiffersFromLastSync()) {
+        if (editorDraftMatchesGuide(formSnapshotRef.current, guide)) {
+          // updated_at moved without content changes (e.g. legacy heart trigger).
+          serverUpdatedAtRef.current = guide.updated_at
+          rememberSyncedContent({
+            title: guide.title,
+            body: guide.body,
+            thumbnailUrl: guide.thumbnail_url ?? '',
+            socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+          })
+          persistCache(Boolean(formSnapshotRef.current.changelogNote.trim()))
+          return
+        }
+        applyServerGuide(guide, { keepChangelog: true })
+        setSyncNotice('Synced latest edits from a collaborator.')
+        window.setTimeout(() => setSyncNotice(null), 4000)
+        return
+      }
+
+      if (editorDraftMatchesGuide(formSnapshotRef.current, guide)) {
+        serverUpdatedAtRef.current = guide.updated_at
+        dirtyRef.current = Boolean(formSnapshotRef.current.changelogNote.trim())
+        rememberSyncedContent({
+          title: guide.title,
+          body: guide.body,
+          thumbnailUrl: guide.thumbnail_url ?? '',
+          socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+        })
+        persistCache(dirtyRef.current)
+        return
+      }
+
+      setRemoteConflict(guide)
+    }
+
+    const pushLocalIfChanged = async (): Promise<'pushed' | 'conflict' | 'skipped'> => {
+      if (!contentDiffersFromLastSync()) return 'skipped'
+
+      const status = guideStatusRef.current
+      const snap = formSnapshotRef.current
+      if (status === 'published' && !snap.body.trim()) return 'skipped'
+
+      const expectedUpdatedAt = serverUpdatedAtRef.current
+      const isOwner = !authorIdRef.current || authorIdRef.current === userId
+      const editorName = profileDisplayNameRef.current?.trim() || 'Player'
+      setLiveSaveLabel('Live-saving…')
+
+      try {
+        const updated = await updateCommunityGuide(
+          supabase,
+          id,
+          userId,
+          {
+            title: snap.title,
+            body: snap.body,
+            authorName: editorName,
+            thumbnailUrl: snap.thumbnailUrl || null,
+            socialLinks: snap.socialLinks,
+            status,
+          },
+          {
+            updateAuthorName: isOwner,
+            expectedUpdatedAt,
+          },
+        )
+
+        serverUpdatedAtRef.current = updated.updated_at
+        rememberSyncedContent({
+          title: snap.title,
+          body: snap.body,
+          thumbnailUrl: snap.thumbnailUrl,
+          socialLinks: snap.socialLinks,
+        })
+
+        const newerThanSaved = !editorDraftMatchesGuide(formSnapshotRef.current, {
+          title: snap.title,
+          body: snap.body,
+          thumbnail_url: snap.thumbnailUrl || null,
+          social_links: snap.socialLinks,
+        })
+        dirtyRef.current =
+          newerThanSaved || Boolean(formSnapshotRef.current.changelogNote.trim())
+
+        persistCache(dirtyRef.current)
+        showLiveSaved()
+        return 'pushed'
+      } catch (e: unknown) {
+        setLiveSaveLabel(null)
+        if (e instanceof CommunityGuideVersionConflictError) {
+          const guide = await fetchCommunityGuideForAuthor(supabase, id, userId)
+          if (guide && !editorDraftMatchesGuide(formSnapshotRef.current, guide)) {
+            setRemoteConflict(guide)
+            return 'conflict'
+          }
+          if (guide) {
+            serverUpdatedAtRef.current = guide.updated_at
+            rememberSyncedContent({
+              title: guide.title,
+              body: guide.body,
+              thumbnailUrl: guide.thumbnail_url ?? '',
+              socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+            })
+          }
+          return 'skipped'
+        }
+        throw e
+      }
+    }
+
     const syncOnce = async () => {
-      if (syncBusyRef.current || document.visibilityState === 'hidden') return
+      if (syncBusyRef.current || savingRef.current || document.visibilityState === 'hidden') return
       if (remoteConflictRef.current) return
       syncBusyRef.current = true
       try {
-        const remoteUpdatedAt = await peekCommunityGuideUpdatedAt(supabase, id)
-        if (!remoteUpdatedAt || remoteUpdatedAt === serverUpdatedAtRef.current) return
-
-        const guide = await fetchCommunityGuideForAuthor(supabase, id, userId)
-        if (!guide || guide.updated_at === serverUpdatedAtRef.current) return
-
-        if (!dirtyRef.current) {
-          const snap = formSnapshotRef.current
-          if (editorDraftMatchesGuide(snap, guide)) {
-            // updated_at moved without content changes (e.g. legacy heart trigger).
-            serverUpdatedAtRef.current = guide.updated_at
-            persistCache(false)
-            return
-          }
-          applyServerGuide(guide, { keepChangelog: true })
-          setSyncNotice('Synced latest edits from a collaborator.')
-          window.setTimeout(() => setSyncNotice(null), 4000)
+        if (contentDiffersFromLastSync()) {
+          await pushLocalIfChanged()
           return
         }
-
-        if (editorDraftMatchesGuide(formSnapshotRef.current, guide)) {
-          serverUpdatedAtRef.current = guide.updated_at
-          dirtyRef.current = false
-          persistCache(false)
-          return
-        }
-
-        setRemoteConflict(guide)
+        await pullRemoteIfChanged()
       } catch {
         // Ignore transient sync errors; next tick retries.
+        setLiveSaveLabel(null)
       } finally {
         syncBusyRef.current = false
       }
@@ -393,7 +574,16 @@ export function CommunityGuideEditorPage() {
       window.clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [id, supabase, userId, loading, applyServerGuide, persistCache])
+  }, [
+    id,
+    supabase,
+    userId,
+    loading,
+    applyServerGuide,
+    persistCache,
+    contentDiffersFromLastSync,
+    rememberSyncedContent,
+  ])
 
   const onApplyRemote = useCallback(() => {
     if (!remoteConflict) return
@@ -510,8 +700,15 @@ export function CommunityGuideEditorPage() {
           setGuideStatus(updated.status)
           serverUpdatedAtRef.current = updated.updated_at
           dirtyRef.current = false
+          rememberSyncedContent({
+            title: updated.title,
+            body: updated.body,
+            thumbnailUrl: updated.thumbnail_url ?? '',
+            socialLinks: updated.social_links.map(({ platform, url }) => ({ platform, url })),
+          })
           setRemoteConflict(null)
           setRestoredFromCache(false)
+          setLiveSaveLabel(null)
           writeCommunityGuideEditorCache({
             guideKey: id,
             userId,
@@ -543,7 +740,14 @@ export function CommunityGuideEditorPage() {
           setAuthorId(created.author_id)
           serverUpdatedAtRef.current = created.updated_at
           dirtyRef.current = false
+          rememberSyncedContent({
+            title: created.title,
+            body: created.body,
+            thumbnailUrl: created.thumbnail_url ?? '',
+            socialLinks: created.social_links.map(({ platform, url }) => ({ platform, url })),
+          })
           setRemoteConflict(null)
+          setLiveSaveLabel(null)
           migrateCommunityGuideEditorCache(userId, 'new', created.id)
           writeCommunityGuideEditorCache({
             guideKey: created.id,
@@ -592,6 +796,7 @@ export function CommunityGuideEditorPage() {
       changelogNote,
       guideStatus,
       navigate,
+      rememberSyncedContent,
     ],
   )
 
@@ -621,6 +826,30 @@ export function CommunityGuideEditorPage() {
       setDeleting(false)
     }
   }, [supabase, user, userId, id, authorId, title, deleting, navigate])
+
+  const editorDisplayName = profileDisplayName?.trim() || 'Player'
+  const { myColor, remoteCursors, publishCursor } = useCommunityGuideEditorCursors({
+    supabase,
+    guideId: id,
+    userId,
+    displayName: editorDisplayName,
+    enabled: Boolean(id) && !loading && !showPreview,
+  })
+
+  const publishBodyCursor = useCallback(
+    (el: HTMLTextAreaElement, focused = document.activeElement === el) => {
+      publishCursor(el.selectionStart, el.selectionEnd, focused)
+    },
+    [publishCursor],
+  )
+
+  // Keep remote peers updated after toolbar / programmatic body edits.
+  useEffect(() => {
+    if (!id || showPreview) return
+    const el = textareaRef.current
+    if (!el || document.activeElement !== el) return
+    publishBodyCursor(el, true)
+  }, [body, id, showPreview, publishBodyCursor])
 
   if (!authReady || loading) {
     return <p className="community-guides-status">Loading editor…</p>
@@ -656,11 +885,16 @@ export function CommunityGuideEditorPage() {
         ) : null}
 
         {syncNotice ? <p className="community-guides-editor__sync-note">{syncNotice}</p> : null}
+        {liveSaveLabel ? (
+          <p className="community-guides-editor__sync-note community-guides-editor__sync-note--live">
+            {liveSaveLabel}
+          </p>
+        ) : null}
 
         {remoteConflict ? (
           <div className="community-guides-editor__conflict" role="status">
             <p className="community-guides-editor__conflict-text">
-              A collaborator saved newer changes
+              A collaborator has newer changes
               {remoteConflict.updated_at
                 ? ` (${new Date(remoteConflict.updated_at).toLocaleString()})`
                 : ''}
@@ -810,18 +1044,42 @@ export function CommunityGuideEditorPage() {
                   }}
                 />
                 <label className="community-guides-field">
-                  <span className="community-guides-field__label">Body</span>
-                  <textarea
-                    ref={textareaRef}
-                    className="community-guides-field__textarea"
-                    value={body}
-                    onChange={(e) => {
-                      setBody(e.target.value)
-                      markDirty()
-                    }}
-                    rows={16}
-                    placeholder="Write your guide… Use the toolbar for formatting, or **bold**, *italic*, lists, and wiki links."
-                  />
+                  <span className="community-guides-field__label">
+                    Body
+                    {id ? (
+                      <span
+                        className="community-guides-editor__you-cursor-hint"
+                        style={{ color: myColor }}
+                      >
+                        Your cursor
+                      </span>
+                    ) : null}
+                  </span>
+                  <div className="community-guides-editor__body-shell">
+                    <textarea
+                      ref={textareaRef}
+                      className="community-guides-field__textarea"
+                      value={body}
+                      style={{ caretColor: myColor }}
+                      onChange={(e) => {
+                        setBody(e.target.value)
+                        markDirty()
+                        publishBodyCursor(e.currentTarget, true)
+                      }}
+                      onSelect={(e) => publishBodyCursor(e.currentTarget)}
+                      onKeyUp={(e) => publishBodyCursor(e.currentTarget)}
+                      onClick={(e) => publishBodyCursor(e.currentTarget)}
+                      onFocus={(e) => publishBodyCursor(e.currentTarget, true)}
+                      onBlur={(e) => publishBodyCursor(e.currentTarget, false)}
+                      rows={16}
+                      placeholder="Write your guide… Use the toolbar for formatting, or **bold**, *italic*, lists, and wiki links."
+                    />
+                    <CommunityGuideEditorCursorOverlay
+                      textareaRef={textareaRef}
+                      body={body}
+                      remoteCursors={remoteCursors}
+                    />
+                  </div>
                 </label>
               </>
             ) : null}

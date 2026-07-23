@@ -30453,6 +30453,10 @@ a.guidebook-monster-panel__loot-btn:hover {
 .community-guides-field__label {
   font-size: 0.875rem;
   color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.35rem;
 }
 
 .community-guides-field__hint {
@@ -30528,6 +30532,10 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin: 0 0 0.85rem;
   color: var(--text-soft);
   font-size: 0.875rem;
+}
+
+.community-guides-editor__sync-note--live {
+  color: #67e8f9;
 }
 
 .community-guides-editor__conflict {
@@ -30738,6 +30746,63 @@ a.guidebook-monster-panel__loot-btn:hover {
   min-height: 280px;
   resize: vertical;
   line-height: 1.55;
+}
+
+.community-guides-editor__body-shell {
+  position: relative;
+}
+
+.community-guides-editor__body-shell .community-guides-field__textarea {
+  display: block;
+}
+
+.community-guides-editor__you-cursor-hint {
+  margin-left: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.community-guides-editor__cursor-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.community-guides-editor__remote-cursor {
+  position: absolute;
+  transform: translate(-1px, 0);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.community-guides-editor__remote-cursor-caret {
+  display: block;
+  width: 2px;
+  height: 100%;
+  background: var(--cursor-color, currentColor);
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+.community-guides-editor__remote-cursor-label {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 2px);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px 3px 3px 0;
+  background: var(--cursor-color, currentColor);
+  color: #0f172a;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .community-guides-editor__toolbar {
