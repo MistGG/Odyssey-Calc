@@ -742,6 +742,14 @@ export function CommunityGuideEditorPage() {
                 isOwner={isOwner}
                 currentUserId={user.id}
               />
+            ) : user && supabase ? (
+              <section className="community-guide-collab-editor community-guide-collab-editor--locked">
+                <h2 className="community-guides-field__label">Collaborators</h2>
+                <p className="community-guides-field__hint">
+                  Save a draft first, then you can invite editors with a share link from this
+                  panel.
+                </p>
+              </section>
             ) : null}
 
             <div className="community-guides-editor__toolbar community-guides-editor__toolbar--wiki">
