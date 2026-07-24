@@ -1,6 +1,4408 @@
 {
-  "updated_at": "2026-07-23T18:36:55.214Z",
+  "updated_at": "2026-07-24T02:44:46.231Z",
   "runs": [
+    {
+      "id": "2026-07-24T02:44:46.250Z-izfk6o",
+      "finishedAt": "2026-07-24T02:44:46.250Z",
+      "mode": "force",
+      "refreshedCount": 467,
+      "apiCount": 0,
+      "tierCount": 467,
+      "sampleDigimon": [
+        {
+          "id": "d1hndr0k",
+          "name": "Aegisdramon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1iab7dm",
+          "name": "AeroV-Dramon",
+          "cause": "tier"
+        },
+        {
+          "id": "d932np5",
+          "name": "Agnimon",
+          "cause": "tier"
+        },
+        {
+          "id": "dourljw",
+          "name": "Agumon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1n28lsv",
+          "name": "Agumon(Black)",
+          "cause": "tier"
+        },
+        {
+          "id": "dfwwn6s",
+          "name": "Agumon(Classic)",
+          "cause": "tier"
+        },
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "cause": "tier"
+        },
+        {
+          "id": "dxbmr4h",
+          "name": "AncientTroiamon",
+          "cause": "tier"
+        },
+        {
+          "id": "dr5unom",
+          "name": "Andromon",
+          "cause": "tier"
+        },
+        {
+          "id": "dqcps0z",
+          "name": "Angemon",
+          "cause": "tier"
+        },
+        {
+          "id": "d66odwa",
+          "name": "Angewomon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1soic64",
+          "name": "Ankylomon",
+          "cause": "tier"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-07-24T02:44:46.250Z",
+        "mode": "force",
+        "refreshedCount": 467,
+        "dpsUp": [
+          {
+            "id": "d1hndr0k",
+            "name": "Aegisdramon",
+            "role": "Ranged DPS",
+            "before": 25817.20197340558,
+            "after": 26657.87346940556,
+            "delta": 840.6714959999808
+          },
+          {
+            "id": "d1iab7dm",
+            "name": "AeroV-Dramon",
+            "role": "Tank",
+            "before": 5938.999837334799,
+            "after": 6125.945828524225,
+            "delta": 186.94599118942642
+          },
+          {
+            "id": "d932np5",
+            "name": "Agnimon",
+            "role": "Melee DPS",
+            "before": 9610.94901186221,
+            "after": 9686.996478528883,
+            "delta": 76.04746666667234
+          },
+          {
+            "id": "dourljw",
+            "name": "Agumon",
+            "role": "Tank",
+            "before": 2776.5968962839743,
+            "after": 2867.134533555186,
+            "delta": 90.53763727121168
+          },
+          {
+            "id": "d1n28lsv",
+            "name": "Agumon(Black)",
+            "role": "Melee DPS",
+            "before": 2775.2914372789733,
+            "after": 2847.4970265327947,
+            "delta": 72.20558925382147
+          },
+          {
+            "id": "dfwwn6s",
+            "name": "Agumon(Classic)",
+            "role": "Melee DPS",
+            "before": 3673.285350466667,
+            "after": 3729.6074939012938,
+            "delta": 56.32214343462692
+          },
+          {
+            "id": "dffhh64",
+            "name": "Alphamon",
+            "role": "Melee DPS",
+            "before": 52499.67922388132,
+            "after": 54220.7041909143,
+            "delta": 1721.0249670329795
+          },
+          {
+            "id": "dxbmr4h",
+            "name": "AncientTroiamon",
+            "role": "Tank",
+            "before": 21580.798395604405,
+            "after": 22625.152505494512,
+            "delta": 1044.3541098901078
+          },
+          {
+            "id": "dr5unom",
+            "name": "Andromon",
+            "role": "Melee DPS",
+            "before": 13613.735850197034,
+            "after": 13992.390863955974,
+            "delta": 378.6550137589402
+          },
+          {
+            "id": "dqcps0z",
+            "name": "Angemon",
+            "role": "Support",
+            "before": 3652.415643555556,
+            "after": 3734.7249768888896,
+            "delta": 82.3093333333336
+          },
+          {
+            "id": "d66odwa",
+            "name": "Angewomon",
+            "role": "Support",
+            "before": 5973.214685555553,
+            "after": 6115.909103448276,
+            "delta": 142.69441789272332
+          },
+          {
+            "id": "d1soic64",
+            "name": "Ankylomon",
+            "role": "Tank",
+            "before": 4045.787099392597,
+            "after": 4176.052102153506,
+            "delta": 130.26500276090883
+          },
+          {
+            "id": "dl70hc3",
+            "name": "Antylamon",
+            "role": "Melee DPS",
+            "before": 14379.060358525974,
+            "after": 14793.146811564646,
+            "delta": 414.0864530386716
+          },
+          {
+            "id": "d1yl8rpf",
+            "name": "Antylamon Deva",
+            "role": "Melee DPS",
+            "before": 14382.325436595562,
+            "after": 14780.627303262227,
+            "delta": 398.30186666666486
+          },
+          {
+            "id": "dc0pdvu",
+            "name": "Anubimon",
+            "role": "Support",
+            "before": 15634.031692307704,
+            "after": 16074.220912008857,
+            "delta": 440.189219701153
+          },
+          {
+            "id": "djdhlsa",
+            "name": "Apemon",
+            "role": "Melee DPS",
+            "before": 8699.61501831858,
+            "after": 8944.949708584072,
+            "delta": 245.3346902654921
+          },
+          {
+            "id": "dj782yu",
+            "name": "Aquilamon",
+            "role": "Support",
+            "before": 4045.964316407982,
+            "after": 4135.958462749452,
+            "delta": 89.99414634147024
+          },
+          {
+            "id": "d11r5zka",
+            "name": "Arbormon",
+            "role": "Tank",
+            "before": 5011.46438677778,
+            "after": 5080.25212011112,
+            "delta": 68.78773333333993
+          },
+          {
+            "id": "dgnvjhe",
+            "name": "Archnemon",
+            "role": "Support",
+            "before": 7604.84018763797,
+            "after": 7804.440398678414,
+            "delta": 199.60021104044336
+          },
+          {
+            "id": "d18ucac6",
+            "name": "Argomon",
+            "role": "Tank",
+            "before": 6004.271820374447,
+            "after": 6193.047943722463,
+            "delta": 188.77612334801597
+          },
+          {
+            "id": "d1k71sbi",
+            "name": "Argomon Ultimate",
+            "role": "Hybrid",
+            "before": 30476.520318743293,
+            "after": 31285.33711874337,
+            "delta": 808.8168000000769
+          },
+          {
+            "id": "d1diof57",
+            "name": "Arkadimon Adult",
+            "role": "Melee DPS",
+            "before": 9296.884174485618,
+            "after": 9547.28063466261,
+            "delta": 250.39646017699124
+          },
+          {
+            "id": "dc0pjim",
+            "name": "Arkadimon Child",
+            "role": "Ranged DPS",
+            "before": 4178.688781967713,
+            "after": 4262.137311868966,
+            "delta": 83.4485299012531
+          },
+          {
+            "id": "d1tcema",
+            "name": "Arkadimon Perfect",
+            "role": "Melee DPS",
+            "before": 13713.511391298849,
+            "after": 14134.746677740437,
+            "delta": 421.23528644158796
+          },
+          {
+            "id": "d1un4asi",
+            "name": "Arkadimon Ultimate",
+            "role": "Melee DPS",
+            "before": 36353.16303486117,
+            "after": 37475.064023201,
+            "delta": 1121.9009883398248
+          },
+          {
+            "id": "d15mpym0",
+            "name": "Armadimon",
+            "role": "Tank",
+            "before": 2845.5047293399875,
+            "after": 2938.8643300055487,
+            "delta": 93.35960066556117
+          },
+          {
+            "id": "dmkn2k6",
+            "name": "Armadimon",
+            "role": "Tank",
+            "before": 2845.5047293399875,
+            "after": 2938.8643300055487,
+            "delta": 93.35960066556117
+          },
+          {
+            "id": "drg85bt",
+            "name": "Armagemon",
+            "role": "Tank",
+            "before": 8262.748414537451,
+            "after": 8461.467357268722,
+            "delta": 198.71894273127145
+          },
+          {
+            "id": "dpehw5f",
+            "name": "Armagemon[Conflation]",
+            "role": "Melee DPS",
+            "before": 9249.627107111108,
+            "after": 9461.859640444447,
+            "delta": 212.23253333333923
+          },
+          {
+            "id": "d1pduht4",
+            "name": "Astamon",
+            "role": "Ranged DPS",
+            "before": 15723.574229352755,
+            "after": 16294.7989589758,
+            "delta": 571.2247296230453
+          },
+          {
+            "id": "doq2524",
+            "name": "Asuramon",
+            "role": "Melee DPS",
+            "before": 13169.235364209593,
+            "after": 13502.22241238283,
+            "delta": 332.98704817323596
+          },
+          {
+            "id": "d1jidsdb",
+            "name": "Baihumon",
+            "role": "Melee DPS",
+            "before": 33431.680246023105,
+            "after": 34270.82841499701,
+            "delta": 839.1481689739085
+          },
+          {
+            "id": "dll44ok",
+            "name": "Baihumon",
+            "role": "Melee DPS",
+            "before": 8041.170234257902,
+            "after": 8209.734828547702,
+            "delta": 168.56459428979997
+          },
+          {
+            "id": "daknlcd",
+            "name": "Bakemon",
+            "role": "Hybrid",
+            "before": 5774.614734410756,
+            "after": 5983.3421956080965,
+            "delta": 208.72746119734074
+          },
+          {
+            "id": "d1pya1h2",
+            "name": "Ballistamon",
+            "role": "Tank",
+            "before": 1214.5808000000009,
+            "after": 1243.0181333333344,
+            "delta": 28.437333333333527
+          },
+          {
+            "id": "d147goj4",
+            "name": "Ballistamon",
+            "role": "Tank",
+            "before": 4368.670107419714,
+            "after": 4467.339343300109,
+            "delta": 98.66923588039481
+          },
+          {
+            "id": "dccgvp5",
+            "name": "BanchouLeomon",
+            "role": "Tank",
+            "before": 16452.597248076923,
+            "after": 17037.763401923075,
+            "delta": 585.1661538461522
+          },
+          {
+            "id": "d5cxqcq",
+            "name": "BaoHackmon",
+            "role": "Melee DPS",
+            "before": 9093.650157657461,
+            "after": 9296.386758533332,
+            "delta": 202.73660087587086
+          },
+          {
+            "id": "d1v6a4mo",
+            "name": "Barbamon",
+            "role": "Caster",
+            "before": 57053.425903886346,
+            "after": 60827.424925439045,
+            "delta": 3773.9990215526996
+          },
+          {
+            "id": "d14va304",
+            "name": "Bastemon",
+            "role": "Support",
+            "before": 6240.10478224196,
+            "after": 6404.187801109878,
+            "delta": 164.08301886791833
+          },
+          {
+            "id": "dcw8vt8",
+            "name": "Bearmon",
+            "role": "Melee DPS",
+            "before": 3567.1515140971865,
+            "after": 3688.3234540999997,
+            "delta": 121.17194000281324
+          },
+          {
+            "id": "d10d0snt",
+            "name": "Beelzebumon",
+            "role": "Ranged DPS",
+            "before": 30597.466524001054,
+            "after": 30783.316470710277,
+            "delta": 185.84994670922242
+          },
+          {
+            "id": "d31fxga",
+            "name": "Beelzebumon BlastMode",
+            "role": "Ranged DPS",
+            "before": 37667.4317260222,
+            "after": 38726.296792688845,
+            "delta": 1058.8650666666435
+          },
+          {
+            "id": "d1ua3ze0",
+            "name": "Belial Vamdemon",
+            "role": "Tank",
+            "before": 24670.65151666665,
+            "after": 25541.019607480746,
+            "delta": 870.3680908140959
+          },
+          {
+            "id": "dkd4rjy",
+            "name": "Belphemon: Rage Mode",
+            "role": "Tank",
+            "before": 20702.838360728078,
+            "after": 21450.672800882505,
+            "delta": 747.8344401544273
+          },
+          {
+            "id": "d1a1xzuc",
+            "name": "Belphemon: Sleep Mode",
+            "role": "Tank",
+            "before": 19890.571929359838,
+            "after": 20592.291664459153,
+            "delta": 701.7197350993156
+          },
+          {
+            "id": "d1pnobwx",
+            "name": "Betamon",
+            "role": "Tank",
+            "before": 3097.328221916304,
+            "after": 3180.637476718405,
+            "delta": 83.30925480210135
+          },
+          {
+            "id": "dht027o",
+            "name": "Betamon[Apocalymon]",
+            "role": "Tank",
+            "before": 3667.8274260387802,
+            "after": 3786.947650496141,
+            "delta": 119.12022445736056
+          },
+          {
+            "id": "d1u36138",
+            "name": "Big Mamemon",
+            "role": "Support",
+            "before": 7328.750187465647,
+            "after": 7497.641578339755,
+            "delta": 168.89139087410786
+          },
+          {
+            "id": "d1s6qnpj",
+            "name": "Birdramon",
+            "role": "Hybrid",
+            "before": 5903.928015641153,
+            "after": 6056.730073865461,
+            "delta": 152.80205822430798
+          },
+          {
+            "id": "d6piz7q",
+            "name": "BishopChessmon",
+            "role": "Tank",
+            "before": 6040.3813134955735,
+            "after": 6234.064233849554,
+            "delta": 193.68292035398008
+          },
+          {
+            "id": "d1llo7gc",
+            "name": "Biyomon",
+            "role": "None",
+            "before": 3124.098476777779,
+            "after": 3205.7894101111137,
+            "delta": 81.69093333333467
+          },
+          {
+            "id": "d16lzzvt",
+            "name": "BlackSaintGalgomon",
+            "role": "Ranged DPS",
+            "before": 30811.43379980383,
+            "after": 32267.839895090594,
+            "delta": 1456.4060952867621
+          },
+          {
+            "id": "d1x1d68d",
+            "name": "Blackgatomon",
+            "role": "Melee DPS",
+            "before": 8607.076895930239,
+            "after": 8875.447479504952,
+            "delta": 268.37058357471324
+          },
+          {
+            "id": "d1gu6vxj",
+            "name": "Blitz Greymon",
+            "role": "Tank",
+            "before": 19062.850225333314,
+            "after": 19724.359025333335,
+            "delta": 661.5088000000214
+          },
+          {
+            "id": "d1gpy8w8",
+            "name": "Blitzmon",
+            "role": "Tank",
+            "before": 8017.175822222214,
+            "after": 8085.219288888869,
+            "delta": 68.04346666665515
+          },
+          {
+            "id": "d1ufuffb",
+            "name": "Blizzarmon",
+            "role": "Tank",
+            "before": 8544.889944777777,
+            "after": 8613.442478111094,
+            "delta": 68.55253333331711
+          },
+          {
+            "id": "de7i5eu",
+            "name": "Blossomon",
+            "role": "Melee DPS",
+            "before": 14897.441829514451,
+            "after": 15299.489562847786,
+            "delta": 402.0477333333347
+          },
+          {
+            "id": "dpd6mf",
+            "name": "Bolgmon",
+            "role": "Tank",
+            "before": 4716.320717333328,
+            "after": 4785.538317333328,
+            "delta": 69.21760000000086
+          },
+          {
+            "id": "d1vhr9k1",
+            "name": "Brakedramon",
+            "role": "Tank",
+            "before": 16781.47693670884,
+            "after": 17320.51345123967,
+            "delta": 539.0365145308278
+          },
+          {
+            "id": "d11j22ny",
+            "name": "Calamaramon",
+            "role": "Support",
+            "before": 7177.880064444466,
+            "after": 7247.270731111136,
+            "delta": 69.39066666666986
+          },
+          {
+            "id": "dugn3ma",
+            "name": "Candlemon",
+            "role": "Caster",
+            "before": 6621.542792555246,
+            "after": 6750.004340777775,
+            "delta": 128.46154822252902
+          },
+          {
+            "id": "d1j9f992",
+            "name": "CannonBeemon",
+            "role": "Melee DPS",
+            "before": 12613.926393191105,
+            "after": 12933.37202096976,
+            "delta": 319.44562777865576
+          },
+          {
+            "id": "dok71k3",
+            "name": "Cerberumon",
+            "role": "Hybrid",
+            "before": 10118.219242243766,
+            "after": 10374.71684224375,
+            "delta": 256.49759999998423
+          },
+          {
+            "id": "d1kn67hd",
+            "name": "Chakkumon",
+            "role": "Ranged DPS",
+            "before": 8090.547024283334,
+            "after": 8153.79849095001,
+            "delta": 63.2514666666757
+          },
+          {
+            "id": "d7o5l1a",
+            "name": "Chaos Dukemon",
+            "role": "Melee DPS",
+            "before": 36063.31624620647,
+            "after": 37196.74255211484,
+            "delta": 1133.4263059083678
+          },
+          {
+            "id": "d1tyih3f",
+            "name": "ChaosPiedmon",
+            "role": "Melee DPS",
+            "before": 23835.184911010485,
+            "after": 24593.426412943132,
+            "delta": 758.2415019326472
+          },
+          {
+            "id": "d1kcmd1q",
+            "name": "Chaosdramon",
+            "role": "Melee DPS",
+            "before": 35198.437156854394,
+            "after": 36247.735577907035,
+            "delta": 1049.298421052641
+          },
+          {
+            "id": "de7lcl8",
+            "name": "Chaosmon",
+            "role": "Tank",
+            "before": 13182.971650666655,
+            "after": 13345.24455477777,
+            "delta": 162.27290411111426
+          },
+          {
+            "id": "ds0vzxi",
+            "name": "Cherrymon",
+            "role": "Support",
+            "before": 5496.350447058823,
+            "after": 5643.025607991117,
+            "delta": 146.6751609322937
+          },
+          {
+            "id": "dx0m1jn",
+            "name": "Cherubimon",
+            "role": "Caster",
+            "before": 55890.24972514744,
+            "after": 59097.90945837488,
+            "delta": 3207.6597332274396
+          },
+          {
+            "id": "d1p8vik",
+            "name": "Cherubimon White",
+            "role": "Support",
+            "before": 14501.162400999996,
+            "after": 14908.365600999994,
+            "delta": 407.2031999999981
+          },
+          {
+            "id": "d1q0aohx",
+            "name": "Chimairamon",
+            "role": "Hybrid",
+            "before": 11019.179364234731,
+            "after": 11250.40085147114,
+            "delta": 231.2214872364093
+          },
+          {
+            "id": "d1okikjz",
+            "name": "Chrysalimon",
+            "role": "Tank",
+            "before": 3559.2871800443454,
+            "after": 3667.9970691795997,
+            "delta": 108.70988913525434
+          },
+          {
+            "id": "d17lp54y",
+            "name": "CommanDramon",
+            "role": "Ranged DPS",
+            "before": 4025.9445113561183,
+            "after": 4157.943003035514,
+            "delta": 131.998491679396
+          },
+          {
+            "id": "d1qqkebb",
+            "name": "Coredramon(Blue)",
+            "role": "Melee DPS",
+            "before": 8561.989751308372,
+            "after": 8866.786381894446,
+            "delta": 304.79663058607366
+          },
+          {
+            "id": "dcswzqb",
+            "name": "Coredramon(Green)",
+            "role": "Tank",
+            "before": 3625.232318960751,
+            "after": 3735.47178828082,
+            "delta": 110.23946932006902
+          },
+          {
+            "id": "d764v8e",
+            "name": "Craniummon",
+            "role": "Tank",
+            "before": 18222.786201973693,
+            "after": 18878.49909671056,
+            "delta": 655.7128947368656
+          },
+          {
+            "id": "dn8zobu",
+            "name": "Cres Garurumon",
+            "role": "Melee DPS",
+            "before": 28777.7014358001,
+            "after": 29759.246306037552,
+            "delta": 981.5448702374524
+          },
+          {
+            "id": "d1q84jvw",
+            "name": "Crowmon",
+            "role": "Ranged DPS",
+            "before": 13489.516086091455,
+            "after": 13858.192692888919,
+            "delta": 368.67660679746405
+          },
+          {
+            "id": "d1x70xm0",
+            "name": "CyberDramon",
+            "role": "Melee DPS",
+            "before": 14052.851319984107,
+            "after": 14469.389598129806,
+            "delta": 416.5382781456992
+          },
+          {
+            "id": "d17h7zns",
+            "name": "DarkDramon",
+            "role": "Tank",
+            "before": 14104.37961540167,
+            "after": 14581.925897950145,
+            "delta": 477.54628254847376
+          },
+          {
+            "id": "d1lshomj",
+            "name": "Darktyranomon",
+            "role": "Hybrid",
+            "before": 7503.805012988892,
+            "after": 7660.298346322228,
+            "delta": 156.49333333333652
+          },
+          {
+            "id": "d3qe76m",
+            "name": "Death-X-DORUgoramon",
+            "role": "Melee DPS",
+            "before": 32629.40273029689,
+            "after": 33739.293130296865,
+            "delta": 1109.8903999999748
+          },
+          {
+            "id": "d18ap589",
+            "name": "Death-X-mon",
+            "role": "Melee DPS",
+            "before": 43623.66827227975,
+            "after": 44925.33332146007,
+            "delta": 1301.665049180323
+          },
+          {
+            "id": "d1k5wt46",
+            "name": "Deltamon",
+            "role": "Hybrid",
+            "before": 7486.142976092218,
+            "after": 7615.463776092223,
+            "delta": 129.32080000000497
+          },
+          {
+            "id": "d1mf5hol",
+            "name": "DemiMeramon",
+            "role": "Ranged DPS",
+            "before": 3434.261798605039,
+            "after": 3511.7738938167745,
+            "delta": 77.51209521173541
+          },
+          {
+            "id": "d1m5hyp7",
+            "name": "Demon",
+            "role": "Caster",
+            "before": 58221.784836650215,
+            "after": 61223.23033345815,
+            "delta": 3001.445496807937
+          },
+          {
+            "id": "d12b859p",
+            "name": "Demon Beast Mode",
+            "role": "Melee DPS",
+            "before": 8462.788294361322,
+            "after": 8670.368656799545,
+            "delta": 207.58036243822244
+          },
+          {
+            "id": "d1o9p1gd",
+            "name": "Deputymon",
+            "role": "Ranged DPS",
+            "before": 10401.64678340444,
+            "after": 10653.076650071114,
+            "delta": 251.42986666667457
+          },
+          {
+            "id": "dmu7lhj",
+            "name": "Devidramon",
+            "role": "Hybrid",
+            "before": 4497.412158793008,
+            "after": 4590.6645450305205,
+            "delta": 93.25238623751284
+          },
+          {
+            "id": "dnj0fix",
+            "name": "Devimon",
+            "role": "Melee DPS",
+            "before": 6795.1677648122195,
+            "after": 6982.843498145551,
+            "delta": 187.67573333333166
+          },
+          {
+            "id": "dsj63yb",
+            "name": "DexDoruGreymon",
+            "role": "Melee DPS",
+            "before": 13642.800439508856,
+            "after": 14071.71893508408,
+            "delta": 428.91849557522437
+          },
+          {
+            "id": "d1uoxuqq",
+            "name": "DexDorugamon",
+            "role": "Melee DPS",
+            "before": 8653.21925437345,
+            "after": 8893.651997736284,
+            "delta": 240.4327433628332
+          },
+          {
+            "id": "d14qie1i",
+            "name": "Diablomon",
+            "role": "Tank",
+            "before": 19124.636516666673,
+            "after": 19527.01526578073,
+            "delta": 402.3787491140574
+          },
+          {
+            "id": "dh27skg",
+            "name": "Digmon",
+            "role": "Tank",
+            "before": 4160.7182316666685,
+            "after": 4313.648393015525,
+            "delta": 152.93016134885602
+          },
+          {
+            "id": "d1jeguht",
+            "name": "DinoTigermon",
+            "role": "Melee DPS",
+            "before": 20485.120902507653,
+            "after": 21544.344847822213,
+            "delta": 1059.2239453145594
+          },
+          {
+            "id": "d1epigw",
+            "name": "Dobermon",
+            "role": "Support",
+            "before": 3433.442461111114,
+            "after": 3522.0859277777813,
+            "delta": 88.64346666666734
+          },
+          {
+            "id": "di8jip4",
+            "name": "Doggymon",
+            "role": "Support",
+            "before": 3481.8165055555564,
+            "after": 3572.1474388888882,
+            "delta": 90.33093333333181
+          },
+          {
+            "id": "d12lyp36",
+            "name": "Dokugumon",
+            "role": "Support",
+            "before": 3174.424705234163,
+            "after": 3263.512969696968,
+            "delta": 89.088264462805
+          },
+          {
+            "id": "d842n8u",
+            "name": "Dokunemon",
+            "role": "Support",
+            "before": 2417.7137806824435,
+            "after": 2489.2049859658787,
+            "delta": 71.49120528343519
+          },
+          {
+            "id": "d89gux7",
+            "name": "DoruGreymon",
+            "role": "Melee DPS",
+            "before": 14412.234262486545,
+            "after": 14767.027147239418,
+            "delta": 354.79288475287285
+          },
+          {
+            "id": "d1a4bqf2",
+            "name": "Dorugamon",
+            "role": "Melee DPS",
+            "before": 8751.88345643197,
+            "after": 8991.544429883295,
+            "delta": 239.66097345132584
+          },
+          {
+            "id": "d8nc5yn",
+            "name": "Dorugoramon",
+            "role": "Melee DPS",
+            "before": 36874.71725782665,
+            "after": 38833.3585478458,
+            "delta": 1958.64129001915
+          },
+          {
+            "id": "d1fg0u9c",
+            "name": "Dorulumon",
+            "role": "Tank",
+            "before": 5082.550321705427,
+            "after": 5181.219557585822,
+            "delta": 98.66923588039481
+          },
+          {
+            "id": "du2394h",
+            "name": "Dorulumon",
+            "role": "Tank",
+            "before": 3200.8776576177297,
+            "after": 3299.000826592797,
+            "delta": 98.12316897506707
+          },
+          {
+            "id": "d1ql4gn6",
+            "name": "Dorumon",
+            "role": "Ranged DPS",
+            "before": 4587.022401466018,
+            "after": 4673.074822612176,
+            "delta": 86.05242114615794
+          },
+          {
+            "id": "dbzt6ro",
+            "name": "Dorumon",
+            "role": "Ranged DPS",
+            "before": 4161.916244308087,
+            "after": 4247.96866545424,
+            "delta": 86.05242114615339
+          },
+          {
+            "id": "d1hxpawa",
+            "name": "Dorumon[Dex]",
+            "role": "Ranged DPS",
+            "before": 4572.624360784101,
+            "after": 4658.676781930256,
+            "delta": 86.05242114615521
+          },
+          {
+            "id": "d8xrh57",
+            "name": "Dracmon",
+            "role": "Melee DPS",
+            "before": 3406.9446189757705,
+            "after": 3474.822063909693,
+            "delta": 67.87744493392256
+          },
+          {
+            "id": "dvvp3ye",
+            "name": "Dracomon",
+            "role": "Melee DPS",
+            "before": 4067.1434349111087,
+            "after": 4141.460501577778,
+            "delta": 74.31706666666923
+          },
+          {
+            "id": "d151s09c",
+            "name": "Dracomon",
+            "role": "Melee DPS",
+            "before": 3914.6386210222217,
+            "after": 3988.955687688889,
+            "delta": 74.31706666666742
+          },
+          {
+            "id": "dneh6db",
+            "name": "Drimogemon",
+            "role": "Tank",
+            "before": 2838.5233417443783,
+            "after": 2930.9103082830497,
+            "delta": 92.38696653867146
+          },
+          {
+            "id": "dxj5ae0",
+            "name": "Drimogemon",
+            "role": "Tank",
+            "before": 2850.125179374659,
+            "after": 2942.512145913332,
+            "delta": 92.38696653867282
+          },
+          {
+            "id": "d8c8hgt",
+            "name": "Duftmon",
+            "role": "Melee DPS",
+            "before": 32932.63061816239,
+            "after": 34025.94477745438,
+            "delta": 1093.3141592919928
+          },
+          {
+            "id": "ds8bjit",
+            "name": "Dukemon",
+            "role": "Tank",
+            "before": 20442.35713340686,
+            "after": 21275.2365159868,
+            "delta": 832.8793825799403
+          },
+          {
+            "id": "drh623u",
+            "name": "Dukemon Crimson Mode",
+            "role": "Hybrid",
+            "before": 29349.92174609323,
+            "after": 30139.774716699718,
+            "delta": 789.8529706064874
+          },
+          {
+            "id": "d3gby2n",
+            "name": "Dynasmon",
+            "role": "Caster",
+            "before": 62619.806041935844,
+            "after": 64256.665107697445,
+            "delta": 1636.8590657616005
+          },
+          {
+            "id": "d1jn1e57",
+            "name": "Elecmon",
+            "role": "Tank",
+            "before": 3126.6012546909524,
+            "after": 3224.0693341611454,
+            "delta": 97.46807947019306
+          },
+          {
+            "id": "d42rpkf",
+            "name": "Elecmon",
+            "role": "None",
+            "before": 3541.1031593818966,
+            "after": 3637.9389209713017,
+            "delta": 96.83576158940514
+          },
+          {
+            "id": "d14trgn6",
+            "name": "Eosmon_LV4",
+            "role": "Hybrid",
+            "before": 2118.354211725789,
+            "after": 2164.9819483057563,
+            "delta": 46.627736579967404
+          },
+          {
+            "id": "dwnitdh",
+            "name": "Eosmon_LV5",
+            "role": "Hybrid",
+            "before": 5685.782113520086,
+            "after": 5828.364523943539,
+            "delta": 142.58241042345344
+          },
+          {
+            "id": "dihd81c",
+            "name": "Eosmon_LV6",
+            "role": "Hybrid",
+            "before": 40296.721507608585,
+            "after": 40754.7441766818,
+            "delta": 458.0226690732161
+          },
+          {
+            "id": "d3xqja6",
+            "name": "Etemon",
+            "role": "Hybrid",
+            "before": 10815.331957324792,
+            "after": 11077.18599705988,
+            "delta": 261.854039735088
+          },
+          {
+            "id": "decl9ek",
+            "name": "ExV-mon",
+            "role": "Melee DPS",
+            "before": 8303.482835591634,
+            "after": 8562.179494376032,
+            "delta": 258.6966587843981
+          },
+          {
+            "id": "d1rd3l21",
+            "name": "Fairimon",
+            "role": "Support",
+            "before": 7393.124454555568,
+            "after": 7469.115121222228,
+            "delta": 75.99066666665931
+          },
+          {
+            "id": "d190qtot",
+            "name": "Falcomon",
+            "role": "Ranged DPS",
+            "before": 3279.6605211275305,
+            "after": 3348.402196004378,
+            "delta": 68.74167487684736
+          },
+          {
+            "id": "d10fmb6x",
+            "name": "FanBeemon",
+            "role": "Melee DPS",
+            "before": 3225.3381294621317,
+            "after": 3302.8764331578946,
+            "delta": 77.5383036957628
+          },
+          {
+            "id": "d1u1wrfs",
+            "name": "Floramon",
+            "role": "Ranged DPS",
+            "before": 3085.3202768510855,
+            "after": 3150.5685675199547,
+            "delta": 65.24829066886923
+          },
+          {
+            "id": "d1fozle5",
+            "name": "Flybeemon",
+            "role": "Hybrid",
+            "before": 6590.4622097590645,
+            "after": 6643.113065477695,
+            "delta": 52.65085571863074
+          },
+          {
+            "id": "dnve9z5",
+            "name": "Flymon",
+            "role": "Tank",
+            "before": 3721.253344751383,
+            "after": 3824.011532596687,
+            "delta": 102.75818784530429
+          },
+          {
+            "id": "d1tvr03j",
+            "name": "Fradramon",
+            "role": "Melee DPS",
+            "before": 5940.21780228445,
+            "after": 5997.957535617777,
+            "delta": 57.73973333332651
+          },
+          {
+            "id": "dw24vbb",
+            "name": "Fujinmon",
+            "role": "Melee DPS",
+            "before": 55773.42559026606,
+            "after": 56974.45747619877,
+            "delta": 1201.031885932709
+          },
+          {
+            "id": "d3vjay5",
+            "name": "Gabumon",
+            "role": "Tank",
+            "before": 2777.6737642857106,
+            "after": 2867.3926214285684,
+            "delta": 89.71885714285781
+          },
+          {
+            "id": "d151lgi4",
+            "name": "Gabumon(Black)",
+            "role": "Melee DPS",
+            "before": 4015.7508268333336,
+            "after": 4099.283846567162,
+            "delta": 83.5330197338285
+          },
+          {
+            "id": "d18czwbu",
+            "name": "Galgomon",
+            "role": "Ranged DPS",
+            "before": 9467.092991427633,
+            "after": 9717.524686825267,
+            "delta": 250.43169539763403
+          },
+          {
+            "id": "d1lk2vyj",
+            "name": "Gankoomon",
+            "role": "Melee DPS",
+            "before": 33571.7217941349,
+            "after": 34704.57060840747,
+            "delta": 1132.8488142725691
+          },
+          {
+            "id": "dp48uny",
+            "name": "Gaogamon",
+            "role": "Melee DPS",
+            "before": 8748.946286392704,
+            "after": 8994.280976658183,
+            "delta": 245.33469026547937
+          },
+          {
+            "id": "d1tctiy4",
+            "name": "Gaomon",
+            "role": "Melee DPS",
+            "before": 3904.7163637222216,
+            "after": 3991.91237488889,
+            "delta": 87.19601116666854
+          },
+          {
+            "id": "d19wwz3y",
+            "name": "Gardromon",
+            "role": "Tank",
+            "before": 3619.7720065934063,
+            "after": 3731.388358241757,
+            "delta": 111.6163516483507
+          },
+          {
+            "id": "d76d61m",
+            "name": "Gargomon",
+            "role": "Support",
+            "before": 6560.08214222222,
+            "after": 6615.020808888893,
+            "delta": 54.93866666667327
+          },
+          {
+            "id": "d1ok6629",
+            "name": "Garmmon",
+            "role": "Tank",
+            "before": 6291.763883333346,
+            "after": 6360.010283333344,
+            "delta": 68.24639999999818
+          },
+          {
+            "id": "d1qh4gms",
+            "name": "Garudamon",
+            "role": "Hybrid",
+            "before": 10833.575892159859,
+            "after": 11104.120139947452,
+            "delta": 270.5442477875931
+          },
+          {
+            "id": "dmod5tv",
+            "name": "Garurumon",
+            "role": "Tank",
+            "before": 3682.1923092011,
+            "after": 3764.4546746961305,
+            "delta": 82.26236549503028
+          },
+          {
+            "id": "dzaw7o1",
+            "name": "Garurumon(Black)",
+            "role": "Melee DPS",
+            "before": 9092.911474323728,
+            "after": 9334.819285924299,
+            "delta": 241.90781160057122
+          },
+          {
+            "id": "d18gxr8i",
+            "name": "Gatomon",
+            "role": "Support",
+            "before": 3591.8715346666704,
+            "after": 3675.2251346666717,
+            "delta": 83.35360000000128
+          },
+          {
+            "id": "d1titkoy",
+            "name": "Gawappamon",
+            "role": "Tank",
+            "before": 3702.9033780487803,
+            "after": 3820.00581707317,
+            "delta": 117.1024390243897
+          },
+          {
+            "id": "d1i8znp9",
+            "name": "Gazimon",
+            "role": "Hybrid",
+            "before": 3761.837821273578,
+            "after": 3863.0905515548825,
+            "delta": 101.2527302813046
+          },
+          {
+            "id": "dab16l9",
+            "name": "Gazimon[Millenniumon]",
+            "role": "Hybrid",
+            "before": 3772.5837949506304,
+            "after": 3873.836525231937,
+            "delta": 101.25273028130641
+          },
+          {
+            "id": "dfu0d1h",
+            "name": "Gekomon",
+            "role": "Tank",
+            "before": 7474.943186810161,
+            "after": 7856.182739046038,
+            "delta": 381.23955223587654
+          },
+          {
+            "id": "d1rwu6j6",
+            "name": "GeoGreymon",
+            "role": "Tank",
+            "before": 4210.020723287675,
+            "after": 4341.370816438361,
+            "delta": 131.350093150686
+          },
+          {
+            "id": "dgro4ey",
+            "name": "Gesomon",
+            "role": "Tank",
+            "before": 3380.723060000002,
+            "after": 3449.914810000001,
+            "delta": 69.19174999999905
+          },
+          {
+            "id": "dgzy4t4",
+            "name": "GigaSeadramon",
+            "role": "Tank",
+            "before": 21580.798395604405,
+            "after": 22625.152505494512,
+            "delta": 1044.3541098901078
+          },
+          {
+            "id": "dydd2cu",
+            "name": "Gigasmon",
+            "role": "Hybrid",
+            "before": 4806.346070586475,
+            "after": 4809.505324914038,
+            "delta": 3.1592543275628486
+          },
+          {
+            "id": "d8hcpb3",
+            "name": "GinRyuumon",
+            "role": "Melee DPS",
+            "before": 5842.293168197802,
+            "after": 5990.11048687912,
+            "delta": 147.81731868131828
+          },
+          {
+            "id": "d1g7rwn6",
+            "name": "Giromon",
+            "role": "Tank",
+            "before": 6163.9702315789455,
+            "after": 6355.415505817172,
+            "delta": 191.44527423822638
+          },
+          {
+            "id": "db960ue",
+            "name": "Gizamon",
+            "role": "Hybrid",
+            "before": 2565.4775839701656,
+            "after": 2605.8633519259674,
+            "delta": 40.38576795580184
+          },
+          {
+            "id": "d9dx2bx",
+            "name": "GizumonAT",
+            "role": "Hybrid",
+            "before": 6375.233770453338,
+            "after": 6520.531903786664,
+            "delta": 145.2981333333255
+          },
+          {
+            "id": "d1lav428",
+            "name": "GizumonXT",
+            "role": "Hybrid",
+            "before": 10069.303457653436,
+            "after": 10318.672887647908,
+            "delta": 249.36942999447274
+          },
+          {
+            "id": "d1ycr0rn",
+            "name": "Gladimon",
+            "role": "Tank",
+            "before": 4293.4016533112635,
+            "after": 4421.344699668875,
+            "delta": 127.94304635761182
+          },
+          {
+            "id": "d6qqfrg",
+            "name": "Goblimon",
+            "role": "Hybrid",
+            "before": 3675.175253577133,
+            "after": 3767.8978284938985,
+            "delta": 92.72257491676555
+          },
+          {
+            "id": "d10cfzih",
+            "name": "Gomamon",
+            "role": "Tank",
+            "before": 2574.8702361111164,
+            "after": 2658.3179694444425,
+            "delta": 83.44773333332614
+          },
+          {
+            "id": "d8htyti",
+            "name": "Gomamon",
+            "role": "Tank",
+            "before": 2574.8702361111164,
+            "after": 2658.3179694444425,
+            "delta": 83.44773333332614
+          },
+          {
+            "id": "d44zgob",
+            "name": "Gotsumon",
+            "role": "Tank",
+            "before": 3284.006307666671,
+            "after": 3386.7463076666713,
+            "delta": 102.74000000000024
+          },
+          {
+            "id": "d9qh2rg",
+            "name": "Grademon",
+            "role": "Melee DPS",
+            "before": 15585.091400951022,
+            "after": 16025.825431827048,
+            "delta": 440.73403087602674
+          },
+          {
+            "id": "d1b77qqr",
+            "name": "GrandKuwagamon",
+            "role": "Melee DPS",
+            "before": 23599.69569855442,
+            "after": 24393.33256025484,
+            "delta": 793.6368617004191
+          },
+          {
+            "id": "d10zw390",
+            "name": "Grapleomon",
+            "role": "Melee DPS",
+            "before": 13321.788919602,
+            "after": 13707.813463548917,
+            "delta": 386.0245439469163
+          },
+          {
+            "id": "dvq7beo",
+            "name": "Greymon",
+            "role": "Melee DPS",
+            "before": 9406.017220954747,
+            "after": 9657.80530042495,
+            "delta": 251.78807947020323
+          },
+          {
+            "id": "d1dj8zva",
+            "name": "Greymon(Black)",
+            "role": "Melee DPS",
+            "before": 8866.732937983335,
+            "after": 9124.264876279049,
+            "delta": 257.5319382957132
+          },
+          {
+            "id": "d1j2vktn",
+            "name": "Greymon(C)",
+            "role": "Tank",
+            "before": 9748.646315325248,
+            "after": 10074.75947960308,
+            "delta": 326.11316427783277
+          },
+          {
+            "id": "d41qey5",
+            "name": "Greymon(C)",
+            "role": "None",
+            "before": 7826.660394444443,
+            "after": 8001.602261111112,
+            "delta": 174.94186666666883
+          },
+          {
+            "id": "d121uwg6",
+            "name": "Grizzmon",
+            "role": "Melee DPS",
+            "before": 9383.733822746657,
+            "after": 9625.444264384743,
+            "delta": 241.7104416380862
+          },
+          {
+            "id": "dtebasx",
+            "name": "Grotmon",
+            "role": "Hybrid",
+            "before": 7154.190235115858,
+            "after": 7157.592739826044,
+            "delta": 3.4025047101858945
+          },
+          {
+            "id": "dugg62m",
+            "name": "Groundramon",
+            "role": "Tank",
+            "before": 6290.141071152793,
+            "after": 6575.415934878591,
+            "delta": 285.27486372579733
+          },
+          {
+            "id": "d1u1j6kk",
+            "name": "Growmon",
+            "role": "Tank",
+            "before": 3533.060438247011,
+            "after": 3647.375976095617,
+            "delta": 114.3155378486058
+          },
+          {
+            "id": "dff7fw6",
+            "name": "Gryphonmon",
+            "role": "Melee DPS",
+            "before": 20546.051821463592,
+            "after": 21111.02965522685,
+            "delta": 564.9778337632561
+          },
+          {
+            "id": "d1ykxfmc",
+            "name": "Guilmon",
+            "role": "Tank",
+            "before": 2878.056117412716,
+            "after": 2969.038333978864,
+            "delta": 90.98221656614805
+          },
+          {
+            "id": "d1mjgc4g",
+            "name": "Guilmon[ChaosDukemon]",
+            "role": "Melee DPS",
+            "before": 3855.866416604267,
+            "after": 3945.6320462502113,
+            "delta": 89.76562964594405
+          },
+          {
+            "id": "d1n1ayys",
+            "name": "Gulfmon",
+            "role": "Hybrid",
+            "before": 17980.642885946345,
+            "after": 18416.57182399945,
+            "delta": 435.9289380531045
+          },
+          {
+            "id": "d1qzyxrg",
+            "name": "Hagurumon",
+            "role": "Tank",
+            "before": 2869.778514600548,
+            "after": 2963.2727294765828,
+            "delta": 93.49421487603468
+          },
+          {
+            "id": "d1jvehnu",
+            "name": "Hagurumon",
+            "role": "Tank",
+            "before": 2869.778514600548,
+            "after": 2963.2727294765828,
+            "delta": 93.49421487603468
+          },
+          {
+            "id": "d1yxr8kd",
+            "name": "Hagurumon[Apocalymon]",
+            "role": "Melee DPS",
+            "before": 3130.2333323183598,
+            "after": 3229.511691465707,
+            "delta": 99.27835914734715
+          },
+          {
+            "id": "dkp5zw7",
+            "name": "Hawkmon",
+            "role": "Ranged DPS",
+            "before": 4040.6620443416373,
+            "after": 4118.3599526834705,
+            "delta": 77.69790834183323
+          },
+          {
+            "id": "de49mfw",
+            "name": "Hawkmon",
+            "role": "Ranged DPS",
+            "before": 4198.836193410867,
+            "after": 4276.534101752698,
+            "delta": 77.69790834183095
+          },
+          {
+            "id": "d1c81r0i",
+            "name": "HerculesKabuterimon",
+            "role": "Tank",
+            "before": 10981.460627517878,
+            "after": 11341.17611458448,
+            "delta": 359.7154870666018
+          },
+          {
+            "id": "dhnylj3",
+            "name": "HiAndromon",
+            "role": "Support",
+            "before": 6600.718399999998,
+            "after": 6765.456,
+            "delta": 164.7376000000022
+          },
+          {
+            "id": "d1iu46ij",
+            "name": "HishaRyuumon",
+            "role": "Melee DPS",
+            "before": 14092.043690488881,
+            "after": 14318.948606266666,
+            "delta": 226.90491577778448
+          },
+          {
+            "id": "d189uuci",
+            "name": "Holsmon",
+            "role": "Support",
+            "before": 4557.383555555554,
+            "after": 4600.976035437428,
+            "delta": 43.59247988187417
+          },
+          {
+            "id": "d40m73z",
+            "name": "IceDevimon",
+            "role": "Melee DPS",
+            "before": 8568.059422986667,
+            "after": 8752.156844449635,
+            "delta": 184.09742146296776
+          },
+          {
+            "id": "d1i982g0",
+            "name": "Icemon",
+            "role": "Tank",
+            "before": 3976.9908565096957,
+            "after": 4096.472031024931,
+            "delta": 119.48117451523558
+          },
+          {
+            "id": "d1warrod",
+            "name": "Ikkakumon",
+            "role": "Tank",
+            "before": 3855.90326208426,
+            "after": 3975.3272547777738,
+            "delta": 119.42399269351381
+          },
+          {
+            "id": "dli2qnl",
+            "name": "Impmon",
+            "role": "Ranged DPS",
+            "before": 3937.7336823073047,
+            "after": 4081.1262546555554,
+            "delta": 143.39257234825072
+          },
+          {
+            "id": "d1bqx9nw",
+            "name": "Infermon",
+            "role": "Tank",
+            "before": 6294.407452719199,
+            "after": 6479.520171920091,
+            "delta": 185.11271920089257
+          },
+          {
+            "id": "dy10wzd",
+            "name": "Jesmon",
+            "role": "Melee DPS",
+            "before": 39041.803020588835,
+            "after": 40197.53656092708,
+            "delta": 1155.7335403382458
+          },
+          {
+            "id": "d55iyrw",
+            "name": "Jijimon",
+            "role": "Caster",
+            "before": 52005.49253607101,
+            "after": 56063.07129405289,
+            "delta": 4057.578757981879
+          },
+          {
+            "id": "djwfsba",
+            "name": "Justimon",
+            "role": "Melee DPS",
+            "before": 31981.22012112934,
+            "after": 33012.967155307946,
+            "delta": 1031.7470341786066
+          },
+          {
+            "id": "d1t82jaj",
+            "name": "Kabuterimon",
+            "role": "Tank",
+            "before": 4133.6608621262485,
+            "after": 4256.984981727574,
+            "delta": 123.32411960132595
+          },
+          {
+            "id": "d1a79mzn",
+            "name": "KaiserGreymon",
+            "role": "Melee DPS",
+            "before": 20516.550713748424,
+            "after": 21057.69355297062,
+            "delta": 541.1428392221969
+          },
+          {
+            "id": "d49xcve",
+            "name": "KaiserLeomon",
+            "role": "Melee DPS",
+            "before": 11077.02918555554,
+            "after": 11132.124652222205,
+            "delta": 55.095466666663924
+          },
+          {
+            "id": "dgeemb",
+            "name": "Kamemon",
+            "role": "Tank",
+            "before": 2408.886206043956,
+            "after": 2512.8368681318657,
+            "delta": 103.95066208790968
+          },
+          {
+            "id": "d2h1vgh",
+            "name": "Keramon",
+            "role": "Ranged DPS",
+            "before": 3357.018974763724,
+            "after": 3436.193310300837,
+            "delta": 79.17433553711271
+          },
+          {
+            "id": "d1u2az0u",
+            "name": "KingChessmon",
+            "role": "Tank",
+            "before": 11060.14144156129,
+            "after": 11428.056295876846,
+            "delta": 367.9148543155552
+          },
+          {
+            "id": "dtfa2kl",
+            "name": "KingEtemon",
+            "role": "Hybrid",
+            "before": 28083.90036880861,
+            "after": 28856.626502289022,
+            "delta": 772.7261334804134
+          },
+          {
+            "id": "d167vxdu",
+            "name": "Kiwimon",
+            "role": "Melee DPS",
+            "before": 8736.344397626448,
+            "after": 8988.466314981823,
+            "delta": 252.12191735537453
+          },
+          {
+            "id": "dtqxlcp",
+            "name": "KnightChessmon Black",
+            "role": "Support",
+            "before": 3445.7933433333333,
+            "after": 3538.184009999999,
+            "delta": 92.39066666666577
+          },
+          {
+            "id": "duk9lvg",
+            "name": "KnightChessmon White",
+            "role": "Tank",
+            "before": 3762.17189166667,
+            "after": 3876.1118916666665,
+            "delta": 113.93999999999642
+          },
+          {
+            "id": "dncnwga",
+            "name": "Knightmon",
+            "role": "Tank",
+            "before": 6127.589743888887,
+            "after": 6310.241743888889,
+            "delta": 182.65200000000186
+          },
+          {
+            "id": "dgh0eh2",
+            "name": "Kotemon",
+            "role": "Tank",
+            "before": 3005.766129372574,
+            "after": 3098.564707940035,
+            "delta": 92.79857856746094
+          },
+          {
+            "id": "d4fsifo",
+            "name": "Kotemon(LordKnight)",
+            "role": "Tank",
+            "before": 3005.766129372574,
+            "after": 3098.564707940035,
+            "delta": 92.79857856746094
+          },
+          {
+            "id": "d11ghtew",
+            "name": "Kudamon",
+            "role": "Ranged DPS",
+            "before": 3809.6798112552447,
+            "after": 3892.1533815798184,
+            "delta": 82.47357032457376
+          },
+          {
+            "id": "drtjeh2",
+            "name": "Kunemon",
+            "role": "Melee DPS",
+            "before": 3865.8924798002217,
+            "after": 3939.980293340735,
+            "delta": 74.08781354051325
+          },
+          {
+            "id": "dvshl3g",
+            "name": "Kuzuhamon",
+            "role": "Support",
+            "before": 18598.982928301884,
+            "after": 19121.603305660377,
+            "delta": 522.620377358493
+          },
+          {
+            "id": "dcsfxgo",
+            "name": "Kyubimon",
+            "role": "Support",
+            "before": 3579.688140444441,
+            "after": 3666.304407111112,
+            "delta": 86.61626666667098
+          },
+          {
+            "id": "do7bbps",
+            "name": "Labramon",
+            "role": "Support",
+            "before": 2254.884735833336,
+            "after": 2320.744469166669,
+            "delta": 65.85973333333322
+          },
+          {
+            "id": "d1dkukn",
+            "name": "LadyDevimon",
+            "role": "Hybrid",
+            "before": 9979.544597558148,
+            "after": 10227.975008967906,
+            "delta": 248.43041140975765
+          },
+          {
+            "id": "dwri0vm",
+            "name": "Lalamon",
+            "role": "Support",
+            "before": 2348.0818213501652,
+            "after": 2416.695213227226,
+            "delta": 68.61339187706062
+          },
+          {
+            "id": "d1f6rzc5",
+            "name": "Lanamon",
+            "role": "Support",
+            "before": 8892.85021055553,
+            "after": 8962.102477222194,
+            "delta": 69.25226666666276
+          },
+          {
+            "id": "d1s5h9kq",
+            "name": "Leomon",
+            "role": "Tank",
+            "before": 5212.3975959690815,
+            "after": 5339.11892120376,
+            "delta": 126.72132523467826
+          },
+          {
+            "id": "dytx9gp",
+            "name": "Leomon",
+            "role": "Tank",
+            "before": 4260.495583710654,
+            "after": 4387.216908945333,
+            "delta": 126.72132523467917
+          },
+          {
+            "id": "d1h6b9yz",
+            "name": "Leviamon",
+            "role": "Tank",
+            "before": 16999.574715978313,
+            "after": 17684.22004872106,
+            "delta": 684.645332742748
+          },
+          {
+            "id": "d16lihoe",
+            "name": "Lighdramon",
+            "role": "Melee DPS",
+            "before": 5072.472286888883,
+            "after": 5129.019486888879,
+            "delta": 56.54719999999634
+          },
+          {
+            "id": "dzu1hgw",
+            "name": "Lilamon",
+            "role": "Support",
+            "before": 6705.582960555556,
+            "after": 6854.923493888885,
+            "delta": 149.3405333333285
+          },
+          {
+            "id": "d104y2rc",
+            "name": "Lilithmon",
+            "role": "Caster",
+            "before": 65576.96856076815,
+            "after": 68474.846677717,
+            "delta": 2897.87811694885
+          },
+          {
+            "id": "d1an27y2",
+            "name": "Lillymon",
+            "role": "Support",
+            "before": 6737.85823166666,
+            "after": 6887.6822316666585,
+            "delta": 149.8239999999987
+          },
+          {
+            "id": "d1x2vh0s",
+            "name": "Lopmon",
+            "role": "Melee DPS",
+            "before": 3455.5043672444467,
+            "after": 3528.637433911109,
+            "delta": 73.13306666666222
+          },
+          {
+            "id": "d4nl79b",
+            "name": "LordKnightmon",
+            "role": "Tank",
+            "before": 22125.360512707175,
+            "after": 22935.181772375694,
+            "delta": 809.8212596685189
+          },
+          {
+            "id": "d1y3znrg",
+            "name": "Lotusmon",
+            "role": "Melee DPS",
+            "before": 24807.14731523982,
+            "after": 25485.94414692299,
+            "delta": 678.7968316831684
+          },
+          {
+            "id": "d10wbhm0",
+            "name": "Lowemon",
+            "role": "Melee DPS",
+            "before": 8301.096725561134,
+            "after": 8351.21352556113,
+            "delta": 50.11679999999615
+          },
+          {
+            "id": "d11f2ank",
+            "name": "Lucemon",
+            "role": "Hybrid",
+            "before": 5024.48568910778,
+            "after": 5141.878915544448,
+            "delta": 117.39322643666856
+          },
+          {
+            "id": "dbdeb96",
+            "name": "Lucemon Falldown Mode",
+            "role": "Hybrid",
+            "before": 28295.140981819983,
+            "after": 29046.882711309994,
+            "delta": 751.7417294900115
+          },
+          {
+            "id": "dnmr9hc",
+            "name": "Lucemon Larva",
+            "role": "Support",
+            "before": 19730.666572062088,
+            "after": 20271.67366740577,
+            "delta": 541.0070953436807
+          },
+          {
+            "id": "d1r632k4",
+            "name": "Lucemon: Wild 2nd Mode",
+            "role": "Hybrid",
+            "before": 31312.232008687806,
+            "after": 32097.744368731728,
+            "delta": 785.512360043922
+          },
+          {
+            "id": "d1vjr1ha",
+            "name": "MagnaAngemon",
+            "role": "Support",
+            "before": 5923.326660465122,
+            "after": 6080.398288372092,
+            "delta": 157.0716279069702
+          },
+          {
+            "id": "d14i7xz7",
+            "name": "MagnaDramon",
+            "role": "Tank",
+            "before": 9491.085474008813,
+            "after": 9792.527852863443,
+            "delta": 301.4423788546301
+          },
+          {
+            "id": "d1e8382m",
+            "name": "MagnaGarurumon",
+            "role": "Tank",
+            "before": 12808.575350000006,
+            "after": 13105.76815000001,
+            "delta": 297.19280000000435
+          },
+          {
+            "id": "doa5jy",
+            "name": "Magnamon",
+            "role": "Tank",
+            "before": 7647.5293560000055,
+            "after": 7789.91566714682,
+            "delta": 142.38631114681448
+          },
+          {
+            "id": "d1gh1f4z",
+            "name": "Mailbirdramon",
+            "role": "None",
+            "before": 6830.813401104971,
+            "after": 6987.832804419884,
+            "delta": 157.0194033149137
+          },
+          {
+            "id": "doc0lja",
+            "name": "Mailbirdramon",
+            "role": "Tank",
+            "before": 6801.947273076921,
+            "after": 7027.719099499994,
+            "delta": 225.77182642307253
+          },
+          {
+            "id": "dksl5x6",
+            "name": "Mamemon",
+            "role": "Melee DPS",
+            "before": 14724.375923265561,
+            "after": 15133.296989932223,
+            "delta": 408.9210666666622
+          },
+          {
+            "id": "d1ltfl6m",
+            "name": "Mammothmon",
+            "role": "Tank",
+            "before": 6718.210112444942,
+            "after": 6917.663084222222,
+            "delta": 199.45297177728025
+          },
+          {
+            "id": "dfp8p25",
+            "name": "MarineAngemon",
+            "role": "Support",
+            "before": 7934.211456906075,
+            "after": 8135.530882320451,
+            "delta": 201.31942541437638
+          },
+          {
+            "id": "d1ddyiem",
+            "name": "MarineDevimon",
+            "role": "Tank",
+            "before": 6824.286553914502,
+            "after": 7049.130098676958,
+            "delta": 224.84354476245608
+          },
+          {
+            "id": "deixc9j",
+            "name": "Matadormon",
+            "role": "Melee DPS",
+            "before": 13197.26078829557,
+            "after": 13589.956137190697,
+            "delta": 392.6953488951258
+          },
+          {
+            "id": "d60op71",
+            "name": "MechaNorimon",
+            "role": "Ranged DPS",
+            "before": 9235.161677562273,
+            "after": 9526.035078899335,
+            "delta": 290.8734013370613
+          },
+          {
+            "id": "d1ty5lv4",
+            "name": "MegaDramon",
+            "role": "Ranged DPS",
+            "before": 14916.241643305691,
+            "after": 15298.818094383632,
+            "delta": 382.5764510779409
+          },
+          {
+            "id": "dc6ccei",
+            "name": "MegaKabuterimon",
+            "role": "Tank",
+            "before": 6610.135916851446,
+            "after": 6924.613866190216,
+            "delta": 314.4779493387696
+          },
+          {
+            "id": "d1wxrac1",
+            "name": "MegaSeadramon",
+            "role": "Tank",
+            "before": 6312.82457541529,
+            "after": 6674.290529527993,
+            "delta": 361.465954112703
+          },
+          {
+            "id": "duz8ou1",
+            "name": "Megidramon X",
+            "role": "Melee DPS",
+            "before": 18320.111525751392,
+            "after": 18868.070415873462,
+            "delta": 547.9588901220704
+          },
+          {
+            "id": "d17kebi5",
+            "name": "Meicoomon",
+            "role": "Caster",
+            "before": 16377.143003970014,
+            "after": 16703.443882118332,
+            "delta": 326.3008781483186
+          },
+          {
+            "id": "d1myywqm",
+            "name": "Meicrackmon: Vicious Mode",
+            "role": "Caster",
+            "before": 38180.9283478501,
+            "after": 40284.704973892534,
+            "delta": 2103.7766260424323
+          },
+          {
+            "id": "dk0h906",
+            "name": "Mephismon",
+            "role": "Ranged DPS",
+            "before": 16929.903256428235,
+            "after": 17426.468899581756,
+            "delta": 496.5656431535208
+          },
+          {
+            "id": "dyni2b9",
+            "name": "Meramon",
+            "role": "Ranged DPS",
+            "before": 9727.503766429936,
+            "after": 9969.751236226863,
+            "delta": 242.24746979692645
+          },
+          {
+            "id": "d9dlmxb",
+            "name": "Mercuremon",
+            "role": "Tank",
+            "before": 5138.649629666675,
+            "after": 5207.474429666679,
+            "delta": 68.82480000000396
+          },
+          {
+            "id": "dto9365",
+            "name": "MetalEtemon",
+            "role": "Hybrid",
+            "before": 15037.438884249048,
+            "after": 15402.962924280188,
+            "delta": 365.5240400311395
+          },
+          {
+            "id": "d1bsszap",
+            "name": "MetalGarurumon",
+            "role": "Tank",
+            "before": 8695.841378342546,
+            "after": 8994.557842430937,
+            "delta": 298.71646408839115
+          },
+          {
+            "id": "d1qixi7v",
+            "name": "MetalGarurumon(Black)",
+            "role": "Melee DPS",
+            "before": 18894.401702846477,
+            "after": 19454.33474732627,
+            "delta": 559.9330444797924
+          },
+          {
+            "id": "d1wxjqjk",
+            "name": "MetalGreymon",
+            "role": "Melee DPS",
+            "before": 15149.498320217528,
+            "after": 15575.815860105991,
+            "delta": 426.3175398884632
+          },
+          {
+            "id": "df14eue",
+            "name": "MetalGreymon(Black)",
+            "role": "Melee DPS",
+            "before": 14334.2897865837,
+            "after": 14668.356658652563,
+            "delta": 334.0668720688627
+          },
+          {
+            "id": "d1fwgpzu",
+            "name": "MetalGreymon(C)",
+            "role": "None",
+            "before": 12038.034795000005,
+            "after": 12299.567595000004,
+            "delta": 261.53279999999904
+          },
+          {
+            "id": "d1abt5e5",
+            "name": "MetalSeadramon",
+            "role": "Tank",
+            "before": 10994.3517627677,
+            "after": 11360.525074135094,
+            "delta": 366.1733113673945
+          },
+          {
+            "id": "d1x6jw61",
+            "name": "Metaltyranomon",
+            "role": "Tank",
+            "before": 6620.977999777782,
+            "after": 6811.937999777778,
+            "delta": 190.9599999999955
+          },
+          {
+            "id": "d1kr5ien",
+            "name": "Meteormon",
+            "role": "Tank",
+            "before": 6238.1831173318715,
+            "after": 6502.277810352418,
+            "delta": 264.0946930205464
+          },
+          {
+            "id": "d14o81du",
+            "name": "Mikemon",
+            "role": "Support",
+            "before": 7145.754847777775,
+            "after": 7351.8161811111095,
+            "delta": 206.06133333333491
+          },
+          {
+            "id": "ddkag3n",
+            "name": "Millenniumon",
+            "role": "Hybrid",
+            "before": 18617.298691763735,
+            "after": 18991.630804908502,
+            "delta": 374.3321131447665
+          },
+          {
+            "id": "d11grws9",
+            "name": "MirageGaogamon",
+            "role": "Melee DPS",
+            "before": 20091.758138676945,
+            "after": 20718.238050474072,
+            "delta": 626.479911797127
+          },
+          {
+            "id": "dwy8es3",
+            "name": "MirageGaogamon: BurstMode",
+            "role": "Melee DPS",
+            "before": 31955.000200688915,
+            "after": 32952.55966735556,
+            "delta": 997.5594666666475
+          },
+          {
+            "id": "d12b3taj",
+            "name": "Mojyamon",
+            "role": "Ranged DPS",
+            "before": 9812.126274597564,
+            "after": 10070.53469751676,
+            "delta": 258.4084229191958
+          },
+          {
+            "id": "d1o6sisz",
+            "name": "Monodramon",
+            "role": "Melee DPS",
+            "before": 3479.3317137990052,
+            "after": 3556.0596210325803,
+            "delta": 76.72790723357502
+          },
+          {
+            "id": "d23zl4w",
+            "name": "MugenDramon",
+            "role": "Hybrid",
+            "before": 16100.827879516739,
+            "after": 16494.43346709989,
+            "delta": 393.60558758315165
+          },
+          {
+            "id": "da534d5",
+            "name": "Murmukusmon",
+            "role": "Caster",
+            "before": 62792.27313295656,
+            "after": 64580.52923504219,
+            "delta": 1788.2561020856301
+          },
+          {
+            "id": "d1vofs84",
+            "name": "Mushroomon",
+            "role": "Hybrid",
+            "before": 3426.3311817651665,
+            "after": 3520.1690484318324,
+            "delta": 93.83786666666583
+          },
+          {
+            "id": "d1cg31ad",
+            "name": "Musyamon",
+            "role": "Melee DPS",
+            "before": 8868.614979230855,
+            "after": 9063.184085590266,
+            "delta": 194.5691063594113
+          },
+          {
+            "id": "d1txi0jq",
+            "name": "Myotismon",
+            "role": "Tank",
+            "before": 6168.839529235883,
+            "after": 6351.937735215951,
+            "delta": 183.0982059800681
+          },
+          {
+            "id": "d8w5c5x",
+            "name": "Mystimon",
+            "role": "Hybrid",
+            "before": 10769.412663637262,
+            "after": 11032.046224827998,
+            "delta": 262.63356119073615
+          },
+          {
+            "id": "d9ni39r",
+            "name": "Negamon",
+            "role": "Ranged DPS",
+            "before": 3204.1811591185433,
+            "after": 3275.3072216620876,
+            "delta": 71.12606254354432
+          },
+          {
+            "id": "d1v8wv1g",
+            "name": "NeoDevimon",
+            "role": "Melee DPS",
+            "before": 16987.178730179203,
+            "after": 17591.596918187057,
+            "delta": 604.418188007854
+          },
+          {
+            "id": "d16751fe",
+            "name": "Numemon",
+            "role": "Hybrid",
+            "before": 4607.88025816749,
+            "after": 4708.408074259443,
+            "delta": 100.52781609195335
+          },
+          {
+            "id": "d13ii2t7",
+            "name": "Ogremon",
+            "role": "Melee DPS",
+            "before": 8933.801659590557,
+            "after": 9184.190992923892,
+            "delta": 250.38933333333443
+          },
+          {
+            "id": "d6net83",
+            "name": "Ogudomon(weakened)",
+            "role": "Hybrid",
+            "before": 4653.878841200002,
+            "after": 4696.6516412000055,
+            "delta": 42.77280000000337
+          },
+          {
+            "id": "d1yr220u",
+            "name": "Okuwamon",
+            "role": "Melee DPS",
+            "before": 14482.20717910921,
+            "after": 14887.015389573095,
+            "delta": 404.8082104638852
+          },
+          {
+            "id": "de60lf7",
+            "name": "OmegaShoutmon",
+            "role": "None",
+            "before": 17996.52817066666,
+            "after": 18572.03217066665,
+            "delta": 575.5039999999899
+          },
+          {
+            "id": "d1assrjo",
+            "name": "Ophanimon",
+            "role": "Support",
+            "before": 15261.30521802646,
+            "after": 15572.871335000007,
+            "delta": 311.56611697354674
+          },
+          {
+            "id": "dpbsan4",
+            "name": "Ophanimon Falldown Mode",
+            "role": "Melee DPS",
+            "before": 47979.63118065158,
+            "after": 49558.631865356154,
+            "delta": 1579.0006847045734
+          },
+          {
+            "id": "der4hr2",
+            "name": "Ornismon",
+            "role": "Caster",
+            "before": 72160.63389783283,
+            "after": 82349.42491968226,
+            "delta": 10188.791021849436
+          },
+          {
+            "id": "d153rkba",
+            "name": "Otamamon",
+            "role": "Tank",
+            "before": 1904.4730347222235,
+            "after": 1966.2717013888891,
+            "delta": 61.79866666666567
+          },
+          {
+            "id": "drdz7ff",
+            "name": "OuRyuumon",
+            "role": "Melee DPS",
+            "before": 33129.64222837989,
+            "after": 34181.10860054998,
+            "delta": 1051.4663721700927
+          },
+          {
+            "id": "dx91kvw",
+            "name": "Palmon",
+            "role": "Support",
+            "before": 2379.4678755506607,
+            "after": 2447.0907830396472,
+            "delta": 67.62290748898658
+          },
+          {
+            "id": "d16360sb",
+            "name": "Palmon",
+            "role": "Support",
+            "before": 2385.2356949339223,
+            "after": 2452.8586024229057,
+            "delta": 67.6229074889834
+          },
+          {
+            "id": "dhq58ge",
+            "name": "Palmon[Apocalymon]",
+            "role": "Support",
+            "before": 2385.2356949339223,
+            "after": 2452.8586024229057,
+            "delta": 67.6229074889834
+          },
+          {
+            "id": "dgt4b70",
+            "name": "Palmon[Original]",
+            "role": "Support",
+            "before": 2390.3199114537447,
+            "after": 2457.942818942731,
+            "delta": 67.62290748898613
+          },
+          {
+            "id": "d6w0954",
+            "name": "Panjyamon",
+            "role": "Tank",
+            "before": 6043.812407620103,
+            "after": 6242.265884925451,
+            "delta": 198.45347730534831
+          },
+          {
+            "id": "d11d88nj",
+            "name": "Patamon",
+            "role": "Support",
+            "before": 2893.833753333332,
+            "after": 2958.4940200000005,
+            "delta": 64.66026666666858
+          },
+          {
+            "id": "d1pxujdq",
+            "name": "Patamon",
+            "role": "Support",
+            "before": 2893.833753333332,
+            "after": 2958.4940200000005,
+            "delta": 64.66026666666858
+          },
+          {
+            "id": "d2ly586",
+            "name": "PawnChessmon Black",
+            "role": "Melee DPS",
+            "before": 3743.712500244445,
+            "after": 3816.1689558934518,
+            "delta": 72.45645564900678
+          },
+          {
+            "id": "dtwmlz4",
+            "name": "PawnChessmon White",
+            "role": "Tank",
+            "before": 3110.8912430632627,
+            "after": 3212.0806770255276,
+            "delta": 101.18943396226496
+          },
+          {
+            "id": "dqysmod",
+            "name": "Peckmon",
+            "role": "Melee DPS",
+            "before": 8408.799380316954,
+            "after": 8645.11770675152,
+            "delta": 236.3183264345662
+          },
+          {
+            "id": "d1998y1x",
+            "name": "Petaldramon",
+            "role": "Tank",
+            "before": 7847.0455573333475,
+            "after": 7914.652757333342,
+            "delta": 67.60719999999492
+          },
+          {
+            "id": "d139666q",
+            "name": "Phantomon",
+            "role": "Melee DPS",
+            "before": 13541.729382069967,
+            "after": 13844.018481400008,
+            "delta": 302.2890993300407
+          },
+          {
+            "id": "d10jj674",
+            "name": "Phoenixmon",
+            "role": "Support",
+            "before": 11389.00988666668,
+            "after": 11686.033886666666,
+            "delta": 297.0239999999867
+          },
+          {
+            "id": "d1n1870e",
+            "name": "Phoenixmon",
+            "role": "Hybrid",
+            "before": 14847.651307065335,
+            "after": 15248.440304792484,
+            "delta": 400.78899772714976
+          },
+          {
+            "id": "dohjvwn",
+            "name": "Pickelmon",
+            "role": "Support",
+            "before": 5398.971671666664,
+            "after": 5508.022871666665,
+            "delta": 109.05120000000079
+          },
+          {
+            "id": "d2e4idh",
+            "name": "PicoDevimon",
+            "role": "Hybrid",
+            "before": 3895.2163133848717,
+            "after": 3986.9503829596924,
+            "delta": 91.73406957482075
+          },
+          {
+            "id": "dsylc4y",
+            "name": "PicoDevimon[Apocalymon]",
+            "role": "Ranged DPS",
+            "before": 4103.622837293333,
+            "after": 4191.735370626668,
+            "delta": 88.1125333333348
+          },
+          {
+            "id": "d8ziw6k",
+            "name": "PicoDevimon[Myotismon]",
+            "role": "Support",
+            "before": 3455.5396304588216,
+            "after": 3547.3751196793824,
+            "delta": 91.8354892205607
+          },
+          {
+            "id": "d7c45dj",
+            "name": "PicoDevimon[soulmon]",
+            "role": "Ranged DPS",
+            "before": 4103.622837293333,
+            "after": 4191.735370626668,
+            "delta": 88.1125333333348
+          },
+          {
+            "id": "d1yast50",
+            "name": "Piemon",
+            "role": "Caster",
+            "before": 49558.96336228695,
+            "after": 50166.84103711787,
+            "delta": 607.8776748309174
+          },
+          {
+            "id": "d171l359",
+            "name": "Piyomon",
+            "role": "Ranged DPS",
+            "before": 3778.9240153527785,
+            "after": 3857.763482019445,
+            "delta": 78.83946666666634
+          },
+          {
+            "id": "d1numzqk",
+            "name": "Plesiomon",
+            "role": "Caster",
+            "before": 73694.36521572077,
+            "after": 74876.43780327152,
+            "delta": 1182.0725875507487
+          },
+          {
+            "id": "dymipyb",
+            "name": "Prince Mamemon",
+            "role": "Support",
+            "before": 15602.597251162786,
+            "after": 16037.315390697682,
+            "delta": 434.7181395348962
+          },
+          {
+            "id": "dat9wvx",
+            "name": "Psychemon",
+            "role": "Tank",
+            "before": 2840.8504454293598,
+            "after": 2933.9422570637103,
+            "delta": 93.0918116343505
+          },
+          {
+            "id": "d17l0wih",
+            "name": "Pukumon",
+            "role": "Tank",
+            "before": 9327.220224444432,
+            "after": 9667.76928767124,
+            "delta": 340.54906322680836
+          },
+          {
+            "id": "d19ddu27",
+            "name": "Pumpkinmon",
+            "role": "Support",
+            "before": 6504.401099999998,
+            "after": 6686.6971,
+            "delta": 182.2960000000021
+          },
+          {
+            "id": "dgu3ls1",
+            "name": "Puppetmon",
+            "role": "Melee DPS",
+            "before": 19486.510395809826,
+            "after": 20042.40128105573,
+            "delta": 555.8908852459026
+          },
+          {
+            "id": "d1klwktn",
+            "name": "Qinglongmon",
+            "role": "Support",
+            "before": 7500.318008888888,
+            "after": 7715.592675555549,
+            "delta": 215.2746666666617
+          },
+          {
+            "id": "d1crdcm9",
+            "name": "QueenChessmon",
+            "role": "Support",
+            "before": 8377.88408637874,
+            "after": 8575.49338870433,
+            "delta": 197.60930232558894
+          },
+          {
+            "id": "d4w6oll",
+            "name": "Raguelmon",
+            "role": "Caster",
+            "before": 73258.83797962572,
+            "after": 73302.71785433228,
+            "delta": 43.87987470655935
+          },
+          {
+            "id": "dw94i3k",
+            "name": "Rapidmon",
+            "role": "Ranged DPS",
+            "before": 15670.312693695845,
+            "after": 16069.368427029172,
+            "delta": 399.0557333333272
+          },
+          {
+            "id": "d153jub0",
+            "name": "RaptorDramon",
+            "role": "Melee DPS",
+            "before": 6048.916716178259,
+            "after": 6216.077345776597,
+            "delta": 167.16062959833835
+          },
+          {
+            "id": "d1968bbg",
+            "name": "Raremon",
+            "role": "Hybrid",
+            "before": 3842.820156142777,
+            "after": 3905.6873561427747,
+            "delta": 62.867199999997865
+          },
+          {
+            "id": "d1y9kxx7",
+            "name": "Raremon",
+            "role": "Hybrid",
+            "before": 16695.767221441216,
+            "after": 17065.450584273072,
+            "delta": 369.68336283185636
+          },
+          {
+            "id": "dhki5t6",
+            "name": "Ravemon",
+            "role": "Melee DPS",
+            "before": 20700.662913543943,
+            "after": 21359.99637954726,
+            "delta": 659.3334660033179
+          },
+          {
+            "id": "d1xkgxtr",
+            "name": "Renamon",
+            "role": "Support",
+            "before": 2560.832336383802,
+            "after": 2626.6447823072644,
+            "delta": 65.81244592346229
+          },
+          {
+            "id": "dou0500",
+            "name": "Reppamon",
+            "role": "Melee DPS",
+            "before": 8673.430950476199,
+            "after": 8922.955468748622,
+            "delta": 249.52451827242294
+          },
+          {
+            "id": "d1y9uwls",
+            "name": "RizeGreymon",
+            "role": "Tank",
+            "before": 6303.331405758588,
+            "after": 6513.426289479513,
+            "delta": 210.09488372092528
+          },
+          {
+            "id": "d1itce75",
+            "name": "RookChessmon",
+            "role": "Support",
+            "before": 6196.998328896281,
+            "after": 6360.990342207436,
+            "delta": 163.99201331115455
+          },
+          {
+            "id": "dxepxuv",
+            "name": "Rosemon",
+            "role": "Support",
+            "before": 8212.90282393352,
+            "after": 8406.90978238226,
+            "delta": 194.00695844873917
+          },
+          {
+            "id": "dgckqsy",
+            "name": "Rosemon",
+            "role": "Support",
+            "before": 7669.038173444447,
+            "after": 7862.701640111115,
+            "delta": 193.66346666666777
+          },
+          {
+            "id": "d7we98o",
+            "name": "Rosemon: BurstMode",
+            "role": "Support",
+            "before": 14335.045511111095,
+            "after": 14719.696177777772,
+            "delta": 384.65066666667735
+          },
+          {
+            "id": "dgfbcf6",
+            "name": "Rusttyranomon",
+            "role": "Tank",
+            "before": 18088.71658800001,
+            "after": 18493.04932677779,
+            "delta": 404.332738777779
+          },
+          {
+            "id": "d1kcvgac",
+            "name": "Ryudamon",
+            "role": "Melee DPS",
+            "before": 3272.349432847777,
+            "after": 3347.141166181114,
+            "delta": 74.7917333333371
+          },
+          {
+            "id": "d1swxqha",
+            "name": "SaberLeomon",
+            "role": "Tank",
+            "before": 10232.17561083472,
+            "after": 10562.290901050303,
+            "delta": 330.1152902155827
+          },
+          {
+            "id": "d1rg7qyd",
+            "name": "SaintGalgomon",
+            "role": "Melee DPS",
+            "before": 21692.319423858713,
+            "after": 22270.001807964676,
+            "delta": 577.6823841059631
+          },
+          {
+            "id": "d1vx4a2u",
+            "name": "Sakuyamon",
+            "role": "Support",
+            "before": 8626.004947368418,
+            "after": 8833.781922437673,
+            "delta": 207.77697506925506
+          },
+          {
+            "id": "dttzz0e",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 2370.98540759076,
+            "after": 2431.544948055557,
+            "delta": 60.55954046479701
+          },
+          {
+            "id": "de67gfw",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 2361.9335847222205,
+            "after": 2431.391718055554,
+            "delta": 69.45813333333354
+          },
+          {
+            "id": "d14bu8e3",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 2358.3005181518165,
+            "after": 2418.8974627777793,
+            "delta": 60.596944625962806
+          },
+          {
+            "id": "d1g4crwk",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 2763.705853777777,
+            "after": 2843.8681161716163,
+            "delta": 80.16226239383923
+          },
+          {
+            "id": "d1av420w",
+            "name": "Salamon[BlackGatomon]",
+            "role": "Support",
+            "before": 2416.722399999998,
+            "after": 2486.180533333331,
+            "delta": 69.45813333333308
+          },
+          {
+            "id": "d1otpbm5",
+            "name": "Sangloupmon",
+            "role": "Melee DPS",
+            "before": 5019.645734324604,
+            "after": 5140.248561721864,
+            "delta": 120.60282739725972
+          },
+          {
+            "id": "d14xa5y1",
+            "name": "SaviorHackmon",
+            "role": "Melee DPS",
+            "before": 16593.478357240874,
+            "after": 17008.559690574224,
+            "delta": 415.0813333333499
+          },
+          {
+            "id": "d3wcljc",
+            "name": "Seadramon",
+            "role": "Tank",
+            "before": 3719.6615011634326,
+            "after": 3832.6511078116355,
+            "delta": 112.98960664820288
+          },
+          {
+            "id": "dly041g",
+            "name": "SealsDramon",
+            "role": "Tank",
+            "before": 3742.9056490109874,
+            "after": 3853.3926819780218,
+            "delta": 110.48703296703434
+          },
+          {
+            "id": "d99pexg",
+            "name": "Sefirotmon",
+            "role": "Support",
+            "before": 11509.955822222191,
+            "after": 11580.965688888858,
+            "delta": 71.00986666666722
+          },
+          {
+            "id": "d1bzl66n",
+            "name": "Seraphimon",
+            "role": "Support",
+            "before": 14868.239085510417,
+            "after": 15299.899766081224,
+            "delta": 431.660680570807
+          },
+          {
+            "id": "ds43htf",
+            "name": "ShadowSeraphimon",
+            "role": "Support",
+            "before": 16873.3735515,
+            "after": 17345.847151499995,
+            "delta": 472.4735999999939
+          },
+          {
+            "id": "d1xwpkoe",
+            "name": "Shakkoumon",
+            "role": "Tank",
+            "before": 6163.9702315789455,
+            "after": 6355.415505817172,
+            "delta": 191.44527423822638
+          },
+          {
+            "id": "d1er9wpw",
+            "name": "Sharmamon",
+            "role": "Hybrid",
+            "before": 3711.3493662652622,
+            "after": 3802.349055499447,
+            "delta": 90.99968923418464
+          },
+          {
+            "id": "d1s8sxz0",
+            "name": "Shawujingmon",
+            "role": "Tank",
+            "before": 6165.729004840481,
+            "after": 6321.808343173022,
+            "delta": 156.07933833254083
+          },
+          {
+            "id": "dc3qq4y",
+            "name": "ShineGreymon",
+            "role": "Tank",
+            "before": 11320.609794588634,
+            "after": 11695.549165102153,
+            "delta": 374.93937051351895
+          },
+          {
+            "id": "d12fy5lx",
+            "name": "ShineGreymon: BurstMode",
+            "role": "Tank",
+            "before": 6668.217409638552,
+            "after": 7026.4831494760065,
+            "delta": 358.265739837454
+          },
+          {
+            "id": "dpnbwmt",
+            "name": "Shoutmon",
+            "role": "Tank",
+            "before": 7364.690945000001,
+            "after": 7521.0677449999985,
+            "delta": 156.37679999999727
+          },
+          {
+            "id": "dk0rt4a",
+            "name": "Shoutmon",
+            "role": "Tank",
+            "before": 3891.5626039140006,
+            "after": 4008.3476094266794,
+            "delta": 116.78500551267871
+          },
+          {
+            "id": "dtez47v",
+            "name": "Shoutmon X4",
+            "role": "Tank",
+            "before": 10025.436859555562,
+            "after": 10266.387259555562,
+            "delta": 240.95039999999972
+          },
+          {
+            "id": "d1724t3s",
+            "name": "ShoutmonX2",
+            "role": "Tank",
+            "before": 8392.877056911284,
+            "after": 8613.588206966047,
+            "delta": 220.7111500547635
+          },
+          {
+            "id": "d16kgx3p",
+            "name": "ShoutmonX3",
+            "role": "Tank",
+            "before": 7872.99126,
+            "after": 8067.767259999996,
+            "delta": 194.7759999999962
+          },
+          {
+            "id": "d1weqbhn",
+            "name": "ShoutmonX5",
+            "role": "Tank",
+            "before": 10197.973751999996,
+            "after": 10436.898551999997,
+            "delta": 238.9248000000007
+          },
+          {
+            "id": "d1xkpgqw",
+            "name": "Shutsmon",
+            "role": "Melee DPS",
+            "before": 7337.898412577764,
+            "after": 7407.873879244424,
+            "delta": 69.97546666665949
+          },
+          {
+            "id": "d1071ro4",
+            "name": "Sinduramon",
+            "role": "Hybrid",
+            "before": 9426.555457040016,
+            "after": 9734.996045601922,
+            "delta": 308.4405885619053
+          },
+          {
+            "id": "dkyybp3",
+            "name": "SkullGreymon",
+            "role": "Melee DPS",
+            "before": 10610.996029008338,
+            "after": 10810.696295675001,
+            "delta": 199.70026666666308
+          },
+          {
+            "id": "d8e94af",
+            "name": "SkullMammothmon",
+            "role": "Tank",
+            "before": 9793.800688555555,
+            "after": 10156.485623434894,
+            "delta": 362.68493487933847
+          },
+          {
+            "id": "dqnw5lw",
+            "name": "SkullMeramon",
+            "role": "Melee DPS",
+            "before": 14570.01073976283,
+            "after": 14995.48904092113,
+            "delta": 425.47830115829856
+          },
+          {
+            "id": "d13xrb62",
+            "name": "SkullSatamon",
+            "role": "Hybrid",
+            "before": 11020.685913106354,
+            "after": 11277.386730785913,
+            "delta": 256.7008176795589
+          },
+          {
+            "id": "d1eru6rh",
+            "name": "Slayerdramon",
+            "role": "Melee DPS",
+            "before": 42885.165710354326,
+            "after": 44375.85248776301,
+            "delta": 1490.6867774086859
+          },
+          {
+            "id": "dqhvots",
+            "name": "Soulmon",
+            "role": "Tank",
+            "before": 3843.8155999999976,
+            "after": 3959.776215384619,
+            "delta": 115.96061538462118
+          },
+          {
+            "id": "d1psfpop",
+            "name": "Sparrowmon",
+            "role": "None",
+            "before": 4519.047179999994,
+            "after": 4619.062160609412,
+            "delta": 100.01498060941776
+          },
+          {
+            "id": "d1ypjdkm",
+            "name": "Starmon",
+            "role": "Melee DPS",
+            "before": 8262.907108614403,
+            "after": 8510.256465403843,
+            "delta": 247.3493567894402
+          },
+          {
+            "id": "d1pf6ppm",
+            "name": "Starmons",
+            "role": "Ranged DPS",
+            "before": 5892.000789812947,
+            "after": 6036.824759354413,
+            "delta": 144.82396954146589
+          },
+          {
+            "id": "d1gh9aim",
+            "name": "Starmons",
+            "role": "None",
+            "before": 4360.559782000001,
+            "after": 4452.018982,
+            "delta": 91.45919999999842
+          },
+          {
+            "id": "de7fgxi",
+            "name": "Stingmon",
+            "role": "Support",
+            "before": 4148.650986164915,
+            "after": 4235.964765910349,
+            "delta": 87.31377974543466
+          },
+          {
+            "id": "d4dk33d",
+            "name": "Strikedramon",
+            "role": "Melee DPS",
+            "before": 8661.40014005653,
+            "after": 8888.164412830487,
+            "delta": 226.7642727739567
+          },
+          {
+            "id": "d8zcsxi",
+            "name": "SunFlowmon",
+            "role": "Support",
+            "before": 2516.298740310074,
+            "after": 2574.0863815060884,
+            "delta": 57.78764119601419
+          },
+          {
+            "id": "dm2qz41",
+            "name": "SuperStarmon",
+            "role": "Ranged DPS",
+            "before": 14168.811936366761,
+            "after": 14570.200068234895,
+            "delta": 401.3881318681342
+          },
+          {
+            "id": "d11cl5t4",
+            "name": "Swimmon",
+            "role": "Ranged DPS",
+            "before": 3753.590572711991,
+            "after": 3831.288481053819,
+            "delta": 77.69790834182777
+          },
+          {
+            "id": "d1x4b40e",
+            "name": "Syakomon",
+            "role": "Tank",
+            "before": 2901.1820650854957,
+            "after": 2996.9067203530085,
+            "delta": 95.72465526751284
+          },
+          {
+            "id": "d1ujjycl",
+            "name": "Tanemon",
+            "role": "Support",
+            "before": 1871.996331944446,
+            "after": 1892.4944652777776,
+            "delta": 20.49813333333168
+          },
+          {
+            "id": "d12h9b8e",
+            "name": "TankDramon",
+            "role": "Tank",
+            "before": 5947.062761018822,
+            "after": 6128.9758507198185,
+            "delta": 181.91308970099635
+          },
+          {
+            "id": "dhyyb46",
+            "name": "Taomon",
+            "role": "Support",
+            "before": 5859.934606430154,
+            "after": 5998.522633037693,
+            "delta": 138.58802660753827
+          },
+          {
+            "id": "d1sl5ps8",
+            "name": "Tentomon",
+            "role": "Tank",
+            "before": 2972.6631251384256,
+            "after": 3070.962128460688,
+            "delta": 98.29900332226225
+          },
+          {
+            "id": "dd89h5y",
+            "name": "Terriermon",
+            "role": "Melee DPS",
+            "before": 4068.528777023281,
+            "after": 4150.590151746119,
+            "delta": 82.06137472283808
+          },
+          {
+            "id": "dp2j0lt",
+            "name": "Thunderballmon",
+            "role": "Support",
+            "before": 3689.127007000001,
+            "after": 3793.426314845471,
+            "delta": 104.29930784547014
+          },
+          {
+            "id": "d13bcyba",
+            "name": "TigerVespamon",
+            "role": "Melee DPS",
+            "before": 34180.72478082639,
+            "after": 35733.261038332224,
+            "delta": 1552.5362575058316
+          },
+          {
+            "id": "d1op179x",
+            "name": "Togemon",
+            "role": "Melee DPS",
+            "before": 9384.901058046664,
+            "after": 9635.275458046668,
+            "delta": 250.37440000000424
+          },
+          {
+            "id": "d7q1dfi",
+            "name": "Tonosama Gekomon",
+            "role": "Tank",
+            "before": 6493.318060396041,
+            "after": 6704.687565346534,
+            "delta": 211.36950495049314
+          },
+          {
+            "id": "dkkjn9r",
+            "name": "Toucanmon",
+            "role": "Support",
+            "before": 6974.033494444457,
+            "after": 7029.1446944444515,
+            "delta": 55.111199999994824
+          },
+          {
+            "id": "d7k5lfc",
+            "name": "ToyAgumon",
+            "role": "Hybrid",
+            "before": 1904.61338565233,
+            "after": 1937.985105963096,
+            "delta": 33.37172031076602
+          },
+          {
+            "id": "dxqhxfb",
+            "name": "ToyAgumon",
+            "role": "Tank",
+            "before": 6511.034148184819,
+            "after": 6722.403653135311,
+            "delta": 211.36950495049223
+          },
+          {
+            "id": "d1s7301b",
+            "name": "Tsukaimon",
+            "role": "Support",
+            "before": 2297.2152747252753,
+            "after": 2364.3678021978026,
+            "delta": 67.15252747252725
+          },
+          {
+            "id": "d1yx18bh",
+            "name": "Tsukaimon",
+            "role": "Support",
+            "before": 2301.599802197802,
+            "after": 2368.752329670325,
+            "delta": 67.1525274725227
+          },
+          {
+            "id": "d1dulttt",
+            "name": "Tsukaimon",
+            "role": "Support",
+            "before": 2296.730065934064,
+            "after": 2363.882593406591,
+            "delta": 67.1525274725268
+          },
+          {
+            "id": "d12gle1s",
+            "name": "Turuiemon",
+            "role": "Melee DPS",
+            "before": 8750.777266303254,
+            "after": 8974.521810204946,
+            "delta": 223.74454390169194
+          },
+          {
+            "id": "d1yq7gxc",
+            "name": "Tyilinmon",
+            "role": "Melee DPS",
+            "before": 13405.147542719447,
+            "after": 13812.329398054017,
+            "delta": 407.18185533456926
+          },
+          {
+            "id": "dfi44h3",
+            "name": "Tylomon",
+            "role": "Support",
+            "before": 3471.7483516483508,
+            "after": 3565.4907692307715,
+            "delta": 93.74241758242079
+          },
+          {
+            "id": "d186rzyx",
+            "name": "TyrantKabuterimon",
+            "role": "Caster",
+            "before": 66352.71973375538,
+            "after": 74132.8697622676,
+            "delta": 7780.1500285122165
+          },
+          {
+            "id": "dl514np",
+            "name": "Ulforce V-dramon",
+            "role": "Tank",
+            "before": 19580.19695178082,
+            "after": 20137.11652008808,
+            "delta": 556.9195683072576
+          },
+          {
+            "id": "d1loxbth",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "before": 4165.779454571591,
+            "after": 4259.7728177633435,
+            "delta": 93.9933631917529
+          },
+          {
+            "id": "dfe5oik",
+            "name": "Valdurmon",
+            "role": "Support",
+            "before": 19659.650116850225,
+            "after": 20209.347914207072,
+            "delta": 549.6977973568464
+          },
+          {
+            "id": "d1mk6bi9",
+            "name": "Veedramon",
+            "role": "Tank",
+            "before": 3547.0515220563816,
+            "after": 3654.7859167495862,
+            "delta": 107.73439469320465
+          },
+          {
+            "id": "dpndznr",
+            "name": "Vegiemon",
+            "role": "Support",
+            "before": 3999.558245575222,
+            "after": 4088.3611659292033,
+            "delta": 88.80292035398134
+          },
+          {
+            "id": "dzgt7kb",
+            "name": "Venom Vamdemon",
+            "role": "Tank",
+            "before": 9620.264533922662,
+            "after": 9944.11188896176,
+            "delta": 323.84735503909724
+          },
+          {
+            "id": "dzkw288",
+            "name": "VictoryGreymon",
+            "role": "Melee DPS",
+            "before": 41005.327445708615,
+            "after": 42444.81353842386,
+            "delta": 1439.4860927152477
+          },
+          {
+            "id": "depf51l",
+            "name": "Vikemon",
+            "role": "Tank",
+            "before": 10563.867063964455,
+            "after": 10917.205964575249,
+            "delta": 353.33890061079364
+          },
+          {
+            "id": "dm9fc8r",
+            "name": "WarGreymon",
+            "role": "Melee DPS",
+            "before": 19194.32532312707,
+            "after": 19984.53118957989,
+            "delta": 790.2058664528231
+          },
+          {
+            "id": "dh7f01t",
+            "name": "WarGreymon(Black)",
+            "role": "Melee DPS",
+            "before": 19171.1840404286,
+            "after": 19961.096395524946,
+            "delta": 789.912355096345
+          },
+          {
+            "id": "d1h9g8uj",
+            "name": "WarGrowlmon",
+            "role": "Tank",
+            "before": 6310.145927555557,
+            "after": 6474.831523909447,
+            "delta": 164.6855963538901
+          },
+          {
+            "id": "d8wdrqp",
+            "name": "Waspmon",
+            "role": "Melee DPS",
+            "before": 7846.392945985562,
+            "after": 8050.613745985558,
+            "delta": 204.22079999999642
+          },
+          {
+            "id": "dm4j8cw",
+            "name": "Wendigomon",
+            "role": "Support",
+            "before": 3450.0813033333325,
+            "after": 3547.1637033333323,
+            "delta": 97.08239999999978
+          },
+          {
+            "id": "d1vn0w8",
+            "name": "WereGarurumon",
+            "role": "Tank",
+            "before": 5977.808371650048,
+            "after": 6159.7214613510505,
+            "delta": 181.91308970100272
+          },
+          {
+            "id": "d1g535ae",
+            "name": "WereGarurumon(Black)",
+            "role": "Melee DPS",
+            "before": 13580.830387240987,
+            "after": 13835.425461509332,
+            "delta": 254.59507426834534
+          },
+          {
+            "id": "d7f5i23",
+            "name": "Whamon",
+            "role": "Support",
+            "before": 5569.79323333333,
+            "after": 5721.061499999999,
+            "delta": 151.26826666666875
+          },
+          {
+            "id": "d1p2t419",
+            "name": "Wingdramon",
+            "role": "Melee DPS",
+            "before": 13736.629575279901,
+            "after": 14152.100925444562,
+            "delta": 415.4713501646602
+          },
+          {
+            "id": "dpyhtza",
+            "name": "Witchmon",
+            "role": "Support",
+            "before": 3288.753362333336,
+            "after": 3351.487762333335,
+            "delta": 62.734399999998914
+          },
+          {
+            "id": "d1s9i90b",
+            "name": "Wizardmon",
+            "role": "Caster",
+            "before": 14402.326619500333,
+            "after": 15802.916681396391,
+            "delta": 1400.5900618960586
+          },
+          {
+            "id": "d1epliso",
+            "name": "Wolfmon",
+            "role": "Melee DPS",
+            "before": 11762.303352128878,
+            "after": 11818.226018795549,
+            "delta": 55.92266666667092
+          },
+          {
+            "id": "d1k4vnhv",
+            "name": "Woodmon",
+            "role": "Hybrid",
+            "before": 6737.103760595005,
+            "after": 6907.756560595007,
+            "delta": 170.65280000000166
+          },
+          {
+            "id": "d111bpnq",
+            "name": "Wormmon",
+            "role": "Hybrid",
+            "before": 3743.00404031198,
+            "after": 3841.0992363362807,
+            "delta": 98.09519602430055
+          },
+          {
+            "id": "de5oy2e",
+            "name": "Xuanwumon",
+            "role": "Tank",
+            "before": 24900.058307777166,
+            "after": 25569.402139226528,
+            "delta": 669.3438314493615
+          },
+          {
+            "id": "d10063fw",
+            "name": "Xuanwumon",
+            "role": "Tank",
+            "before": 5930.073804189633,
+            "after": 6127.034157001105,
+            "delta": 196.96035281147215
+          },
+          {
+            "id": "d60dn5t",
+            "name": "Yaksamon",
+            "role": "Melee DPS",
+            "before": 5229.816759666661,
+            "after": 5293.696554666657,
+            "delta": 63.87979499999619
+          },
+          {
+            "id": "d1710e5w",
+            "name": "Z'dGarurumon",
+            "role": "Tank",
+            "before": 23015.208532818546,
+            "after": 23853.86305019308,
+            "delta": 838.6545173745326
+          },
+          {
+            "id": "dc8jatg",
+            "name": "Zanbamon",
+            "role": "Melee DPS",
+            "before": 31854.175021646137,
+            "after": 32935.140820657645,
+            "delta": 1080.9657990115084
+          },
+          {
+            "id": "d9m8x9d",
+            "name": "Zhuqiaomon",
+            "role": "Hybrid",
+            "before": 5205.8884446346665,
+            "after": 5319.395644634663,
+            "delta": 113.50719999999637
+          },
+          {
+            "id": "d1f70bhk",
+            "name": "Zudomon",
+            "role": "Tank",
+            "before": 6255.756429777784,
+            "after": 6533.275922637363,
+            "delta": 277.51949285957835
+          },
+          {
+            "id": "dnvmrhg",
+            "name": "Boltmon",
+            "role": "Melee DPS",
+            "before": 20931.76600968671,
+            "after": 21604.150809686707,
+            "delta": 672.3847999999962
+          },
+          {
+            "id": "dtoq57f",
+            "name": "Elecmon",
+            "role": "Melee DPS",
+            "before": 3796.9813709251125,
+            "after": 3894.234762995594,
+            "delta": 97.25339207048137
+          },
+          {
+            "id": "dwjycr8",
+            "name": "Hackmon",
+            "role": "Melee DPS",
+            "before": 3394.213435679956,
+            "after": 3462.702472224806,
+            "delta": 68.48903654485002
+          },
+          {
+            "id": "dc8zysn",
+            "name": "MachGaogamon",
+            "role": "Melee DPS",
+            "before": 14670.791438820388,
+            "after": 15051.903314536414,
+            "delta": 381.1118757160257
+          },
+          {
+            "id": "d15cu3bt",
+            "name": "Parasimon",
+            "role": "Support",
+            "before": 13752.316244444435,
+            "after": 14139.83571111112,
+            "delta": 387.5194666666848
+          },
+          {
+            "id": "d19hbrag",
+            "name": "Shakkoumon",
+            "role": "Tank",
+            "before": 5342.607954922568,
+            "after": 5475.279160616057,
+            "delta": 132.67120569348936
+          },
+          {
+            "id": "do9w2pq",
+            "name": "Vritramon",
+            "role": "Melee DPS",
+            "before": 9475.457662586685,
+            "after": 9550.049662586682,
+            "delta": 74.59199999999691
+          },
+          {
+            "id": "d1b204a4",
+            "name": "Baalmon",
+            "role": "Caster",
+            "before": 78419.66272731303,
+            "after": 87614.33964921322,
+            "delta": 9194.676921900187
+          },
+          {
+            "id": "d13da2bb",
+            "name": "Sleipmon",
+            "role": "Caster",
+            "before": 59641.85696668003,
+            "after": 60930.63988238146,
+            "delta": 1288.7829157014276
+          },
+          {
+            "id": "dn2dc8s",
+            "name": "Zhuqiaomon",
+            "role": "Caster",
+            "before": 61324.06735399012,
+            "after": 69065.01022147946,
+            "delta": 7740.9428674893425
+          },
+          {
+            "id": "dijnp7z",
+            "name": "Monzaemon",
+            "role": "Hybrid",
+            "before": 5283.367089055556,
+            "after": 5290.812689055553,
+            "delta": 7.445599999997285
+          },
+          {
+            "id": "d1846655",
+            "name": "WaruMonzaemon",
+            "role": "Hybrid",
+            "before": 6459.638077316659,
+            "after": 6605.046077316661,
+            "delta": 145.40800000000127
+          },
+          {
+            "id": "dhs58kt",
+            "name": "Chaos Megidramon",
+            "role": "Tank",
+            "before": 17394.664527472545,
+            "after": 17997.64527472529,
+            "delta": 602.9807472527464
+          },
+          {
+            "id": "d16e4fy1",
+            "name": "White Gale Ornismon",
+            "role": "Support",
+            "before": 18984.418853457362,
+            "after": 19524.737073022214,
+            "delta": 540.3182195648515
+          },
+          {
+            "id": "d17wcc7a",
+            "name": "Obsidian Valor Ulforce V-dramon",
+            "role": "Melee DPS",
+            "before": 37979.42568945015,
+            "after": 39263.02816710113,
+            "delta": 1283.6024776509803
+          },
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "before": 4179.3406027242,
+            "after": 4273.38011437791,
+            "delta": 94.03951165371018
+          },
+          {
+            "id": "d1r6hxc2",
+            "name": "Agumon X",
+            "role": "Ranged DPS",
+            "before": 5377.203363145288,
+            "after": 5468.589757608909,
+            "delta": 91.3863944636214
+          },
+          {
+            "id": "dnwhdoz",
+            "name": "Alphamon Ouryuken",
+            "role": "Melee DPS",
+            "before": 97961.22382961937,
+            "after": 101463.21028775086,
+            "delta": 3501.9864581314905
+          },
+          {
+            "id": "d1k8ts4t",
+            "name": "BlackWarGreymon X",
+            "role": "Melee DPS",
+            "before": 47032.34207621351,
+            "after": 48450.94438651961,
+            "delta": 1418.6023103061016
+          },
+          {
+            "id": "d1dhpfhd",
+            "name": "Gabumon X",
+            "role": "Hybrid",
+            "before": 3382.9112065429517,
+            "after": 3467.559576587006,
+            "delta": 84.64837004405445
+          },
+          {
+            "id": "dionc7u",
+            "name": "Garurumon X",
+            "role": "Tank",
+            "before": 3494.1617340720218,
+            "after": 3601.575628808865,
+            "delta": 107.4138947368433
+          },
+          {
+            "id": "d1hjnjx",
+            "name": "Greymon X",
+            "role": "Melee DPS",
+            "before": 3348.466769141935,
+            "after": 3407.138321928691,
+            "delta": 58.67155278675591
+          },
+          {
+            "id": "d1jinqt3",
+            "name": "Growlmon X",
+            "role": "Tank",
+            "before": 3137.639692095079,
+            "after": 3249.3219030530545,
+            "delta": 111.68221095797526
+          },
+          {
+            "id": "d1rs2wlk",
+            "name": "Guilmon X",
+            "role": "Tank",
+            "before": 2662.8020535469377,
+            "after": 2742.767730838863,
+            "delta": 79.9656772919252
+          },
+          {
+            "id": "d1js7yed",
+            "name": "Lilimon X",
+            "role": "Support",
+            "before": 4133.665500662248,
+            "after": 4232.330931125829,
+            "delta": 98.66543046358129
+          },
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 89257.1163475563,
+            "after": 89412.91707243274,
+            "delta": 155.80072487644793
+          },
+          {
+            "id": "dko51ol",
+            "name": "MetalGarurumon X",
+            "role": "Tank",
+            "before": 13443.687731715396,
+            "after": 13912.281046662996,
+            "delta": 468.59331494760045
+          },
+          {
+            "id": "d1fhvv9z",
+            "name": "MetalGreymon X",
+            "role": "Melee DPS",
+            "before": 4778.24285999114,
+            "after": 4876.055886132041,
+            "delta": 97.81302614090146
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 100284.05906920387,
+            "after": 103887.6228720968,
+            "delta": 3603.563802892939
+          },
+          {
+            "id": "d11bvsf4",
+            "name": "Palmon X",
+            "role": "Hybrid",
+            "before": 4143.29770981021,
+            "after": 4236.882149321867,
+            "delta": 93.58443951165646
+          },
+          {
+            "id": "d14trauw",
+            "name": "Rosemon X",
+            "role": "Support",
+            "before": 19738.388242422592,
+            "after": 20300.442224723472,
+            "delta": 562.0539823008803
+          },
+          {
+            "id": "dhp0omc",
+            "name": "Togemon X",
+            "role": "Support",
+            "before": 2587.232960000002,
+            "after": 2647.9902933333356,
+            "delta": 60.75733333333346
+          },
+          {
+            "id": "dn0vuxa",
+            "name": "Ulforce V-Dramon X",
+            "role": "Hybrid",
+            "before": 59831.24709502556,
+            "after": 61585.3317121177,
+            "delta": 1754.0846170921432
+          },
+          {
+            "id": "d1jpeu3d",
+            "name": "WarGreymon X",
+            "role": "Melee DPS",
+            "before": 47032.34207621351,
+            "after": 48450.94438651961,
+            "delta": 1418.6023103061016
+          },
+          {
+            "id": "dk8fjur",
+            "name": "WarGrowlmon X",
+            "role": "Tank",
+            "before": 6557.48378366446,
+            "after": 6744.648551876375,
+            "delta": 187.16476821191463
+          },
+          {
+            "id": "d6z9a7u",
+            "name": "WereGarurumon X",
+            "role": "Tank",
+            "before": 6190.095090518187,
+            "after": 6379.687152260194,
+            "delta": 189.592061742007
+          },
+          {
+            "id": "d1ajjnwd",
+            "name": "Alphamon Ouryuken",
+            "role": "Tank",
+            "before": 41747.084508606385,
+            "after": 43356.099867914134,
+            "delta": 1609.0153593077484
+          },
+          {
+            "id": "d1vnmxm9",
+            "name": "Mastemon",
+            "role": "Support",
+            "before": 32879.76808318681,
+            "after": 33823.319379890105,
+            "delta": 943.5512967032919
+          },
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "before": 91032.96997976047,
+            "after": 94340.95555443363,
+            "delta": 3307.985574673163
+          },
+          {
+            "id": "dd3xj39",
+            "name": "Ulforce V-Dramon X",
+            "role": "Tank",
+            "before": 49475.935956738824,
+            "after": 51308.985673876894,
+            "delta": 1833.0497171380703
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1njrd4e",
+            "name": "JumboGamemon",
+            "role": "Tank",
+            "before": 22439.858444444468,
+            "after": 22407.3496247241,
+            "delta": -32.5088197203695
+          },
+          {
+            "id": "dwcz5ij",
+            "name": "Kokuwamon",
+            "role": "Melee DPS",
+            "before": 3631.9960186807084,
+            "after": 3589.2747271064304,
+            "delta": -42.721291574277984
+          },
+          {
+            "id": "dfabzxw",
+            "name": "Megidramon",
+            "role": "Caster",
+            "before": 78769.78327690369,
+            "after": 76244.21484299994,
+            "delta": -2525.5684339037543
+          },
+          {
+            "id": "d1a8u0sl",
+            "name": "Ravemon: BurstMode",
+            "role": "Caster",
+            "before": 57464.801856790174,
+            "after": 54416.88389585884,
+            "delta": -3047.917960931336
+          },
+          {
+            "id": "d1uj3d0u",
+            "name": "Sparrowmon",
+            "role": "Ranged DPS",
+            "before": 2763.349312550493,
+            "after": 2663.604350639982,
+            "delta": -99.74496191051094
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [
+          {
+            "id": "dqcps0z",
+            "name": "Angemon",
+            "role": "Support",
+            "before": 5.588275839166812,
+            "after": 5.61721829239466,
+            "delta": 0.028942453227847942
+          },
+          {
+            "id": "d66odwa",
+            "name": "Angewomon",
+            "role": "Support",
+            "before": 5.813104706419587,
+            "after": 5.840543116822363,
+            "delta": 0.027438410402775837
+          },
+          {
+            "id": "dc0pdvu",
+            "name": "Anubimon",
+            "role": "Support",
+            "before": 5.951071391553723,
+            "after": 5.97719466241785,
+            "delta": 0.02612327086412769
+          },
+          {
+            "id": "dj782yu",
+            "name": "Aquilamon",
+            "role": "Support",
+            "before": 5.591733812798202,
+            "after": 5.620676428676544,
+            "delta": 0.028942615878341904
+          },
+          {
+            "id": "dgnvjhe",
+            "name": "Archnemon",
+            "role": "Support",
+            "before": 5.62562955074538,
+            "after": 5.65305583256386,
+            "delta": 0.027426281818479836
+          },
+          {
+            "id": "d14va304",
+            "name": "Bastemon",
+            "role": "Support",
+            "before": 5.405800344466833,
+            "after": 5.433226255868496,
+            "delta": 0.027425911401662617
+          },
+          {
+            "id": "d1u36138",
+            "name": "Big Mamemon",
+            "role": "Support",
+            "before": 5.765063197764529,
+            "after": 5.791175693218723,
+            "delta": 0.026112495454194473
+          },
+          {
+            "id": "ds0vzxi",
+            "name": "Cherrymon",
+            "role": "Support",
+            "before": 5.62139959785816,
+            "after": 5.64883542826264,
+            "delta": 0.027435830404479944
+          },
+          {
+            "id": "d1p8vik",
+            "name": "Cherubimon White",
+            "role": "Support",
+            "before": 5.749542083757112,
+            "after": 5.775656646969867,
+            "delta": 0.026114563212754405
+          },
+          {
+            "id": "d1epigw",
+            "name": "Dobermon",
+            "role": "Support",
+            "before": 5.215299785515898,
+            "after": 5.244226273950983,
+            "delta": 0.028926488435085496
+          },
+          {
+            "id": "di8jip4",
+            "name": "Doggymon",
+            "role": "Support",
+            "before": 5.2231545650803,
+            "after": 5.2520815904538285,
+            "delta": 0.028927025373528537
+          },
+          {
+            "id": "d12lyp36",
+            "name": "Dokugumon",
+            "role": "Support",
+            "before": 5.212724677227538,
+            "after": 5.241650988388661,
+            "delta": 0.028926311161122875
+          },
+          {
+            "id": "d842n8u",
+            "name": "Dokunemon",
+            "role": "Support",
+            "before": 4.934767665826682,
+            "after": 4.96481675634448,
+            "delta": 0.030049090517798582
+          },
+          {
+            "id": "d18gxr8i",
+            "name": "Gatomon",
+            "role": "Support",
+            "before": 5.606236986641932,
+            "after": 5.635180276477773,
+            "delta": 0.02894328983584149
+          },
+          {
+            "id": "dhnylj3",
+            "name": "HiAndromon",
+            "role": "Support",
+            "before": 5.538234416662985,
+            "after": 5.564345415165268,
+            "delta": 0.026110998502282712
+          },
+          {
+            "id": "dtqxlcp",
+            "name": "KnightChessmon Black",
+            "role": "Support",
+            "before": 5.423410191844117,
+            "after": 5.45234935244094,
+            "delta": 0.02893916059682322
+          },
+          {
+            "id": "dvshl3g",
+            "name": "Kuzuhamon",
+            "role": "Support",
+            "before": 5.664849086328382,
+            "after": 5.689428262361288,
+            "delta": 0.024579176032905714
+          },
+          {
+            "id": "dcsfxgo",
+            "name": "Kyubimon",
+            "role": "Support",
+            "before": 5.593487127784096,
+            "after": 5.622429825842048,
+            "delta": 0.028942698057952576
+          },
+          {
+            "id": "do7bbps",
+            "name": "Labramon",
+            "role": "Support",
+            "before": 4.91392370948879,
+            "after": 4.943970626034097,
+            "delta": 0.03004691654530678
+          },
+          {
+            "id": "dwri0vm",
+            "name": "Lalamon",
+            "role": "Support",
+            "before": 5.121220416085629,
+            "after": 5.151286455495336,
+            "delta": 0.0300660394097072
+          },
+          {
+            "id": "dzu1hgw",
+            "name": "Lilamon",
+            "role": "Support",
+            "before": 5.813104706419587,
+            "after": 5.840543116822363,
+            "delta": 0.027438410402775837
+          },
+          {
+            "id": "d1an27y2",
+            "name": "Lillymon",
+            "role": "Support",
+            "before": 5.813104706419587,
+            "after": 5.840543116822363,
+            "delta": 0.027438410402775837
+          },
+          {
+            "id": "dnmr9hc",
+            "name": "Lucemon Larva",
+            "role": "Support",
+            "before": 6.116811639812355,
+            "after": 6.141400442558595,
+            "delta": 0.024588802746239757
+          },
+          {
+            "id": "d1vjr1ha",
+            "name": "MagnaAngemon",
+            "role": "Support",
+            "before": 5.405800344466833,
+            "after": 5.433226255868496,
+            "delta": 0.027425911401662617
+          },
+          {
+            "id": "dfp8p25",
+            "name": "MarineAngemon",
+            "role": "Support",
+            "before": 5.769501434399073,
+            "after": 5.795620918791443,
+            "delta": 0.026119484392370218
+          },
+          {
+            "id": "d14o81du",
+            "name": "Mikemon",
+            "role": "Support",
+            "before": 5.4136547881470864,
+            "after": 5.44258157368284,
+            "delta": 0.02892678553575312
+          },
+          {
+            "id": "d1assrjo",
+            "name": "Ophanimon",
+            "role": "Support",
+            "before": 6.038862305118068,
+            "after": 6.063449691187626,
+            "delta": 0.024587386069558015
+          },
+          {
+            "id": "dx91kvw",
+            "name": "Palmon",
+            "role": "Support",
+            "before": 5.083830882744039,
+            "after": 5.113878501574504,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "d16360sb",
+            "name": "Palmon",
+            "role": "Support",
+            "before": 5.083830882744039,
+            "after": 5.113878501574504,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "dhq58ge",
+            "name": "Palmon[Apocalymon]",
+            "role": "Support",
+            "before": 5.083830882744039,
+            "after": 5.113878501574504,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "dgt4b70",
+            "name": "Palmon[Original]",
+            "role": "Support",
+            "before": 5.083830882744039,
+            "after": 5.113878501574504,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "d11d88nj",
+            "name": "Patamon",
+            "role": "Support",
+            "before": 5.274144153075712,
+            "after": 5.304216934046186,
+            "delta": 0.03007278097047461
+          },
+          {
+            "id": "d1pxujdq",
+            "name": "Patamon",
+            "role": "Support",
+            "before": 5.274144153075712,
+            "after": 5.304216934046186,
+            "delta": 0.03007278097047461
+          },
+          {
+            "id": "d10jj674",
+            "name": "Phoenixmon",
+            "role": "Support",
+            "before": 5.942628376181955,
+            "after": 5.96875008315215,
+            "delta": 0.026121706970195113
+          },
+          {
+            "id": "dohjvwn",
+            "name": "Pickelmon",
+            "role": "Support",
+            "before": 5.62562955074538,
+            "after": 5.65305583256386,
+            "delta": 0.027426281818479836
+          },
+          {
+            "id": "d8ziw6k",
+            "name": "PicoDevimon[Myotismon]",
+            "role": "Support",
+            "before": 2.741817486043914,
+            "after": 2.770332087272601,
+            "delta": 0.028514601228686765
+          },
+          {
+            "id": "dymipyb",
+            "name": "Prince Mamemon",
+            "role": "Support",
+            "before": 5.883536081729934,
+            "after": 5.908122799063697,
+            "delta": 0.024586717333762387
+          },
+          {
+            "id": "d19ddu27",
+            "name": "Pumpkinmon",
+            "role": "Support",
+            "before": 5.621782426788162,
+            "after": 5.649218257192642,
+            "delta": 0.027435830404479944
+          },
+          {
+            "id": "d1klwktn",
+            "name": "Qinglongmon",
+            "role": "Support",
+            "before": 5.408615070294667,
+            "after": 5.437541510341036,
+            "delta": 0.028926440046368462
+          },
+          {
+            "id": "d1crdcm9",
+            "name": "QueenChessmon",
+            "role": "Support",
+            "before": 5.926662157094318,
+            "after": 5.952783442629905,
+            "delta": 0.026121285535587013
+          },
+          {
+            "id": "d1xkgxtr",
+            "name": "Renamon",
+            "role": "Support",
+            "before": 5.228748810912599,
+            "after": 5.258818276393917,
+            "delta": 0.030069465481318502
+          },
+          {
+            "id": "d1itce75",
+            "name": "RookChessmon",
+            "role": "Support",
+            "before": 5.405800344466833,
+            "after": 5.433226255868496,
+            "delta": 0.027425911401662617
+          },
+          {
+            "id": "dxepxuv",
+            "name": "Rosemon",
+            "role": "Support",
+            "before": 5.752652866402326,
+            "after": 5.778764879278055,
+            "delta": 0.026112012875728396
+          },
+          {
+            "id": "dgckqsy",
+            "name": "Rosemon",
+            "role": "Support",
+            "before": 5.766562312389106,
+            "after": 5.792681711038118,
+            "delta": 0.026119398649012027
+          },
+          {
+            "id": "d7we98o",
+            "name": "Rosemon: BurstMode",
+            "role": "Support",
+            "before": 5.903321098232856,
+            "after": 5.92790824821056,
+            "delta": 0.024587149977704392
+          },
+          {
+            "id": "d1vx4a2u",
+            "name": "Sakuyamon",
+            "role": "Support",
+            "before": 5.922877326829534,
+            "after": 5.9489985111227,
+            "delta": 0.026121184293166344
+          },
+          {
+            "id": "dttzz0e",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 5.121220416085629,
+            "after": 5.151286455495336,
+            "delta": 0.0300660394097072
+          },
+          {
+            "id": "de67gfw",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 5.121220416085629,
+            "after": 5.151286455495336,
+            "delta": 0.0300660394097072
+          },
+          {
+            "id": "d14bu8e3",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 5.121220416085629,
+            "after": 5.151286455495336,
+            "delta": 0.0300660394097072
+          },
+          {
+            "id": "d1g4crwk",
+            "name": "Salamon",
+            "role": "Support",
+            "before": 5.2593821955039255,
+            "after": 5.28394199803752,
+            "delta": 0.024559802533594244
+          },
+          {
+            "id": "d1av420w",
+            "name": "Salamon[BlackGatomon]",
+            "role": "Support",
+            "before": 5.121220416085629,
+            "after": 5.151286455495336,
+            "delta": 0.0300660394097072
+          },
+          {
+            "id": "d1bzl66n",
+            "name": "Seraphimon",
+            "role": "Support",
+            "before": 5.982392185320111,
+            "after": 6.008516155698602,
+            "delta": 0.02612397037849057
+          },
+          {
+            "id": "ds43htf",
+            "name": "ShadowSeraphimon",
+            "role": "Support",
+            "before": 5.6333620036880925,
+            "after": 5.657940168142955,
+            "delta": 0.02457816445486216
+          },
+          {
+            "id": "de7fgxi",
+            "name": "Stingmon",
+            "role": "Support",
+            "before": 5.426626408782267,
+            "after": 5.455554072818086,
+            "delta": 0.0289276640358187
+          },
+          {
+            "id": "d8zcsxi",
+            "name": "SunFlowmon",
+            "role": "Support",
+            "before": 5.424324085106194,
+            "after": 5.453263345027418,
+            "delta": 0.02893925992122437
+          },
+          {
+            "id": "dhyyb46",
+            "name": "Taomon",
+            "role": "Support",
+            "before": 5.62562955074538,
+            "after": 5.65305583256386,
+            "delta": 0.027426281818479836
+          },
+          {
+            "id": "dp2j0lt",
+            "name": "Thunderballmon",
+            "role": "Support",
+            "before": 5.593487127784096,
+            "after": 5.622429825842048,
+            "delta": 0.028942698057952576
+          },
+          {
+            "id": "d1s7301b",
+            "name": "Tsukaimon",
+            "role": "Support",
+            "before": 5.048330337703748,
+            "after": 5.078377956534213,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "d1yx18bh",
+            "name": "Tsukaimon",
+            "role": "Support",
+            "before": 5.048330337703748,
+            "after": 5.078377956534213,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "d1dulttt",
+            "name": "Tsukaimon",
+            "role": "Support",
+            "before": 5.048330337703748,
+            "after": 5.078377956534213,
+            "delta": 0.030047618830465694
+          },
+          {
+            "id": "dfi44h3",
+            "name": "Tylomon",
+            "role": "Support",
+            "before": 5.4223965386596245,
+            "after": 5.451335699256448,
+            "delta": 0.02893916059682322
+          },
+          {
+            "id": "dfe5oik",
+            "name": "Valdurmon",
+            "role": "Support",
+            "before": 5.810251009220256,
+            "after": 5.834830185253161,
+            "delta": 0.024579176032905714
+          },
+          {
+            "id": "dpndznr",
+            "name": "Vegiemon",
+            "role": "Support",
+            "before": 5.391541891288259,
+            "after": 5.420468850823009,
+            "delta": 0.028926959534749663
+          },
+          {
+            "id": "dm4j8cw",
+            "name": "Wendigomon",
+            "role": "Support",
+            "before": 5.192861306319118,
+            "after": 5.221786229126661,
+            "delta": 0.02892492280754233
+          },
+          {
+            "id": "d7f5i23",
+            "name": "Whamon",
+            "role": "Support",
+            "before": 5.62161142797267,
+            "after": 5.649047258377149,
+            "delta": 0.027435830404479056
+          },
+          {
+            "id": "dpyhtza",
+            "name": "Witchmon",
+            "role": "Support",
+            "before": 5.598847224372243,
+            "after": 5.627790172459041,
+            "delta": 0.028942948086798204
+          },
+          {
+            "id": "d15cu3bt",
+            "name": "Parasimon",
+            "role": "Support",
+            "before": 5.80761426830469,
+            "after": 5.8337309571097276,
+            "delta": 0.026116688805037924
+          },
+          {
+            "id": "d16e4fy1",
+            "name": "White Gale Ornismon",
+            "role": "Support",
+            "before": 5.752217619980143,
+            "after": 5.776799306851773,
+            "delta": 0.024581686871630204
+          },
+          {
+            "id": "d1js7yed",
+            "name": "Lilimon X",
+            "role": "Support",
+            "before": 5.212099706306741,
+            "after": 5.238818187198994,
+            "delta": 0.026718480892252927
+          },
+          {
+            "id": "d14trauw",
+            "name": "Rosemon X",
+            "role": "Support",
+            "before": 5.7522356992074455,
+            "after": 5.776817386079075,
+            "delta": 0.024581686871629316
+          },
+          {
+            "id": "dhp0omc",
+            "name": "Togemon X",
+            "role": "Support",
+            "before": 4.750807994367341,
+            "after": 4.779109020905708,
+            "delta": 0.02830102653836697
+          },
+          {
+            "id": "d1vnmxm9",
+            "name": "Mastemon",
+            "role": "Support",
+            "before": 6.242911304178447,
+            "after": 6.2675025290747035,
+            "delta": 0.024591224896256314
+          }
+        ],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-07-23T18:36:55.259Z-uw4kkm",
       "finishedAt": "2026-07-23T18:36:55.259Z",
@@ -12232,32 +16634,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-06-25T06:03:25.363Z",
-        "mode": "force",
-        "refreshedCount": 439,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-06-25T04:05:03.924Z-zv65ko",
-      "finishedAt": "2026-06-25T04:05:03.924Z",
-      "mode": "force",
-      "refreshedCount": 439,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-06-25T04:05:03.924Z",
         "mode": "force",
         "refreshedCount": 439,
         "dpsUp": [],
