@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getDigimonThumbUrl } from '../../lib/digimonThumbCache'
+import { getDigimonThumbUrl } from '../lib/digimonThumbCache'
 
 /**
  * Renders a downscaled portrait so the browser does not retain full-res decoded bitmaps
