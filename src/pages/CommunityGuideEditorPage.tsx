@@ -1074,11 +1074,12 @@ export function CommunityGuideEditorPage() {
                       rows={16}
                       placeholder="Write your guide… Use the toolbar for formatting, or **bold**, *italic*, lists, and wiki links."
                     />
-                    <CommunityGuideEditorCursorOverlay
-                      textareaRef={textareaRef}
-                      body={body}
-                      remoteCursors={remoteCursors}
-                    />
+                    {remoteCursors.length > 0 ? (
+                      <CommunityGuideEditorCursorOverlay
+                        textareaRef={textareaRef}
+                        remoteCursors={remoteCursors}
+                      />
+                    ) : null}
                   </div>
                 </label>
               </>

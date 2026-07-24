@@ -100,7 +100,7 @@ export function resimTierEntrySustainedAtFightDuration(
     cfg.baseAttack,
     cfg.attackSpeed,
     cfg.baseCritRateStat,
-    { ...cfg.options, ...communityOpts },
+    { ...cfg.options, ...communityOpts, recordEventLog: false },
   )
 
   return { sustained: sim.dps, sustainedAutoDps: sim.autoDps }

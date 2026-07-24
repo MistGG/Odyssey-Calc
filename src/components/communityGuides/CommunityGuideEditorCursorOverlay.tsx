@@ -1,96 +1,132 @@
-import { useLayoutEffect, useState, type RefObject } from 'react'
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { getTextareaCaretCoordinates } from '../../lib/textareaCaretPosition'
 import type { CommunityGuideRemoteCursor } from '../../hooks/useCommunityGuideEditorCursors'
 
-type PlacedCursor = CommunityGuideRemoteCursor & {
+type PlacedCursor = {
+  userId: string
+  displayName: string
+  color: string
   top: number
   left: number
   height: number
-  visible: boolean
 }
 
-function placeCursor(
-  textarea: HTMLTextAreaElement,
-  cursor: CommunityGuideRemoteCursor,
-): PlacedCursor {
-  const pos = Math.max(
-    0,
-    Math.min(cursor.selectionStart, textarea.value.length),
-  )
-  const coords = getTextareaCaretCoordinates(textarea, pos)
-  const top = coords.top - textarea.scrollTop
-  const left = coords.left - textarea.scrollLeft
-  const visible =
-    cursor.focused &&
-    top >= -coords.height &&
-    top <= textarea.clientHeight &&
-    left >= -4 &&
-    left <= textarea.clientWidth
-
-  return {
-    ...cursor,
-    top,
-    left,
-    height: coords.height,
-    visible,
+function placedEqual(a: PlacedCursor[], b: PlacedCursor[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    const left = a[i]!
+    const right = b[i]!
+    if (
+      left.userId !== right.userId ||
+      left.displayName !== right.displayName ||
+      left.color !== right.color ||
+      left.top !== right.top ||
+      left.left !== right.left ||
+      left.height !== right.height
+    ) {
+      return false
+    }
   }
+  return true
+}
+
+function placeVisibleCursors(
+  textarea: HTMLTextAreaElement,
+  remoteCursors: CommunityGuideRemoteCursor[],
+): PlacedCursor[] {
+  const out: PlacedCursor[] = []
+  for (const cursor of remoteCursors) {
+    if (!cursor.focused) continue
+    const pos = Math.max(0, Math.min(cursor.selectionStart, textarea.value.length))
+    const coords = getTextareaCaretCoordinates(textarea, pos)
+    const top = coords.top - textarea.scrollTop
+    const left = coords.left - textarea.scrollLeft
+    if (
+      top < -coords.height ||
+      top > textarea.clientHeight ||
+      left < -4 ||
+      left > textarea.clientWidth
+    ) {
+      continue
+    }
+    out.push({
+      userId: cursor.userId,
+      displayName: cursor.displayName,
+      color: cursor.color,
+      top,
+      left,
+      height: coords.height,
+    })
+  }
+  return out
 }
 
 export function CommunityGuideEditorCursorOverlay({
   textareaRef,
-  body,
   remoteCursors,
 }: {
   textareaRef: RefObject<HTMLTextAreaElement | null>
-  body: string
   remoteCursors: CommunityGuideRemoteCursor[]
 }) {
   const [placed, setPlaced] = useState<PlacedCursor[]>([])
+  const cursorsRef = useRef(remoteCursors)
+  const rafRef = useRef<number | null>(null)
+
+  useLayoutEffect(() => {
+    cursorsRef.current = remoteCursors
+  }, [remoteCursors])
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current
-    if (!textarea || remoteCursors.length === 0) {
-      setPlaced([])
+    if (!textarea) {
+      setPlaced((prev) => (prev.length === 0 ? prev : []))
       return
     }
 
-    const relayout = () => {
-      setPlaced(remoteCursors.map((cursor) => placeCursor(textarea, cursor)))
+    const scheduleRelayout = () => {
+      if (rafRef.current != null) return
+      rafRef.current = window.requestAnimationFrame(() => {
+        rafRef.current = null
+        const next = placeVisibleCursors(textarea, cursorsRef.current)
+        setPlaced((prev) => (placedEqual(prev, next) ? prev : next))
+      })
     }
 
-    relayout()
-    textarea.addEventListener('scroll', relayout)
-    window.addEventListener('resize', relayout)
+    scheduleRelayout()
+    textarea.addEventListener('scroll', scheduleRelayout, { passive: true })
+    window.addEventListener('resize', scheduleRelayout)
     return () => {
-      textarea.removeEventListener('scroll', relayout)
-      window.removeEventListener('resize', relayout)
+      if (rafRef.current != null) {
+        window.cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      textarea.removeEventListener('scroll', scheduleRelayout)
+      window.removeEventListener('resize', scheduleRelayout)
     }
-  }, [textareaRef, body, remoteCursors])
+  }, [textareaRef, remoteCursors])
 
   if (placed.length === 0) return null
 
   return (
     <div className="community-guides-editor__cursor-layer" aria-hidden="true">
-      {placed.map((cursor) =>
-        cursor.visible ? (
-          <div
-            key={cursor.userId}
-            className="community-guides-editor__remote-cursor"
-            style={{
-              top: cursor.top,
-              left: cursor.left,
-              height: cursor.height,
-              color: cursor.color,
-              ['--cursor-color' as string]: cursor.color,
-            }}
-          >
-            <span className="community-guides-editor__remote-cursor-caret" />
-            <span className="community-guides-editor__remote-cursor-label">
-              {cursor.displayName}
-            </span>
-          </div>
-        ) : null,
-      )}
+      {placed.map((cursor) => (
+        <div
+          key={cursor.userId}
+          className="community-guides-editor__remote-cursor"
+          style={{
+            top: cursor.top,
+            left: cursor.left,
+            height: cursor.height,
+            color: cursor.color,
+            ['--cursor-color' as string]: cursor.color,
+          }}
+        >
+          <span className="community-guides-editor__remote-cursor-caret" />
+          <span className="community-guides-editor__remote-cursor-label">
+            {cursor.displayName}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }

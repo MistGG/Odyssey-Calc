@@ -81,8 +81,32 @@ export function readTierFightDurationResimCacheRoot(): TierFightResimCacheRootV1
   }
 }
 
-export function writeTierFightDurationResimCacheRoot(root: TierFightResimCacheRootV1): void {
+/** Max distinct fight-param buckets retained in memory + localStorage. */
+export const MAX_FIGHT_RESIM_PARAM_KEYS = 4
+
+/** Drop oldest param buckets when over the cap (insertion order via Object.keys). */
+export function trimFightResimParamBuckets(
+  root: TierFightResimCacheRootV1,
+  preferKeepKey?: string,
+): void {
+  const keys = Object.keys(root.byParamKey)
+  if (keys.length <= MAX_FIGHT_RESIM_PARAM_KEYS) return
+  const keep = new Set<string>()
+  if (preferKeepKey && root.byParamKey[preferKeepKey]) keep.add(preferKeepKey)
+  for (let i = keys.length - 1; i >= 0 && keep.size < MAX_FIGHT_RESIM_PARAM_KEYS; i--) {
+    keep.add(keys[i]!)
+  }
+  for (const key of keys) {
+    if (!keep.has(key)) delete root.byParamKey[key]
+  }
+}
+
+export function writeTierFightDurationResimCacheRoot(
+  root: TierFightResimCacheRootV1,
+  preferKeepKey?: string,
+): void {
   try {
+    trimFightResimParamBuckets(root, preferKeepKey)
     localStorage.setItem(TIER_FIGHT_RESIM_CACHE_STORAGE_KEY, JSON.stringify(root))
   } catch {
     /* ignore */

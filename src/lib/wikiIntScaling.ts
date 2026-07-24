@@ -1,5 +1,5 @@
-/** Current in-game Digimon level cap for INT scaling (other stats may scale to 130). */
-export const DIGIMON_INT_LEVEL_CAP = 90
+/** Current in-game Digimon level cap for INT scaling (other stats may scale higher). */
+export const DIGIMON_INT_LEVEL_CAP = 110
 
 /** Flat INT gained per Digimon level: in-game INT = wiki base + this × level (≤ cap). */
 export const WIKI_INT_GAIN_PER_DIGIMON_LEVEL = 24
@@ -18,7 +18,7 @@ export function wikiBaseIntFromStats(stats: { int?: unknown } | null | undefined
 
 /**
  * In-game INT from wiki base + 24 × Digimon level (capped at {@link DIGIMON_INT_LEVEL_CAP}).
- * Example: Plesiomon wiki 1333 at L90 → 1333 + 2160 = 3493.
+ * Example: Plesiomon wiki 1333 at L110 → 1333 + 2640 = 3973.
  */
 export function effectiveIntAtDigimonLevel(
   wikiBaseInt: number,

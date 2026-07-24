@@ -1972,6 +1972,11 @@ export type RotationSimOptions = {
   applySavedGearTrueVice?: boolean
   /** Apply ring / necklace / earring stats from saved gear (Lab). */
   applySavedGearAccessories?: boolean
+  /**
+   * When false, discard the cast/auto event timeline during the sim (tier list / batch scoring).
+   * Default true for Lab graphs.
+   */
+  recordEventLog?: boolean
 }
 
 type RotationSimCoreOpts = {
@@ -1998,6 +2003,8 @@ type RotationSimCoreOpts = {
   customRotationFullCycles?: number
   /** Raw ids from options; resolved to wiki/role skills in `runRotationSim`. */
   customRotationFillerSkillIds?: string[]
+  /** When false, event log is discarded (saves memory for bulk tier sims). */
+  recordEventLog: boolean
 }
 
 function resolveCustomRotationFillerSkillIds(
@@ -2416,6 +2423,7 @@ function runRotationSim(
       console.error('[dpsSim] simulateRotation: step limit exceeded, aborting early')
       break
     }
+    if (!core.recordEventLog && m.events.length > 0) m.events.length = 0
     if (damageHold && m.t >= damageHold.until) damageHold = null
 
     purgeExpiredBuffs(m, m.t)
@@ -2578,6 +2586,7 @@ function runRotationSim(
   const autoTot = m.autoDamageTotal
   const elapsedSec = Math.max(1e-9, m.t)
   const capSec = durationSec
+  if (!core.recordEventLog) m.events.length = 0
 
   return {
     totalDamage: m.totalDamage,
@@ -2618,7 +2627,7 @@ function runRotationSim(
                 100)
             : 0)
         : buffs.totalDpsBuffPct,
-    events: m.events,
+    events: core.recordEventLog ? m.events : [],
   }
   } catch (err) {
     console.error('[dpsSim] runRotationSim failed', err)
@@ -2706,6 +2715,7 @@ function buildRotationSimCore(
     manualSupportOnly: options?.manualSupportOnly === true,
     customRotationFullCycles,
     customRotationFillerSkillIds: (options?.customRotationFiller ?? []).map((row) => row.skillId),
+    recordEventLog: options?.recordEventLog !== false,
   }
 }
 

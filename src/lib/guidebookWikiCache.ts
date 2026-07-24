@@ -120,6 +120,18 @@ function createRevalidatingCache<T>(options: RevalidatingCacheOptions) {
   const memoryFetchedAt = new Map<string, number>()
   const inflight = new Map<string, Promise<T>>()
 
+  const trimMemory = () => {
+    if (memory.size <= MAX_ENTITY_ENTRIES) return
+    const entries = [...memoryFetchedAt.entries()].sort((a, b) => a[1] - b[1])
+    const drop = memory.size - MAX_ENTITY_ENTRIES
+    for (let i = 0; i < drop; i++) {
+      const key = entries[i]?.[0]
+      if (!key) break
+      memory.delete(key)
+      memoryFetchedAt.delete(key)
+    }
+  }
+
   const hydrate = (key: string): T | undefined => {
     const hit = memory.get(key)
     if (hit !== undefined) return hit
@@ -130,6 +142,7 @@ function createRevalidatingCache<T>(options: RevalidatingCacheOptions) {
       memory.set(key, fromEntity)
       const storedAt = guidebookEntityStoredAt(storageKey)
       if (storedAt != null) memoryFetchedAt.set(key, storedAt)
+      trimMemory()
       return fromEntity
     }
 
@@ -140,6 +153,7 @@ function createRevalidatingCache<T>(options: RevalidatingCacheOptions) {
         memory.set(key, fromHttp)
         const httpStoredAt = wikiHttpCacheStoredAt(url)
         if (httpStoredAt != null) memoryFetchedAt.set(key, httpStoredAt)
+        trimMemory()
         return fromHttp
       }
     }
@@ -170,6 +184,7 @@ function createRevalidatingCache<T>(options: RevalidatingCacheOptions) {
             const now = Date.now()
             memory.set(key, value)
             memoryFetchedAt.set(key, now)
+            trimMemory()
             guidebookEntitySet(options.entityKey(key), value)
             inflight.delete(key)
             return value

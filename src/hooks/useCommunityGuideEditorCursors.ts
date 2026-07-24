@@ -27,11 +27,26 @@ type CursorBroadcast = {
   focused: boolean
 }
 
-const CURSOR_BROADCAST_MS = 80
+const CURSOR_BROADCAST_MS = 160
 const CURSOR_STALE_MS = 20_000
+const EMPTY_REMOTE_CURSORS: CommunityGuideRemoteCursor[] = []
 
 function channelName(guideId: string): string {
   return `community-guide-editor:${guideId}`
+}
+
+function cursorPayloadEqual(
+  prev: CommunityGuideRemoteCursor | undefined,
+  next: Omit<CommunityGuideRemoteCursor, 'updatedAt'>,
+): boolean {
+  return Boolean(
+    prev &&
+      prev.selectionStart === next.selectionStart &&
+      prev.selectionEnd === next.selectionEnd &&
+      prev.focused === next.focused &&
+      prev.displayName === next.displayName &&
+      prev.color === next.color,
+  )
 }
 
 export function useCommunityGuideEditorCursors(options: {
@@ -53,6 +68,7 @@ export function useCommunityGuideEditorCursors(options: {
   const pendingRef = useRef<CursorBroadcast | null>(null)
   const flushTimerRef = useRef<number | null>(null)
   const displayNameRef = useRef(displayName)
+  const lastSentRef = useRef<CursorBroadcast | null>(null)
 
   useEffect(() => {
     displayNameRef.current = displayName
@@ -72,6 +88,12 @@ export function useCommunityGuideEditorCursors(options: {
       }
       const idx = prev.findIndex((c) => c.userId === next.userId)
       if (idx === -1) return [...prev, next]
+      const existing = prev[idx]
+      if (cursorPayloadEqual(existing, next)) {
+        // Refresh stale timer without allocating a new array when nothing moved.
+        existing.updatedAt = next.updatedAt
+        return prev
+      }
       const copy = prev.slice()
       copy[idx] = next
       return copy
@@ -79,7 +101,10 @@ export function useCommunityGuideEditorCursors(options: {
   }, [userId])
 
   const removeRemote = useCallback((remoteUserId: string) => {
-    setRemoteCursors((prev) => prev.filter((c) => c.userId !== remoteUserId))
+    setRemoteCursors((prev) => {
+      if (!prev.some((c) => c.userId === remoteUserId)) return prev
+      return prev.filter((c) => c.userId !== remoteUserId)
+    })
   }, [])
 
   useEffect(() => {
@@ -133,9 +158,9 @@ export function useCommunityGuideEditorCursors(options: {
         window.clearTimeout(flushTimerRef.current)
         flushTimerRef.current = null
       }
+      lastSentRef.current = null
       channelRef.current = null
       void supabase.removeChannel(channel)
-      queueMicrotask(() => setRemoteCursors([]))
     }
   }, [enabled, supabase, guideId, userId, myColor, upsertRemote, removeRemote])
 
@@ -145,6 +170,18 @@ export function useCommunityGuideEditorCursors(options: {
     const channel = channelRef.current
     if (!payload || !channel) return
     pendingRef.current = null
+
+    const last = lastSentRef.current
+    if (
+      last &&
+      last.selectionStart === payload.selectionStart &&
+      last.selectionEnd === payload.selectionEnd &&
+      last.focused === payload.focused
+    ) {
+      return
+    }
+
+    lastSentRef.current = payload
     lastBroadcastRef.current = Date.now()
     void channel.send({
       type: 'broadcast',
@@ -185,7 +222,7 @@ export function useCommunityGuideEditorCursors(options: {
 
   return {
     myColor,
-    remoteCursors: enabled ? remoteCursors : [],
+    remoteCursors: enabled ? remoteCursors : EMPTY_REMOTE_CURSORS,
     publishCursor,
   }
 }

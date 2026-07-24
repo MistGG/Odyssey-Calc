@@ -25,6 +25,7 @@ import {
   clearTierFightDurationResimCacheStorage,
   communityRotationsMapFingerprint,
   readTierFightDurationResimCacheRoot,
+  trimFightResimParamBuckets,
   writeTierFightDurationResimCacheRoot,
   type TierFightResimCacheRootV1,
 } from '../lib/tierListFightDurationResimCacheStorage'
@@ -63,6 +64,7 @@ import {
   type TierListCache,
   type TierListMode,
 } from '../lib/tierList'
+import { DigimonThumbImg } from '../components/DigimonThumbImg'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import {
   alternateStructureListStub,
@@ -1192,12 +1194,15 @@ export function TierListPage() {
               ? {
                   v: 1,
                   revision: stored.revision,
-                  byParamKey: structuredClone(stored.byParamKey) as TierFightResimCacheRootV1['byParamKey'],
+                  // Shallow-copy buckets only — avoid structuredClone of the whole tree.
+                  byParamKey: { ...stored.byParamKey },
                 }
               : { v: 1, revision: fightResimRevision, byParamKey: {} }
+          trimFightResimParamBuckets(root)
           fightResimCacheRef.current = root
         }
         const bucket = root.byParamKey[paramKey] ?? (root.byParamKey[paramKey] = {})
+        trimFightResimParamBuckets(root, paramKey)
 
         for (const [id, e] of Object.entries(out)) {
           const base = e.dpsCategoryScores
@@ -1276,10 +1281,17 @@ export function TierListPage() {
     const root = fightResimCacheRef.current
     if (!root || root.revision !== fightResimRevision) return
     if (Object.keys(root.byParamKey).length === 0) return
+    const preferKey = buildFightResimParamKey({
+      durationSec: clampTierFightDurationSecFree(fightDurationAppliedSec),
+      forceAutoCrit: dpsForceAutoCrit,
+      perfectAtClone: dpsPerfectAtClone,
+      autoAnimCancel: dpsAutoAnimCancel,
+      targetEnemyAttributeTrim: dpsTargetEnemyAttribute.trim(),
+    })
     const t = window.setTimeout(() => {
       const latest = fightResimCacheRef.current
       if (latest && latest.revision === fightResimRevision) {
-        writeTierFightDurationResimCacheRoot(latest)
+        writeTierFightDurationResimCacheRoot(latest, preferKey)
       }
     }, 450)
     return () => window.clearTimeout(t)
@@ -2280,7 +2292,7 @@ export function TierListPage() {
                                         >
                                           {icon ? (
                                             <span className="tier-entry-thumb-wrap">
-                                              <img src={icon} alt="" loading="lazy" />
+                                              <DigimonThumbImg key={icon} src={icon} />
                                             </span>
                                           ) : (
                                             <span className="tier-entry-fallback">{e.name.slice(0, 2)}</span>
