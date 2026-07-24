@@ -3,10 +3,10 @@ import type { WikiDigimonDetail, WikiDigimonSkin } from '../types/wikiApi'
 import {
   alternateStructureBracketRole,
   alternateStructureListStub,
+  bracketRoleToWikiRole,
   findAlternateStructureSkinByIcon,
   isAlternateStructureSkin,
 } from './digimonAlternateStructure'
-import { normalizeWikiRole } from './digimonRoleSkills'
 import { fetchWikiDigimonCatalog } from './meterRoleBuckets'
 
 export type EffectiveDigimonIdentity = {
@@ -83,31 +83,17 @@ function alternateResolutionCacheKey(
   return `${parentDigimonId}|${iconId}|${[...skillKeys].sort().join(',')}`
 }
 
-function bracketRoleToWikiRole(bracket: string, parentRole: string): string {
-  const tag = bracket.trim().toLowerCase()
-  if (tag === 'healer') return 'Support'
-  if (tag === 'tank') return 'Tank'
-  if (tag === 'caster') return 'Caster'
-  if (tag === 'hybrid') return 'Hybrid'
-  if (tag === 'dps') {
-    const parent = normalizeWikiRole(parentRole)
-    if (parent.includes('ranged')) return 'Ranged DPS'
-    if (parent.includes('melee')) return 'Melee DPS'
-    return 'Melee DPS'
-  }
-  return bracket
-}
-
 function identityFromSkin(
   parentDetail: WikiDigimonDetail,
   skin: WikiDigimonSkin,
   iconId: string,
+  overrideRole = '',
 ): ResolvedAlternate {
   const stub = alternateStructureListStub(parentDetail, skin)
   const bracket = alternateStructureBracketRole(skin.name)
   const wikiRole = bracket
     ? bracketRoleToWikiRole(bracket, parentDetail.role)
-    : stub.role || parentDetail.role
+    : overrideRole.trim() || stub.role || parentDetail.role
   return {
     digimonId: stub.id,
     digimonName: stub.name,
@@ -161,10 +147,14 @@ function alternateStructureSkillScore(
 
   let parentExclusive = 0
   let overrideExclusive = 0
+  let overrideHits = 0
+  let parentHits = 0
 
   for (const key of memberSkillKeys) {
     const inParent = parentSkills.has(key)
     const inOverride = overrideSkills.has(key)
+    if (inParent) parentHits += 1
+    if (inOverride) overrideHits += 1
     if (inParent && !inOverride) parentExclusive += 1
     if (inOverride && !inParent) overrideExclusive += 1
   }
@@ -176,8 +166,15 @@ function alternateStructureSkillScore(
     if (inOverride && !inParent) overrideExclusive += 1
   }
 
-  if (parentExclusive > 0) return 0
-  return overrideExclusive
+  // Prefer the kit with more exclusive skill hits. Same-model alts (Omegamon / Ulforce X)
+  // share skill names but use distinct skill ids — id exclusivity is enough.
+  if (overrideExclusive > parentExclusive) return overrideExclusive - parentExclusive
+  if (overrideExclusive > 0 && parentExclusive === 0) return overrideExclusive
+  // All recorded skills belong to the override kit (and none are parent-only).
+  if (overrideHits > 0 && parentExclusive === 0 && overrideHits >= parentHits) {
+    return overrideHits
+  }
+  return 0
 }
 
 function skillsSupportAlternateStructure(
@@ -269,8 +266,10 @@ export async function resolveEffectiveDigimonIdentity(params: {
   const usingDefaultPortrait = !iconId || (effectiveParentModelId && iconId === effectiveParentModelId)
 
   let matchedSkin: WikiDigimonSkin | null = null
+  let matchedByIcon = false
   if (!usingDefaultPortrait && iconId) {
     matchedSkin = findAlternateStructureSkinByIcon(parentDetail, iconId)
+    matchedByIcon = Boolean(matchedSkin)
   }
   if (!matchedSkin && skillKeys.length) {
     matchedSkin = await findBestAlternateStructureSkinBySkills(parentDetail, skillKeys)
@@ -280,14 +279,18 @@ export async function resolveEffectiveDigimonIdentity(params: {
     const overrideDetail = await fetchParentDetail(matchedSkin.override_id.trim())
     const skinIcon = (matchedSkin.override_model ?? matchedSkin.model_id ?? '').trim()
     const resolvedIcon = iconId || skinIcon || null
-    if (
+    // Distinct-model skins can be trusted from portrait alone. Same-model alts
+    // (Mastemon / Alphamon Ouryuken / Omegamon / Ulforce X) must prove via skill kit.
+    const skillsOk = Boolean(
       overrideDetail &&
-      skillsSupportAlternateStructure(skillKeys, parentDetail, overrideDetail)
-    ) {
+        skillsSupportAlternateStructure(skillKeys, parentDetail, overrideDetail),
+    )
+    if (overrideDetail && (matchedByIcon || skillsOk)) {
       const resolved = identityFromSkin(
         parentDetail,
         matchedSkin,
         resolvedIcon || iconId || skinIcon,
+        overrideDetail.role ?? '',
       )
       alternateResolutionCache.set(cacheKey, resolved)
       catalog = await fetchWikiDigimonCatalog()

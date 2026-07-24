@@ -126,25 +126,32 @@ function findAlternateStructureSkinByIcon(detail: WikiDetail, iconId: string): W
 }
 
 function bracketRoleToWikiRole(bracket: string, parentRole: string): string {
-  const tag = bracket.trim().toLowerCase()
-  if (tag === 'healer') return 'Support'
+  const tag = bracket.trim().toLowerCase().replace(/\s+/g, ' ')
+  if (tag === 'healer' || tag === 'support') return 'Support'
   if (tag === 'tank') return 'Tank'
   if (tag === 'caster') return 'Caster'
   if (tag === 'hybrid') return 'Hybrid'
+  if (tag === 'melee' || tag === 'melee dps') return 'Melee DPS'
+  if (tag === 'ranged' || tag === 'ranged dps') return 'Ranged DPS'
   if (tag === 'dps') {
     const parent = normalizeWikiRole(parentRole)
     if (parent.includes('ranged')) return 'Ranged DPS'
     if (parent.includes('melee')) return 'Melee DPS'
     return 'Melee DPS'
   }
-  return bracket
+  return bracket.trim()
 }
 
-function identityFromSkin(parentDetail: WikiDetail, skin: WikiSkin, iconId: string): ResolvedAlternate {
+function identityFromSkin(
+  parentDetail: WikiDetail,
+  skin: WikiSkin,
+  iconId: string,
+  overrideRole = '',
+): ResolvedAlternate {
   const bracket = alternateStructureBracketRole(skin.name)
   const wikiRole = bracket
     ? bracketRoleToWikiRole(bracket, String(parentDetail.role ?? ''))
-    : String(parentDetail.role ?? '')
+    : overrideRole.trim() || String(parentDetail.role ?? '')
   return {
     digimonId: (skin.override_id ?? '').trim(),
     digimonName: (skin.override_name ?? skin.name ?? parentDetail.name ?? '').trim(),
@@ -198,10 +205,14 @@ function alternateStructureSkillScore(
 
   let parentExclusive = 0
   let overrideExclusive = 0
+  let overrideHits = 0
+  let parentHits = 0
 
   for (const key of memberSkillKeys) {
     const inParent = parentSkills.has(key)
     const inOverride = overrideSkills.has(key)
+    if (inParent) parentHits += 1
+    if (inOverride) overrideHits += 1
     if (inParent && !inOverride) parentExclusive += 1
     if (inOverride && !inParent) overrideExclusive += 1
   }
@@ -213,8 +224,12 @@ function alternateStructureSkillScore(
     if (inOverride && !inParent) overrideExclusive += 1
   }
 
-  if (parentExclusive > 0) return 0
-  return overrideExclusive
+  if (overrideExclusive > parentExclusive) return overrideExclusive - parentExclusive
+  if (overrideExclusive > 0 && parentExclusive === 0) return overrideExclusive
+  if (overrideHits > 0 && parentExclusive === 0 && overrideHits >= parentHits) {
+    return overrideHits
+  }
+  return 0
 }
 
 function skillsSupportAlternateStructure(
@@ -306,8 +321,10 @@ export async function resolveEffectiveDigimonIdentity(params: {
   const usingDefaultPortrait = !iconId || (effectiveParentModelId && iconId === effectiveParentModelId)
 
   let matchedSkin: WikiSkin | null = null
+  let matchedByIcon = false
   if (!usingDefaultPortrait && iconId) {
     matchedSkin = findAlternateStructureSkinByIcon(parentDetail, iconId)
+    matchedByIcon = Boolean(matchedSkin)
   }
   if (!matchedSkin && skillKeys.length) {
     matchedSkin = await findBestAlternateStructureSkinBySkills(parentDetail, skillKeys)
@@ -317,11 +334,17 @@ export async function resolveEffectiveDigimonIdentity(params: {
     const overrideDetail = await fetchWikiDetail(matchedSkin.override_id.trim())
     const skinIcon = (matchedSkin.override_model ?? matchedSkin.model_id ?? '').trim()
     const resolvedIcon = iconId || skinIcon || null
-    if (
+    const skillsOk = Boolean(
       overrideDetail &&
-      skillsSupportAlternateStructure(skillKeys, parentDetail, overrideDetail)
-    ) {
-      const resolved = identityFromSkin(parentDetail, matchedSkin, resolvedIcon || iconId || skinIcon)
+        skillsSupportAlternateStructure(skillKeys, parentDetail, overrideDetail),
+    )
+    if (overrideDetail && (matchedByIcon || skillsOk)) {
+      const resolved = identityFromSkin(
+        parentDetail,
+        matchedSkin,
+        resolvedIcon || iconId || skinIcon,
+        String(overrideDetail.role ?? ''),
+      )
       alternateResolutionCache.set(cacheKey, resolved)
       return resolved
     }

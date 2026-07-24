@@ -63,9 +63,9 @@ export function wikiRoleToBucket(role: string | null | undefined): MeterRoleBuck
 
   const norm = normalizeWikiRole(role)
 
-  if (norm === 'melee dps') return 'melee'
+  if (norm === 'melee dps' || norm === 'melee') return 'melee'
 
-  if (norm === 'ranged dps') return 'ranged'
+  if (norm === 'ranged dps' || norm === 'ranged') return 'ranged'
 
   if (norm === 'caster') return 'caster'
 
@@ -73,7 +73,7 @@ export function wikiRoleToBucket(role: string | null | undefined): MeterRoleBuck
 
   if (norm === 'tank') return 'tank'
 
-  if (norm === 'support') return 'healer'
+  if (norm === 'support' || norm === 'healer') return 'healer'
 
   return null
 

@@ -127,21 +127,27 @@ function applyAlternateStructureToMember(
   const top = memberTopDigimonUsed(member, undefined, partyMembers)
   if (!top) return
   const parentId = effective.parentDigimonId?.trim() || top.digimonId.trim()
+  const overrideId = effective.digimonId.trim()
+  if (!overrideId) return
   for (const dg of member.digimons ?? []) {
     if (dg.digimonId?.trim() !== parentId) continue
+    // Rewrite to override id so role lookups (wiki catalog / leaderboard) use the
+    // alternate structure role instead of the parent species role.
+    dg.digimonId = overrideId
     dg.digimonName = effective.digimonName
     if (effective.iconId) {
       dg.iconId = effective.iconId
-      dg.portraitUrl = digimonPortraitUrl(effective.iconId, effective.digimonId, effective.digimonName)
+      dg.portraitUrl = digimonPortraitUrl(effective.iconId, overrideId, effective.digimonName)
     }
   }
   if ((member.currentDigimonId?.trim() || '') === parentId) {
+    member.currentDigimonId = overrideId
     member.currentDigimonName = effective.digimonName
     if (effective.iconId) {
       member.portraitIconId = effective.iconId
       member.portraitUrl = digimonPortraitUrl(
         effective.iconId,
-        effective.digimonId,
+        overrideId,
         effective.digimonName,
       )
     }

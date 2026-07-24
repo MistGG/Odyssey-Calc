@@ -12,7 +12,10 @@ const ROLE_BUCKETS = ['melee', 'ranged', 'caster', 'hybrid', 'tank', 'healer'] a
 type RoleBucket = (typeof ROLE_BUCKETS)[number]
 
 const MIN_PARTY_DAMAGE_SHARE = 0.02
-const PARTY_UPLOAD_DEDUPE_WINDOW_SEC = 10
+/** How far apart party uploads of the same clear may be and still merge. */
+const PARTY_UPLOAD_DEDUPE_WINDOW_SEC = 30 * 60
+/** Meter duration drift (Mist 72s vs Tirweth 70s) still counts as one run. */
+const PARTY_DURATION_TOLERANCE_SEC = 5
 /** When the in-game clear time and meter session diverge by at least this, DPS uses the in-game clock. */
 const DPS_CLEAR_TIME_GAP_SEC = 30
 const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
@@ -53,6 +56,7 @@ type StoredMember = {
   memberKey?: string
   displayLabel?: string
   tamerName?: string
+  isSelf?: boolean
   totalDamage?: number
   durationSec?: number
   currentDigimonId?: string | null
@@ -113,12 +117,12 @@ function normalizeWikiRole(role: string | null | undefined): string {
 
 function wikiRoleToBucket(role: string | null | undefined): RoleBucket | null {
   const norm = normalizeWikiRole(role)
-  if (norm === 'melee dps') return 'melee'
-  if (norm === 'ranged dps') return 'ranged'
+  if (norm === 'melee dps' || norm === 'melee') return 'melee'
+  if (norm === 'ranged dps' || norm === 'ranged') return 'ranged'
   if (norm === 'caster') return 'caster'
   if (norm === 'hybrid') return 'hybrid'
   if (norm === 'tank') return 'tank'
-  if (norm === 'support') return 'healer'
+  if (norm === 'support' || norm === 'healer') return 'healer'
   return null
 }
 
@@ -146,38 +150,181 @@ function normalizePlayerKey(member: StoredMember): string {
   return raw.toLowerCase()
 }
 
+function partyPlayerSetKey(members: StoredMember[]): string {
+  return members
+    .map((m) => normalizePlayerKey(m))
+    .filter(Boolean)
+    .sort()
+    .join('\u0001')
+}
+
 function buildPartyRunFingerprint(
   dungeonId: string,
   difficultyId: number,
   durationSec: number,
   members: StoredMember[],
 ): string {
-  const players = members
-    .map((m) => normalizePlayerKey(m))
-    .filter(Boolean)
-    .sort()
+  const players = partyPlayerSetKey(members)
   const dur = Math.max(0, Math.round(durationSec))
-  return `${dungeonId.trim()}:${difficultyId}:${dur}:${players.join('\u0001')}`
+  return `${dungeonId.trim()}:${difficultyId}:${dur}:${players}`
 }
 
-async function findDuplicatePartyParseInWindow(
+/**
+ * Prefer each player's isSelf kit when merging peer uploads of the same clear.
+ * Peer party_skill can lie about alternate-structure skill ids/names (e.g. Mastemon healer).
+ */
+function mergePartyPayloads(canonical: DungeonPayload, incoming: DungeonPayload): DungeonPayload {
+  const canonMembers = Array.isArray(canonical.members) ? canonical.members : []
+  const inMembers = Array.isArray(incoming.members) ? incoming.members : []
+  const byKey = new Map<string, StoredMember>()
+
+  for (const member of canonMembers) {
+    const key = normalizePlayerKey(member)
+    if (key) byKey.set(key, member)
+  }
+
+  for (const member of inMembers) {
+    const key = normalizePlayerKey(member)
+    if (!key) continue
+    const existing = byKey.get(key)
+    if (!existing) {
+      byKey.set(key, member)
+      continue
+    }
+    if (member.isSelf === true && existing.isSelf !== true) {
+      byKey.set(key, member)
+    } else if (member.isSelf === true && existing.isSelf === true) {
+      // Keep canonical isSelf row.
+    } else if (member.isSelf !== true && existing.isSelf === true) {
+      // Keep authoritative isSelf row.
+    } else if (memberDamageTotal(member) > memberDamageTotal(existing)) {
+      // Neither isSelf — prefer the healthier damage attribution.
+      byKey.set(key, member)
+    }
+  }
+
+  const mergedMembers: StoredMember[] = []
+  const seen = new Set<string>()
+  for (const member of canonMembers) {
+    const key = normalizePlayerKey(member)
+    if (!key || seen.has(key)) continue
+    const chosen = byKey.get(key)
+    if (chosen) {
+      mergedMembers.push(chosen)
+      seen.add(key)
+    }
+  }
+  for (const member of inMembers) {
+    const key = normalizePlayerKey(member)
+    if (!key || seen.has(key)) continue
+    const chosen = byKey.get(key)
+    if (chosen) {
+      mergedMembers.push(chosen)
+      seen.add(key)
+    }
+  }
+
+  const canonRaid = Math.max(0, Number(canonical.raidTotalDamage) || 0)
+  const inRaid = Math.max(0, Number(incoming.raidTotalDamage) || 0)
+
+  return {
+    ...canonical,
+    members: mergedMembers,
+    raidTotalDamage: Math.max(canonRaid, inRaid) || canonical.raidTotalDamage,
+    dungeon: canonical.dungeon ?? incoming.dungeon,
+    sessionDurationSec: canonical.sessionDurationSec ?? incoming.sessionDurationSec,
+  }
+}
+
+async function findSoftDuplicatePartyParseInWindow(
   supabase: ReturnType<typeof createClient>,
-  fingerprint: string,
-  excludeParseId: string,
+  params: {
+    dungeonId: string
+    difficultyId: number
+    durationSec: number
+    members: StoredMember[]
+    excludeParseId: string
+    createdAt: string
+  },
 ): Promise<string | null> {
-  const since = new Date(Date.now() - PARTY_UPLOAD_DEDUPE_WINDOW_SEC * 1000).toISOString()
+  const playerKey = partyPlayerSetKey(params.members)
+  if (!playerKey) return null
+
+  const centerMs = new Date(params.createdAt).getTime()
+  if (!Number.isFinite(centerMs)) return null
+  const since = new Date(centerMs - PARTY_UPLOAD_DEDUPE_WINDOW_SEC * 1000).toISOString()
+  const until = new Date(centerMs + PARTY_UPLOAD_DEDUPE_WINDOW_SEC * 1000).toISOString()
+
   const { data, error } = await supabase
     .from('meter_parses')
-    .select('id')
+    .select('id, created_at, duration_sec, payload')
     .eq('parse_kind', 'dungeon_party')
-    .eq('party_fingerprint', fingerprint)
-    .neq('id', excludeParseId)
+    .eq('dungeon_id', params.dungeonId)
+    .eq('difficulty_id', params.difficultyId)
+    .neq('id', params.excludeParseId)
     .gte('created_at', since)
+    .lte('created_at', until)
     .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
-  if (error || !data?.id) return null
-  return data.id as string
+    .limit(80)
+
+  if (error || !data?.length) return null
+
+  const dur = Math.max(0, Math.round(params.durationSec))
+  type Candidate = {
+    id: string
+    createdAtMs: number
+    durationDelta: number
+    hasEntries: boolean
+    broken: boolean
+  }
+  const candidates: Candidate[] = []
+
+  for (const row of data) {
+    const payload = (row.payload ?? {}) as DungeonPayload
+    const members = payload.members ?? []
+    if (partyPlayerSetKey(members) !== playerKey) continue
+    const otherDur = Math.max(
+      0,
+      Math.round(sessionDuration(payload, Number(row.duration_sec) || 0, members)),
+    )
+    const durationDelta = Math.abs(otherDur - dur)
+    if (durationDelta > PARTY_DURATION_TOLERANCE_SEC) continue
+    const createdAtMs = new Date(String(row.created_at)).getTime()
+    if (!Number.isFinite(createdAtMs)) continue
+    candidates.push({
+      id: String(row.id),
+      createdAtMs,
+      durationDelta,
+      hasEntries: false,
+      broken: isBrokenPartyParse(payload, members),
+    })
+  }
+
+  if (!candidates.length) return null
+
+  const candidateIds = candidates.map((c) => c.id)
+  const { data: entryRows } = await supabase
+    .from('meter_leaderboard_entries')
+    .select('parse_id')
+    .in('parse_id', candidateIds)
+  const withEntries = new Set(
+    (entryRows ?? []).map((r) => String(r.parse_id ?? '').trim()).filter(Boolean),
+  )
+  for (const c of candidates) c.hasEntries = withEntries.has(c.id)
+
+  // Prefer a ranked/healthy peer parse over a broken upload (Mist at 0% on
+  // Tirweth/Prex meters). Among equals, prefer closest upload time then duration.
+  candidates.sort((a, b) => {
+    if (a.hasEntries !== b.hasEntries) return a.hasEntries ? -1 : 1
+    if (a.broken !== b.broken) return a.broken ? 1 : -1
+    const timeA = Math.abs(a.createdAtMs - centerMs)
+    const timeB = Math.abs(b.createdAtMs - centerMs)
+    if (timeA !== timeB) return timeA - timeB
+    if (a.durationDelta !== b.durationDelta) return a.durationDelta - b.durationDelta
+    return a.createdAtMs - b.createdAtMs
+  })
+
+  return candidates[0]?.id ?? null
 }
 
 function memberDigimons(member: StoredMember) {
@@ -707,7 +854,14 @@ async function processParse(
       : null
 
   if (fingerprint && !force && !options.skipDuplicateCheck) {
-    const dupId = await findDuplicatePartyParseInWindow(supabase, fingerprint, row.id)
+    const dupId = await findSoftDuplicatePartyParseInWindow(supabase, {
+      dungeonId,
+      difficultyId,
+      durationSec,
+      members,
+      excludeParseId: row.id,
+      createdAt: row.created_at,
+    })
     if (dupId) {
       await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
       const { data: canonical, error: canonicalError } = await supabase
@@ -721,15 +875,42 @@ async function processParse(
       if (!canonical) {
         return { inserted: 0, skipped: 'duplicate party upload within window' }
       }
+
+      const canonicalPayload = (canonical.payload ?? {}) as DungeonPayload
+      const incomingPayload = (row.payload ?? canonical.payload ?? {}) as DungeonPayload
+      const mergedPayload = mergePartyPayloads(canonicalPayload, incomingPayload)
+      const mergedDurationSec =
+        sessionDuration(mergedPayload, Number(row.duration_sec) || Number(canonical.duration_sec) || 0, mergedPayload.members ?? []) ||
+        Number(row.duration_sec) ||
+        Number(canonical.duration_sec) ||
+        0
+      const mergedFingerprint = buildPartyRunFingerprint(
+        dungeonId,
+        difficultyId,
+        mergedDurationSec,
+        mergedPayload.members ?? [],
+      )
+
+      await supabase
+        .from('meter_parses')
+        .update({
+          payload: mergedPayload,
+          party_fingerprint: mergedFingerprint,
+          duration_sec: mergedDurationSec,
+        })
+        .eq('id', dupId)
+
       const mergedRow: ParseRow = {
         ...(canonical as ParseRow),
-        payload: row.payload ?? canonical.payload,
+        payload: mergedPayload,
         leaderboard_summary: row.leaderboard_summary ?? canonical.leaderboard_summary,
-        duration_sec: row.duration_sec ?? canonical.duration_sec,
+        duration_sec: mergedDurationSec,
       }
+      // Force rewrite so isSelf skill kits refresh digimonId/role_bucket on existing entries.
       const merged = await processParse(mergedRow, supabase, {
         ...options,
         skipDuplicateCheck: true,
+        force: true,
       })
       return {
         ...merged,

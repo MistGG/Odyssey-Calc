@@ -15,6 +15,30 @@ export function alternateStructureBracketRole(skinName: string | null | undefine
   return match?.[1]?.trim() || null
 }
 
+/**
+ * Map skin bracket tags (`[HEALER]`, `[MELEE]`, `[TANK]`, …) to wiki role strings
+ * that {@link wikiRoleToBucket} understands.
+ */
+export function bracketRoleToWikiRole(
+  bracket: string,
+  parentRole: string | null | undefined = '',
+): string {
+  const tag = bracket.trim().toLowerCase().replace(/\s+/g, ' ')
+  if (tag === 'healer' || tag === 'support') return 'Support'
+  if (tag === 'tank') return 'Tank'
+  if (tag === 'caster') return 'Caster'
+  if (tag === 'hybrid') return 'Hybrid'
+  if (tag === 'melee' || tag === 'melee dps') return 'Melee DPS'
+  if (tag === 'ranged' || tag === 'ranged dps') return 'Ranged DPS'
+  if (tag === 'dps') {
+    const parent = (parentRole ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+    if (parent.includes('ranged')) return 'Ranged DPS'
+    if (parent.includes('melee')) return 'Melee DPS'
+    return 'Melee DPS'
+  }
+  return bracket.trim()
+}
+
 /** Match an in-game portrait `icon_id` to an alternate structure skin on a parent detail payload. */
 export function findAlternateStructureSkinByIcon(
   detail: WikiDigimonDetail,
@@ -83,7 +107,7 @@ export function alternateStructureListStub(
   parent: WikiDigimonDetail,
   skin: WikiDigimonSkin,
 ): WikiDigimonListItem {
-  const roleMatch = /^\[(.+?)\]\s/.exec(skin.name ?? '')
+  const bracket = alternateStructureBracketRole(skin.name)
   return {
     id: skin.override_id ?? '',
     name: skin.override_name ?? skin.name,
@@ -91,7 +115,7 @@ export function alternateStructureListStub(
     stage: skin.stage ?? parent.stage,
     attribute: parent.attribute,
     element: parent.element,
-    role: roleMatch?.[1] ?? parent.role,
+    role: bracket ? bracketRoleToWikiRole(bracket, parent.role) : parent.role,
     family_types: parent.family_types ?? [],
     rank: parent.rank,
     hp: parent.hp,
