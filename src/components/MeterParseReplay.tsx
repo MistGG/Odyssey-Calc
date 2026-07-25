@@ -18,7 +18,13 @@ import {
   shouldShowMeterThemeBadge,
 } from '../lib/meterPartyBarThemes'
 import { partyMemberChromeStyle } from '../lib/meterPartyColor'
-import { MeterPartyPlainBar, MeterPartyThemedBar, meterPartyMemberSssFirstClass, meterPartyMemberThemeClass } from './MeterPartyThemedBar'
+import {
+  MeterPartyPlainBar,
+  MeterPartyThemedBar,
+  meterPartyMemberMastemonPlaceClass,
+  meterPartyMemberSssFirstClass,
+  meterPartyMemberThemeClass,
+} from './MeterPartyThemedBar'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -252,15 +258,18 @@ export function MeterPartyRoster({
           })
           const themeStyle = barTheme ? meterPartyBarThemeStyle(barTheme) : undefined
           const isFirstPlace = index === 0
+          const placeRank = index + 1
           const sssBleedClass = meterPartyMemberSssFirstClass(barTheme, isFirstPlace)
+          const mastemonPlaceClass = meterPartyMemberMastemonPlaceClass(barTheme, placeRank)
+          const rowBleed = Boolean(sssBleedClass || mastemonPlaceClass)
           return (
             <div
               key={m.memberKey}
-              className={`meter-party-row${sssBleedClass ? ' meter-party-row--sss-bleed' : ''}`}
+              className={`meter-party-row${rowBleed ? ' meter-party-row--sss-bleed' : ''}`}
             >
             <button
               type="button"
-              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberThemeClass(barTheme)}${sssBleedClass}`}
+              className={`meter-party-member${active ? ' meter-party-member--active' : ''}${barTheme ? ' meter-party-member--bar-theme' : ''}${meterPartyMemberThemeClass(barTheme)}${sssBleedClass}${mastemonPlaceClass}`}
               style={{
                 ...(barTheme ? themeStyle : {}),
                 boxShadow: barTheme ? undefined : `inset 3px 0 0 ${chrome.borderLeftColor}`,
@@ -272,6 +281,8 @@ export function MeterPartyRoster({
                   theme={barTheme}
                   sharePct={sharePct}
                   isFirstPlace={isFirstPlace}
+                  placeRank={placeRank}
+                  totalDamage={m.totalDamage}
                 />
               ) : (
                 <MeterPartyPlainBar sharePct={sharePct} rowKey={m.memberKey} />

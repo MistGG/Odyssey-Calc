@@ -1,5 +1,9 @@
 import { getMeterPartyBarTheme, type MeterPartyBarThemeId } from '../lib/meterPartyBarThemes'
-import { buildThemePreviewRows, MeterThemePreview } from '../components/MeterThemePreview'
+import {
+  buildMastemonPlacePreviewRows,
+  buildThemePreviewRows,
+  MeterThemePreview,
+} from '../components/MeterThemePreview'
 import { MeterSubNav } from '../components/MeterSubNav'
 import { previewDigimonForTheme } from '../lib/meterThemeShop'
 
@@ -76,6 +80,28 @@ export function MeterVerdandiThemePreviewPage() {
           themeId="alphamon-ouryuken-legendary"
           seed={6}
         />
+        <VerdandiThemePreviewCard
+          title="Mastemon (Rare)"
+          description="Angel/demon New Century palette with Mastemon watermark."
+          themeId="mastemon-rare"
+          seed={7}
+        />
+        <VerdandiThemePreviewCard
+          title="Mastemon (SSS Legendary)"
+          description="Full-width duality bar — place-scaled wings, orbs, border pulse. Click the bar to preview glass shatter (+500k hits)."
+          themeId="mastemon-legendary"
+          seed={8}
+        />
+        <section className="meter-cycle-theme-preview-card meter-cycle-theme-preview-card--verdandi">
+          <h2 className="meter-parses-section-title">Mastemon place states</h2>
+          <p className="meter-parses-muted meter-cycle-theme-preview-sub">
+            Place 4→1 stacks 1→4 wings (angel left / bat right). Click any bar for glass shatter preview.
+          </p>
+          <MeterThemePreview
+            theme={getMeterPartyBarTheme('mastemon-legendary')!}
+            rows={buildMastemonPlacePreviewRows(getMeterPartyBarTheme('mastemon-legendary')!)}
+          />
+        </section>
       </div>
     </div>
   )

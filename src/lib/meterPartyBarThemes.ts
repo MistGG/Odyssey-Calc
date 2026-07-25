@@ -60,12 +60,13 @@ export type MagiaBaseThemeId = 'raguelmon' | 'plesiomon' | 'zhuqiaomon'
 
 export const MAGIA_BASE_THEME_IDS: MagiaBaseThemeId[] = ['raguelmon', 'plesiomon', 'zhuqiaomon']
 
-export type VerdandiBaseThemeId = 'omegamon' | 'ulforce-veemon-x' | 'alphamon-ouryuken'
+export type VerdandiBaseThemeId = 'omegamon' | 'ulforce-veemon-x' | 'alphamon-ouryuken' | 'mastemon'
 
 export const VERDANDI_BASE_THEME_IDS: VerdandiBaseThemeId[] = [
   'omegamon',
   'ulforce-veemon-x',
   'alphamon-ouryuken',
+  'mastemon',
 ]
 
 export function isMagiaMeterShopTheme(theme: MeterPartyBarTheme | null | undefined): boolean {
@@ -512,6 +513,22 @@ const VERDANDI_BASE_THEMES: MeterPartyBarTheme[] = [
       c1: 'rgba(6, 6, 8, 0.92)',
       c2: 'rgba(48, 40, 18, 0.7)',
       grid: 'rgba(212, 175, 55, 0.1)',
+    },
+  },
+  {
+    id: 'mastemon',
+    barStyleId: 'mastemon',
+    variant: 'common',
+    label: 'Mastemon',
+    badge: '',
+    domain: 'Angel & demon duality',
+    earnable: true,
+    subtitle: 'Verdandi · Mastemon',
+    style: {
+      accent: '#c084fc',
+      c1: 'rgba(24, 8, 40, 0.9)',
+      c2: 'rgba(120, 40, 110, 0.55)',
+      grid: 'rgba(192, 132, 252, 0.12)',
     },
   },
 ]
