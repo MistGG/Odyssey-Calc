@@ -121,6 +121,24 @@ export function memberPrimaryDigimonId(
   return top?.digimonId?.trim() || member.currentDigimonId?.trim() || null
 }
 
+/** True when the tamer dealt damage on digimon from 2+ role buckets. */
+function memberHasMultipleRoleBuckets(
+  member: MeterPartyMemberStored,
+  digimonRoleById?: Map<string, string>,
+): boolean {
+  if (!digimonRoleById?.size) return false
+  const buckets = new Set<MeterRoleBucket>()
+  for (const dg of memberDigimonBreakdowns(member)) {
+    const id = dg.digimonId.trim()
+    if (!id || dg.totalDamage <= 0) continue
+    const bucket = digimonIdToBucket(id, digimonRoleById)
+    if (!bucket) continue
+    buckets.add(bucket)
+    if (buckets.size > 1) return true
+  }
+  return false
+}
+
 /** Damage credited to the leaderboard-attributed digimon (highest-damage form, not end-of-run swap). */
 export function memberLeaderboardDamage(
   member: MeterPartyMemberStored,
@@ -130,6 +148,8 @@ export function memberLeaderboardDamage(
   if (digimons.length <= 1) return memberDamageTotal(member)
   const totals = digimonIdDamageTotals(digimons)
   if (totals.size <= 1) return memberDamageTotal(member)
+  // Multi-role runs: credit full tamer damage (role still from primary digimon).
+  if (memberHasMultipleRoleBuckets(member, digimonRoleById)) return memberDamageTotal(member)
   const top = memberTopDigimonUsed(member, digimonRoleById)
   if (!top) return memberDamageTotal(member)
   const dmg = Math.max(0, totals.get(top.digimonId.trim()) ?? 0)

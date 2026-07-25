@@ -25,7 +25,7 @@ as $$
       end
     )::integer
     from public.meter_theme_purchases
-    where user_id = p_user_id),
+    where user_id = p_user_id),image.png
     0
   );
 $$;

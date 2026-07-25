@@ -508,17 +508,41 @@ function primaryDigimonDamage(
   return dmg > 0 ? dmg : memberDamageTotal(member)
 }
 
-function memberDpsForLeaderboard(
+/** True when the tamer dealt damage on digimon from 2+ role buckets (e.g. Support + Caster Mastemon). */
+function memberHasMultipleRoleBuckets(
+  member: StoredMember,
+  wikiCatalog?: Map<string, RoleBucket | null>,
+): boolean {
+  if (!wikiCatalog?.size) return false
+  const buckets = new Set<RoleBucket>()
+  for (const dg of memberDigimons(member)) {
+    const id = dg.digimonId?.trim() ?? ''
+    if (!id || (Number(dg.totalDamage) || 0) <= 0) continue
+    const bucket = wikiCatalog.get(id)
+    if (!bucket) continue
+    buckets.add(bucket)
+    if (buckets.size > 1) return true
+  }
+  return false
+}
+
+async function memberDpsForLeaderboard(
   member: StoredMember,
   payload: DungeonPayload,
   rowDurationSec: number,
   members: StoredMember[],
   wikiCatalog?: Map<string, RoleBucket | null>,
-): number {
+): Promise<number> {
   reconcileJustimonMisattribution(member)
+  if (wikiCatalog) await ensureWikiRolesForMember(member, wikiCatalog)
   const digimons = memberDigimons(member)
+  // Multi-role runs: credit full tamer damage. Same-role multi-form still uses primary digimon only.
   const damage =
-    digimons.length > 1 ? primaryDigimonDamage(member, wikiCatalog) : memberDamageTotal(member)
+    digimons.length > 1 && memberHasMultipleRoleBuckets(member, wikiCatalog)
+      ? memberDamageTotal(member)
+      : digimons.length > 1
+        ? primaryDigimonDamage(member, wikiCatalog)
+        : memberDamageTotal(member)
   const dur = Math.max(dpsDurationSeconds(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
 }
@@ -738,6 +762,36 @@ async function fetchWikiDigimon(digimonId: string): Promise<{ name: string | nul
   }
 }
 
+/** Fill wiki catalog gaps for a member's digimon (list catalog can miss ids that detail has). */
+async function ensureWikiRolesForMember(
+  member: StoredMember,
+  wikiCatalog: Map<string, RoleBucket | null>,
+): Promise<void> {
+  const missing: string[] = []
+  for (const dg of memberDigimons(member)) {
+    const id = dg.digimonId?.trim() ?? ''
+    if (!id || (Number(dg.totalDamage) || 0) <= 0) continue
+    if (!wikiCatalog.has(id)) missing.push(id)
+  }
+  if (!missing.length) return
+  await Promise.all(
+    missing.map(async (id) => {
+      const meta = await fetchWikiDigimon(id)
+      wikiCatalog.set(id, wikiRoleToBucket(meta.role))
+      if (meta.name || meta.role) {
+        const metaMap = getWikiMetaCatalog()
+        if (!metaMap.has(id)) {
+          metaMap.set(id, {
+            name: meta.name ?? '',
+            modelId: '',
+            role: meta.role ?? '',
+          })
+        }
+      }
+    }),
+  )
+}
+
 async function resolveRoleBucket(
   member: StoredMember,
   _summaryMember: SummaryMember | undefined,
@@ -779,7 +833,7 @@ async function buildSummaryFromPayload(
   for (const member of members) {
     if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
     const primary = memberPrimaryDigimon(member, wikiCatalog)
-    const dps = memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
+    const dps = await memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
     if (!primary?.digimonId?.trim()) {
       out.push({
         playerKey: normalizePlayerKey(member),
@@ -1030,7 +1084,7 @@ async function processParse(
     const payloadPortrait = sm?.portraitUrl?.trim() || primary?.portraitUrl || null
     const portraitUrl = portraitUrlForResolvedIcon(iconId, payloadPortrait)
 
-    const dps = memberDpsForLeaderboard(
+    const dps = await memberDpsForLeaderboard(
       member,
       payload,
       Number(row.duration_sec) || 0,

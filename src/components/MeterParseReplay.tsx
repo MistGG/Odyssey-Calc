@@ -261,11 +261,13 @@ export function MeterPartyRoster({
           const placeRank = index + 1
           const sssBleedClass = meterPartyMemberSssFirstClass(barTheme, isFirstPlace)
           const mastemonPlaceClass = meterPartyMemberMastemonPlaceClass(barTheme, placeRank)
-          const rowBleed = Boolean(sssBleedClass || mastemonPlaceClass)
+          // Mastemon wings are fixed overlays — tall SSS bleed opens huge gaps on non-1st rows.
+          const rowBleed = Boolean(sssBleedClass)
+          const mastemonBleed = Boolean(mastemonPlaceClass) && !rowBleed
           return (
             <div
               key={m.memberKey}
-              className={`meter-party-row${rowBleed ? ' meter-party-row--sss-bleed' : ''}`}
+              className={`meter-party-row${rowBleed ? ' meter-party-row--sss-bleed' : ''}${mastemonBleed ? ' meter-party-row--mastemon-bleed' : ''}`}
             >
             <button
               type="button"
