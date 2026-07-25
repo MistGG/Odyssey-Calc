@@ -171,7 +171,8 @@ function buildPartyRunFingerprint(
 
 /**
  * Prefer each player's isSelf kit when merging peer uploads of the same clear.
- * Peer party_skill can lie about alternate-structure skill ids/names (e.g. Mastemon healer).
+ * Peer party_skill may still emit parent skill *ids* for same-model alts; skill *names*
+ * from EventStream are preferred during alternate-structure resolution.
  */
 function mergePartyPayloads(canonical: DungeonPayload, incoming: DungeonPayload): DungeonPayload {
   const canonMembers = Array.isArray(canonical.members) ? canonical.members : []
@@ -661,6 +662,20 @@ function primaryDigimonSkillKeys(
   return keys
 }
 
+function primaryDigimonSkillNames(
+  primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
+): string[] {
+  const names: string[] = []
+  const seen = new Set<string>()
+  for (const skill of primary.skills ?? []) {
+    const name = String(skill.skill ?? '').trim().toLowerCase()
+    if (!name || name === '(basic)' || name === 'auto attack' || seen.has(name)) continue
+    seen.add(name)
+    names.push(name)
+  }
+  return names
+}
+
 async function resolvePrimaryDigimonIdentity(
   primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
   wikiCatalog: Map<string, RoleBucket | null>,
@@ -683,6 +698,7 @@ async function resolvePrimaryDigimonIdentity(
     parentName: parentMeta?.name || null,
     parentRole: parentMeta?.role || null,
     skillKeys: primaryDigimonSkillKeys(primary),
+    skillNames: primaryDigimonSkillNames(primary),
   })
 
   const digimonId = effective.digimonId || parentDigimonId

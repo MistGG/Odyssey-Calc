@@ -163,11 +163,13 @@ export async function resolveAlternateStructureInPayload(
     next.members.map(async (member) => {
       const top = memberTopDigimonUsed(member, undefined, next.members)
       if (!top?.digimonId) return
+      const kit = skillKitFromTopDigimon(member, next.members)
       const effective = await resolveEffectiveDigimonIdentity({
         digimonId: top.digimonId,
         iconId: top.iconId,
         digimonName: top.digimonName,
-        skillKeys: skillKeysFromTopDigimon(member, next.members),
+        skillKeys: kit.skillKeys,
+        skillNames: kit.skillNames,
       })
       applyAlternateStructureToMember(member, next.members, effective)
     }),
@@ -239,25 +241,33 @@ export async function resolveMeterParseRowPayloads<T extends { payload: unknown 
   )
 }
 
-function skillKeysFromTopDigimon(
+function skillKitFromTopDigimon(
   member: MeterPartyMemberStored,
   partyMembers: MeterPartyMemberStored[],
-): string[] {
+): { skillKeys: string[]; skillNames: string[] } {
   const top = memberTopDigimonUsed(member, undefined, partyMembers)
-  if (!top?.digimonId) return []
+  if (!top?.digimonId) return { skillKeys: [], skillNames: [] }
   const idKey = normId(top.digimonId)
   const keys: string[] = []
-  const seen = new Set<string>()
+  const names: string[] = []
+  const seenKeys = new Set<string>()
+  const seenNames = new Set<string>()
   for (const dg of member.digimons ?? []) {
     if (normId(dg.digimonId) !== idKey) continue
     for (const skill of dg.skills ?? []) {
       const key = skill.skillKey?.trim().toLowerCase()
-      if (!key || key === '(basic)' || seen.has(key)) continue
-      seen.add(key)
-      keys.push(key)
+      if (key && key !== '(basic)' && !seenKeys.has(key)) {
+        seenKeys.add(key)
+        keys.push(key)
+      }
+      const name = skill.skill?.trim().toLowerCase()
+      if (name && name !== '(basic)' && name !== 'auto attack' && !seenNames.has(name)) {
+        seenNames.add(name)
+        names.push(name)
+      }
     }
   }
-  return keys
+  return { skillKeys: keys, skillNames: names }
 }
 
 function applyOfficialNameToRankEntry(

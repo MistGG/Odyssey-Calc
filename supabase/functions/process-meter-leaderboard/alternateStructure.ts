@@ -51,6 +51,12 @@ function normalizeSkillKey(key: string | null | undefined): string | null {
   return k
 }
 
+function normalizeSkillName(name: string | null | undefined): string | null {
+  const n = (name ?? '').trim().toLowerCase()
+  if (!n || n === 'auto attack' || n === '(basic)') return null
+  return n
+}
+
 function wikiSkillKeySet(detail: WikiDetail): Set<string> {
   const set = new Set<string>()
   for (const skill of detail.skills ?? []) {
@@ -63,7 +69,7 @@ function wikiSkillKeySet(detail: WikiDetail): Set<string> {
 function wikiSkillNameSet(detail: WikiDetail): Set<string> {
   const set = new Set<string>()
   for (const skill of detail.skills ?? []) {
-    const name = skill.name?.trim().toLowerCase()
+    const name = normalizeSkillName(skill.name)
     if (name) set.add(name)
   }
   return set
@@ -73,20 +79,31 @@ function wikiSkillKeyToNameMap(detail: WikiDetail): Map<string, string> {
   const map = new Map<string, string>()
   for (const skill of detail.skills ?? []) {
     const key = normalizeSkillKey(skill.id)
-    const name = skill.name?.trim().toLowerCase()
+    const name = normalizeSkillName(skill.name)
     if (key && name) map.set(key, name)
   }
   return map
 }
 
-function memberSkillNames(
+/**
+ * Peer party_skill can still emit parent skill ids for same-model alts.
+ * Prefer EventStream-recorded skill *names* when present (e.g. Seiken Grandalpha).
+ */
+function collectUsedSkillNames(
   memberSkillKeys: string[],
+  recordedSkillNames: string[],
   parentDetail: WikiDetail,
   overrideDetail: WikiDetail,
 ): Set<string> {
+  const names = new Set<string>()
+  for (const raw of recordedSkillNames) {
+    const name = normalizeSkillName(raw)
+    if (name) names.add(name)
+  }
+  if (names.size > 0) return names
+
   const parentMap = wikiSkillKeyToNameMap(parentDetail)
   const overrideMap = wikiSkillKeyToNameMap(overrideDetail)
-  const names = new Set<string>()
   for (const key of memberSkillKeys) {
     const name = parentMap.get(key) ?? overrideMap.get(key)
     if (name) names.add(name)
@@ -98,8 +115,9 @@ function alternateResolutionCacheKey(
   parentDigimonId: string,
   iconId: string,
   skillKeys: string[],
+  skillNames: string[],
 ): string {
-  return `${parentDigimonId}|${iconId}|${[...skillKeys].sort().join(',')}`
+  return `${parentDigimonId}|${iconId}|${[...skillKeys].sort().join(',')}|${[...skillNames].sort().join(',')}`
 }
 
 function isAlternateStructureSkin(skin: WikiSkin): boolean {
@@ -192,57 +210,82 @@ function parentIdentity(
 
 function alternateStructureSkillScore(
   memberSkillKeys: string[],
+  recordedSkillNames: string[],
   parentDetail: WikiDetail,
   overrideDetail: WikiDetail,
 ): number {
-  if (!memberSkillKeys.length) return 0
+  if (!memberSkillKeys.length && !recordedSkillNames.length) return 0
 
   const parentSkills = wikiSkillKeySet(parentDetail)
   const overrideSkills = wikiSkillKeySet(overrideDetail)
   const parentNames = wikiSkillNameSet(parentDetail)
   const overrideNames = wikiSkillNameSet(overrideDetail)
-  const usedNames = memberSkillNames(memberSkillKeys, parentDetail, overrideDetail)
+  const usedNames = collectUsedSkillNames(
+    memberSkillKeys,
+    recordedSkillNames,
+    parentDetail,
+    overrideDetail,
+  )
 
-  let parentExclusive = 0
-  let overrideExclusive = 0
-  let overrideHits = 0
-  let parentHits = 0
+  let parentKeyExclusive = 0
+  let overrideKeyExclusive = 0
+  let overrideKeyHits = 0
+  let parentKeyHits = 0
 
   for (const key of memberSkillKeys) {
     const inParent = parentSkills.has(key)
     const inOverride = overrideSkills.has(key)
-    if (inParent) parentHits += 1
-    if (inOverride) overrideHits += 1
-    if (inParent && !inOverride) parentExclusive += 1
-    if (inOverride && !inParent) overrideExclusive += 1
+    if (inParent) parentKeyHits += 1
+    if (inOverride) overrideKeyHits += 1
+    if (inParent && !inOverride) parentKeyExclusive += 1
+    if (inOverride && !inParent) overrideKeyExclusive += 1
   }
 
+  let parentNameExclusive = 0
+  let overrideNameExclusive = 0
   for (const name of usedNames) {
     const inParent = parentNames.has(name)
     const inOverride = overrideNames.has(name)
-    if (inParent && !inOverride) parentExclusive += 1
-    if (inOverride && !inParent) overrideExclusive += 1
+    if (inParent && !inOverride) parentNameExclusive += 1
+    if (inOverride && !inParent) overrideNameExclusive += 1
   }
 
-  if (overrideExclusive > parentExclusive) return overrideExclusive - parentExclusive
-  if (overrideExclusive > 0 && parentExclusive === 0) return overrideExclusive
-  if (overrideHits > 0 && parentExclusive === 0 && overrideHits >= parentHits) {
-    return overrideHits
+  // EventStream peer skill *names* are authoritative for same-model alts.
+  if (overrideNameExclusive > parentNameExclusive) {
+    return overrideNameExclusive - parentNameExclusive
+  }
+  if (overrideNameExclusive > 0 && parentNameExclusive === 0) {
+    return overrideNameExclusive
+  }
+
+  if (overrideKeyExclusive > parentKeyExclusive) return overrideKeyExclusive - parentKeyExclusive
+  if (overrideKeyExclusive > 0 && parentKeyExclusive === 0) return overrideKeyExclusive
+  if (overrideKeyHits > 0 && parentKeyExclusive === 0 && overrideKeyHits >= parentKeyHits) {
+    return overrideKeyHits
   }
   return 0
 }
 
 function skillsSupportAlternateStructure(
   memberSkillKeys: string[],
+  recordedSkillNames: string[],
   parentDetail: WikiDetail,
   overrideDetail: WikiDetail,
 ): boolean {
-  return alternateStructureSkillScore(memberSkillKeys, parentDetail, overrideDetail) > 0
+  return (
+    alternateStructureSkillScore(
+      memberSkillKeys,
+      recordedSkillNames,
+      parentDetail,
+      overrideDetail,
+    ) > 0
+  )
 }
 
 async function findBestAlternateStructureSkinBySkills(
   parentDetail: WikiDetail,
   memberSkillKeys: string[],
+  recordedSkillNames: string[],
 ): Promise<WikiSkin | null> {
   let best: { skin: WikiSkin; score: number } | null = null
   for (const skin of parentDetail.skins ?? []) {
@@ -251,7 +294,12 @@ async function findBestAlternateStructureSkinBySkills(
     if (!overrideId) continue
     const overrideDetail = await fetchWikiDetail(overrideId)
     if (!overrideDetail) continue
-    const score = alternateStructureSkillScore(memberSkillKeys, parentDetail, overrideDetail)
+    const score = alternateStructureSkillScore(
+      memberSkillKeys,
+      recordedSkillNames,
+      parentDetail,
+      overrideDetail,
+    )
     if (score <= 0) continue
     if (!best || score > best.score) best = { skin, score }
   }
@@ -282,6 +330,7 @@ export async function resolveEffectiveDigimonIdentity(params: {
   parentName?: string | null
   parentRole?: string | null
   skillKeys?: string[] | null
+  skillNames?: string[] | null
 }): Promise<EffectiveDigimonIdentity> {
   const digimonId = params.digimonId.trim()
   const iconId = params.iconId?.trim() || null
@@ -291,6 +340,9 @@ export async function resolveEffectiveDigimonIdentity(params: {
   const skillKeys = (params.skillKeys ?? [])
     .map((key) => normalizeSkillKey(key))
     .filter((key): key is string => Boolean(key))
+  const skillNames = (params.skillNames ?? [])
+    .map((name) => normalizeSkillName(name))
+    .filter((name): name is string => Boolean(name))
 
   if (!digimonId) {
     return {
@@ -302,7 +354,7 @@ export async function resolveEffectiveDigimonIdentity(params: {
     }
   }
 
-  const cacheKey = alternateResolutionCacheKey(digimonId, iconId ?? '', skillKeys)
+  const cacheKey = alternateResolutionCacheKey(digimonId, iconId ?? '', skillKeys, skillNames)
   const cached = alternateResolutionCache.get(cacheKey)
   if (cached) return cached
 
@@ -326,8 +378,12 @@ export async function resolveEffectiveDigimonIdentity(params: {
     matchedSkin = findAlternateStructureSkinByIcon(parentDetail, iconId)
     matchedByIcon = Boolean(matchedSkin)
   }
-  if (!matchedSkin && skillKeys.length) {
-    matchedSkin = await findBestAlternateStructureSkinBySkills(parentDetail, skillKeys)
+  if (!matchedSkin && (skillKeys.length || skillNames.length)) {
+    matchedSkin = await findBestAlternateStructureSkinBySkills(
+      parentDetail,
+      skillKeys,
+      skillNames,
+    )
   }
 
   if (matchedSkin?.override_id?.trim()) {
@@ -336,7 +392,7 @@ export async function resolveEffectiveDigimonIdentity(params: {
     const resolvedIcon = iconId || skinIcon || null
     const skillsOk = Boolean(
       overrideDetail &&
-        skillsSupportAlternateStructure(skillKeys, parentDetail, overrideDetail),
+        skillsSupportAlternateStructure(skillKeys, skillNames, parentDetail, overrideDetail),
     )
     if (overrideDetail && (matchedByIcon || skillsOk)) {
       const resolved = identityFromSkin(
