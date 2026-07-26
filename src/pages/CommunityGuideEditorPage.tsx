@@ -5,6 +5,7 @@ import { CommunityGuideBody } from '../components/communityGuides/CommunityGuide
 import { CommunityGuideCollaboratorsEditor } from '../components/communityGuides/CommunityGuideCollaboratorsEditor'
 import { CommunityGuideEditorCursorOverlay } from '../components/communityGuides/CommunityGuideEditorCursorOverlay'
 import { CommunityGuideMarkdownToolbar } from '../components/communityGuides/CommunityGuideMarkdownToolbar'
+import { CommunityGuideToc } from '../components/communityGuides/CommunityGuideToc'
 import { CommunityGuideThumbnail } from '../components/communityGuides/CommunityGuideThumbnail'
 import { WikiItemSearchPicker } from '../components/communityGuides/WikiItemSearchPicker'
 import { WikiQuestSearchPicker } from '../components/communityGuides/WikiQuestSearchPicker'
@@ -1081,6 +1082,10 @@ export function CommunityGuideEditorPage() {
                       />
                     ) : null}
                   </div>
+                  <span className="community-guides-field__hint">
+                    Use H2 for chapters, H3/H4 for subsections. With 2+ headings they show as a
+                    Chapters sidebar on the guide page.
+                  </span>
                 </label>
               </>
             ) : null}
@@ -1093,7 +1098,10 @@ export function CommunityGuideEditorPage() {
                     .filter((link) => link.url.trim())
                     .map(({ platform, url }) => ({ platform, url: url.trim() }))}
                 />
-                <CommunityGuideBody body={body} />
+                <div className="community-guides-editor__preview-layout">
+                  <CommunityGuideBody body={body} />
+                  <CommunityGuideToc body={body} />
+                </div>
               </section>
             ) : null}
 

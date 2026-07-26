@@ -160,9 +160,29 @@ export function communityGuideShareUrl(slug: string): string {
   return `${resolveAppSiteOrigin()}#${path}`
 }
 
+/** Deep link to a chapter/heading on a published guide (`#/guides/slug?section=id`). */
+export function communityGuideSectionShareUrl(slug: string, sectionId: string): string {
+  const id = sectionId.trim()
+  if (!id) return communityGuideShareUrl(slug)
+  const path = `/guides/${encodeURIComponent(slug)}`
+  return `${resolveAppSiteOrigin()}#${path}?section=${encodeURIComponent(id)}`
+}
+
 export async function copyCommunityGuideShareLink(slug: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(communityGuideShareUrl(slug))
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function copyCommunityGuideSectionShareLink(
+  slug: string,
+  sectionId: string,
+): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(communityGuideSectionShareUrl(slug, sectionId))
     return true
   } catch {
     return false

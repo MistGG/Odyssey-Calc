@@ -4,6 +4,8 @@ import { useAuth } from '../auth/useAuth'
 import { CommunityGuideBody } from '../components/communityGuides/CommunityGuideBody'
 import { CommunityGuideChangelog } from '../components/communityGuides/CommunityGuideChangelog'
 import { CommunityGuideSocialLinks } from '../components/communityGuides/CommunityGuideSocialLinks'
+import { CommunityGuideToc } from '../components/communityGuides/CommunityGuideToc'
+import { extractCommunityGuideToc } from '../lib/communityGuideToc'
 import { GuidebookWikiOverlayProvider } from '../components/guidebook/GuidebookWikiOverlay'
 import {
   fetchAcceptedCommunityGuideCollaborators,
@@ -49,6 +51,10 @@ export function CommunityGuideDetailPage() {
   const [canEdit, setCanEdit] = useState(false)
 
   const shareUrl = useMemo(() => (guide ? communityGuideShareUrl(guide.slug) : ''), [guide])
+  const hasChapters = useMemo(
+    () => (guide ? extractCommunityGuideToc(guide.body).length >= 2 : false),
+    [guide],
+  )
 
   useEffect(() => {
     if (!slug || !supabase) {
@@ -209,7 +215,9 @@ export function CommunityGuideDetailPage() {
 
   return (
     <GuidebookWikiOverlayProvider>
-      <article className="community-guides-page community-guides-detail">
+      <article
+        className={`community-guides-page community-guides-detail${hasChapters ? ' community-guides-detail--chapters' : ''}`}
+      >
         <div className="community-guides-detail__shell">
           <div className="community-guides-detail__toolbar">
             <Link to="/guides" className="community-guides-detail__back">
@@ -291,9 +299,12 @@ export function CommunityGuideDetailPage() {
 
           {error ? <p className="community-guides-error community-guides-detail__error">{error}</p> : null}
 
-          <section className="community-guides-detail__content" aria-label="Guide content">
-            <CommunityGuideBody body={guide.body} embedded />
-          </section>
+          <div className="community-guides-detail__body-row">
+            <section className="community-guides-detail__content" aria-label="Guide content">
+              <CommunityGuideBody body={guide.body} embedded />
+            </section>
+            {hasChapters ? <CommunityGuideToc body={guide.body} slug={guide.slug} /> : null}
+          </div>
 
           {supabase ? <CommunityGuideChangelog supabase={supabase} guideId={guide.id} /> : null}
         </div>

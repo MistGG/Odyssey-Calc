@@ -144,18 +144,26 @@ export function CommunityGuideMarkdownToolbar({
         <button
           type="button"
           className="community-guide-md-toolbar__btn"
-          title="Heading 2"
-          onClick={() => run(textareaRef, onChange, (el) => setTextareaLinePrefix(el, '## ', 'Section'))}
+          title="Heading 2 — chapter (sidebar)"
+          onClick={() => run(textareaRef, onChange, (el) => setTextareaLinePrefix(el, '## ', 'Chapter'))}
         >
           H2
         </button>
         <button
           type="button"
           className="community-guide-md-toolbar__btn"
-          title="Heading 3"
+          title="Heading 3 — chapter subsection (sidebar)"
           onClick={() => run(textareaRef, onChange, (el) => setTextareaLinePrefix(el, '### ', 'Subsection'))}
         >
           H3
+        </button>
+        <button
+          type="button"
+          className="community-guide-md-toolbar__btn"
+          title="Heading 4 — nested subsection (sidebar)"
+          onClick={() => run(textareaRef, onChange, (el) => setTextareaLinePrefix(el, '#### ', 'Detail'))}
+        >
+          H4
         </button>
         <button
           type="button"

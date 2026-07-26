@@ -14,6 +14,10 @@ import {
 } from '../../lib/communityGuideEmbed'
 import { parseCommunityGuideImageMarkdown } from '../../lib/communityGuideImageUrl'
 import { parseCommunityGuideTableBlock, isCommunityGuideTablePreamble } from '../../lib/communityGuideMarkdownTable'
+import {
+  communityGuideHeadingIdQueue,
+  parseCommunityGuideHeadingChunk,
+} from '../../lib/communityGuideToc'
 import { GuidebookDungeonPanel } from '../guidebook/GuidebookWidgets'
 import { useGuidebookWikiOverlay } from '../guidebook/GuidebookWikiOverlay'
 import { CommunityGuideImage } from './CommunityGuideImage'
@@ -291,7 +295,11 @@ function renderProseParagraph(lines: string[], key: number): ReactNode {
   )
 }
 
-function renderMarkdownChunk(chunk: string, key: number): ReactNode | null {
+function renderMarkdownChunk(
+  chunk: string,
+  key: number,
+  headingId?: string,
+): ReactNode | null {
   const dungeonEmbed = parseDungeonBlockEmbed(chunk)
   if (dungeonEmbed) {
     return <CommunityGuideDungeonBlock key={key} embed={dungeonEmbed} />
@@ -323,18 +331,17 @@ function renderMarkdownChunk(chunk: string, key: number): ReactNode | null {
     return <CommunityGuideImage key={key} src={imageBlock.url} alt={imageBlock.alt} />
   }
 
-  if (nonEmpty.length === 1 && /^##\s+/.test(first)) {
+  const heading = parseCommunityGuideHeadingChunk(chunk)
+  if (heading) {
+    const Tag = heading.level === 2 ? 'h2' : heading.level === 3 ? 'h3' : 'h4'
     return (
-      <h2 key={key} className="community-guide-md__h2">
-        {inlineCommunityGuideMarkdown(first.replace(/^##\s+/, ''), `h2-${key}`)}
-      </h2>
-    )
-  }
-  if (nonEmpty.length === 1 && /^###\s+/.test(first)) {
-    return (
-      <h3 key={key} className="community-guide-md__h3">
-        {inlineCommunityGuideMarkdown(first.replace(/^###\s+/, ''), `h3-${key}`)}
-      </h3>
+      <Tag
+        key={key}
+        id={headingId}
+        className={`community-guide-md__h${heading.level}${headingId ? ' community-guide-md__heading' : ''}`}
+      >
+        {inlineCommunityGuideMarkdown(heading.raw, `h${heading.level}-${key}`)}
+      </Tag>
     )
   }
 
@@ -375,6 +382,17 @@ function renderMarkdownChunk(chunk: string, key: number): ReactNode | null {
 
 export function CommunityGuideBody({ body, embedded = false }: { body: string; embedded?: boolean }) {
   const blocks = mergeGuideBodyBlocksWithTables(splitGuideBodyBlocks(body))
+  const headingIds = communityGuideHeadingIdQueue(body)
+  const headingIdByBlock = new Map<number, string>()
+  let headingCursor = 0
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]!
+    if (block.kind !== 'chunk') continue
+    if (parseCommunityGuideTableBlock(block.text)) continue
+    if (!parseCommunityGuideHeadingChunk(block.text)) continue
+    const id = headingIds[headingCursor++]
+    if (id) headingIdByBlock.set(i, id)
+  }
   const className = [
     'community-guide-body',
     'guidebook-prose',
@@ -400,7 +418,7 @@ export function CommunityGuideBody({ body, embedded = false }: { body: string; e
             />
           )
         }
-        return renderMarkdownChunk(block.text, i)
+        return renderMarkdownChunk(block.text, i, headingIdByBlock.get(i))
       })}
     </div>
   )
