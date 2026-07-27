@@ -3,7 +3,6 @@ import type { CommunityGuideSocialLink, CommunityGuideSocialPlatform } from './c
 import {
   formatCommunityGuideError,
   resolveCommunityGuideEditorContent,
-  type CommunityGuide,
 } from './communityGuides'
 
 export type CommunityGuideEditorCacheSocial = {

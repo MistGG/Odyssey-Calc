@@ -491,8 +491,8 @@ export function CommunityGuideEditorPage() {
       const liveStatus = guideStatusRef.current
       const snap = formSnapshotRef.current
       // On published guides, autosave WIP into draft_* so the live page stays unchanged.
-      const status: 'draft' | 'published' = liveStatus === 'published' ? 'draft' : liveStatus
-      if (status === 'published' && !snap.body.trim()) return 'skipped'
+      const status: 'draft' | 'published' =
+        liveStatus === 'published' ? 'draft' : liveStatus
 
       const expectedUpdatedAt = serverUpdatedAtRef.current
       const isOwner = !authorIdRef.current || authorIdRef.current === userId
