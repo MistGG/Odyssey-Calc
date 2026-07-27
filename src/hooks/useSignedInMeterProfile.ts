@@ -20,10 +20,16 @@ export function useSignedInMeterProfile(): {
   myParseRows: PublicMeterParseRow[]
 } {
   const { user, supabase, profileDisplayName } = useAuth()
-  const [loading, setLoading] = useState(false)
+  const [cachedTamerName, setCachedTamerName] = useState<string | null>(() =>
+    readCachedConfirmedTamer(),
+  )
+  const [confirmedPlayerKey, setConfirmedPlayerKey] = useState<string | null>(() => {
+    const cached = readCachedConfirmedTamer()?.trim().toLowerCase()
+    return cached || null
+  })
+  // Cold until first fetch unless localStorage already has a confirmed tamer.
+  const [loading, setLoading] = useState(() => !readCachedConfirmedTamer())
   const [myParseRows, setMyParseRows] = useState<PublicMeterParseRow[]>([])
-  const [confirmedPlayerKey, setConfirmedPlayerKey] = useState<string | null>(null)
-  const [cachedTamerName, setCachedTamerName] = useState<string | null>(null)
 
   const userId = user?.id ?? null
 
@@ -38,9 +44,13 @@ export function useSignedInMeterProfile(): {
 
     let cancelled = false
     const cachedTamer = readCachedConfirmedTamer()
-    setCachedTamerName(cachedTamer)
-    // Cold fetch only — keep UI warm when we already know the tamer.
-    setLoading(!cachedTamer)
+    if (cachedTamer) {
+      setCachedTamerName(cachedTamer)
+      setConfirmedPlayerKey(cachedTamer.trim().toLowerCase())
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
 
     void (async () => {
       if (cachedTamer) {

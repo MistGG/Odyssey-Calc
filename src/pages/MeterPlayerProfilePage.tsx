@@ -322,11 +322,12 @@ export function MeterPlayerProfilePage() {
 
   /** True when this is your profile but no upload has marked you as self yet. */
   const showIdentityNotice = useMemo(() => {
+    // Never flash while page/identity data is still settling.
     if (!isOwnProfile || loading || signedInLoading) return false
     const match = signedInIdentities.find((id) => id.playerKey === playerKey)
-    // Profile display-name fallback is not upload-confirmed.
+    if (match?.confirmedFromUpload) return false
+    // Unconfirmed profile-name fallback, or own-profile with no confirmed identity.
     if (match) return !match.confirmedFromUpload
-    // Navigated as "own profile" without a resolved identity yet.
     return Boolean(nav?.ownProfile)
   }, [
     isOwnProfile,
