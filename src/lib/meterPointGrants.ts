@@ -347,12 +347,21 @@ export async function persistConfirmedPlayerKey(
   supabase: SupabaseClient,
   playerKey: string | null,
 ): Promise<void> {
-  const key = playerKey?.trim()
-  if (!key) return
-
   const { data: auth } = await supabase.auth.getUser()
   const userId = auth.user?.id
   if (!userId) return
+
+  const key = playerKey?.trim()
+  if (!key) {
+    await supabase
+      .from('meter_reward_accounts')
+      .update({
+        confirmed_player_key: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+    return
+  }
 
   await supabase.from('meter_reward_accounts').upsert({
     user_id: userId,

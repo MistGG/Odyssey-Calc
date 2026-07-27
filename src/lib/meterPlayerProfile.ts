@@ -6,6 +6,7 @@ import {
   partyMembersFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
+import { parseConfirmsMeterIdentity } from './meterIdentityReconfirm'
 import {
   memberDpsInParse,
   memberRoleBucket,
@@ -35,7 +36,7 @@ export function normalizeRoutePlayerKey(raw: string): string {
 }
 
 export const METER_PROFILE_IDENTITY_NOTICE =
-  'Please upload a parse through the meter to confirm your Tamer identity'
+  'Please upload a new parse through the meter to confirm your Tamer identity'
 
 export type SignedInMeterIdentity = {
   playerKey: string
@@ -70,6 +71,7 @@ export type ResolveSignedInMeterIdentitiesOptions = {
  * Collect trusted self identities from owned parses.
  * Peer co-upload merges used to persist multiple isSelf flags on one row — only trust a
  * row when it has a single isSelf (or that self matches the confirmed account key).
+ * During the Jul 2026 reconfirm window, only post-cutoff uploads count.
  */
 function collectTrustedSelfIdentitiesFromParses(
   myParseRows: PublicMeterParseRow[],
@@ -78,6 +80,7 @@ function collectTrustedSelfIdentitiesFromParses(
   const byKey = new Map<string, SignedInMeterIdentity>()
 
   for (const row of myParseRows) {
+    if (!parseConfirmsMeterIdentity(row.created_at)) continue
     const selves: SignedInMeterIdentity[] = []
     for (const member of partyMembersFromPayload(row.payload)) {
       const self = selfTamerFromMember(member)

@@ -23,14 +23,16 @@ import {
 import { fetchOlympusHofBreaksForPointGrants } from '../lib/meterHallOfFameTheme'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
-import { resolveSignedInMeterIdentity, normalizeRoutePlayerKey } from '../lib/meterPlayerProfile'
+import { resolveSignedInMeterIdentity } from '../lib/meterPlayerProfile'
 import type { PublicMeterParseRow } from '../lib/meterPublicStats'
 import { dungeonFromPayload } from '../lib/meterParsePayload'
 import {
   readCachedConfirmedTamer,
   writeCachedConfirmedTamer,
+  clearCachedConfirmedTamer,
 } from '../lib/meterConfirmedTamerCache'
 import { isMistMeterShopDev } from '../lib/meterDevShop'
+import { parseConfirmsMeterIdentity } from '../lib/meterIdentityReconfirm'
 import {
   clearEquippedMeterPartyBarThemeId,
   getMeterPartyBarTheme,
@@ -139,8 +141,6 @@ export function useMeterRewards(
       const gen = ++syncGenRef.current
       setSyncing(true)
 
-      const cachedTamer = readCachedConfirmedTamer()
-
       const [myRes, storedPlayerKey] = await Promise.all([
         fetchMyMeterParsesForGrants(supabase),
         fetchStoredConfirmedPlayerKey(supabase),
@@ -153,28 +153,34 @@ export function useMeterRewards(
       }
       setMyParses(myRes.rows)
 
-      const fromParsesKey = confirmedPlayerKeyFromParses(myRes.rows)
-      // Prefer stored account key so peer-merge contamination cannot overwrite identity.
-      const confirmedPlayerKey =
-        storedPlayerKey ?? fromParsesKey ?? (cachedTamer ? normalizeRoutePlayerKey(cachedTamer) : null)
+      // Only a post-reset upload may confirm identity (ignore stale cache / old isSelf rows).
+      const freshParses = myRes.rows.filter((row) => parseConfirmsMeterIdentity(row.created_at))
+      const fromFreshUpload = confirmedPlayerKeyFromParses(freshParses)
+      // Do not trust pre-reset stored keys — everyone must re-upload to confirm.
+      const confirmedPlayerKey = fromFreshUpload
 
-      if (confirmedPlayerKey) {
-        await claimAnonymousMeterParsesForTamer(supabase, confirmedPlayerKey)
-        writeCachedConfirmedTamer(confirmedPlayerKey)
-        void persistConfirmedPlayerKey(supabase, confirmedPlayerKey)
+      if (fromFreshUpload) {
+        await claimAnonymousMeterParsesForTamer(supabase, fromFreshUpload)
+        writeCachedConfirmedTamer(fromFreshUpload)
+        void persistConfirmedPlayerKey(supabase, fromFreshUpload)
+      } else {
+        clearCachedConfirmedTamer()
+        if (storedPlayerKey) {
+          // Drop poisoned / pre-reset confirmations so the notice stays until a fresh upload.
+          void persistConfirmedPlayerKey(supabase, null)
+        }
       }
 
-      const identity = resolveSignedInMeterIdentity(profileDisplayName, myRes.rows, {
-        confirmedPlayerKeys: [confirmedPlayerKey],
+      const identity = resolveSignedInMeterIdentity(profileDisplayName, freshParses, {
+        confirmedPlayerKeys: confirmedPlayerKey ? [confirmedPlayerKey] : [],
         confirmedDisplayNames: confirmedPlayerKey ? [confirmedPlayerKey] : [],
       })
-      const confirmedFromParses = hasConfirmedTamerFromParses(myRes.rows)
+      const confirmedFromParses = hasConfirmedTamerFromParses(freshParses)
       const tamerName =
-        identity?.displayName?.trim() ||
-        confirmedPlayerKey ||
-        cachedTamer ||
-        null
-      const confirmed = Boolean(confirmedPlayerKey) || confirmedFromParses || Boolean(cachedTamer)
+        identity?.confirmedFromUpload
+          ? identity.displayName?.trim() || confirmedPlayerKey || null
+          : confirmedPlayerKey || null
+      const confirmed = Boolean(fromFreshUpload) || confirmedFromParses
       setIdentityConfirmed(confirmed)
       setConfirmedTamerName(tamerName)
       setShowIdentityNotice(!confirmed)

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { fetchMyMeterParses } from '../lib/meterDataSource'
 import {
+  clearCachedConfirmedTamer,
   readCachedConfirmedTamer,
   writeCachedConfirmedTamer,
 } from '../lib/meterConfirmedTamerCache'
@@ -27,8 +28,7 @@ export function useSignedInMeterProfile(): {
     const cached = readCachedConfirmedTamer()?.trim().toLowerCase()
     return cached || null
   })
-  // Cold until first fetch unless localStorage already has a confirmed tamer.
-  const [loading, setLoading] = useState(() => !readCachedConfirmedTamer())
+  const [loading, setLoading] = useState(true)
   const [myParseRows, setMyParseRows] = useState<PublicMeterParseRow[]>([])
 
   const userId = user?.id ?? null
@@ -43,14 +43,7 @@ export function useSignedInMeterProfile(): {
     }
 
     let cancelled = false
-    const cachedTamer = readCachedConfirmedTamer()
-    if (cachedTamer) {
-      setCachedTamerName(cachedTamer)
-      setConfirmedPlayerKey(cachedTamer.trim().toLowerCase())
-      setLoading(false)
-    } else {
-      setLoading(true)
-    }
+    setLoading(true)
 
     void (async () => {
       const [result, storedKey] = await Promise.all([
@@ -59,20 +52,20 @@ export function useSignedInMeterProfile(): {
       ])
       if (cancelled) return
 
-      // Prefer the account's stored key over any leftover cache from a co-meter peer.
-      const authoritativeKey = storedKey || cachedTamer?.trim().toLowerCase() || null
-      if (authoritativeKey) {
-        await claimAnonymousMeterParsesForTamer(supabase, authoritativeKey)
+      // Identity must be re-confirmed via a fresh upload after the Jul 2026 reset.
+      // Ignore legacy localStorage; only trust the server key once a new upload wrote it.
+      if (storedKey) {
+        await claimAnonymousMeterParsesForTamer(supabase, storedKey)
+        writeCachedConfirmedTamer(storedKey)
+        setConfirmedPlayerKey(storedKey)
+        setCachedTamerName(storedKey)
+      } else {
+        clearCachedConfirmedTamer()
+        setConfirmedPlayerKey(null)
+        setCachedTamerName(null)
       }
 
       setMyParseRows(result.rows)
-      setConfirmedPlayerKey(storedKey || authoritativeKey)
-      if (storedKey) {
-        writeCachedConfirmedTamer(storedKey)
-        setCachedTamerName(storedKey)
-      } else if (!cachedTamer) {
-        setCachedTamerName(null)
-      }
       setLoading(false)
     })()
 
@@ -85,18 +78,8 @@ export function useSignedInMeterProfile(): {
     () =>
       userId
         ? resolveSignedInMeterIdentities(profileDisplayName, myParseRows, {
-            confirmedPlayerKeys: [confirmedPlayerKey],
-            // Only pass cache as display when it matches the confirmed key (avoid dual identities).
-            confirmedDisplayNames:
-              cachedTamerName &&
-              confirmedPlayerKey &&
-              cachedTamerName.trim().toLowerCase() === confirmedPlayerKey
-                ? [cachedTamerName]
-                : confirmedPlayerKey
-                  ? [confirmedPlayerKey]
-                  : cachedTamerName
-                    ? [cachedTamerName]
-                    : [],
+            confirmedPlayerKeys: confirmedPlayerKey ? [confirmedPlayerKey] : [],
+            confirmedDisplayNames: cachedTamerName ? [cachedTamerName] : [],
           })
         : [],
     [userId, profileDisplayName, myParseRows, confirmedPlayerKey, cachedTamerName],

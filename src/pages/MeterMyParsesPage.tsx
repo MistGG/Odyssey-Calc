@@ -17,7 +17,6 @@ import {
   getPublicDungeonParsesCached,
   loadDigimonRoleMapForMeter,
 } from '../lib/meterDataSource'
-import { readCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
 import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
 import { fetchStoredConfirmedPlayerKey } from '../lib/meterPointGrants'
 import {
@@ -120,9 +119,8 @@ export function MeterMyParsesPage() {
     setLoading(true)
     setLoadError(null)
     const storedKey = await fetchStoredConfirmedPlayerKey(supabase)
-    const claimKey = storedKey || readCachedConfirmedTamer()
-    if (claimKey) {
-      await claimAnonymousMeterParsesForTamer(supabase, claimKey)
+    if (storedKey) {
+      await claimAnonymousMeterParsesForTamer(supabase, storedKey)
     }
     const [mine, roles, dungeons] = await Promise.all([
       fetchMyMeterParses(supabase),

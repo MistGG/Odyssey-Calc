@@ -171,13 +171,17 @@ export async function syncPointGrantsAfterUpload(
 
   const selfFromTrigger = selfFromPayload(triggerParse)
   const storedBefore = await fetchConfirmedPlayerKey(supabase, userId)
-  // Only seed confirmed_player_key from a trustworthy sole isSelf; never overwrite an existing key
-  // from parse members (peer merges used to inject extra isSelf flags).
-  if (selfFromTrigger && !storedBefore) {
+  const triggerCreatedMs = Date.parse(String(triggerParse.created_at ?? ''))
+  const reconfirmAfterMs = Date.parse('2026-07-27T16:00:00.000Z')
+  const triggerCanConfirmIdentity =
+    Number.isFinite(triggerCreatedMs) && triggerCreatedMs >= reconfirmAfterMs
+  // Only seed confirmed_player_key from a trustworthy sole isSelf on a post-reset upload.
+  if (selfFromTrigger && !storedBefore && triggerCanConfirmIdentity) {
     await persistConfirmedPlayerKey(supabase, userId, selfFromTrigger)
   }
 
-  const storedKey = storedBefore ?? selfFromTrigger
+  const storedKey =
+    storedBefore ?? (triggerCanConfirmIdentity ? selfFromTrigger : null)
 
   const { data, error } = await supabase
     .from('meter_parses')
