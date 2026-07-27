@@ -507,12 +507,12 @@ async function fetchPlayerHallOfFameFromPlayerRpc(
     return { entries: [], error: error.message }
   }
 
-  let goldRows = filterGoldRecordBreaksByScope(
-    ((data ?? []) as PlayerHofGoldRpcRow[])
-      .map((row) => mapPlayerHofGoldRpcRow(row))
-      .filter((row): row is HofRowWithScope => row != null),
-    (row) => ({ dungeonId: row.dungeonId, difficultyId: row.difficultyId }),
-  )
+  // RPC already collapses holder streaks server-side (full timeline). Do not re-run
+  // filterGoldRecordBreaksByScope on player-only rows — that drops retakes when the
+  // intervening record holders are absent from the payload.
+  let goldRows = ((data ?? []) as PlayerHofGoldRpcRow[])
+    .map((row) => mapPlayerHofGoldRpcRow(row))
+    .filter((row): row is HofRowWithScope => row != null)
 
   const scopeByEntryKey = new Map(goldRows.map((row) => [entryKey(row), row]))
 

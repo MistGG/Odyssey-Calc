@@ -11,13 +11,17 @@ function navLinkClass(isActive: boolean, extra = '') {
 }
 
 export function Layout() {
-  const { user, authReady, signOut, profileDisplayName, profileReady } = useAuth()
+  const { user, authReady, signOut, profileDisplayName } = useAuth()
   const { identities: meterIdentities } = useSignedInMeterProfile()
   const { pathname } = useLocation()
 
   const navUserLabel = profileDisplayName?.trim() || 'Account'
   const navUserInitial = navUserLabel.charAt(0).toUpperCase() || '?'
-  const showAccountNav = authReady && user && profileReady
+  // Prefer account chrome whenever we already know the user (incl. persisted
+  // session on first paint). Never flash "Sign in" for a signed-in session
+  // while profileReady / getSession is still catching up.
+  const showAccountNav = Boolean(user)
+  const showSignIn = authReady && !user
   const meterProfileItems = meterIdentities.map((id) => ({
     to: meterPlayerProfilePath(id.playerKey),
     label: id.displayName,
@@ -203,7 +207,7 @@ export function Layout() {
                   Sign out
                 </button>
               </div>
-            ) : authReady ? (
+            ) : showSignIn ? (
               <NavLink
                 to="/auth"
                 className={({ isActive }) => navLinkClass(isActive, 'nav-sign-in')}

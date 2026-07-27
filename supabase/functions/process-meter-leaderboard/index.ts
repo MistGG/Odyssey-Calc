@@ -16,6 +16,18 @@ const MIN_PARTY_DAMAGE_SHARE = 0.02
 const PARTY_UPLOAD_DEDUPE_WINDOW_SEC = 30 * 60
 /** Meter duration drift (Mist 72s vs Tirweth 70s) still counts as one run. */
 const PARTY_DURATION_TOLERANCE_SEC = 5
+/**
+ * In-game results-screen clear clocks for the same pull must match this closely.
+ * Farming the same dungeon back-to-back often lands within a few seconds of meter
+ * duration (e.g. 135s vs 136s) but different clear times (142s vs 144s).
+ */
+const PARTY_CLEAR_TIME_TOLERANCE_SEC = 1
+/**
+ * When either upload lacks clientComplete.timeSec, only treat near-simultaneous
+ * uploads as the same clear (peer meters finish within seconds; multi-minute gaps
+ * are almost always a later pull with a similar meter duration).
+ */
+const PARTY_UPLOAD_NO_CLEAR_MAX_GAP_SEC = 120
 /** When the in-game clear time and meter session diverge by at least this, DPS uses the in-game clock. */
 const DPS_CLEAR_TIME_GAP_SEC = 30
 const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
@@ -158,15 +170,23 @@ function partyPlayerSetKey(members: StoredMember[]): string {
     .join('\u0001')
 }
 
+function clientCompleteTimeSec(payload: DungeonPayload): number | null {
+  const cc = Number(payload.dungeon?.clientComplete?.timeSec)
+  if (!Number.isFinite(cc) || cc <= 0) return null
+  return Math.round(cc)
+}
+
 function buildPartyRunFingerprint(
   dungeonId: string,
   difficultyId: number,
   durationSec: number,
   members: StoredMember[],
+  clearTimeSec: number | null = null,
 ): string {
   const players = partyPlayerSetKey(members)
   const dur = Math.max(0, Math.round(durationSec))
-  return `${dungeonId.trim()}:${difficultyId}:${dur}:${players}`
+  const clear = clearTimeSec != null && clearTimeSec > 0 ? `c${Math.round(clearTimeSec)}` : 'c?'
+  return `${dungeonId.trim()}:${difficultyId}:${dur}:${clear}:${players}`
 }
 
 /**
@@ -246,6 +266,7 @@ async function findSoftDuplicatePartyParseInWindow(
     members: StoredMember[]
     excludeParseId: string
     createdAt: string
+    clearTimeSec?: number | null
   },
 ): Promise<string | null> {
   const playerKey = partyPlayerSetKey(params.members)
@@ -271,6 +292,10 @@ async function findSoftDuplicatePartyParseInWindow(
   if (error || !data?.length) return null
 
   const dur = Math.max(0, Math.round(params.durationSec))
+  const incomingClear =
+    params.clearTimeSec != null && Number.isFinite(params.clearTimeSec) && params.clearTimeSec > 0
+      ? Math.round(params.clearTimeSec)
+      : null
   type Candidate = {
     id: string
     createdAtMs: number
@@ -292,6 +317,17 @@ async function findSoftDuplicatePartyParseInWindow(
     if (durationDelta > PARTY_DURATION_TOLERANCE_SEC) continue
     const createdAtMs = new Date(String(row.created_at)).getTime()
     if (!Number.isFinite(createdAtMs)) continue
+
+    const otherClear = clientCompleteTimeSec(payload)
+    if (incomingClear != null && otherClear != null) {
+      // Same party + similar meter duration is not enough when farming; clear clocks
+      // distinguish back-to-back pulls (142s vs 144s) that used to false-merge.
+      if (Math.abs(otherClear - incomingClear) > PARTY_CLEAR_TIME_TOLERANCE_SEC) continue
+    } else if (Math.abs(createdAtMs - centerMs) > PARTY_UPLOAD_NO_CLEAR_MAX_GAP_SEC * 1000) {
+      // Without a clear clock, refuse to merge uploads minutes apart.
+      continue
+    }
+
     candidates.push({
       id: String(row.id),
       createdAtMs,
@@ -918,9 +954,10 @@ async function processParse(
   const payload = (row.payload ?? {}) as DungeonPayload
   const members = payload.members ?? []
   const durationSec = sessionDuration(payload, Number(row.duration_sec) || 0, members)
+  const clearTimeSec = clientCompleteTimeSec(payload)
   const fingerprint =
     members.length > 0
-      ? buildPartyRunFingerprint(dungeonId, difficultyId, durationSec, members)
+      ? buildPartyRunFingerprint(dungeonId, difficultyId, durationSec, members, clearTimeSec)
       : null
 
   if (fingerprint && !force && !options.skipDuplicateCheck) {
@@ -931,6 +968,7 @@ async function processParse(
       members,
       excludeParseId: row.id,
       createdAt: row.created_at,
+      clearTimeSec,
     })
     if (dupId) {
       await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
@@ -959,6 +997,7 @@ async function processParse(
         difficultyId,
         mergedDurationSec,
         mergedPayload.members ?? [],
+        clientCompleteTimeSec(mergedPayload),
       )
 
       await supabase

@@ -55,10 +55,21 @@ export function selfTamerFromMember(member: MeterPartyMemberStored): SignedInMet
   }
 }
 
+export type ResolveSignedInMeterIdentitiesOptions = {
+  /**
+   * Already-confirmed tamer keys (reward account / local cache). Used when my-parse
+   * list rows omit payloads (egress), so isSelf cannot be read from uploads.
+   */
+  confirmedPlayerKeys?: Array<string | null | undefined>
+  /** Optional display names aligned with confirmed keys (e.g. cached tamer string). */
+  confirmedDisplayNames?: Array<string | null | undefined>
+}
+
 /** All distinct self tamers from the user's meter uploads, sorted by display name. */
 export function resolveSignedInMeterIdentities(
   profileDisplayName: string | null | undefined,
   myParseRows: PublicMeterParseRow[],
+  options?: ResolveSignedInMeterIdentitiesOptions,
 ): SignedInMeterIdentity[] {
   const byKey = new Map<string, SignedInMeterIdentity>()
 
@@ -72,23 +83,56 @@ export function resolveSignedInMeterIdentities(
     }
   }
 
+  const confirmedKeys = [
+    ...(options?.confirmedPlayerKeys ?? []),
+    ...(options?.confirmedDisplayNames ?? []).map((n) => n?.trim().toLowerCase() || null),
+  ]
+    .map((k) => k?.trim().toLowerCase() || '')
+    .filter(Boolean)
+
+  const confirmedNameByKey = new Map<string, string>()
+  for (const raw of options?.confirmedDisplayNames ?? []) {
+    const name = raw?.trim()
+    if (!name) continue
+    confirmedNameByKey.set(name.toLowerCase(), name)
+  }
+
+  const profileName = profileDisplayName?.trim() || ''
+  const profileKey = profileName.toLowerCase()
+
+  for (const key of confirmedKeys) {
+    const existing = byKey.get(key)
+    if (existing) {
+      existing.confirmedFromUpload = true
+      continue
+    }
+    const displayName =
+      confirmedNameByKey.get(key) ||
+      (profileKey === key ? profileName : null) ||
+      key
+    byKey.set(key, {
+      playerKey: key,
+      displayName,
+      confirmedFromUpload: true,
+    })
+  }
+
   const fromUploads = [...byKey.values()].sort((a, b) =>
     a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }),
   )
   if (fromUploads.length > 0) return fromUploads
 
-  const fallbackName = profileDisplayName?.trim()
-  if (!fallbackName) return []
-  const key = fallbackName.toLowerCase()
-  return [{ playerKey: key, displayName: fallbackName, confirmedFromUpload: false }]
+  if (!profileName) return []
+  return [{ playerKey: profileKey, displayName: profileName, confirmedFromUpload: false }]
 }
 
 /** First resolved identity (convenience). */
 export function resolveSignedInMeterIdentity(
   profileDisplayName: string | null | undefined,
   myParseRows: PublicMeterParseRow[],
+  options?: ResolveSignedInMeterIdentitiesOptions,
 ): SignedInMeterIdentity | null {
-  return resolveSignedInMeterIdentities(profileDisplayName, myParseRows)[0] ?? null
+  return resolveSignedInMeterIdentities(profileDisplayName, myParseRows, options)[0] ?? null
 }
 
 export function parseRowIncludesPlayer(row: PublicMeterParseRow, playerKey: string): boolean {
