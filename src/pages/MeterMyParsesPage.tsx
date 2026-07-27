@@ -19,6 +19,7 @@ import {
 } from '../lib/meterDataSource'
 import { readCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
 import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
+import { fetchStoredConfirmedPlayerKey } from '../lib/meterPointGrants'
 import {
   dungeonParseRows,
   dungeonSelectOptions,
@@ -118,9 +119,10 @@ export function MeterMyParsesPage() {
     if (!supabase || !user) return
     setLoading(true)
     setLoadError(null)
-    const cachedTamer = readCachedConfirmedTamer()
-    if (cachedTamer) {
-      await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
+    const storedKey = await fetchStoredConfirmedPlayerKey(supabase)
+    const claimKey = storedKey || readCachedConfirmedTamer()
+    if (claimKey) {
+      await claimAnonymousMeterParsesForTamer(supabase, claimKey)
     }
     const [mine, roles, dungeons] = await Promise.all([
       fetchMyMeterParses(supabase),

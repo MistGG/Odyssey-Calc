@@ -47,17 +47,30 @@ function parseDifficultyId(row: ParseRow): number | null {
 
 function selfFromPayload(row: ParseRow): string | null {
   const members = row.payload?.members ?? []
+  const selves: string[] = []
   for (const member of members) {
     if (!member.isSelf) continue
     const raw = member.tamerName?.trim() || member.displayLabel?.trim() || ''
-    if (raw) return normalizeTamerKey(raw)
+    if (raw) selves.push(normalizeTamerKey(raw))
   }
-  return null
+  // Multiple isSelf on one row is peer-merge contamination — do not trust it.
+  return selves.length === 1 ? selves[0]! : null
 }
 
 function rowHasSelf(row: ParseRow, selfPlayerKey: string | null): boolean {
-  const fromPayload = selfFromPayload(row)
-  if (fromPayload) return true
+  const members = row.payload?.members ?? []
+  if (selfPlayerKey) {
+    if (
+      members.some(
+        (m) =>
+          normalizeTamerKey(m.tamerName?.trim() || m.displayLabel?.trim() || '') === selfPlayerKey,
+      )
+    ) {
+      return true
+    }
+  } else if (selfFromPayload(row)) {
+    return true
+  }
   if (!selfPlayerKey) return false
   const summary = row.leaderboard_summary
   if (summary?.eligible !== true) return false
@@ -83,7 +96,7 @@ function computeGrantsForUser(
 ): MeterPointGrant[] {
   const grants: MeterPointGrant[] = []
   const selfKey =
-    rows.map((r) => selfFromPayload(r)).find((k) => k) ?? confirmedPlayerKey
+    confirmedPlayerKey ?? rows.map((r) => selfFromPayload(r)).find((k) => k) ?? null
   const today = todayUtcKey()
   let dailyDone = false
   const firstClear = new Set<string>()
@@ -157,11 +170,14 @@ export async function syncPointGrantsAfterUpload(
   if (!userId?.trim()) return { inserted: 0 }
 
   const selfFromTrigger = selfFromPayload(triggerParse)
-  if (selfFromTrigger) {
+  const storedBefore = await fetchConfirmedPlayerKey(supabase, userId)
+  // Only seed confirmed_player_key from a trustworthy sole isSelf; never overwrite an existing key
+  // from parse members (peer merges used to inject extra isSelf flags).
+  if (selfFromTrigger && !storedBefore) {
     await persistConfirmedPlayerKey(supabase, userId, selfFromTrigger)
   }
 
-  const storedKey = (await fetchConfirmedPlayerKey(supabase, userId)) ?? selfFromTrigger
+  const storedKey = storedBefore ?? selfFromTrigger
 
   const { data, error } = await supabase
     .from('meter_parses')

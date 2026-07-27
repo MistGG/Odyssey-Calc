@@ -22,12 +22,14 @@ export function selfTamerNameFromParsePayload(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
   const members = (payload as { members?: unknown }).members
   if (!Array.isArray(members)) return null
+  const names: string[] = []
   for (const raw of members) {
     if (!raw || typeof raw !== 'object') continue
     const member = raw as { isSelf?: boolean; tamerName?: string; displayLabel?: string }
     if (!member.isSelf) continue
     const name = member.tamerName?.trim() || member.displayLabel?.trim()
-    if (name) return name
+    if (name) names.push(name)
   }
-  return null
+  // Multiple isSelf = peer-merge contamination; do not guess.
+  return names.length === 1 ? names[0]! : null
 }

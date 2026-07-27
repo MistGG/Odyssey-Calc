@@ -57,12 +57,47 @@ export function selfTamerFromMember(member: MeterPartyMemberStored): SignedInMet
 
 export type ResolveSignedInMeterIdentitiesOptions = {
   /**
-   * Already-confirmed tamer keys (reward account / local cache). Used when my-parse
+   * Already-confirmed tamer key (reward account / local cache). Used when my-parse
    * list rows omit payloads (egress), so isSelf cannot be read from uploads.
+   * Only the first non-empty key is used — do not pass divergent names as extra keys.
    */
   confirmedPlayerKeys?: Array<string | null | undefined>
-  /** Optional display names aligned with confirmed keys (e.g. cached tamer string). */
+  /** Optional display name for the confirmed key (ignored when it disagrees with the key). */
   confirmedDisplayNames?: Array<string | null | undefined>
+}
+
+/**
+ * Collect trusted self identities from owned parses.
+ * Peer co-upload merges used to persist multiple isSelf flags on one row — only trust a
+ * row when it has a single isSelf (or that self matches the confirmed account key).
+ */
+function collectTrustedSelfIdentitiesFromParses(
+  myParseRows: PublicMeterParseRow[],
+  confirmedPlayerKey: string | null,
+): Map<string, SignedInMeterIdentity> {
+  const byKey = new Map<string, SignedInMeterIdentity>()
+
+  for (const row of myParseRows) {
+    const selves: SignedInMeterIdentity[] = []
+    for (const member of partyMembersFromPayload(row.payload)) {
+      const self = selfTamerFromMember(member)
+      if (self) selves.push(self)
+    }
+    if (selves.length === 0) continue
+
+    const trusted =
+      selves.length === 1
+        ? selves
+        : confirmedPlayerKey
+          ? selves.filter((self) => self.playerKey === confirmedPlayerKey)
+          : []
+
+    for (const self of trusted) {
+      if (!byKey.has(self.playerKey)) byKey.set(self.playerKey, self)
+    }
+  }
+
+  return byKey
 }
 
 /** All distinct self tamers from the user's meter uploads, sorted by display name. */
@@ -71,50 +106,43 @@ export function resolveSignedInMeterIdentities(
   myParseRows: PublicMeterParseRow[],
   options?: ResolveSignedInMeterIdentitiesOptions,
 ): SignedInMeterIdentity[] {
-  const byKey = new Map<string, SignedInMeterIdentity>()
+  const confirmedKey =
+    options?.confirmedPlayerKeys
+      ?.map((k) => k?.trim().toLowerCase() || '')
+      .find(Boolean) || null
+  const confirmedDisplayName =
+    options?.confirmedDisplayNames?.map((n) => n?.trim() || '').find(Boolean) || null
+  const confirmedDisplayKey = confirmedDisplayName?.toLowerCase() || null
 
-  for (const row of myParseRows) {
-    const members = partyMembersFromPayload(row.payload)
-    for (const member of members) {
-      const self = selfTamerFromMember(member)
-      if (self && !byKey.has(self.playerKey)) {
-        byKey.set(self.playerKey, self)
-      }
-    }
-  }
-
-  const confirmedKeys = [
-    ...(options?.confirmedPlayerKeys ?? []),
-    ...(options?.confirmedDisplayNames ?? []).map((n) => n?.trim().toLowerCase() || null),
-  ]
-    .map((k) => k?.trim().toLowerCase() || '')
-    .filter(Boolean)
-
-  const confirmedNameByKey = new Map<string, string>()
-  for (const raw of options?.confirmedDisplayNames ?? []) {
-    const name = raw?.trim()
-    if (!name) continue
-    confirmedNameByKey.set(name.toLowerCase(), name)
-  }
+  // One authoritative confirmed identity — never union a divergent cache name with the DB key.
+  const authoritativeKey = confirmedKey || confirmedDisplayKey
+  const byKey = collectTrustedSelfIdentitiesFromParses(myParseRows, authoritativeKey)
 
   const profileName = profileDisplayName?.trim() || ''
   const profileKey = profileName.toLowerCase()
 
-  for (const key of confirmedKeys) {
-    const existing = byKey.get(key)
+  if (authoritativeKey) {
+    const existing = byKey.get(authoritativeKey)
     if (existing) {
       existing.confirmedFromUpload = true
-      continue
+      if (
+        confirmedDisplayName &&
+        confirmedDisplayKey === authoritativeKey &&
+        confirmedDisplayName !== existing.displayName
+      ) {
+        existing.displayName = confirmedDisplayName
+      }
+    } else {
+      const displayName =
+        (confirmedDisplayKey === authoritativeKey ? confirmedDisplayName : null) ||
+        (profileKey === authoritativeKey ? profileName : null) ||
+        authoritativeKey
+      byKey.set(authoritativeKey, {
+        playerKey: authoritativeKey,
+        displayName,
+        confirmedFromUpload: true,
+      })
     }
-    const displayName =
-      confirmedNameByKey.get(key) ||
-      (profileKey === key ? profileName : null) ||
-      key
-    byKey.set(key, {
-      playerKey: key,
-      displayName,
-      confirmedFromUpload: true,
-    })
   }
 
   const fromUploads = [...byKey.values()].sort((a, b) =>

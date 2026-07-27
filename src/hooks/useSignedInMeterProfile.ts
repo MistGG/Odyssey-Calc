@@ -53,19 +53,25 @@ export function useSignedInMeterProfile(): {
     }
 
     void (async () => {
-      if (cachedTamer) {
-        await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
-      }
       const [result, storedKey] = await Promise.all([
         fetchMyMeterParses(supabase),
         fetchStoredConfirmedPlayerKey(supabase),
       ])
       if (cancelled) return
+
+      // Prefer the account's stored key over any leftover cache from a co-meter peer.
+      const authoritativeKey = storedKey || cachedTamer?.trim().toLowerCase() || null
+      if (authoritativeKey) {
+        await claimAnonymousMeterParsesForTamer(supabase, authoritativeKey)
+      }
+
       setMyParseRows(result.rows)
-      setConfirmedPlayerKey(storedKey)
-      if (storedKey && !cachedTamer) {
+      setConfirmedPlayerKey(storedKey || authoritativeKey)
+      if (storedKey) {
         writeCachedConfirmedTamer(storedKey)
         setCachedTamerName(storedKey)
+      } else if (!cachedTamer) {
+        setCachedTamerName(null)
       }
       setLoading(false)
     })()
@@ -80,7 +86,17 @@ export function useSignedInMeterProfile(): {
       userId
         ? resolveSignedInMeterIdentities(profileDisplayName, myParseRows, {
             confirmedPlayerKeys: [confirmedPlayerKey],
-            confirmedDisplayNames: [cachedTamerName],
+            // Only pass cache as display when it matches the confirmed key (avoid dual identities).
+            confirmedDisplayNames:
+              cachedTamerName &&
+              confirmedPlayerKey &&
+              cachedTamerName.trim().toLowerCase() === confirmedPlayerKey
+                ? [cachedTamerName]
+                : confirmedPlayerKey
+                  ? [confirmedPlayerKey]
+                  : cachedTamerName
+                    ? [cachedTamerName]
+                    : [],
           })
         : [],
     [userId, profileDisplayName, myParseRows, confirmedPlayerKey, cachedTamerName],

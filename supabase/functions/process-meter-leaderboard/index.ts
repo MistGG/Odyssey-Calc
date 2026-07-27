@@ -186,10 +186,73 @@ function buildPartyRunFingerprint(
   return `${dungeonId.trim()}:${difficultyId}:${dur}:${clear}:${players}`
 }
 
+function selfPlayerKeysFromPayload(payload: DungeonPayload): string[] {
+  const keys: string[] = []
+  const seen = new Set<string>()
+  for (const member of payload.members ?? []) {
+    if (member.isSelf !== true) continue
+    const key = normalizePlayerKey(member)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    keys.push(key)
+  }
+  return keys
+}
+
+/**
+ * Canonical row owner for isSelf after a peer merge. Prefer the single self on the
+ * canonical upload; if that row was already contaminated, drop selves that belong to
+ * the incoming peer upload.
+ */
+function resolveCanonicalOwnerSelfKey(
+  canonical: DungeonPayload,
+  incoming: DungeonPayload,
+): string | null {
+  const canonSelves = selfPlayerKeysFromPayload(canonical)
+  const incomingSelves = new Set(selfPlayerKeysFromPayload(incoming))
+  if (canonSelves.length === 1) return canonSelves[0]!
+  const owned = canonSelves.filter((key) => !incomingSelves.has(key))
+  if (owned.length >= 1) return owned[0]!
+  return canonSelves[0] ?? null
+}
+
+/**
+ * Peer kit merge may temporarily keep multiple isSelf flags; persisted payloads must
+ * only mark the owning upload's tamer as self (otherwise co-meters leak into identity).
+ */
+function restrictIsSelfToOwner(
+  payload: DungeonPayload,
+  ownerSelfKey: string | null,
+): DungeonPayload {
+  const members = Array.isArray(payload.members) ? payload.members : []
+  if (!ownerSelfKey) {
+    let kept = false
+    return {
+      ...payload,
+      members: members.map((member) => {
+        if (member.isSelf !== true) return { ...member, isSelf: false }
+        if (kept) return { ...member, isSelf: false }
+        kept = true
+        return { ...member, isSelf: true }
+      }),
+    }
+  }
+  return {
+    ...payload,
+    members: members.map((member) => ({
+      ...member,
+      isSelf: normalizePlayerKey(member) === ownerSelfKey,
+    })),
+  }
+}
+
 /**
  * Prefer each player's isSelf kit when merging peer uploads of the same clear.
  * Peer party_skill may still emit parent skill *ids* for same-model alts; skill *names*
  * from EventStream are preferred during alternate-structure resolution.
+ *
+ * Kit preference may keep peer isSelf flags in-memory; callers must run
+ * `restrictIsSelfToOwner` before persisting onto a specific parse row.
  */
 function mergePartyPayloads(canonical: DungeonPayload, incoming: DungeonPayload): DungeonPayload {
   const canonMembers = Array.isArray(canonical.members) ? canonical.members : []
@@ -969,7 +1032,11 @@ async function processParse(
 
       const canonicalPayload = (canonical.payload ?? {}) as DungeonPayload
       const incomingPayload = (row.payload ?? canonical.payload ?? {}) as DungeonPayload
-      const mergedPayload = mergePartyPayloads(canonicalPayload, incomingPayload)
+      const ownerSelfKey = resolveCanonicalOwnerSelfKey(canonicalPayload, incomingPayload)
+      const mergedPayload = restrictIsSelfToOwner(
+        mergePartyPayloads(canonicalPayload, incomingPayload),
+        ownerSelfKey,
+      )
       const mergedDurationSec =
         sessionDuration(mergedPayload, Number(row.duration_sec) || Number(canonical.duration_sec) || 0, mergedPayload.members ?? []) ||
         Number(row.duration_sec) ||

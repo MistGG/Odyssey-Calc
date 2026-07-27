@@ -140,9 +140,6 @@ export function useMeterRewards(
       setSyncing(true)
 
       const cachedTamer = readCachedConfirmedTamer()
-      if (cachedTamer) {
-        await claimAnonymousMeterParsesForTamer(supabase, cachedTamer)
-      }
 
       const [myRes, storedPlayerKey] = await Promise.all([
         fetchMyMeterParsesForGrants(supabase),
@@ -156,18 +153,28 @@ export function useMeterRewards(
       }
       setMyParses(myRes.rows)
 
-      const identity = resolveSignedInMeterIdentity(profileDisplayName, myRes.rows)
-      const confirmedFromParses = hasConfirmedTamerFromParses(myRes.rows)
-      const parsedTamerName =
-        identity?.confirmedFromUpload ? identity.displayName?.trim() || null : null
-      if (parsedTamerName) writeCachedConfirmedTamer(parsedTamerName)
-      const tamerName = parsedTamerName ?? cachedTamer
+      const fromParsesKey = confirmedPlayerKeyFromParses(myRes.rows)
+      // Prefer stored account key so peer-merge contamination cannot overwrite identity.
       const confirmedPlayerKey =
-        confirmedPlayerKeyFromParses(myRes.rows) ?? storedPlayerKey ?? (tamerName ? normalizeRoutePlayerKey(tamerName) : null)
+        storedPlayerKey ?? fromParsesKey ?? (cachedTamer ? normalizeRoutePlayerKey(cachedTamer) : null)
+
       if (confirmedPlayerKey) {
+        await claimAnonymousMeterParsesForTamer(supabase, confirmedPlayerKey)
+        writeCachedConfirmedTamer(confirmedPlayerKey)
         void persistConfirmedPlayerKey(supabase, confirmedPlayerKey)
       }
-      const confirmed = confirmedFromParses || Boolean(cachedTamer) || Boolean(storedPlayerKey)
+
+      const identity = resolveSignedInMeterIdentity(profileDisplayName, myRes.rows, {
+        confirmedPlayerKeys: [confirmedPlayerKey],
+        confirmedDisplayNames: confirmedPlayerKey ? [confirmedPlayerKey] : [],
+      })
+      const confirmedFromParses = hasConfirmedTamerFromParses(myRes.rows)
+      const tamerName =
+        identity?.displayName?.trim() ||
+        confirmedPlayerKey ||
+        cachedTamer ||
+        null
+      const confirmed = Boolean(confirmedPlayerKey) || confirmedFromParses || Boolean(cachedTamer)
       setIdentityConfirmed(confirmed)
       setConfirmedTamerName(tamerName)
       setShowIdentityNotice(!confirmed)

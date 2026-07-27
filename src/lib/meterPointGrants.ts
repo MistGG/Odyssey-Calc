@@ -69,11 +69,13 @@ function isNormalOrHardDifficulty(difficultyId: number | null): boolean {
 
 function selfFromPayloadRow(row: PublicMeterParseRow): string | null {
   if (!row.payload) return null
+  const selves: string[] = []
   for (const member of partyMembersFromPayload(row.payload)) {
     const self = selfTamerFromMember(member)
-    if (self) return self.playerKey
+    if (self) selves.push(self.playerKey)
   }
-  return null
+  // Multiple isSelf on one owned row is peer-merge contamination — do not trust it.
+  return selves.length === 1 ? selves[0]! : null
 }
 
 /** Resolve the uploader's tamer key from payloads, stored account key, or summary membership. */
@@ -81,13 +83,13 @@ export function resolveSelfPlayerKey(
   myParses: PublicMeterParseRow[],
   confirmedPlayerKey?: string | null,
 ): string | null {
+  const stored = confirmedPlayerKey?.trim()
+  if (stored) return normalizeTamerKey(stored)
+
   for (const row of myParses) {
     const fromPayload = selfFromPayloadRow(row)
     if (fromPayload) return fromPayload
   }
-
-  const stored = confirmedPlayerKey?.trim()
-  if (stored) return normalizeTamerKey(stored)
 
   return null
 }
@@ -98,7 +100,21 @@ function rowHasSelfParticipation(
 ): boolean {
   if (row.payload && isLeaderboardEligibleDungeonParsePayload(row.payload)) {
     const members = partyMembersFromPayload(row.payload)
-    if (members.some((m) => m.isSelf)) return true
+    if (selfPlayerKey) {
+      if (
+        members.some(
+          (m) =>
+            normalizeTamerKey(m.tamerName?.trim() || m.displayLabel?.trim() || '') ===
+            selfPlayerKey,
+        )
+      ) {
+        return true
+      }
+    } else {
+      const selfCount = members.filter((m) => m.isSelf).length
+      // Sole isSelf is trustworthy; multi-isSelf is peer-merge contamination.
+      if (selfCount === 1) return true
+    }
   }
 
   if (!selfPlayerKey) return false
@@ -120,18 +136,26 @@ function isEligibleHardParse(row: PublicMeterParseRow, selfPlayerKey?: string | 
 }
 
 function selfDpsInParse(row: PublicMeterParseRow, selfPlayerKey?: string | null): number {
+  const key = selfPlayerKey ?? selfFromPayloadRow(row)
+
   if (row.payload) {
     const members = partyMembersFromPayload(row.payload)
     let best = 0
     for (const member of members) {
-      if (!member.isSelf) continue
+      const memberKey = normalizeTamerKey(
+        member.tamerName?.trim() || member.displayLabel?.trim() || '',
+      )
+      if (key) {
+        if (memberKey !== key) continue
+      } else if (!member.isSelf) {
+        continue
+      }
       const dps = memberDpsInParse(member, row.payload, row.duration_sec, members)
       if (dps > best) best = dps
     }
     if (best > 0) return best
   }
 
-  const key = selfPlayerKey ?? selfFromPayloadRow(row)
   const summary = summaryFromRow(row)
   if (!summary?.members?.length || !key) return 0
   let best = 0

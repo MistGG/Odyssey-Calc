@@ -28,6 +28,7 @@ scripts/*
 !scripts/backfill-meter-leaderboard-parses.mjs
 !scripts/backfill-meter-leaderboard-entries.mjs
 !scripts/invalidate-dual-meter-uploads.mjs
+!scripts/repair-meter-peer-isSelf-contamination.mjs
 !scripts/load-env-local.mjs
 !scripts/tier-worker-refresh.mjs
 !scripts/verify-tier-alternate-structure.mjs

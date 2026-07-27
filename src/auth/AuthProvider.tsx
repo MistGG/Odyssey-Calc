@@ -13,6 +13,7 @@ import {
   ensureUserProfile,
 } from './ensureUserProfile'
 import { readPersistedAuthUser } from './readPersistedAuthUser'
+import { clearCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
 
 const PROFILE_NAME_CACHE_PREFIX = 'odyssey-profile-display-name:'
 
@@ -212,6 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (!supabase) return
+    clearCachedConfirmedTamer()
     await supabase.auth.signOut()
   }, [supabase])
 
