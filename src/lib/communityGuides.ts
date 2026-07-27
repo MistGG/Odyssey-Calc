@@ -20,8 +20,53 @@ export type CommunityGuide = {
   view_count: number
   status: 'draft' | 'published'
   social_links: CommunityGuideSocialLink[]
+  /** Published guides only: WIP stored separately so the live page stays unchanged. */
+  has_unpublished_draft: boolean
+  draft_title: string | null
+  draft_body: string | null
+  draft_thumbnail_url: string | null
+  draft_social_links: CommunityGuideSocialLink[] | null
   created_at: string
   updated_at: string
+}
+
+/** Content the editor should show (unpublished WIP when present, otherwise live fields). */
+export type CommunityGuideEditorContent = {
+  title: string
+  body: string
+  thumbnail_url: string | null
+  social_links: CommunityGuideSocialLink[]
+}
+
+export function resolveCommunityGuideEditorContent(
+  guide: Pick<
+    CommunityGuide,
+    | 'status'
+    | 'has_unpublished_draft'
+    | 'title'
+    | 'body'
+    | 'thumbnail_url'
+    | 'social_links'
+    | 'draft_title'
+    | 'draft_body'
+    | 'draft_thumbnail_url'
+    | 'draft_social_links'
+  >,
+): CommunityGuideEditorContent {
+  if (guide.status === 'published' && guide.has_unpublished_draft) {
+    return {
+      title: guide.draft_title ?? guide.title,
+      body: guide.draft_body ?? '',
+      thumbnail_url: guide.draft_thumbnail_url ?? null,
+      social_links: guide.draft_social_links ?? [],
+    }
+  }
+  return {
+    title: guide.title,
+    body: guide.body,
+    thumbnail_url: guide.thumbnail_url,
+    social_links: guide.social_links,
+  }
 }
 
 /** Card/list fields only — excludes heavy `body` text. */
@@ -52,7 +97,23 @@ function isMissingCommunityGuideColumnError(message: string): boolean {
     lower.includes('thumbnail_url') ||
     lower.includes('view_count') ||
     lower.includes('social_links') ||
+    lower.includes('has_unpublished_draft') ||
+    lower.includes('draft_title') ||
+    lower.includes('draft_body') ||
+    lower.includes('draft_thumbnail_url') ||
+    lower.includes('draft_social_links') ||
     (lower.includes('column') && lower.includes('community_guides'))
+  )
+}
+
+function isMissingCommunityGuideDraftColumnError(message: string): boolean {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes('has_unpublished_draft') ||
+    lower.includes('draft_title') ||
+    lower.includes('draft_body') ||
+    lower.includes('draft_thumbnail_url') ||
+    lower.includes('draft_social_links')
   )
 }
 
@@ -77,6 +138,11 @@ function normalizeCommunityGuideListItem(row: Record<string, unknown>): Communit
 }
 
 function normalizeCommunityGuide(row: Record<string, unknown>): CommunityGuide {
+  const hasDraftColumn = Object.prototype.hasOwnProperty.call(row, 'has_unpublished_draft')
+  const hasUnpublishedDraft = hasDraftColumn
+    ? Boolean(row.has_unpublished_draft)
+    : false
+  const draftSocialRaw = row.draft_social_links
   return {
     id: String(row.id),
     author_id: String(row.author_id),
@@ -89,6 +155,21 @@ function normalizeCommunityGuide(row: Record<string, unknown>): CommunityGuide {
     view_count: Number(row.view_count) || 0,
     status: row.status === 'draft' ? 'draft' : 'published',
     social_links: normalizeCommunityGuideSocialLinks(row.social_links),
+    has_unpublished_draft: hasUnpublishedDraft,
+    draft_title:
+      row.draft_title === null || row.draft_title === undefined
+        ? null
+        : String(row.draft_title),
+    draft_body:
+      row.draft_body === null || row.draft_body === undefined ? null : String(row.draft_body),
+    draft_thumbnail_url:
+      row.draft_thumbnail_url === null || row.draft_thumbnail_url === undefined
+        ? null
+        : String(row.draft_thumbnail_url),
+    draft_social_links:
+      draftSocialRaw === null || draftSocialRaw === undefined
+        ? null
+        : normalizeCommunityGuideSocialLinks(draftSocialRaw),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   }
@@ -526,6 +607,11 @@ export type SaveCommunityGuideOptions = {
    * Used by live autosave so collaborators do not silently overwrite each other.
    */
   expectedUpdatedAt?: string | null
+  /**
+   * Current published/draft status before this save. Used so "Save draft" on a
+   * published guide writes WIP into draft_* columns instead of unpublishing.
+   */
+  currentStatus?: 'draft' | 'published'
 }
 
 export class CommunityGuideVersionConflictError extends Error {
@@ -533,6 +619,14 @@ export class CommunityGuideVersionConflictError extends Error {
     super('Guide was updated by someone else.')
     this.name = 'CommunityGuideVersionConflictError'
   }
+}
+
+function clearUnpublishedDraftFields(row: Record<string, unknown>) {
+  row.has_unpublished_draft = false
+  row.draft_title = null
+  row.draft_body = null
+  row.draft_thumbnail_url = null
+  row.draft_social_links = null
 }
 
 export async function updateCommunityGuide(
@@ -544,25 +638,54 @@ export async function updateCommunityGuide(
 ): Promise<CommunityGuide> {
   if (!userId) throw new Error('Not authenticated.')
 
-  const status = input.status ?? 'published'
-  const { title, body, authorName } = normalizeSaveCommunityGuideInput(input, status)
+  const requestedStatus = input.status ?? 'published'
+  const currentStatus = options?.currentStatus ?? requestedStatus
+  const preservePublishedLive =
+    requestedStatus === 'draft' && currentStatus === 'published'
+  const status = preservePublishedLive ? 'published' : requestedStatus
+  const { title, body, authorName } = normalizeSaveCommunityGuideInput(
+    input,
+    // Draft WIP on a live guide still allows an empty body (same as unpublished drafts).
+    preservePublishedLive ? 'draft' : status,
+  )
   const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
   const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
   const updateAuthorName = options?.updateAuthorName !== false
   const expectedUpdatedAt = options?.expectedUpdatedAt
 
-  const updateRow: Record<string, unknown> = {
-    title,
-    body,
-    status,
-    social_links: socialLinks,
-    updated_at: new Date().toISOString(),
-  }
-  if (updateAuthorName) {
-    updateRow.author_name = authorName
-  }
-  if (thumbnailUrl !== null || input.thumbnailUrl === '') {
-    updateRow.thumbnail_url = thumbnailUrl
+  let updateRow: Record<string, unknown>
+
+  if (preservePublishedLive) {
+    // Keep live title/body/status; store WIP privately until publish.
+    updateRow = {
+      status: 'published',
+      has_unpublished_draft: true,
+      draft_title: title,
+      draft_body: body,
+      draft_thumbnail_url: thumbnailUrl,
+      draft_social_links: socialLinks,
+      updated_at: new Date().toISOString(),
+    }
+    if (updateAuthorName) {
+      updateRow.author_name = authorName
+    }
+  } else {
+    updateRow = {
+      title,
+      body,
+      status,
+      social_links: socialLinks,
+      updated_at: new Date().toISOString(),
+    }
+    if (updateAuthorName) {
+      updateRow.author_name = authorName
+    }
+    if (thumbnailUrl !== null || input.thumbnailUrl === '') {
+      updateRow.thumbnail_url = thumbnailUrl
+    }
+    if (status === 'published') {
+      clearUnpublishedDraftFields(updateRow)
+    }
   }
 
   // RLS allows the owner or an accepted collaborator; do not filter by author_id.
@@ -579,6 +702,21 @@ export async function updateCommunityGuide(
   if (error && isMissingCommunityGuideColumnError(error.message)) {
     const updateRowRetry = { ...updateRow }
     if (stripOptionalCommunityGuideFields(updateRowRetry, error.message)) {
+      // Without draft columns, fall back to writing live fields (legacy) but never
+      // demote a published guide to draft when the intent was preserve-live WIP.
+      if (preservePublishedLive && isMissingCommunityGuideDraftColumnError(error.message)) {
+        updateRowRetry.title = title
+        updateRowRetry.body = body
+        updateRowRetry.status = 'published'
+        updateRowRetry.social_links = socialLinks
+        if (thumbnailUrl !== null || input.thumbnailUrl === '') {
+          updateRowRetry.thumbnail_url = thumbnailUrl
+        }
+        if (updateAuthorName) {
+          updateRowRetry.author_name = authorName
+        }
+        updateRowRetry.updated_at = new Date().toISOString()
+      }
       const retry = await runUpdate(updateRowRetry)
       data = retry.data
       error = retry.error

@@ -120,5 +120,24 @@ export function stripOptionalCommunityGuideFields(
     delete row.thumbnail_url
     stripped = true
   }
+  if (
+    (lower.includes('has_unpublished_draft') ||
+      lower.includes('draft_title') ||
+      lower.includes('draft_body') ||
+      lower.includes('draft_thumbnail_url') ||
+      lower.includes('draft_social_links')) &&
+    ('has_unpublished_draft' in row ||
+      'draft_title' in row ||
+      'draft_body' in row ||
+      'draft_thumbnail_url' in row ||
+      'draft_social_links' in row)
+  ) {
+    delete row.has_unpublished_draft
+    delete row.draft_title
+    delete row.draft_body
+    delete row.draft_thumbnail_url
+    delete row.draft_social_links
+    stripped = true
+  }
   return stripped
 }

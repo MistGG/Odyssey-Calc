@@ -45,10 +45,18 @@ export function CommunityGuideChangelog({ supabase, guideId }: CommunityGuideCha
   if (loading || entries.length === 0) return null
 
   return (
-    <section className="community-guide-changelog" aria-labelledby="guide-changelog-heading">
-      <h2 id="guide-changelog-heading" className="community-guide-changelog__title">
-        Changelog
-      </h2>
+    <details className="community-guide-changelog">
+      <summary
+        className="community-guide-changelog__summary"
+        aria-label={`Changelog, ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`}
+      >
+        <h2 id="guide-changelog-heading" className="community-guide-changelog__title">
+          Changelog
+        </h2>
+        <span className="community-guide-changelog__count" aria-hidden>
+          {entries.length}
+        </span>
+      </summary>
       <ol className="community-guide-changelog__list">
         {entries.map((entry) => (
           <li key={entry.id} className="community-guide-changelog__item">
@@ -59,10 +67,10 @@ export function CommunityGuideChangelog({ supabase, guideId }: CommunityGuideCha
               </span>
               <span className="community-guide-changelog__editor">{entry.editor_name}</span>
             </div>
-            <p className="community-guide-changelog__summary">{entry.summary}</p>
+            <p className="community-guide-changelog__summary-text">{entry.summary}</p>
           </li>
         ))}
       </ol>
-    </section>
+    </details>
   )
 }

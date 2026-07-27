@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CommunityGuideSocialLink, CommunityGuideSocialPlatform } from './communityGuideSocials'
-import { formatCommunityGuideError, type CommunityGuide } from './communityGuides'
+import {
+  formatCommunityGuideError,
+  resolveCommunityGuideEditorContent,
+  type CommunityGuide,
+} from './communityGuides'
 
 export type CommunityGuideEditorCacheSocial = {
   platform: CommunityGuideSocialPlatform
@@ -163,13 +167,36 @@ export function editorDraftMatchesGuide(
     CommunityGuideEditorCache,
     'title' | 'body' | 'thumbnailUrl' | 'socialLinks'
   >,
-  guide: Pick<CommunityGuide, 'title' | 'body' | 'thumbnail_url' | 'social_links'>,
+  guide: {
+    title: string
+    body: string
+    thumbnail_url: string | null
+    social_links: CommunityGuideSocialLink[]
+    status?: 'draft' | 'published'
+    has_unpublished_draft?: boolean
+    draft_title?: string | null
+    draft_body?: string | null
+    draft_thumbnail_url?: string | null
+    draft_social_links?: CommunityGuideSocialLink[] | null
+  },
 ): boolean {
+  const content = resolveCommunityGuideEditorContent({
+    status: guide.status ?? 'draft',
+    has_unpublished_draft: Boolean(guide.has_unpublished_draft),
+    title: guide.title,
+    body: guide.body,
+    thumbnail_url: guide.thumbnail_url,
+    social_links: guide.social_links,
+    draft_title: guide.draft_title ?? null,
+    draft_body: guide.draft_body ?? null,
+    draft_thumbnail_url: guide.draft_thumbnail_url ?? null,
+    draft_social_links: guide.draft_social_links ?? null,
+  })
   return (
-    draft.title === guide.title &&
-    draft.body === guide.body &&
-    draft.thumbnailUrl === (guide.thumbnail_url ?? '') &&
-    socialLinksEqual(draft.socialLinks, guide.social_links)
+    draft.title === content.title &&
+    draft.body === content.body &&
+    draft.thumbnailUrl === (content.thumbnail_url ?? '') &&
+    socialLinksEqual(draft.socialLinks, content.social_links)
   )
 }
 

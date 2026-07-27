@@ -38,6 +38,7 @@ import {
   createCommunityGuide,
   deleteCommunityGuide,
   fetchCommunityGuideForAuthor,
+  resolveCommunityGuideEditorContent,
   updateCommunityGuide,
   type CommunityGuide,
 } from '../lib/communityGuides'
@@ -89,16 +90,19 @@ function applyGuideToForm(
     setThumbnailUrl: (v: string) => void
     setBody: (v: string) => void
     setGuideStatus: (v: 'draft' | 'published') => void
+    setHasUnpublishedDraft: (v: boolean) => void
     setAuthorId: (v: string) => void
     setSocialLinks: (v: CommunityGuideSocialDraft[]) => void
   },
 ) {
-  setters.setTitle(guide.title)
-  setters.setThumbnailUrl(guide.thumbnail_url ?? '')
-  setters.setBody(guide.body)
+  const content = resolveCommunityGuideEditorContent(guide)
+  setters.setTitle(content.title)
+  setters.setThumbnailUrl(content.thumbnail_url ?? '')
+  setters.setBody(content.body)
   setters.setGuideStatus(guide.status)
+  setters.setHasUnpublishedDraft(guide.has_unpublished_draft)
   setters.setAuthorId(guide.author_id)
-  setters.setSocialLinks(socialDraftsFromLinks(guide.social_links))
+  setters.setSocialLinks(socialDraftsFromLinks(content.social_links))
 }
 
 export function CommunityGuideEditorPage() {
@@ -116,6 +120,7 @@ export function CommunityGuideEditorPage() {
   const [saving, setSaving] = useState(false)
   const [savingAction, setSavingAction] = useState<'draft' | 'publish' | null>(null)
   const [guideStatus, setGuideStatus] = useState<'draft' | 'published'>('draft')
+  const [hasUnpublishedDraft, setHasUnpublishedDraft] = useState(false)
   const [authorId, setAuthorId] = useState<string | null>(null)
   const [changelogNote, setChangelogNote] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -250,17 +255,19 @@ export function CommunityGuideEditorPage() {
         setThumbnailUrl,
         setBody,
         setGuideStatus,
+        setHasUnpublishedDraft,
         setAuthorId,
         setSocialLinks,
       })
       if (!options?.keepChangelog) setChangelogNote('')
       serverUpdatedAtRef.current = guide.updated_at
       dirtyRef.current = false
+      const content = resolveCommunityGuideEditorContent(guide)
       rememberSyncedContent({
-        title: guide.title,
-        body: guide.body,
-        thumbnailUrl: guide.thumbnail_url ?? '',
-        socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+        title: content.title,
+        body: content.body,
+        thumbnailUrl: content.thumbnail_url ?? '',
+        socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
       })
       setRemoteConflict(null)
       setRestoredFromCache(false)
@@ -268,10 +275,10 @@ export function CommunityGuideEditorPage() {
         writeCommunityGuideEditorCache({
           guideKey: communityGuideEditorGuideKey(guide.id),
           userId,
-          title: guide.title,
-          body: guide.body,
-          thumbnailUrl: guide.thumbnail_url ?? '',
-          socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+          title: content.title,
+          body: content.body,
+          thumbnailUrl: content.thumbnail_url ?? '',
+          socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
           changelogNote: options?.keepChangelog ? formSnapshotRef.current.changelogNote : '',
           baseUpdatedAt: guide.updated_at,
           dirty: false,
@@ -348,20 +355,22 @@ export function CommunityGuideEditorPage() {
           !editorDraftMatchesGuide(cached, guide)
 
         if (cacheMatchesServerBase && cacheHasEdits) {
+          const content = resolveCommunityGuideEditorContent(guide)
           setTitle(cached.title)
           setThumbnailUrl(cached.thumbnailUrl)
           setBody(cached.body)
           setGuideStatus(guide.status)
+          setHasUnpublishedDraft(guide.has_unpublished_draft)
           setAuthorId(guide.author_id)
           setSocialLinks(socialDraftsFromLinks(cached.socialLinks))
           setChangelogNote(cached.changelogNote)
           serverUpdatedAtRef.current = guide.updated_at
           dirtyRef.current = true
           rememberSyncedContent({
-            title: guide.title,
-            body: guide.body,
-            thumbnailUrl: guide.thumbnail_url ?? '',
-            socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
           })
           setRestoredFromCache(true)
         } else if (
@@ -371,20 +380,22 @@ export function CommunityGuideEditorPage() {
           !editorDraftMatchesGuide(cached, guide)
         ) {
           // Local unsaved work + newer server copy — keep local, offer remote.
+          const content = resolveCommunityGuideEditorContent(guide)
           setTitle(cached.title)
           setThumbnailUrl(cached.thumbnailUrl)
           setBody(cached.body)
           setGuideStatus(guide.status)
+          setHasUnpublishedDraft(guide.has_unpublished_draft)
           setAuthorId(guide.author_id)
           setSocialLinks(socialDraftsFromLinks(cached.socialLinks))
           setChangelogNote(cached.changelogNote)
           serverUpdatedAtRef.current = cached.baseUpdatedAt
           dirtyRef.current = true
           rememberSyncedContent({
-            title: guide.title,
-            body: guide.body,
-            thumbnailUrl: guide.thumbnail_url ?? '',
-            socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
           })
           setRemoteConflict(guide)
           setRestoredFromCache(true)
@@ -438,12 +449,14 @@ export function CommunityGuideEditorPage() {
       if (!contentDiffersFromLastSync()) {
         if (editorDraftMatchesGuide(formSnapshotRef.current, guide)) {
           // updated_at moved without content changes (e.g. legacy heart trigger).
+          const content = resolveCommunityGuideEditorContent(guide)
           serverUpdatedAtRef.current = guide.updated_at
+          setHasUnpublishedDraft(guide.has_unpublished_draft)
           rememberSyncedContent({
-            title: guide.title,
-            body: guide.body,
-            thumbnailUrl: guide.thumbnail_url ?? '',
-            socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
           })
           persistCache(Boolean(formSnapshotRef.current.changelogNote.trim()))
           return
@@ -455,13 +468,15 @@ export function CommunityGuideEditorPage() {
       }
 
       if (editorDraftMatchesGuide(formSnapshotRef.current, guide)) {
+        const content = resolveCommunityGuideEditorContent(guide)
         serverUpdatedAtRef.current = guide.updated_at
+        setHasUnpublishedDraft(guide.has_unpublished_draft)
         dirtyRef.current = Boolean(formSnapshotRef.current.changelogNote.trim())
         rememberSyncedContent({
-          title: guide.title,
-          body: guide.body,
-          thumbnailUrl: guide.thumbnail_url ?? '',
-          socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+          title: content.title,
+          body: content.body,
+          thumbnailUrl: content.thumbnail_url ?? '',
+          socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
         })
         persistCache(dirtyRef.current)
         return
@@ -473,8 +488,10 @@ export function CommunityGuideEditorPage() {
     const pushLocalIfChanged = async (): Promise<'pushed' | 'conflict' | 'skipped'> => {
       if (!contentDiffersFromLastSync()) return 'skipped'
 
-      const status = guideStatusRef.current
+      const liveStatus = guideStatusRef.current
       const snap = formSnapshotRef.current
+      // On published guides, autosave WIP into draft_* so the live page stays unchanged.
+      const status: 'draft' | 'published' = liveStatus === 'published' ? 'draft' : liveStatus
       if (status === 'published' && !snap.body.trim()) return 'skipped'
 
       const expectedUpdatedAt = serverUpdatedAtRef.current
@@ -498,10 +515,13 @@ export function CommunityGuideEditorPage() {
           {
             updateAuthorName: isOwner,
             expectedUpdatedAt,
+            currentStatus: liveStatus,
           },
         )
 
         serverUpdatedAtRef.current = updated.updated_at
+        setGuideStatus(updated.status)
+        setHasUnpublishedDraft(updated.has_unpublished_draft)
         rememberSyncedContent({
           title: snap.title,
           body: snap.body,
@@ -530,12 +550,15 @@ export function CommunityGuideEditorPage() {
             return 'conflict'
           }
           if (guide) {
+            const content = resolveCommunityGuideEditorContent(guide)
             serverUpdatedAtRef.current = guide.updated_at
+            setGuideStatus(guide.status)
+            setHasUnpublishedDraft(guide.has_unpublished_draft)
             rememberSyncedContent({
-              title: guide.title,
-              body: guide.body,
-              thumbnailUrl: guide.thumbnail_url ?? '',
-              socialLinks: guide.social_links.map(({ platform, url }) => ({ platform, url })),
+              title: content.title,
+              body: content.body,
+              thumbnailUrl: content.thumbnail_url ?? '',
+              socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
             })
           }
           return 'skipped'
@@ -697,15 +720,18 @@ export function CommunityGuideEditorPage() {
         if (id) {
           const updated = await updateCommunityGuide(supabase, id, user.id, payload, {
             updateAuthorName: isOwner,
+            currentStatus: guideStatus,
           })
+          const content = resolveCommunityGuideEditorContent(updated)
           setGuideStatus(updated.status)
+          setHasUnpublishedDraft(updated.has_unpublished_draft)
           serverUpdatedAtRef.current = updated.updated_at
           dirtyRef.current = false
           rememberSyncedContent({
-            title: updated.title,
-            body: updated.body,
-            thumbnailUrl: updated.thumbnail_url ?? '',
-            socialLinks: updated.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
           })
           setRemoteConflict(null)
           setRestoredFromCache(false)
@@ -713,10 +739,10 @@ export function CommunityGuideEditorPage() {
           writeCommunityGuideEditorCache({
             guideKey: id,
             userId,
-            title: updated.title,
-            body: updated.body,
-            thumbnailUrl: updated.thumbnail_url ?? '',
-            socialLinks: updated.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
             changelogNote: status === 'published' ? '' : changelogNote,
             baseUpdatedAt: updated.updated_at,
             dirty: false,
@@ -737,15 +763,17 @@ export function CommunityGuideEditorPage() {
           }
         } else {
           const created = await createCommunityGuide(supabase, user.id, payload)
+          const content = resolveCommunityGuideEditorContent(created)
           setGuideStatus(created.status)
+          setHasUnpublishedDraft(created.has_unpublished_draft)
           setAuthorId(created.author_id)
           serverUpdatedAtRef.current = created.updated_at
           dirtyRef.current = false
           rememberSyncedContent({
-            title: created.title,
-            body: created.body,
-            thumbnailUrl: created.thumbnail_url ?? '',
-            socialLinks: created.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
           })
           setRemoteConflict(null)
           setLiveSaveLabel(null)
@@ -753,10 +781,10 @@ export function CommunityGuideEditorPage() {
           writeCommunityGuideEditorCache({
             guideKey: created.id,
             userId,
-            title: created.title,
-            body: created.body,
-            thumbnailUrl: created.thumbnail_url ?? '',
-            socialLinks: created.social_links.map(({ platform, url }) => ({ platform, url })),
+            title: content.title,
+            body: content.body,
+            thumbnailUrl: content.thumbnail_url ?? '',
+            socialLinks: content.social_links.map(({ platform, url }) => ({ platform, url })),
             changelogNote: status === 'published' ? '' : changelogNote,
             baseUpdatedAt: created.updated_at,
             dirty: false,
@@ -871,6 +899,9 @@ export function CommunityGuideEditorPage() {
           <h1 className="community-guides-hero__title">{id ? 'Edit guide' : 'Write a guide'}</h1>
           {id && guideStatus === 'draft' ? (
             <span className="community-guides-editor__status-badge">Draft</span>
+          ) : null}
+          {id && guideStatus === 'published' && hasUnpublishedDraft ? (
+            <span className="community-guides-editor__status-badge">Unpublished edits</span>
           ) : null}
           {id && !isOwner ? (
             <span className="community-guides-editor__status-badge community-guides-editor__status-badge--collab">

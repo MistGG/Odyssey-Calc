@@ -32778,21 +32778,72 @@ a.guidebook-monster-panel__loot-btn:hover {
 
 .community-guide-changelog {
   margin: 0;
-  padding: 1.15rem 1.5rem 1.35rem;
+  padding: 0;
   border-bottom: 1px solid var(--border);
 }
 
+.community-guide-changelog__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.15rem 1.5rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.community-guide-changelog__summary::-webkit-details-marker {
+  display: none;
+}
+
+.community-guide-changelog__summary::before {
+  content: '▸';
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.875rem;
+  height: 1.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.community-guide-changelog[open] > .community-guide-changelog__summary::before {
+  transform: rotate(90deg);
+}
+
 .community-guide-changelog__title {
-  margin: 0 0 0.85rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
   letter-spacing: -0.01em;
 }
 
+.community-guide-changelog__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  color: var(--cyan);
+  font-family: var(--font);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
 .community-guide-changelog__list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 1.5rem 1.35rem;
   display: grid;
   gap: 0.85rem;
 }
@@ -32822,7 +32873,7 @@ a.guidebook-monster-panel__loot-btn:hover {
   font-weight: 600;
 }
 
-.community-guide-changelog__summary {
+.community-guide-changelog__summary-text {
   margin: 0;
   color: var(--text);
   line-height: 1.45;
@@ -32846,7 +32897,12 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 @media (max-width: 640px) {
-  .community-guide-changelog {
+  .community-guide-changelog__summary {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .community-guide-changelog__list {
     padding-left: 1rem;
     padding-right: 1rem;
   }
