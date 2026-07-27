@@ -30,9 +30,6 @@ const PARTY_CLEAR_TIME_TOLERANCE_SEC = 1
 const PARTY_UPLOAD_NO_CLEAR_MAX_GAP_SEC = 120
 /** When the in-game clear time and meter session diverge by at least this, DPS uses the in-game clock. */
 const DPS_CLEAR_TIME_GAP_SEC = 30
-const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
-const DRAGON_DIMENSION_HARD_DIFFICULTY_ID = 3
-const DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC = 8 * 60
 const WIKI_DIGIMON_DETAIL_URL =
   Deno.env.get('WIKI_DIGIMON_DETAIL_URL')?.trim() ||
   'https://odyssey-proxy.qawsar-ahmed.workers.dev/proxy/api/wiki/digimon'
@@ -583,20 +580,6 @@ async function memberDpsForLeaderboard(
   return dur > 0 ? damage / dur : 0
 }
 
-function isDragonDimensionHardClearUnderMinTime(
-  payload: DungeonPayload,
-  rowDurationSec: number,
-  dungeonId: string,
-  difficultyId: number,
-  members: StoredMember[],
-): boolean {
-  if (dungeonId !== DRAGON_DIMENSION_DUNGEON_ID || difficultyId !== DRAGON_DIMENSION_HARD_DIFFICULTY_ID) {
-    return false
-  }
-  const clearSec = clearTimeDuration(payload, rowDurationSec, members)
-  return clearSec > 0 && clearSec < DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC
-}
-
 function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): boolean {
   if (members.length < 2) return false
   if (members.some((m) => memberDigimons(m).length === 0)) return true
@@ -1033,18 +1016,6 @@ async function processParse(
 
   if (isPartialDungeonClear(payload, Number(row.duration_sec) || 0)) {
     return { inserted: 0, skipped: 'partial dungeon clear' }
-  }
-
-  if (
-    isDragonDimensionHardClearUnderMinTime(
-      payload,
-      Number(row.duration_sec) || 0,
-      dungeonId,
-      difficultyId,
-      members,
-    )
-  ) {
-    return { inserted: 0, skipped: 'dragon dimension hard clear under 8 minutes' }
   }
 
   const wikiCatalog = await loadWikiRoleCatalog()

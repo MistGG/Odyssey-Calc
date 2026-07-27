@@ -357,28 +357,6 @@ export function dpsDurationFromPayload(
   return sessionDur
 }
 
-export const DRAGON_DIMENSION_DUNGEON_ID = 'uc4j5ut'
-export const DRAGON_DIMENSION_HARD_DIFFICULTY_ID = 3
-/** Full Dragon Dimension Hard clears below this in-game time are unranked. */
-export const DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC = 8 * 60
-
-export function isDragonDimensionHardClearUnderMinTime(
-  payload: unknown,
-  rowDurationSec = 0,
-  dungeonId?: string | null,
-  difficultyId?: number | null,
-): boolean {
-  const dungeon = dungeonFromPayload(payload)
-  const dId = dungeonId?.trim() || dungeon?.dungeonId?.trim() || ''
-  const diffId = difficultyId ?? dungeon?.difficultyId
-  if (dId !== DRAGON_DIMENSION_DUNGEON_ID || diffId !== DRAGON_DIMENSION_HARD_DIFFICULTY_ID) {
-    return false
-  }
-  const members = partyMembersFromPayload(payload)
-  const clearSec = parseClearTimeFromPayload(payload, rowDurationSec, members)
-  return clearSec > 0 && clearSec < DRAGON_DIMENSION_HARD_MIN_CLEAR_SEC
-}
-
 export function partyIdFromPayload(payload: unknown): string | null {
   if (!isDungeonPartyParsePayload(payload)) return null
   return payload.dungeon.partyId?.trim() || null
@@ -450,16 +428,6 @@ export function isExcludedFromLeaderboardParseRow(row: {
   if (isDungeonPartyParsePayload(row.payload)) {
     if (isFailedDungeonParseRow(row)) return true
     if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) return true
-    if (
-      isDragonDimensionHardClearUnderMinTime(
-        row.payload,
-        row.duration_sec ?? 0,
-        row.dungeon_id,
-        row.difficulty_id,
-      )
-    ) {
-      return true
-    }
     if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) return true
     const members = partyMembersFromPayload(row.payload)
     if (isBrokenMeterPartyParse(row.payload, members)) return true

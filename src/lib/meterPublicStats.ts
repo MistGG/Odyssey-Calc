@@ -8,7 +8,6 @@ import {
   isPartialDungeonClearParse,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
-  isDragonDimensionHardClearUnderMinTime,
   dpsDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
@@ -163,16 +162,6 @@ export function aggregatePublicMeterStats(
     if (isBrokenMeterPartyParse(row.payload, members)) continue
     if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
     if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) continue
-    if (
-      isDragonDimensionHardClearUnderMinTime(
-        row.payload,
-        row.duration_sec ?? 0,
-        row.dungeon_id,
-        row.difficulty_id,
-      )
-    ) {
-      continue
-    }
 
     const dpsDur = dpsDurationFromPayload(row.payload, row.duration_sec, members)
 
