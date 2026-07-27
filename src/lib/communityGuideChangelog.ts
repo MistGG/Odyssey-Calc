@@ -57,7 +57,7 @@ export async function appendCommunityGuideChangelog(
     summary: string
   },
 ): Promise<CommunityGuideChangelogEntry | null> {
-  const summary = input.summary.trim().slice(0, 280)
+  const summary = input.summary.replace(/\r\n/g, '\n').trim().slice(0, 2000)
   if (!summary) return null
 
   const { data, error } = await supabase

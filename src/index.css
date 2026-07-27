@@ -32877,6 +32877,13 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin: 0;
   color: var(--text);
   line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.community-guides-field__textarea--changelog {
+  min-height: 6.5rem;
+  resize: vertical;
 }
 
 .community-guide-invite__head {

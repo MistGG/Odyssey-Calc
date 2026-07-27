@@ -1137,21 +1137,18 @@ export function CommunityGuideEditorPage() {
             ) : null}
 
             <label className="community-guides-field">
-              <span className="community-guides-field__label">Changelog note (on publish)</span>
-              <input
-                type="text"
-                className="community-guides-field__input"
+              <span className="community-guides-field__label">Changelog</span>
+              <textarea
+                className="community-guides-field__textarea community-guides-field__textarea--changelog"
                 value={changelogNote}
                 onChange={(e) => {
                   setChangelogNote(e.target.value)
                   markDirty()
                 }}
-                maxLength={280}
-                placeholder="What changed? e.g. Added early-game farming route"
+                maxLength={2000}
+                rows={4}
+                placeholder={"What changed?\n- Added early-game farming route\n- Fixed outdated drop rates"}
               />
-              <span className="community-guides-field__hint">
-                Shown on the guide page when you publish or update a published guide.
-              </span>
             </label>
 
             {error ? <p className="community-guides-error">{error}</p> : null}
