@@ -115,27 +115,31 @@ let myMeterParsesInflightUserId: string | null = null
 const METER_ROLE_COUNT_CACHE_KEY = 'odyssey-meter-total-role-counts-v2'
 
 /** Recent dungeon+difficulty for default leaderboard filters (no full payloads). */
-
 export async function fetchRecentMeterParseSelection(
-
   allowedDungeonIds: Iterable<string>,
-
 ): Promise<MeterParseSelection | null> {
-
   const supabase = getMeterAnonSupabase()
-
   if (!supabase) return null
+
+  // Prefer latest ranked activity — lighter than scanning all public parses.
+  const { data: lbRows, error: lbError } = await supabase
+    .from('meter_leaderboard_entries')
+    .select('dungeon_id, difficulty_id, created_at')
+    .gte('difficulty_id', 2)
+    .order('created_at', { ascending: false })
+    .limit(40)
+
+  if (!lbError && lbRows?.length) {
+    const fromLb = mostRecentMeterParseSelectionFromColumns(lbRows, allowedDungeonIds)
+    if (fromLb) return fromLb
+  }
 
   const { data, error } = await supabase
     .from(METER_PARSES_PUBLIC_TABLE)
     .select('dungeon_id, difficulty_id, difficulty, created_at')
-
     .eq('parse_kind', 'dungeon_party')
-
     .gte('difficulty_id', 2)
-
     .order('created_at', { ascending: false })
-
     .limit(80)
 
   if (error || !data?.length) return null

@@ -91,6 +91,11 @@ export function MeterLeaderboardPreviewShell({
               onChange={(e) => onDungeonChange(e.target.value)}
               disabled={!dungeonOptions.length || bootLoading}
             >
+              {!dungeonId ? (
+                <option value="" disabled>
+                  Selecting…
+                </option>
+              ) : null}
               {dungeonOptions.map((d) => (
                 <option key={d.dungeonId} value={d.dungeonId}>
                   {d.dungeonName}

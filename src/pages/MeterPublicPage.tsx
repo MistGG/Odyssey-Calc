@@ -48,6 +48,7 @@ export function MeterPublicPage() {
   const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
   const [showDigimonStats, setShowDigimonStats] = useState(() => readMeterShowDigimonStats())
   const initialFiltersApplied = useRef(false)
+  const [filtersReady, setFiltersReady] = useState(false)
 
   const loadBoot = useCallback(async () => {
     setBootLoading(true)
@@ -83,29 +84,43 @@ export function MeterPublicPage() {
   }, [location.key])
 
   useEffect(() => {
-    if (!dungeonOptions.length) return
+    if (!dungeonOptions.length || bootLoading) return
+
     if (queryDungeonId && dungeonOptions.some((d) => d.dungeonId === queryDungeonId)) {
       setDungeonId(queryDungeonId)
+      initialFiltersApplied.current = true
+      setFiltersReady(true)
       return
     }
     const fromEvent = meterNav?.dungeonId?.trim()
     if (fromEvent && dungeonOptions.some((d) => d.dungeonId === fromEvent)) {
       setDungeonId(fromEvent)
+      initialFiltersApplied.current = true
+      setFiltersReady(true)
       return
     }
     if (initialFiltersApplied.current) return
-    if (bootLoading) return
     initialFiltersApplied.current = true
-    const allowedIds = dungeonOptions.map((d) => d.dungeonId)
+
+    let cancelled = false
     void (async () => {
-      const recent = await fetchRecentMeterParseSelection(allowedIds)
-      if (recent) {
-        setDungeonId(recent.dungeonId)
-        setDifficultyId(recent.difficultyId)
-        return
+      try {
+        const recent = await fetchRecentMeterParseSelection(dungeonOptions.map((d) => d.dungeonId))
+        if (cancelled) return
+        if (recent) {
+          setDungeonId(recent.dungeonId)
+          setDifficultyId(recent.difficultyId)
+        } else {
+          setDungeonId(dungeonOptions[0]!.dungeonId)
+        }
+      } finally {
+        if (!cancelled) setFiltersReady(true)
       }
-      setDungeonId(dungeonOptions[0]!.dungeonId)
     })()
+
+    return () => {
+      cancelled = true
+    }
   }, [dungeonOptions, bootLoading, meterNav?.dungeonId, queryDungeonId])
 
   useEffect(() => {
@@ -218,16 +233,20 @@ export function MeterPublicPage() {
         onLeaderboardCycleChange={setLeaderboardCycleId}
         dungeonId={dungeonId}
         onDungeonChange={(id) => {
+          if (!filtersReady) return
           setDungeonId(id)
           setDifficultyId(null)
         }}
         difficultyId={difficultyId}
-        onDifficultyChange={setDifficultyId}
+        onDifficultyChange={(id) => {
+          if (!filtersReady) return
+          setDifficultyId(id)
+        }}
         dungeonOptions={dungeonOptions}
         difficultyOptions={difficultyOptions}
         dungeonName={dungeonName}
         difficultyLabel={difficultyLabel}
-        bootLoading={bootLoading}
+        bootLoading={bootLoading || !filtersReady}
         parsesRefreshing={parsesRefreshing}
       />
 

@@ -118,24 +118,27 @@ export function MeterHallOfFamePage() {
   )
 
   useEffect(() => {
-    if (!dungeonOptions.length) return
+    if (!dungeonOptions.length || bootLoading) return
     if (queryDungeonId && dungeonOptions.some((d) => d.dungeonId === queryDungeonId)) {
       setDungeonId(queryDungeonId)
       setExpandedDungeonId(queryDungeonId)
+      initialFiltersApplied.current = true
       return
     }
     const fromEvent = meterNav?.dungeonId?.trim()
     if (fromEvent && dungeonOptions.some((d) => d.dungeonId === fromEvent)) {
       setDungeonId(fromEvent)
       setExpandedDungeonId(fromEvent)
+      initialFiltersApplied.current = true
       return
     }
     if (initialFiltersApplied.current) return
-    if (bootLoading) return
     initialFiltersApplied.current = true
     const allowedIds = dungeonOptions.map((d) => d.dungeonId)
+    let cancelled = false
     void (async () => {
       const recent = await fetchRecentMeterParseSelection(allowedIds)
+      if (cancelled) return
       if (recent) {
         setDungeonId(recent.dungeonId)
         setDifficultyId(recent.difficultyId)
@@ -151,6 +154,9 @@ export function MeterHallOfFamePage() {
       setDifficultyId(diff)
       if (diff != null) syncSearchParams(first.dungeonId, diff)
     })()
+    return () => {
+      cancelled = true
+    }
   }, [dungeonOptions, bootLoading, meterNav?.dungeonId, queryDungeonId, wikiDungeons, syncSearchParams])
 
   useEffect(() => {
