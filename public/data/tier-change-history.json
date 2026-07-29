@@ -1,6 +1,288 @@
 {
-  "updated_at": "2026-07-28T19:30:41.028Z",
+  "updated_at": "2026-07-29T02:41:31.747Z",
   "runs": [
+    {
+      "id": "2026-07-29T02:41:31.769Z-6pkth7",
+      "finishedAt": "2026-07-29T02:41:31.769Z",
+      "mode": "force",
+      "refreshedCount": 467,
+      "apiCount": 8,
+      "tierCount": 7,
+      "sampleDigimon": [
+        {
+          "id": "d3qe76m",
+          "name": "DexDorugoramon",
+          "cause": "api"
+        },
+        {
+          "id": "d1hxpawa",
+          "name": "Dorumon",
+          "cause": "api"
+        },
+        {
+          "id": "d1hjnjx",
+          "name": "Greymon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1fhvv9z",
+          "name": "MetalGreymon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1r6hxc2",
+          "name": "Agumon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1jinqt3",
+          "name": "Growlmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1rs2wlk",
+          "name": "Guilmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "cause": "api"
+        },
+        {
+          "id": "dk8fjur",
+          "name": "WarGrowlmon X",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1r6hxc2": [
+          "Skill Nova Blast radius: 400 -> 0"
+        ],
+        "d1hjnjx": [
+          "HP: 8016 -> 8244",
+          "Attack: 4076 -> 4444",
+          "Stats.ds: 8207 -> 9862",
+          "Stats.crit_rate: 910 -> 1506",
+          "Stats.evasion: 3210 -> 2716",
+          "Stats.hit_rate: 480 -> 728",
+          "Stats.dex: 0 -> 500",
+          "Skill Mega Flame base_dmg: 807 -> 2420"
+        ],
+        "d1jinqt3": [
+          "Skill Exhaust Flame Aura cast_time: 3.27 -> 3.5",
+          "Skill Exhaust Flame Aura description: \"Attacks in a wide arc, dealing damage to all surrounding enemies.\" -> \"Breathes a wide arc of flame, scorching all surrounding enemies.\""
+        ],
+        "d1rs2wlk": [
+          "Skill Hazard's Glimpse cast_time: 1 -> 2.5",
+          "Skill Hazard's Glimpse description: \"Guilmon unleashes inner strength, hitting all nearby enemies and generating aggro.\" -> \"Spews a burst of fire that scorches all nearby enemies and draws their aggro.\""
+        ],
+        "d1dnnjni": [
+          "Skill Dark Despair base_dmg: 4195 -> 5244",
+          "Skill Dark Despair scaling: 378 -> 472",
+          "Skill Chaos Degrade base_dmg: 16280 -> 17094",
+          "Skill Chaos Degrade scaling: 976 -> 1025",
+          "Skill Holy Desire base_dmg: 23521 -> 24697",
+          "Skill Holy Desire scaling: 1646 -> 1728",
+          "Skill Sanctified Oblivion base_dmg: 248471 -> 265864",
+          "Skill Sanctified Oblivion scaling: 12426 -> 13296"
+        ],
+        "d1fhvv9z": [
+          "HP: 11847 -> 12403",
+          "Attack: 5925 -> 6614",
+          "Stats.ds: 11805 -> 14778",
+          "Stats.defense: 313 -> 325",
+          "Stats.crit_rate: 845 -> 2549",
+          "Stats.evasion: 3030 -> 3500",
+          "Stats.hit_rate: 490 -> 1166",
+          "Stats.dex: 0 -> 500"
+        ],
+        "d1ja7r7v": [
+          "Attack: 14658 -> 15109",
+          "Skill Garuru Cannon base_dmg: 39993 -> 43192",
+          "Skill Garuru Cannon scaling: 4796 -> 5180"
+        ],
+        "dk8fjur": [
+          "Skill Atomic Barrage cast_time: 2 -> 1.6"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1r6hxc2",
+          "name": "Agumon X",
+          "lines": [
+            "Skill Nova Blast radius: 400 -> 0"
+          ]
+        },
+        {
+          "id": "d1hjnjx",
+          "name": "Greymon X",
+          "lines": [
+            "HP: 8016 -> 8244",
+            "Attack: 4076 -> 4444",
+            "Stats.ds: 8207 -> 9862",
+            "Stats.crit_rate: 910 -> 1506",
+            "Stats.evasion: 3210 -> 2716",
+            "Stats.hit_rate: 480 -> 728",
+            "Stats.dex: 0 -> 500",
+            "Skill Mega Flame base_dmg: 807 -> 2420"
+          ]
+        },
+        {
+          "id": "d1jinqt3",
+          "name": "Growlmon X",
+          "lines": [
+            "Skill Exhaust Flame Aura cast_time: 3.27 -> 3.5",
+            "Skill Exhaust Flame Aura description: \"Attacks in a wide arc, dealing damage to all surrounding enemies.\" -> \"Breathes a wide arc of flame, scorching all surrounding enemies.\""
+          ]
+        },
+        {
+          "id": "d1rs2wlk",
+          "name": "Guilmon X",
+          "lines": [
+            "Skill Hazard's Glimpse cast_time: 1 -> 2.5",
+            "Skill Hazard's Glimpse description: \"Guilmon unleashes inner strength, hitting all nearby enemies and generating aggro.\" -> \"Spews a burst of fire that scorches all nearby enemies and draws their aggro.\""
+          ]
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Dark Despair base_dmg: 4195 -> 5244",
+            "Skill Dark Despair scaling: 378 -> 472",
+            "Skill Chaos Degrade base_dmg: 16280 -> 17094",
+            "Skill Chaos Degrade scaling: 976 -> 1025",
+            "Skill Holy Desire base_dmg: 23521 -> 24697",
+            "Skill Holy Desire scaling: 1646 -> 1728",
+            "Skill Sanctified Oblivion base_dmg: 248471 -> 265864",
+            "Skill Sanctified Oblivion scaling: 12426 -> 13296"
+          ]
+        },
+        {
+          "id": "d1fhvv9z",
+          "name": "MetalGreymon X",
+          "lines": [
+            "HP: 11847 -> 12403",
+            "Attack: 5925 -> 6614",
+            "Stats.ds: 11805 -> 14778",
+            "Stats.defense: 313 -> 325",
+            "Stats.crit_rate: 845 -> 2549",
+            "Stats.evasion: 3030 -> 3500",
+            "Stats.hit_rate: 490 -> 1166",
+            "Stats.dex: 0 -> 500"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Attack: 14658 -> 15109",
+            "Skill Garuru Cannon base_dmg: 39993 -> 43192",
+            "Skill Garuru Cannon scaling: 4796 -> 5180"
+          ]
+        },
+        {
+          "id": "dk8fjur",
+          "name": "WarGrowlmon X",
+          "lines": [
+            "Skill Atomic Barrage cast_time: 2 -> 1.6"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-07-29T02:41:31.769Z",
+        "mode": "force",
+        "refreshedCount": 467,
+        "dpsUp": [
+          {
+            "id": "d1hjnjx",
+            "name": "Greymon X",
+            "role": "Melee DPS",
+            "before": 3407.138321928691,
+            "after": 10240.114141431164,
+            "delta": 6832.975819502473
+          },
+          {
+            "id": "d1jinqt3",
+            "name": "Growlmon X",
+            "role": "Tank",
+            "before": 3249.3219030530545,
+            "after": 3304.8851448716528,
+            "delta": 55.56324181859827
+          },
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 89412.91707243274,
+            "after": 94259.18710308369,
+            "delta": 4846.2700306509505
+          },
+          {
+            "id": "d1fhvv9z",
+            "name": "MetalGreymon X",
+            "role": "Melee DPS",
+            "before": 4876.055886132041,
+            "after": 15213.270564124241,
+            "delta": 10337.2146779922
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 103887.6228720968,
+            "after": 105497.23537080336,
+            "delta": 1609.612498706556
+          },
+          {
+            "id": "dk8fjur",
+            "name": "WarGrowlmon X",
+            "role": "Tank",
+            "before": 6744.648551876375,
+            "after": 6878.562624168511,
+            "delta": 133.91407229213655
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1rs2wlk",
+            "name": "Guilmon X",
+            "role": "Tank",
+            "before": 2742.767730838863,
+            "after": 2413.210756130033,
+            "delta": -329.5569747088298
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "d1hjnjx",
+            "name": "Greymon X",
+            "role": "Melee DPS",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "d1fhvv9z",
+            "name": "MetalGreymon X",
+            "role": "Melee DPS",
+            "from": "incomplete",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-07-28T19:30:41.048Z-y6j2nn",
       "finishedAt": "2026-07-28T19:30:41.048Z",
@@ -16608,32 +16890,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-06-30T03:43:57.740Z",
-        "mode": "force",
-        "refreshedCount": 439,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-06-29T20:04:08.906Z-op9gt2",
-      "finishedAt": "2026-06-29T20:04:08.906Z",
-      "mode": "force",
-      "refreshedCount": 439,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-06-29T20:04:08.906Z",
         "mode": "force",
         "refreshedCount": 439,
         "dpsUp": [],
