@@ -44,12 +44,12 @@ tmp-*.json
 compare-*.mjs
 
 # Backend / Supabase (not published with the static site; run migrations via CLI locally)
+# Keep migrations local-only — never commit SQL schema to the public repo.
 supabase/*
 !supabase/config.toml
-!supabase/migrations/
-!supabase/migrations/*.sql
 !supabase/functions/
 !supabase/functions/process-meter-leaderboard/
+supabase/migrations/
 
 # Editor directories and files
 .vscode/*
