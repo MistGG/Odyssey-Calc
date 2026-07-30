@@ -32599,6 +32599,27 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin-bottom: 1rem;
 }
 
+.community-guides-editor__thumbnail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.community-guides-editor__stored-badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent, #6b8cae) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #6b8cae) 45%, var(--border));
+  vertical-align: middle;
+}
+
 .community-guides-editor__thumbnail-preview-label {
   display: block;
   margin-bottom: 0.45rem;
@@ -32662,6 +32683,28 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin: 0 0 0.85rem;
   color: var(--text-soft);
   font-size: 0.875rem;
+}
+
+.community-guides-editor__draft-banner {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #6b8cae) 40%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent, #6b8cae) 12%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.community-guides-editor__draft-banner-link {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.community-guides-editor__preview-live-title {
+  margin: 0.5rem 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .community-guides-editor__sync-note--live {

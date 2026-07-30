@@ -1,4 +1,4 @@
-import { useState, type RefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import {
   COMMUNITY_GUIDE_FONT_FAMILIES,
   COMMUNITY_GUIDE_FONT_GROUPS,
@@ -21,6 +21,8 @@ import {
 type CommunityGuideMarkdownToolbarProps = {
   textareaRef: RefObject<HTMLTextAreaElement | null>
   onChange: (value: string) => void
+  /** When set, shows an Upload image control that inserts a stored markdown image. */
+  onUploadImage?: (file: File) => Promise<string>
 }
 
 function run(
@@ -36,9 +38,12 @@ function run(
 export function CommunityGuideMarkdownToolbar({
   textareaRef,
   onChange,
+  onUploadImage,
 }: CommunityGuideMarkdownToolbarProps) {
   const [fontFamily, setFontFamily] = useState<CommunityGuideFontFamily>('')
   const [fontSize, setFontSize] = useState<CommunityGuideFontSize>('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const applyFont = (family: CommunityGuideFontFamily, size: CommunityGuideFontSize) => {
     if (!family && !size) return
@@ -218,15 +223,50 @@ export function CommunityGuideMarkdownToolbar({
         <button
           type="button"
           className="community-guide-md-toolbar__btn"
-          title="Image from URL"
+          title="Image from URL (copied into Odyssey storage on save)"
           onClick={() =>
             run(textareaRef, onChange, (el) =>
               insertTextareaBlock(el, '![Image description](https://)'),
             )
           }
         >
-          Image
+          Image URL
         </button>
+        {onUploadImage ? (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                setUploading(true)
+                void onUploadImage(file)
+                  .then((url) => {
+                    run(textareaRef, onChange, (el) =>
+                      insertTextareaBlock(el, `![Image description](${url})`),
+                    )
+                  })
+                  .catch((err: unknown) => {
+                    window.alert(err instanceof Error ? err.message : 'Image upload failed.')
+                  })
+                  .finally(() => setUploading(false))
+              }}
+            />
+            <button
+              type="button"
+              className="community-guide-md-toolbar__btn"
+              title="Upload image (stored permanently)"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploading ? 'Uploading…' : 'Upload image'}
+            </button>
+          </>
+        ) : null}
       </div>
     </div>
   )

@@ -2,6 +2,8 @@
 
 Instant Discord previews: serves `index.html` and `og.png` from Supabase storage on your domain (no Supabase or `workers.dev` in share links).
 
+Also serves durable community guide images at `/guide-images/{userId}/{file}` with long immutable cache headers (reduces Supabase egress).
+
 ## One-time setup
 
 1. **DNS** — Domain `odyssey-calc.com` is already on Cloudflare Registrar, so DNS is in the same account.
@@ -29,6 +31,7 @@ Instant Discord previews: serves `index.html` and `og.png` from Supabase storage
 
 - Page: `https://share.odyssey-calc.com/meter-player/{playerKey}.html?d={cacheKey}`
 - OG image: `https://share.odyssey-calc.com/meter-player/{playerKey}-og.png?d={cacheKey}`
+- Guide images: `https://share.odyssey-calc.com/guide-images/{userId}/{file}`
 
 Share HTML redirects to the app at `https://odyssey-calc.com/#/meter/player/...` after Discord reads the preview.
 

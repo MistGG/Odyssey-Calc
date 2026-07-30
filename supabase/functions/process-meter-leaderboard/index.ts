@@ -23,11 +23,23 @@ const PARTY_DURATION_TOLERANCE_SEC = 5
  */
 const PARTY_CLEAR_TIME_TOLERANCE_SEC = 1
 /**
+ * When both uploads have a clear clock, peer meters of one pull finish close together.
+ * Longer gaps with an identical clear clock are almost always a later farm pull
+ * (same party, same clear time by coincidence) — do not soft-merge those.
+ */
+const PARTY_UPLOAD_WITH_CLEAR_MAX_GAP_SEC = 4 * 60
+/**
  * When either upload lacks clientComplete.timeSec, only treat near-simultaneous
  * uploads as the same clear (peer meters finish within seconds; multi-minute gaps
  * are almost always a later pull with a similar meter duration).
  */
 const PARTY_UPLOAD_NO_CLEAR_MAX_GAP_SEC = 120
+/**
+ * Same meter user re-uploading one clear (retry): raid / per-member damage must
+ * match this closely. Used only when both payloads share an isSelf player.
+ */
+const PARTY_REUPLOAD_RAID_REL_TOLERANCE = 0.02
+const PARTY_REUPLOAD_MEMBER_REL_TOLERANCE = 0.05
 /** When the in-game clear time and meter session diverge by at least this, DPS uses the in-game clock. */
 const DPS_CLEAR_TIME_GAP_SEC = 30
 const WIKI_DIGIMON_DETAIL_URL =
@@ -171,6 +183,49 @@ function clientCompleteTimeSec(payload: DungeonPayload): number | null {
   const cc = Number(payload.dungeon?.clientComplete?.timeSec)
   if (!Number.isFinite(cc) || cc <= 0) return null
   return Math.round(cc)
+}
+
+function raidDamageTotal(payload: DungeonPayload, members: StoredMember[]): number {
+  const sum = members.reduce((s, m) => s + memberDamageTotal(m), 0)
+  return Math.max(Number(payload.raidTotalDamage) || 0, sum, 0)
+}
+
+function sharesIsSelfPlayer(a: DungeonPayload, b: DungeonPayload): boolean {
+  const aSelf = new Set(selfPlayerKeysFromPayload(a))
+  if (!aSelf.size) return false
+  return selfPlayerKeysFromPayload(b).some((k) => aSelf.has(k))
+}
+
+/**
+ * Near-identical damage signature — used to collapse same-uploader retries of one
+ * clear without merging distinct back-to-back farm pulls.
+ */
+function partyDamageCompatibleForReupload(
+  aPayload: DungeonPayload,
+  aMembers: StoredMember[],
+  bPayload: DungeonPayload,
+  bMembers: StoredMember[],
+): boolean {
+  const raidA = raidDamageTotal(aPayload, aMembers)
+  const raidB = raidDamageTotal(bPayload, bMembers)
+  const raidMax = Math.max(raidA, raidB, 1)
+  if (Math.abs(raidA - raidB) / raidMax > PARTY_REUPLOAD_RAID_REL_TOLERANCE) return false
+
+  const mapB = new Map<string, number>()
+  for (const m of bMembers) {
+    const key = normalizePlayerKey(m)
+    if (key) mapB.set(key, memberDamageTotal(m))
+  }
+  for (const m of aMembers) {
+    const key = normalizePlayerKey(m)
+    if (!key) continue
+    const dmgB = mapB.get(key)
+    if (dmgB == null) continue
+    const dmgA = memberDamageTotal(m)
+    const max = Math.max(dmgA, dmgB, 1)
+    if (Math.abs(dmgA - dmgB) / max > PARTY_REUPLOAD_MEMBER_REL_TOLERANCE) return false
+  }
+  return true
 }
 
 function buildPartyRunFingerprint(
@@ -327,6 +382,8 @@ async function findSoftDuplicatePartyParseInWindow(
     excludeParseId: string
     createdAt: string
     clearTimeSec?: number | null
+    /** Incoming parse payload (raid totals / isSelf) for tighter same-clear checks. */
+    payload?: DungeonPayload
   },
 ): Promise<string | null> {
   const playerKey = partyPlayerSetKey(params.members)
@@ -356,6 +413,10 @@ async function findSoftDuplicatePartyParseInWindow(
     params.clearTimeSec != null && Number.isFinite(params.clearTimeSec) && params.clearTimeSec > 0
       ? Math.round(params.clearTimeSec)
       : null
+  const incomingPayload: DungeonPayload = {
+    ...(params.payload ?? {}),
+    members: params.members,
+  }
   type Candidate = {
     id: string
     createdAtMs: number
@@ -383,9 +444,20 @@ async function findSoftDuplicatePartyParseInWindow(
       // Same party + similar meter duration is not enough when farming; clear clocks
       // distinguish back-to-back pulls (142s vs 144s) that used to false-merge.
       if (Math.abs(otherClear - incomingClear) > PARTY_CLEAR_TIME_TOLERANCE_SEC) continue
+      // Identical clear clocks still collide when farming consistently — peer meters
+      // of one pull upload close together; multi-minute gaps are later pulls.
+      if (Math.abs(createdAtMs - centerMs) > PARTY_UPLOAD_WITH_CLEAR_MAX_GAP_SEC * 1000) continue
     } else if (Math.abs(createdAtMs - centerMs) > PARTY_UPLOAD_NO_CLEAR_MAX_GAP_SEC * 1000) {
       // Without a clear clock, refuse to merge uploads minutes apart.
       continue
+    }
+
+    // Soft-dedupe is for peer meters of one clear (different isSelf). Same meter
+    // user farming back-to-back shares isSelf — only collapse near-identical retries.
+    if (sharesIsSelfPlayer(incomingPayload, payload)) {
+      if (!partyDamageCompatibleForReupload(incomingPayload, params.members, payload, members)) {
+        continue
+      }
     }
 
     candidates.push({
@@ -645,15 +717,17 @@ async function memberDpsForLeaderboard(
 
 function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): boolean {
   if (members.length < 2) return false
+  // Missing digimon rows = meter failed to attribute a party slot.
   if (members.some((m) => memberDigimons(m).length === 0)) return true
   const damages = members.map((m) => memberDamageTotal(m))
   const sumMember = damages.reduce((s, d) => s + d, 0)
   const raidTotal = Math.max(Number(payload.raidTotalDamage) || 0, sumMember, 1)
   const maxDmg = Math.max(0, ...damages)
   if (maxDmg <= 0) return false
-  if (damages.some((d) => d / raidTotal < MIN_PARTY_DAMAGE_SHARE)) return true
-  const nearZeroCount = damages.filter((d) => d < raidTotal * 0.02).length
-  const nonzeroCount = damages.filter((d) => d >= raidTotal * 0.02).length
+  // A member doing little/no damage is valid (passenger / bad pull). Only reject
+  // when attribution looks collapsed onto one player (~all damage on one seat).
+  const nearZeroCount = damages.filter((d) => d < raidTotal * MIN_PARTY_DAMAGE_SHARE).length
+  const nonzeroCount = damages.filter((d) => d >= raidTotal * MIN_PARTY_DAMAGE_SHARE).length
   if (nonzeroCount <= 1 && maxDmg >= raidTotal * 0.88) return true
   if (maxDmg >= raidTotal * 0.9 && nearZeroCount >= members.length - 1) return true
   return false
@@ -661,8 +735,6 @@ function isBrokenPartyParse(payload: DungeonPayload, members: StoredMember[]): b
 
 const MEMBER_SPIKE_MAX_ACTIVE_SEC = 3
 const MEMBER_SPIKE_MIN_SESSION_OVERHANG_SEC = 5
-/** Ranked dungeon clears shorter than this are rejected (reset-mid-run tail damage, etc.). */
-const MIN_LEADERBOARD_SESSION_SEC = 10
 
 function bossTargetLooksLikeFinalDungeonBoss(name: string): boolean {
   return /<\s*dungeon\s+boss\s*>/i.test(name)
@@ -900,15 +972,6 @@ async function buildSummaryFromPayload(
   if (isBrokenPartyParse(payload, members)) return { version: 1, eligible: false, members: [] }
 
   const sessionDur = sessionDuration(payload, rowDurationSec, members)
-  if (sessionDur < MIN_LEADERBOARD_SESSION_SEC) {
-    return {
-      version: 1,
-      eligible: false,
-      sessionDurationSec: sessionDur,
-      members: [],
-      invalidateReason: `session_under_${MIN_LEADERBOARD_SESSION_SEC}s_v3`,
-    }
-  }
   const dungeonLeaderboardEligible = payload.dungeon?.leaderboardEligible === true
   const roleCache = new Map<string, RoleBucket | null>()
   const out: SummaryMember[] = []
@@ -1015,6 +1078,7 @@ async function processParse(
       excludeParseId: row.id,
       createdAt: row.created_at,
       clearTimeSec,
+      payload,
     })
     if (dupId) {
       await supabase.from('meter_parses').update({ party_fingerprint: fingerprint }).eq('id', row.id)
@@ -1090,11 +1154,23 @@ async function processParse(
     members.length > 0
       ? await buildSummaryFromPayload(payload, Number(row.duration_sec) || 0, wikiCatalog)
       : row.leaderboard_summary
-  if (!summary?.members?.length) {
+  // Keep an explicit ineligible summary. Only fall back when buildSummary returned
+  // nothing useful.
+  if (summary == null) {
     summary = row.leaderboard_summary
+  } else if (summary.eligible !== false && !summary.members?.length) {
+    summary = row.leaderboard_summary ?? summary
   }
 
-  if (!summary?.eligible) return { inserted: 0, skipped: 'not leaderboard eligible' }
+  if (!summary?.eligible) {
+    if (summary && summary.eligible === false) {
+      await supabase.from('meter_parses').update({ leaderboard_summary: summary }).eq('id', row.id)
+    }
+    return {
+      inserted: 0,
+      skipped: summary?.invalidateReason ?? 'not leaderboard eligible',
+    }
+  }
 
   if (members.length && isBrokenPartyParse(payload, members)) {
     return { inserted: 0, skipped: 'broken party parse' }

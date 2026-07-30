@@ -33,12 +33,19 @@ import {
 } from '../lib/communityGuideEditorCache'
 import { useCommunityGuideEditorCursors } from '../hooks/useCommunityGuideEditorCursors'
 import { isAllowedCommunityGuideImageUrl } from '../lib/communityGuideImageUrl'
+import { isDurableCommunityGuideImageUrl } from '../lib/communityGuideImageStorage'
+import {
+  deleteCommunityGuideImage,
+  findCommunityGuideImageByPublicUrl,
+  uploadCommunityGuideImageFile,
+} from '../lib/communityGuideImages'
 import {
   CommunityGuideVersionConflictError,
   createCommunityGuide,
   deleteCommunityGuide,
   fetchCommunityGuideForAuthor,
   resolveCommunityGuideEditorContent,
+  resolveCommunityGuideLiveContent,
   updateCommunityGuide,
   type CommunityGuide,
 } from '../lib/communityGuides'
@@ -126,6 +133,14 @@ export function CommunityGuideEditorPage() {
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [previewMode, setPreviewMode] = useState<'draft' | 'live'>('draft')
+  const [guideSlug, setGuideSlug] = useState<string | null>(null)
+  const [liveSnapshot, setLiveSnapshot] = useState<{
+    title: string
+    body: string
+    thumbnail_url: string | null
+    social_links: CommunityGuideSocialDraft[]
+  } | null>(null)
   const [activePicker, setActivePicker] = useState<'item' | 'quest' | 'digimon' | 'dungeon' | null>(
     null,
   )
@@ -133,6 +148,8 @@ export function CommunityGuideEditorPage() {
   const [remoteConflict, setRemoteConflict] = useState<CommunityGuide | null>(null)
   const [syncNotice, setSyncNotice] = useState<string | null>(null)
   const [liveSaveLabel, setLiveSaveLabel] = useState<string | null>(null)
+  const [thumbnailBusy, setThumbnailBusy] = useState(false)
+  const thumbnailFileInputRef = useRef<HTMLInputElement>(null)
 
   const serverUpdatedAtRef = useRef<string | null>(null)
   const dirtyRef = useRef(false)
@@ -259,6 +276,19 @@ export function CommunityGuideEditorPage() {
         setAuthorId,
         setSocialLinks,
       })
+      setGuideSlug(guide.slug)
+      if (guide.status === 'published') {
+        const live = resolveCommunityGuideLiveContent(guide)
+        setLiveSnapshot({
+          title: live.title,
+          body: live.body,
+          thumbnail_url: live.thumbnail_url,
+          social_links: socialDraftsFromLinks(live.social_links),
+        })
+      } else {
+        setLiveSnapshot(null)
+        setPreviewMode('draft')
+      }
       if (!options?.keepChangelog) setChangelogNote('')
       serverUpdatedAtRef.current = guide.updated_at
       dirtyRef.current = false
@@ -431,11 +461,13 @@ export function CommunityGuideEditorPage() {
     if (!id || !supabase || !userId || loading) return
 
     const showLiveSaved = () => {
-      setLiveSaveLabel('Live-saved for collaborators')
+      const label =
+        guideStatusRef.current === 'published'
+          ? 'Draft autosaved (live page unchanged)'
+          : 'Live-saved for collaborators'
+      setLiveSaveLabel(label)
       window.setTimeout(() => {
-        setLiveSaveLabel((current) =>
-          current === 'Live-saved for collaborators' ? null : current,
-        )
+        setLiveSaveLabel((current) => (current === label ? null : current))
       }, 3500)
     }
 
@@ -722,6 +754,17 @@ export function CommunityGuideEditorPage() {
             updateAuthorName: isOwner,
             currentStatus: guideStatus,
           })
+          // Refresh live snapshot from returned row (live columns only change on publish).
+          if (updated.status === 'published') {
+            const live = resolveCommunityGuideLiveContent(updated)
+            setLiveSnapshot({
+              title: live.title,
+              body: live.body,
+              thumbnail_url: live.thumbnail_url,
+              social_links: socialDraftsFromLinks(live.social_links),
+            })
+            setGuideSlug(updated.slug)
+          }
           const content = resolveCommunityGuideEditorContent(updated)
           setGuideStatus(updated.status)
           setHasUnpublishedDraft(updated.has_unpublished_draft)
@@ -880,12 +923,64 @@ export function CommunityGuideEditorPage() {
     publishBodyCursor(el, true)
   }, [body, id, showPreview, publishBodyCursor])
 
+  const onUploadBodyImage = useCallback(
+    async (file: File) => {
+      if (!supabase || !userId) throw new Error('Sign in to upload images.')
+      const row = await uploadCommunityGuideImageFile(supabase, userId, file, {
+        fileName: file.name,
+        guideId: id ?? null,
+      })
+      return row.public_url
+    },
+    [supabase, userId, id],
+  )
+
+  const onUploadThumbnail = useCallback(
+    async (file: File) => {
+      if (!supabase || !userId) throw new Error('Sign in to upload images.')
+      setThumbnailBusy(true)
+      setError(null)
+      try {
+        const row = await uploadCommunityGuideImageFile(supabase, userId, file, {
+          fileName: file.name,
+          guideId: id ?? null,
+        })
+        setThumbnailUrl(row.public_url)
+        markDirty()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Thumbnail upload failed.')
+      } finally {
+        setThumbnailBusy(false)
+      }
+    },
+    [supabase, userId, id, markDirty],
+  )
+
+  const onRemoveThumbnail = useCallback(async () => {
+    if (!thumbnailUrl.trim()) return
+    setThumbnailBusy(true)
+    setError(null)
+    try {
+      if (supabase && isDurableCommunityGuideImageUrl(thumbnailUrl)) {
+        const row = await findCommunityGuideImageByPublicUrl(supabase, thumbnailUrl)
+        if (row) await deleteCommunityGuideImage(supabase, row)
+      }
+      setThumbnailUrl('')
+      markDirty()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not remove thumbnail.')
+    } finally {
+      setThumbnailBusy(false)
+    }
+  }, [supabase, thumbnailUrl, markDirty])
+
   if (!authReady || loading) {
     return <p className="community-guides-status">Loading editor…</p>
   }
 
   const thumbnailPreviewValid =
     thumbnailUrl.trim().length > 0 && isAllowedCommunityGuideImageUrl(thumbnailUrl)
+  const thumbnailIsStored = thumbnailPreviewValid && isDurableCommunityGuideImageUrl(thumbnailUrl)
   const isOwner = !authorId || authorId === user?.id
 
   return (
@@ -900,8 +995,10 @@ export function CommunityGuideEditorPage() {
           {id && guideStatus === 'draft' ? (
             <span className="community-guides-editor__status-badge">Draft</span>
           ) : null}
-          {id && guideStatus === 'published' && hasUnpublishedDraft ? (
-            <span className="community-guides-editor__status-badge">Unpublished edits</span>
+          {id && guideStatus === 'published' ? (
+            <span className="community-guides-editor__status-badge">
+              {hasUnpublishedDraft ? 'Unpublished edits' : 'Published'}
+            </span>
           ) : null}
           {id && !isOwner ? (
             <span className="community-guides-editor__status-badge community-guides-editor__status-badge--collab">
@@ -909,6 +1006,21 @@ export function CommunityGuideEditorPage() {
             </span>
           ) : null}
         </header>
+
+        {id && guideStatus === 'published' ? (
+          <p className="community-guides-editor__draft-banner" role="status">
+            You are editing a private draft. Autosave and <strong>Save draft</strong> never change
+            the live guide. Only <strong>Publish changes</strong> updates what readers see.
+            {guideSlug ? (
+              <>
+                {' '}
+                <Link to={`/guides/${guideSlug}`} className="community-guides-editor__draft-banner-link">
+                  View live page
+                </Link>
+              </>
+            ) : null}
+          </p>
+        ) : null}
 
         {restoredFromCache ? (
           <p className="community-guides-editor__cache-note">
@@ -969,7 +1081,12 @@ export function CommunityGuideEditorPage() {
             </label>
 
             <label className="community-guides-field">
-              <span className="community-guides-field__label">Thumbnail (optional)</span>
+              <span className="community-guides-field__label">
+                Thumbnail (optional)
+                {thumbnailIsStored ? (
+                  <span className="community-guides-editor__stored-badge">Stored</span>
+                ) : null}
+              </span>
               <input
                 type="url"
                 className="community-guides-field__input"
@@ -980,8 +1097,40 @@ export function CommunityGuideEditorPage() {
                 }}
                 placeholder="https://example.com/cover.png"
               />
+              <div className="community-guides-editor__thumbnail-actions">
+                <input
+                  ref={thumbnailFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    e.target.value = ''
+                    if (file) void onUploadThumbnail(file)
+                  }}
+                />
+                <button
+                  type="button"
+                  className="community-guides-btn community-guides-btn--ghost"
+                  disabled={thumbnailBusy || !supabase || !userId}
+                  onClick={() => thumbnailFileInputRef.current?.click()}
+                >
+                  {thumbnailBusy ? 'Working…' : 'Upload image'}
+                </button>
+                {thumbnailUrl.trim() ? (
+                  <button
+                    type="button"
+                    className="community-guides-btn community-guides-btn--ghost"
+                    disabled={thumbnailBusy}
+                    onClick={() => void onRemoveThumbnail()}
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
               <span className="community-guides-field__hint">
-                Direct image URL for your guide card. Leave blank to use the site logo.
+                Upload or paste a URL. Remote links are copied into Odyssey storage on save so they
+                are never lost. Leave blank to use the site logo.
               </span>
             </label>
 
@@ -1050,11 +1199,35 @@ export function CommunityGuideEditorPage() {
               </button>
               <button
                 type="button"
-                className={`community-guides-btn community-guides-btn--ghost${showPreview ? ' is-active' : ''}`}
-                onClick={() => setShowPreview((v) => !v)}
+                className={`community-guides-btn community-guides-btn--ghost${showPreview && previewMode === 'draft' ? ' is-active' : ''}`}
+                onClick={() => {
+                  setPreviewMode('draft')
+                  setShowPreview(true)
+                }}
               >
-                Preview
+                Preview draft
               </button>
+              {guideStatus === 'published' && liveSnapshot ? (
+                <button
+                  type="button"
+                  className={`community-guides-btn community-guides-btn--ghost${showPreview && previewMode === 'live' ? ' is-active' : ''}`}
+                  onClick={() => {
+                    setPreviewMode('live')
+                    setShowPreview(true)
+                  }}
+                >
+                  Preview live
+                </button>
+              ) : null}
+              {showPreview ? (
+                <button
+                  type="button"
+                  className="community-guides-btn community-guides-btn--ghost"
+                  onClick={() => setShowPreview(false)}
+                >
+                  Edit
+                </button>
+              ) : null}
             </div>
 
             {activePicker === 'item' ? <WikiItemSearchPicker onSelect={onItemSelect} /> : null}
@@ -1074,6 +1247,7 @@ export function CommunityGuideEditorPage() {
                     setBody(next)
                     markDirty()
                   }}
+                  onUploadImage={supabase && userId ? onUploadBodyImage : undefined}
                 />
                 <label className="community-guides-field">
                   <span className="community-guides-field__label">
@@ -1123,16 +1297,38 @@ export function CommunityGuideEditorPage() {
 
             {showPreview ? (
               <section className="community-guides-editor__preview" aria-label="Preview">
-                <h2 className="community-guides-editor__preview-title">Preview</h2>
-                <CommunityGuideSocialLinks
-                  links={socialLinks
-                    .filter((link) => link.url.trim())
-                    .map(({ platform, url }) => ({ platform, url: url.trim() }))}
-                />
-                <div className="community-guides-editor__preview-layout">
-                  <CommunityGuideBody body={body} />
-                  <CommunityGuideToc body={body} />
-                </div>
+                <h2 className="community-guides-editor__preview-title">
+                  {previewMode === 'live' && liveSnapshot ? 'Live page preview' : 'Draft preview'}
+                </h2>
+                {previewMode === 'live' && liveSnapshot ? (
+                  <>
+                    <p className="community-guides-field__hint">
+                      This is what readers see now. It does not include your unpublished draft.
+                    </p>
+                    <h3 className="community-guides-editor__preview-live-title">{liveSnapshot.title}</h3>
+                    <CommunityGuideSocialLinks
+                      links={liveSnapshot.social_links
+                        .filter((link) => link.url.trim())
+                        .map(({ platform, url }) => ({ platform, url: url.trim() }))}
+                    />
+                    <div className="community-guides-editor__preview-layout">
+                      <CommunityGuideBody body={liveSnapshot.body} />
+                      <CommunityGuideToc body={liveSnapshot.body} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <CommunityGuideSocialLinks
+                      links={socialLinks
+                        .filter((link) => link.url.trim())
+                        .map(({ platform, url }) => ({ platform, url: url.trim() }))}
+                    />
+                    <div className="community-guides-editor__preview-layout">
+                      <CommunityGuideBody body={body} />
+                      <CommunityGuideToc body={body} />
+                    </div>
+                  </>
+                )}
               </section>
             ) : null}
 
@@ -1160,7 +1356,11 @@ export function CommunityGuideEditorPage() {
                 disabled={saving || deleting}
                 onClick={onSaveDraft}
               >
-                {savingAction === 'draft' ? 'Saving…' : 'Save draft'}
+                {savingAction === 'draft'
+                  ? 'Saving…'
+                  : guideStatus === 'published'
+                    ? 'Save draft'
+                    : 'Save draft'}
               </button>
               <button
                 type="button"
@@ -1169,11 +1369,16 @@ export function CommunityGuideEditorPage() {
                 onClick={onPublish}
               >
                 {savingAction === 'publish'
-                  ? 'Saving…'
+                  ? 'Publishing…'
                   : guideStatus === 'published'
-                    ? 'Save & view'
+                    ? 'Publish changes'
                     : 'Publish guide'}
               </button>
+              {id && guideStatus === 'published' && guideSlug ? (
+                <Link to={`/guides/${guideSlug}`} className="community-guides-btn community-guides-btn--ghost">
+                  View live page
+                </Link>
+              ) : null}
               {id && isOwner ? (
                 <button
                   type="button"

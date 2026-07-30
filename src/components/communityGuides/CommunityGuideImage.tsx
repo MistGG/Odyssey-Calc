@@ -1,4 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import {
+  resolveCachedCommunityGuideImageSrc,
+  revokeCachedCommunityGuideObjectUrl,
+} from '../../lib/communityGuideImageCache'
+import { isDurableCommunityGuideImageUrl } from '../../lib/communityGuideImageStorage'
 import { isAllowedCommunityGuideImageUrl } from '../../lib/communityGuideImageUrl'
 
 export function CommunityGuideImage({
@@ -11,6 +16,35 @@ export function CommunityGuideImage({
   inline?: boolean
 }) {
   const [failed, setFailed] = useState(false)
+  const [displaySrc, setDisplaySrc] = useState(src.trim())
+
+  useEffect(() => {
+    let cancelled = false
+    let objectUrl: string | null = null
+    const trimmed = src.trim()
+    setFailed(false)
+    setDisplaySrc(trimmed)
+
+    if (!isAllowedCommunityGuideImageUrl(trimmed) || !isDurableCommunityGuideImageUrl(trimmed)) {
+      return () => {
+        cancelled = true
+      }
+    }
+
+    void resolveCachedCommunityGuideImageSrc(trimmed).then((resolved) => {
+      if (cancelled) {
+        revokeCachedCommunityGuideObjectUrl(resolved)
+        return
+      }
+      objectUrl = resolved.startsWith('blob:') ? resolved : null
+      setDisplaySrc(resolved)
+    })
+
+    return () => {
+      cancelled = true
+      revokeCachedCommunityGuideObjectUrl(objectUrl)
+    }
+  }, [src])
 
   if (!isAllowedCommunityGuideImageUrl(src)) {
     return (
@@ -31,7 +65,7 @@ export function CommunityGuideImage({
   const img = (
     <img
       className={`community-guide-md__img${inline ? ' community-guide-md__img--inline' : ''}`}
-      src={src.trim()}
+      src={displaySrc}
       alt={alt}
       loading="lazy"
       decoding="async"

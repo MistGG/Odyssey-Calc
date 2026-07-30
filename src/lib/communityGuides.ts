@@ -1,6 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveAppSiteOrigin } from '../config/site'
 import { isAllowedCommunityGuideImageUrl } from './communityGuideImageUrl'
+import {
+  attachCommunityGuideImagesToGuide,
+  deleteCommunityGuideImagesForGuide,
+  persistCommunityGuideImageUrls,
+} from './communityGuideImages'
 import { slugifyCommunityGuideTitle } from './communityGuideEmbed'
 import {
   normalizeCommunityGuideSocialLinks,
@@ -56,11 +61,23 @@ export function resolveCommunityGuideEditorContent(
   if (guide.status === 'published' && guide.has_unpublished_draft) {
     return {
       title: guide.draft_title ?? guide.title,
-      body: guide.draft_body ?? '',
-      thumbnail_url: guide.draft_thumbnail_url ?? null,
-      social_links: guide.draft_social_links ?? [],
+      body: guide.draft_body ?? guide.body,
+      thumbnail_url: guide.draft_thumbnail_url ?? guide.thumbnail_url,
+      social_links: guide.draft_social_links ?? guide.social_links,
     }
   }
+  return {
+    title: guide.title,
+    body: guide.body,
+    thumbnail_url: guide.thumbnail_url,
+    social_links: guide.social_links,
+  }
+}
+
+/** Live published fields only — public page / editor “view live” preview. */
+export function resolveCommunityGuideLiveContent(
+  guide: Pick<CommunityGuide, 'title' | 'body' | 'thumbnail_url' | 'social_links'>,
+): CommunityGuideEditorContent {
   return {
     title: guide.title,
     body: guide.body,
@@ -380,15 +397,25 @@ export async function fetchCommunityGuideBySlug(
   supabase: SupabaseClient,
   slug: string,
 ): Promise<CommunityGuide | null> {
+  // Public page: only live columns. Draft_* WIP must never drive the published view.
   const { data, error } = await supabase
     .from('community_guides')
-    .select('*')
+    .select(
+      'id, author_id, author_name, title, slug, body, thumbnail_url, heart_count, view_count, status, social_links, created_at, updated_at, has_unpublished_draft',
+    )
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle()
 
   if (error) throw new Error(formatCommunityGuideError(error.message))
-  return data ? normalizeCommunityGuide(data as Record<string, unknown>) : null
+  if (!data) return null
+  const guide = normalizeCommunityGuide(data as Record<string, unknown>)
+  // Defense: never expose draft payload on the public page object.
+  guide.draft_title = null
+  guide.draft_body = null
+  guide.draft_thumbnail_url = null
+  guide.draft_social_links = null
+  return guide
 }
 
 export async function incrementCommunityGuideView(
@@ -546,14 +573,23 @@ export async function createCommunityGuide(
   input: SaveCommunityGuideInput,
 ): Promise<CommunityGuide> {
   const status = input.status ?? 'published'
-  const { title, body, authorName } = normalizeSaveCommunityGuideInput(input, status)
-  const baseSlug = (input.slug?.trim() || slugifyCommunityGuideTitle(title)).slice(
+  const persisted = await persistCommunityGuideImageUrls(supabase, {
+    thumbnailUrl: input.thumbnailUrl,
+    body: input.body,
+  })
+  const persistedInput: SaveCommunityGuideInput = {
+    ...input,
+    thumbnailUrl: persisted.thumbnailUrl,
+    body: persisted.body,
+  }
+  const { title, body, authorName } = normalizeSaveCommunityGuideInput(persistedInput, status)
+  const baseSlug = (persistedInput.slug?.trim() || slugifyCommunityGuideTitle(title)).slice(
     0,
     COMMUNITY_GUIDE_SLUG_MAX_LEN,
   )
   let slug = await allocateCommunityGuideSlug(supabase, baseSlug)
-  const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
-  const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
+  const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(persistedInput.thumbnailUrl)
+  const socialLinks = parseCommunityGuideSocialInputs(persistedInput.socialLinks ?? [])
 
   const buildInsertRow = (nextSlug: string): Record<string, unknown> => {
     const row: Record<string, unknown> = {
@@ -577,13 +613,29 @@ export async function createCommunityGuide(
       .select('*')
       .single()
 
-    if (!error) return normalizeCommunityGuide(data as Record<string, unknown>)
+    if (!error) {
+      const guide = normalizeCommunityGuide(data as Record<string, unknown>)
+      try {
+        await attachCommunityGuideImagesToGuide(supabase, guide.id, persisted.durableUrls)
+      } catch {
+        // Guide is saved; attachment is best-effort metadata.
+      }
+      return guide
+    }
 
     if (error && isMissingCommunityGuideColumnError(error.message)) {
       const insertRowRetry = { ...insertRow }
       if (stripOptionalCommunityGuideFields(insertRowRetry, error.message)) {
         const retry = await supabase.from('community_guides').insert(insertRowRetry).select('*').single()
-        if (!retry.error) return normalizeCommunityGuide(retry.data as Record<string, unknown>)
+        if (!retry.error) {
+          const guide = normalizeCommunityGuide(retry.data as Record<string, unknown>)
+          try {
+            await attachCommunityGuideImagesToGuide(supabase, guide.id, persisted.durableUrls)
+          } catch {
+            // best-effort
+          }
+          return guide
+        }
         error = retry.error
       }
     }
@@ -638,18 +690,29 @@ export async function updateCommunityGuide(
 ): Promise<CommunityGuide> {
   if (!userId) throw new Error('Not authenticated.')
 
-  const requestedStatus = input.status ?? 'published'
+  const persisted = await persistCommunityGuideImageUrls(supabase, {
+    thumbnailUrl: input.thumbnailUrl,
+    body: input.body,
+    guideId,
+  })
+  const persistedInput: SaveCommunityGuideInput = {
+    ...input,
+    thumbnailUrl: persisted.thumbnailUrl,
+    body: persisted.body,
+  }
+
+  const requestedStatus = persistedInput.status ?? 'published'
   const currentStatus = options?.currentStatus ?? requestedStatus
   const preservePublishedLive =
     requestedStatus === 'draft' && currentStatus === 'published'
   const status = preservePublishedLive ? 'published' : requestedStatus
   const { title, body, authorName } = normalizeSaveCommunityGuideInput(
-    input,
+    persistedInput,
     // Draft WIP on a live guide still allows an empty body (same as unpublished drafts).
     preservePublishedLive ? 'draft' : status,
   )
-  const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(input.thumbnailUrl)
-  const socialLinks = parseCommunityGuideSocialInputs(input.socialLinks ?? [])
+  const thumbnailUrl = normalizeCommunityGuideThumbnailUrl(persistedInput.thumbnailUrl)
+  const socialLinks = parseCommunityGuideSocialInputs(persistedInput.socialLinks ?? [])
   const updateAuthorName = options?.updateAuthorName !== false
   const expectedUpdatedAt = options?.expectedUpdatedAt
 
@@ -680,7 +743,7 @@ export async function updateCommunityGuide(
     if (updateAuthorName) {
       updateRow.author_name = authorName
     }
-    if (thumbnailUrl !== null || input.thumbnailUrl === '') {
+    if (thumbnailUrl !== null || persistedInput.thumbnailUrl === '') {
       updateRow.thumbnail_url = thumbnailUrl
     }
     if (status === 'published') {
@@ -702,20 +765,12 @@ export async function updateCommunityGuide(
   if (error && isMissingCommunityGuideColumnError(error.message)) {
     const updateRowRetry = { ...updateRow }
     if (stripOptionalCommunityGuideFields(updateRowRetry, error.message)) {
-      // Without draft columns, fall back to writing live fields (legacy) but never
-      // demote a published guide to draft when the intent was preserve-live WIP.
+      // Never fall back to writing WIP onto live title/body/thumbnail when draft
+      // columns are missing — that leaked unpublished edits onto the public page.
       if (preservePublishedLive && isMissingCommunityGuideDraftColumnError(error.message)) {
-        updateRowRetry.title = title
-        updateRowRetry.body = body
-        updateRowRetry.status = 'published'
-        updateRowRetry.social_links = socialLinks
-        if (thumbnailUrl !== null || input.thumbnailUrl === '') {
-          updateRowRetry.thumbnail_url = thumbnailUrl
-        }
-        if (updateAuthorName) {
-          updateRowRetry.author_name = authorName
-        }
-        updateRowRetry.updated_at = new Date().toISOString()
+        throw new Error(
+          'Unpublished draft storage is not available on this database yet. Apply the community_guides unpublished-draft migration before editing a live guide.',
+        )
       }
       const retry = await runUpdate(updateRowRetry)
       data = retry.data
@@ -727,6 +782,11 @@ export async function updateCommunityGuide(
   if (!data) {
     if (expectedUpdatedAt) throw new CommunityGuideVersionConflictError()
     throw new Error('Guide not found or you do not have permission to edit it.')
+  }
+  try {
+    await attachCommunityGuideImagesToGuide(supabase, guideId, persisted.durableUrls)
+  } catch {
+    // best-effort
   }
   return normalizeCommunityGuide(data as Record<string, unknown>)
 }
@@ -759,6 +819,11 @@ export async function deleteCommunityGuide(
   guideId: string,
   userId: string,
 ): Promise<void> {
+  try {
+    await deleteCommunityGuideImagesForGuide(supabase, guideId)
+  } catch {
+    // Continue with guide delete; FK cascade still clears metadata rows.
+  }
   const { error } = await supabase
     .from('community_guides')
     .delete()

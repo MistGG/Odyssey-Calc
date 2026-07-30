@@ -375,14 +375,14 @@ export function partyMemberHasLoggedDigimon(member: MeterPartyMemberStored): boo
   return memberDigimonBreakdowns(member).length > 0
 }
 
-/** Minimum share of raid damage each party member must have for leaderboard eligibility. */
+/** Share threshold used only to detect collapsed one-seat attribution, not to reject low damage. */
 export const MIN_LEADERBOARD_PARTY_DAMAGE_SHARE = 0.02
 
 /**
  * Invalid dungeon party parses — excluded from public leaderboard / percentile aggregates.
  * - Any member with no digimon or skill breakdown (meter failed to attribute a party slot).
- * - Any member below {@link MIN_LEADERBOARD_PARTY_DAMAGE_SHARE} of raid damage.
  * - One member credited with ~all raid damage while everyone else is ~zero.
+ * Low/no damage from a real party member is allowed (passenger / bad pull).
  */
 export function isBrokenMeterPartyParse(
   payload: unknown,
@@ -399,10 +399,8 @@ export function isBrokenMeterPartyParse(
   const maxDmg = Math.max(0, ...damages)
   if (maxDmg <= 0) return false
 
-  if (damages.some((d) => d / raidTotal < MIN_LEADERBOARD_PARTY_DAMAGE_SHARE)) return true
-
-  const nearZeroCount = damages.filter((d) => d < raidTotal * 0.02).length
-  const nonzeroCount = damages.filter((d) => d >= raidTotal * 0.02).length
+  const nearZeroCount = damages.filter((d) => d < raidTotal * MIN_LEADERBOARD_PARTY_DAMAGE_SHARE).length
+  const nonzeroCount = damages.filter((d) => d >= raidTotal * MIN_LEADERBOARD_PARTY_DAMAGE_SHARE).length
 
   if (nonzeroCount <= 1 && maxDmg >= raidTotal * 0.88) return true
   if (maxDmg >= raidTotal * 0.9 && nearZeroCount >= members.length - 1) return true
