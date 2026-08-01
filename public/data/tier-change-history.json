@@ -1,6 +1,52 @@
 {
-  "updated_at": "2026-08-01T13:25:22.977Z",
+  "updated_at": "2026-08-01T19:15:14.553Z",
   "runs": [
+    {
+      "id": "2026-08-01T19:15:14.574Z-ojupcr",
+      "finishedAt": "2026-08-01T19:15:14.574Z",
+      "mode": "force",
+      "refreshedCount": 467,
+      "apiCount": 1,
+      "tierCount": 1,
+      "sampleDigimon": [
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-08-01T19:15:14.574Z",
+        "mode": "force",
+        "refreshedCount": 467,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-08-01T13:25:22.997Z-3d13fn",
       "finishedAt": "2026-08-01T13:25:22.997Z",
@@ -15945,32 +15991,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-07-02T19:30:24.686Z",
-        "mode": "force",
-        "refreshedCount": 443,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-07-02T14:07:33.637Z-vki9bg",
-      "finishedAt": "2026-07-02T14:07:33.637Z",
-      "mode": "force",
-      "refreshedCount": 443,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-07-02T14:07:33.637Z",
         "mode": "force",
         "refreshedCount": 443,
         "dpsUp": [],
