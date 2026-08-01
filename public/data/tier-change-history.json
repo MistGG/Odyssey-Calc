@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-08-01T02:51:36.122Z",
+  "updated_at": "2026-08-01T08:27:01.429Z",
   "runs": [
+    {
+      "id": "2026-08-01T08:27:01.448Z-t28zhs",
+      "finishedAt": "2026-08-01T08:27:01.448Z",
+      "mode": "force",
+      "refreshedCount": 466,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-08-01T08:27:01.448Z",
+        "mode": "force",
+        "refreshedCount": 466,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-08-01T02:51:36.140Z-xu6dj5",
       "finishedAt": "2026-08-01T02:51:36.140Z",
@@ -15957,52 +15983,6 @@
         "healerDown": [],
         "healerNew": [],
         "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-07-02T03:39:10.637Z-19vlti",
-      "finishedAt": "2026-07-02T03:39:10.637Z",
-      "mode": "force",
-      "refreshedCount": 443,
-      "apiCount": 1,
-      "tierCount": 1,
-      "sampleDigimon": [
-        {
-          "id": "de00who",
-          "name": "V-mon",
-          "cause": "api"
-        }
-      ],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-07-02T03:39:10.637Z",
-        "mode": "force",
-        "refreshedCount": 443,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [
-          {
-            "id": "de00who",
-            "name": "V-mon",
-            "role": "Hybrid",
-            "after": 4659.196614278024
-          }
-        ],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": [
-          {
-            "id": "de00who",
-            "name": "V-mon",
-            "role": "Hybrid",
-            "to": "complete"
-          }
-        ]
       }
     }
   ]
