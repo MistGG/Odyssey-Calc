@@ -45,13 +45,12 @@ export function stashRecoverySession(tokens: AuthCallbackTokens): void {
   }
 }
 
-export function takeStashedRecoverySession(): {
+export function peekStashedRecoverySession(): {
   access_token: string
   refresh_token: string
 } | null {
   try {
     const raw = sessionStorage.getItem(RECOVERY_SESSION_KEY)
-    sessionStorage.removeItem(RECOVERY_SESSION_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as {
       access_token?: unknown
@@ -72,6 +71,24 @@ export function takeStashedRecoverySession(): {
   } catch {
     return null
   }
+}
+
+export function clearStashedRecoverySession(): void {
+  try {
+    sessionStorage.removeItem(RECOVERY_SESSION_KEY)
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+/** @deprecated use peek + clear after successful setSession */
+export function takeStashedRecoverySession(): {
+  access_token: string
+  refresh_token: string
+} | null {
+  const session = peekStashedRecoverySession()
+  if (session) clearStashedRecoverySession()
+  return session
 }
 
 /** Pull implicit-flow auth tokens out of a (possibly double) hash fragment. */

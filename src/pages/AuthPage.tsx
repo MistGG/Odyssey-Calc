@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { readPasswordRecoveryFlag } from '../auth/normalizeAuthCallbackUrl'
 import { useAuth } from '../auth/useAuth'
 import { safeReturnTo } from '../lib/safeReturnTo'
 
@@ -68,10 +69,16 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const activeView: View = passwordRecovery ? 'reset' : view
+  const inRecovery = passwordRecovery || readPasswordRecoveryFlag()
+  const activeView: View = inRecovery ? 'reset' : view
 
-  if (user && !passwordRecovery) {
-    navigate(returnTo, { replace: true })
+  useEffect(() => {
+    if (user && !inRecovery) {
+      navigate(returnTo, { replace: true })
+    }
+  }, [inRecovery, navigate, returnTo, user])
+
+  if (user && !inRecovery) {
     return null
   }
 

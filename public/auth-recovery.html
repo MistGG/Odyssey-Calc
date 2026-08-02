@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Reset password — Odyssey Calc</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, sans-serif;
+        background: #0a0f1a;
+        color: #cbd5e1;
+      }
+      p {
+        margin: 0;
+        padding: 1.5rem;
+        text-align: center;
+      }
+    </style>
+    <script>
+      /**
+       * Supabase recovery redirects append #access_token=...&type=recovery.
+       * The HashRouter SPA treats that fragment as a route and/or supabase-js
+       * clears location.hash to '', which becomes #/ — losing the reset flow.
+       * This plain page stashes tokens, then sends the user to /#/auth.
+       */
+      ;(function () {
+        function readParams() {
+          var out = {}
+          var hash = location.hash ? location.hash.replace(/^#/, '') : ''
+          var nested = hash.lastIndexOf('#')
+          if (nested >= 0) hash = hash.slice(nested + 1)
+          var query = location.search ? location.search.replace(/^\?/, '') : ''
+          var raw = hash || query
+          if (!raw) return out
+          raw = raw.split('&amp;').join('&')
+          try {
+            new URLSearchParams(raw).forEach(function (value, key) {
+              out[key] = value
+            })
+          } catch (_) {}
+          return out
+        }
+
+        var params = readParams()
+        var access = params.access_token
+        var refresh = params.refresh_token
+        try {
+          sessionStorage.setItem('odyssey-password-recovery', '1')
+          if (access && refresh) {
+            sessionStorage.setItem(
+              'odyssey-recovery-session',
+              JSON.stringify({ access_token: access, refresh_token: refresh }),
+            )
+          }
+        } catch (_) {}
+
+        var base = '/'
+        if (location.pathname.indexOf('/Odyssey-Calc') === 0) base = '/Odyssey-Calc/'
+        location.replace(location.origin + base + '#/auth')
+      })()
+    </script>
+  </head>
+  <body>
+    <p>Continuing to password reset…</p>
+  </body>
+</html>

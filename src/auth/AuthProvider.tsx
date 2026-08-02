@@ -17,9 +17,10 @@ import { resolveAppSiteOrigin } from '../config/site'
 import { clearCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
 import {
   clearPasswordRecoveryFlag,
+  clearStashedRecoverySession,
   markPasswordRecovery,
+  peekStashedRecoverySession,
   readPasswordRecoveryFlag,
-  takeStashedRecoverySession,
 } from './normalizeAuthCallbackUrl'
 
 const PROFILE_NAME_CACHE_PREFIX = 'odyssey-profile-display-name:'
@@ -30,11 +31,11 @@ function writePasswordRecoveryFlag(active: boolean): void {
 }
 
 function passwordResetRedirectTo(): string {
-  // Never put a HashRouter path in redirectTo. Supabase recovery uses
-  // `#access_token=...&type=recovery`; a pre-existing `#/route` becomes a
-  // double-hash the client cannot parse. Land on the site origin instead;
-  // PasswordRecoveryRedirect sends the user to /#/auth.
-  return `${resolveAppSiteOrigin()}/`
+  // Plain HTML callback (not the HashRouter SPA). Supabase appends
+  // `#access_token=...&type=recovery`; auth-recovery.html stashes tokens and
+  // forwards to /#/auth. Landing on `/` lets supabase-js clear location.hash
+  // to '' which HashRouter turns into #/.
+  return `${resolveAppSiteOrigin()}/auth-recovery.html`
 }
 
 function readCachedProfileName(userId: string): string | null {
@@ -62,7 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const key = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
     if (!url || !key) return null
     return createClient(url, key, {
-      auth: { persistSession: true, autoRefreshToken: true },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        // Recovery tokens are consumed by auth-recovery.html / our stash path.
+        // Letting supabase-js clear location.hash to '' breaks HashRouter (#/).
+        detectSessionInUrl: false,
+      },
       global: {
         headers: {
           'x-odyssey-client': 'odyssey-calc',
@@ -116,9 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setRecovery(true)
-      } else if (event === 'SIGNED_OUT') {
-        setRecovery(false)
       }
+      // Do not clear recovery on SIGNED_OUT — token refresh / session replace
+      // during setSession can emit intermediate events and abort the reset UI.
       adoptUser(session?.user ?? null)
       setAuthReady(true)
       // Profile ensure on real sign-in / first session only — not every token refresh.
@@ -138,12 +145,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     void (async () => {
-      const stashed = takeStashedRecoverySession()
+      const stashed = peekStashedRecoverySession()
       if (stashed) {
         setRecovery(true)
         const { error } = await supabase.auth.setSession(stashed)
-        if (error && import.meta.env.DEV) {
-          console.warn('[auth] setSession (recovery):', error.message)
+        if (error) {
+          if (import.meta.env.DEV) {
+            console.warn('[auth] setSession (recovery):', error.message)
+          }
+        } else {
+          clearStashedRecoverySession()
         }
       }
       if (cancelled) return
