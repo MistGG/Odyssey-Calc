@@ -1,9 +1,41 @@
 /**
  * HashRouter only reads location.hash. Direct hits like /gear (no hash) load index.html
  * at pathname /gear but React sees "/" — send those URLs to /#/gear (and other app paths).
+ *
+ * Also: Supabase password-recovery redirects land as
+ *   /#access_token=...&type=recovery
+ * HashRouter would treat that as a junk route and the SPA catch-all would replace it
+ * with #/, wiping tokens. Park the fragment on #/auth immediately (the React app
+ * stashes/consumes tokens from sessionStorage / auth bootstrap).
  */
 ;(function () {
-  if (location.hash && location.hash.length > 1) return
+  var hash = location.hash || ''
+  if (hash.length > 1) {
+    var body = hash.charAt(0) === '#' ? hash.slice(1) : hash
+    var authPart = body
+    var nested = body.indexOf('#')
+    if (nested >= 0) authPart = body.slice(nested + 1)
+    if (authPart.indexOf('access_token=') !== -1) {
+      try {
+        if (authPart.indexOf('type=recovery') !== -1) {
+          sessionStorage.setItem('odyssey-password-recovery', '1')
+          var params = new URLSearchParams(authPart)
+          var access = params.get('access_token')
+          var refresh = params.get('refresh_token')
+          if (access && refresh) {
+            sessionStorage.setItem(
+              'odyssey-recovery-session',
+              JSON.stringify({ access_token: access, refresh_token: refresh }),
+            )
+          }
+        }
+      } catch (_) {}
+      // replaceState (not location.replace) so the rest of index.html still loads.
+      history.replaceState(null, '', location.pathname + location.search + '#/auth')
+      return
+    }
+    return
+  }
 
   var path = location.pathname || '/'
   if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1)

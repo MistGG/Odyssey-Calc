@@ -15,25 +15,18 @@ import {
 import { readPersistedAuthUser } from './readPersistedAuthUser'
 import { resolveAppSiteOrigin } from '../config/site'
 import { clearCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
+import {
+  clearPasswordRecoveryFlag,
+  markPasswordRecovery,
+  readPasswordRecoveryFlag,
+  takeStashedRecoverySession,
+} from './normalizeAuthCallbackUrl'
 
 const PROFILE_NAME_CACHE_PREFIX = 'odyssey-profile-display-name:'
-const PASSWORD_RECOVERY_FLAG = 'odyssey-password-recovery'
-
-function readPasswordRecoveryFlag(): boolean {
-  try {
-    return sessionStorage.getItem(PASSWORD_RECOVERY_FLAG) === '1'
-  } catch {
-    return false
-  }
-}
 
 function writePasswordRecoveryFlag(active: boolean): void {
-  try {
-    if (active) sessionStorage.setItem(PASSWORD_RECOVERY_FLAG, '1')
-    else sessionStorage.removeItem(PASSWORD_RECOVERY_FLAG)
-  } catch {
-    /* private mode / quota */
-  }
+  if (active) markPasswordRecovery()
+  else clearPasswordRecoveryFlag()
 }
 
 function passwordResetRedirectTo(): string {
@@ -114,23 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     }
 
-    // normalizeAuthCallbackUrl() may have already marked recovery from the URL.
+    // normalizeAuthCallbackUrl() may have already marked recovery + stashed tokens
+    // (HashRouter would otherwise wipe `#access_token=...` via the catch-all route).
     if (readPasswordRecoveryFlag()) setRecovery(true)
 
-    void supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled) {
-        const sessionUser = data.session?.user ?? null
-        adoptUser(sessionUser)
-        setAuthReady(true)
-        if (sessionUser && !readPasswordRecoveryFlag()) {
-          void ensureUserProfile(supabase, sessionUser).then(({ error }) => {
-            if (error && import.meta.env.DEV) {
-              console.warn('[auth] ensureUserProfile (session):', error)
-            }
-          })
-        }
-      }
-    })
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -156,6 +136,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       }
     })
+
+    void (async () => {
+      const stashed = takeStashedRecoverySession()
+      if (stashed) {
+        setRecovery(true)
+        const { error } = await supabase.auth.setSession(stashed)
+        if (error && import.meta.env.DEV) {
+          console.warn('[auth] setSession (recovery):', error.message)
+        }
+      }
+      if (cancelled) return
+      const { data } = await supabase.auth.getSession()
+      if (cancelled) return
+      const sessionUser = data.session?.user ?? null
+      adoptUser(sessionUser)
+      setAuthReady(true)
+      if (sessionUser && !readPasswordRecoveryFlag()) {
+        void ensureUserProfile(supabase, sessionUser).then(({ error }) => {
+          if (error && import.meta.env.DEV) {
+            console.warn('[auth] ensureUserProfile (session):', error)
+          }
+        })
+      }
+    })()
+
     return () => {
       cancelled = true
       subscription.unsubscribe()
