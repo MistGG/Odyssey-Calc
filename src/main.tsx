@@ -2,8 +2,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { AuthProvider } from './auth/AuthProvider'
+import { normalizeAuthCallbackUrl } from './auth/normalizeAuthCallbackUrl'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import App from './App.tsx'
+
+// Must run before AuthProvider mounts so supabase-js can read recovery tokens
+// from a single hash (HashRouter + redirect_to hashes otherwise double-hash).
+normalizeAuthCallbackUrl()
 
 try {
   sessionStorage.removeItem('odyssey-calc-stale-asset-reload')

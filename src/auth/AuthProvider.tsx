@@ -13,9 +13,36 @@ import {
   ensureUserProfile,
 } from './ensureUserProfile'
 import { readPersistedAuthUser } from './readPersistedAuthUser'
+import { resolveAppSiteOrigin } from '../config/site'
 import { clearCachedConfirmedTamer } from '../lib/meterConfirmedTamerCache'
 
 const PROFILE_NAME_CACHE_PREFIX = 'odyssey-profile-display-name:'
+const PASSWORD_RECOVERY_FLAG = 'odyssey-password-recovery'
+
+function readPasswordRecoveryFlag(): boolean {
+  try {
+    return sessionStorage.getItem(PASSWORD_RECOVERY_FLAG) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writePasswordRecoveryFlag(active: boolean): void {
+  try {
+    if (active) sessionStorage.setItem(PASSWORD_RECOVERY_FLAG, '1')
+    else sessionStorage.removeItem(PASSWORD_RECOVERY_FLAG)
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+function passwordResetRedirectTo(): string {
+  // Never put a HashRouter path in redirectTo. Supabase recovery uses
+  // `#access_token=...&type=recovery`; a pre-existing `#/route` becomes a
+  // double-hash the client cannot parse. Land on the site origin instead;
+  // PasswordRecoveryRedirect sends the user to /#/auth.
+  return `${resolveAppSiteOrigin()}/`
+}
 
 function readCachedProfileName(userId: string): string | null {
   try {
@@ -61,6 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return readCachedProfileName(cachedUser.id) ?? displayNameFromUserMetadata(cachedUser)
   })
   const [profileReady, setProfileReady] = useState(true)
+  const [passwordRecovery, setPasswordRecovery] = useState(readPasswordRecoveryFlag)
+
+  const setRecovery = useCallback((active: boolean) => {
+    writePasswordRecoveryFlag(active)
+    setPasswordRecovery(active)
+  }, [])
 
   useEffect(() => {
     if (!supabase) {
@@ -81,12 +114,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     }
 
+    // normalizeAuthCallbackUrl() may have already marked recovery from the URL.
+    if (readPasswordRecoveryFlag()) setRecovery(true)
+
     void supabase.auth.getSession().then(({ data }) => {
       if (!cancelled) {
         const sessionUser = data.session?.user ?? null
         adoptUser(sessionUser)
         setAuthReady(true)
-        if (sessionUser) {
+        if (sessionUser && !readPasswordRecoveryFlag()) {
           void ensureUserProfile(supabase, sessionUser).then(({ error }) => {
             if (error && import.meta.env.DEV) {
               console.warn('[auth] ensureUserProfile (session):', error)
@@ -98,11 +134,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecovery(true)
+      } else if (event === 'SIGNED_OUT') {
+        setRecovery(false)
+      }
       adoptUser(session?.user ?? null)
       setAuthReady(true)
       // Profile ensure on real sign-in / first session only — not every token refresh.
+      // Skip during password recovery — user is mid-reset, not a normal login.
       const signedIn =
-        session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')
+        session?.user &&
+        !readPasswordRecoveryFlag() &&
+        event !== 'PASSWORD_RECOVERY' &&
+        (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')
       if (signedIn && session.user) {
         void ensureUserProfile(supabase, session.user).then(({ error }) => {
           if (error && import.meta.env.DEV) {
@@ -115,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [setRecovery, supabase])
 
   const userId = user?.id ?? null
 
@@ -211,11 +256,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase],
   )
 
+  const requestPasswordReset = useCallback(
+    async (email: string) => {
+      if (!supabase) return { error: 'Supabase is not configured.' }
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: passwordResetRedirectTo(),
+      })
+      if (error) return { error: error.message }
+      return { error: null }
+    },
+    [supabase],
+  )
+
+  const updatePassword = useCallback(
+    async (password: string) => {
+      if (!supabase) return { error: 'Supabase is not configured.' }
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) return { error: error.message }
+      setRecovery(false)
+      return { error: null }
+    },
+    [setRecovery, supabase],
+  )
+
   const signOut = useCallback(async () => {
     if (!supabase) return
     clearCachedConfirmedTamer()
+    setRecovery(false)
     await supabase.auth.signOut()
-  }, [supabase])
+  }, [setRecovery, supabase])
 
   const value = useMemo(
     () => ({
@@ -224,11 +293,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileDisplayName,
       profileReady,
       authReady,
+      passwordRecovery,
       signIn,
       signUp,
+      requestPasswordReset,
+      updatePassword,
       signOut,
     }),
-    [supabase, user, profileDisplayName, profileReady, authReady, signIn, signUp, signOut],
+    [
+      supabase,
+      user,
+      profileDisplayName,
+      profileReady,
+      authReady,
+      passwordRecovery,
+      signIn,
+      signUp,
+      requestPasswordReset,
+      updatePassword,
+      signOut,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

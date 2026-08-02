@@ -8918,6 +8918,57 @@ button.evo-tree__node {
   cursor: default;
 }
 
+.auth-panel-heading {
+  margin: 0 0 1.1rem;
+}
+
+.auth-panel-heading__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+
+.auth-panel-heading__hint {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.auth-forgot-row {
+  margin: -0.35rem 0 0;
+  text-align: right;
+}
+
+.auth-forgot-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #7dd3fc;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.auth-forgot-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.auth-forgot-link:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.auth-alt-action {
+  margin: 1rem 0 0;
+  text-align: center;
+}
+
 /* --- Meter parses: login card (uses site background; no full-page mesh) --- */
 .meter-parses-login-shell {
   display: flex;

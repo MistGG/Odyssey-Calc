@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { PasswordRecoveryRedirect } from './auth/PasswordRecoveryRedirect'
 import { Layout } from './components/Layout'
 import { AuthPage } from './pages/AuthPage'
 import { HomePage } from './pages/HomePage'
@@ -35,6 +36,7 @@ import { PatchPromoPage } from './pages/PatchPromoPage'
 export default function App() {
   return (
     <HashRouter>
+      <PasswordRecoveryRedirect />
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
