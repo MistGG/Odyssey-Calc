@@ -3,6 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { fetchMyMeterParsesForGrants } from '../lib/meterDataSource'
 import { fetchPrecomputedMeterLeaderboard } from '../lib/meterLeaderboardPrecomputed'
+import {
+  getDefaultMeterLeaderboardCycle,
+  meterLeaderboardCycleWindow,
+} from '../lib/meterLeaderboardCycles'
 import { claimAnonymousMeterParsesForTamer } from '../lib/meterParseTamerClaim'
 import {
   buildDungeonEarnProgress,
@@ -16,11 +20,14 @@ import {
   fetchMeterRewardsState,
   fetchStoredConfirmedPlayerKey,
   hasConfirmedTamerFromParses,
+  HARD_DIFFICULTY_ID,
   persistConfirmedPlayerKey,
-  poolDpsValuesFromPrecomputed,
+  rolePoolsFromPrecomputed,
   syncMeterPointGrants,
+  type HardDungeonRolePools,
 } from '../lib/meterPointGrants'
 import { fetchOlympusHofBreaksForPointGrants } from '../lib/meterHallOfFameTheme'
+import { fetchDigimonRoleMap } from '../lib/meterRoleBuckets'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
 import { resolveSignedInMeterIdentity } from '../lib/meterPlayerProfile'
@@ -39,7 +46,6 @@ import {
   writeEquippedMeterPartyBarThemeId,
   type MeterPartyBarThemeId,
 } from '../lib/meterPartyBarThemes'
-import { HARD_DIFFICULTY_ID } from '../lib/meterPointGrants'
 import { markMeterGrantSyncDone, shouldRunMeterGrantSync } from '../lib/meterGrantSyncSession'
 import {
   readMeterRewardsWalletCache,
@@ -199,23 +205,26 @@ export function useMeterRewards(
         if (d && diff === HARD_DIFFICULTY_ID) dungeonIds.add(d)
       }
 
-      const hardDungeonPools = new Map<string, number[]>()
+      const liveCycle = getDefaultMeterLeaderboardCycle()
+      const cycleWindow = meterLeaderboardCycleWindow(liveCycle)
+      const digimonRoleById = await fetchDigimonRoleMap().catch(() => new Map<string, string>())
+      if (gen !== syncGenRef.current) return
+
+      const hardDungeonRolePools = new Map<string, HardDungeonRolePools>()
       await Promise.all(
         [...dungeonIds].map(async (dungeonId) => {
           const pre = await fetchPrecomputedMeterLeaderboard({
             dungeonId,
             difficultyId: HARD_DIFFICULTY_ID,
+            leaderboardCycleId: liveCycle.id,
+            windowStart: cycleWindow.windowStart,
+            windowEnd: cycleWindow.windowEnd,
           })
-          if (pre.stats) {
-            hardDungeonPools.set(dungeonId, poolDpsValuesFromPrecomputed(pre.stats))
-          }
+          const rolePools = rolePoolsFromPrecomputed(pre.stats)
+          if (rolePools) hardDungeonRolePools.set(dungeonId, rolePools)
         }),
       )
       if (gen !== syncGenRef.current) return
-
-      const keys = await fetchMeterGrantKeys(supabase)
-      setGrantKeys(keys)
-      setDungeonEarnProgress(buildDungeonEarnProgress(hardList, keys, myRes.rows, new Map()))
 
       const olympusHofBreaks = confirmedPlayerKey
         ? (await fetchOlympusHofBreaksForPointGrants(confirmedPlayerKey, wikiDungeons)).breaks
@@ -224,9 +233,13 @@ export function useMeterRewards(
       const grants = computeMeterPointGrants(
         myRes.rows,
         new Map(),
-        hardDungeonPools,
+        hardDungeonRolePools,
         confirmedPlayerKey,
-        undefined,
+        {
+          digimonRoleById,
+          windowStart: cycleWindow.windowStart,
+          windowEnd: cycleWindow.windowEnd,
+        },
         olympusHofBreaks,
       )
       const syncRes = await syncMeterPointGrants(supabase, grants)
@@ -240,8 +253,22 @@ export function useMeterRewards(
         setError(syncRes.error)
       }
 
-      const state = await fetchMeterRewardsState(supabase)
+      const [keys, state] = await Promise.all([
+        fetchMeterGrantKeys(supabase),
+        fetchMeterRewardsState(supabase),
+      ])
       if (gen !== syncGenRef.current) return
+
+      setGrantKeys(keys)
+      setDungeonEarnProgress(
+        buildDungeonEarnProgress(hardList, keys, myRes.rows, hardDungeonRolePools, {
+          digimonRoleById,
+          selfPlayerKey: confirmedPlayerKey,
+          windowStart: cycleWindow.windowStart,
+          windowEnd: cycleWindow.windowEnd,
+        }),
+      )
+
       if (state.error && !syncRes.error) setError(state.error)
       const nextBalance = syncRes.error ? state.balance : syncRes.balance || state.balance
       applyWalletState(state, userId, nextBalance)

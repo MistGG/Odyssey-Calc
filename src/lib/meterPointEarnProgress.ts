@@ -1,7 +1,11 @@
 import type { WikiDungeonListItem } from '../types/wikiApi'
 import type { PublicMeterParseRow } from './meterPublicStats'
 import { parseScoreColor } from './meterParseScoreColor'
-import { bestParseScoreForHardDungeon, HARD_DIFFICULTY_ID } from './meterPointGrants'
+import {
+  bestParseScoreForHardDungeonWithRolePools,
+  HARD_DIFFICULTY_ID,
+  type HardDungeonRolePools,
+} from './meterPointGrants'
 import { dungeonSelectOptions, difficultySelectOptions } from './wikiDungeons'
 
 export type MeterEarnMilestoneId = 'first_clear' | 'score90' | 'score99' | 'score100'
@@ -58,16 +62,36 @@ export type MeterDungeonEarnProgress = {
   milestones: MeterEarnMilestoneProgress[]
 }
 
+export type BuildDungeonEarnProgressOptions = {
+  digimonRoleById?: Map<string, string>
+  selfPlayerKey?: string | null
+  windowStart?: string | null
+  windowEnd?: string | null
+}
+
 export function buildDungeonEarnProgress(
   hardDungeons: { dungeonId: string; dungeonName: string }[],
   grantKeys: Set<string>,
   myParses: PublicMeterParseRow[],
-  publicRowsByDungeon: Map<string, PublicMeterParseRow[]>,
+  hardDungeonRolePools: Map<string, HardDungeonRolePools>,
+  options?: BuildDungeonEarnProgressOptions,
 ): MeterDungeonEarnProgress[] {
   return hardDungeons.map(({ dungeonId, dungeonName }) => {
-    const pool = publicRowsByDungeon.get(dungeonId)
+    const rolePools = hardDungeonRolePools.get(dungeonId)
     const bestScore =
-      pool != null ? bestParseScoreForHardDungeon(myParses, pool, dungeonId) || null : null
+      rolePools != null
+        ? bestParseScoreForHardDungeonWithRolePools(
+            myParses,
+            rolePools,
+            dungeonId,
+            options?.selfPlayerKey,
+            {
+              digimonRoleById: options?.digimonRoleById,
+              windowStart: options?.windowStart,
+              windowEnd: options?.windowEnd,
+            },
+          ) || null
+        : null
     const scoreDisplay = bestScore != null && bestScore > 0 ? bestScore : null
 
     const milestones = METER_ONE_TIME_MILESTONES.map((m) => {
