@@ -90,6 +90,11 @@ export type MeterParsePayloadDungeonPartyStored = {
    * Odyssey Calc resolves official wiki names from `digimonId` before display.
    */
   digimonNamesRequireWikiLookup?: boolean
+  /**
+   * When true, DPS uses meter session duration even if it diverges from the
+   * in-game clear clock by {@link DPS_CLEAR_TIME_GAP_SEC} or more.
+   */
+  dpsPreferMeterSession?: boolean
 }
 
 function isSkillRow(x: unknown): x is MeterSkillRow {
@@ -177,6 +182,16 @@ export function partyMembersFromPayload(payload: unknown): MeterPartyMemberStore
   }
   if (!isPartyParsePayload(payload)) return []
   return payload.members.map(normalizePartyMember)
+}
+
+/**
+ * Uploader seat for ranking. Multi-isSelf means peer-merge contamination — ignore.
+ */
+export function soleSelfPartyMember(
+  members: MeterPartyMemberStored[],
+): MeterPartyMemberStored | null {
+  const selves = members.filter((m) => m.isSelf === true)
+  return selves.length === 1 ? selves[0]! : null
 }
 
 function clientCompleteFromDungeon(dungeon: Record<string, unknown>): MeterParseClientComplete | undefined {
@@ -340,9 +355,19 @@ export function parseClearTimeFromPayload(
  */
 export const DPS_CLEAR_TIME_GAP_SEC = 30
 
+function prefersMeterSessionForDps(payload: unknown): boolean {
+  return Boolean(
+    payload &&
+      typeof payload === 'object' &&
+      (payload as { dpsPreferMeterSession?: unknown }).dpsPreferMeterSession === true,
+  )
+}
+
 /**
  * Denominator for DPS: the meter session time, unless it diverges from the in-game clear
  * time by {@link DPS_CLEAR_TIME_GAP_SEC} or more — in which case the in-game clear time is used.
+ * Parses marked {@link MeterParsePayloadDungeonPartyStored.dpsPreferMeterSession} always use
+ * the meter session (clear time is still kept for display).
  */
 export function dpsDurationFromPayload(
   payload: unknown,
@@ -350,6 +375,7 @@ export function dpsDurationFromPayload(
   members: MeterPartyMemberStored[] = [],
 ): number {
   const sessionDur = sessionDurationFromPayload(payload, rowDurationSec, members)
+  if (prefersMeterSessionForDps(payload)) return sessionDur
   const clearSec = clientCompleteTimeFromPayload(payload)
   if (clearSec != null && Math.abs(clearSec - sessionDur) >= DPS_CLEAR_TIME_GAP_SEC) {
     return clearSec

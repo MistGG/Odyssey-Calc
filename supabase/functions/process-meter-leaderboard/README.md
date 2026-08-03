@@ -2,6 +2,12 @@
 
 Supabase Edge Function: writes `meter_leaderboard_entries` from dungeon party parses.
 
+**Ranking model (going forward):** each upload is a unique instance. Soft-dedupe
+only collapses **same-uploader retries** of one clear. Peer meters of the same
+fight are never merged into one parse. A trusted upload (sole `isSelf`) still
+writes **every eligible party member** to `meter_leaderboard_entries`. Multi-`isSelf`
+contaminated uploads are skipped.
+
 Hall of Fame gold rows are maintained automatically via DB triggers on `meter_leaderboard_entries` (`meter_hof_gold_entries`). On `--force` reprocess, the function also calls `rebuild_meter_hof_gold_for_scope` after deleting old rows.
 
 Apply migration `20260604150000_meter_hof_gold_materialized.sql` (and earlier meter RPC migrations) with `supabase db push` before deploying this function.

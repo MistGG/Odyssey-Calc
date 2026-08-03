@@ -8,6 +8,7 @@ import {
   isPartialDungeonClearParse,
   memberDigimonBreakdowns,
   partyMembersFromPayload,
+  soleSelfPartyMember,
   dpsDurationFromPayload,
   type MeterPartyMemberStored,
 } from './meterParsePayload'
@@ -162,6 +163,9 @@ export function aggregatePublicMeterStats(
     if (isBrokenMeterPartyParse(row.payload, members)) continue
     if (!isLeaderboardEligibleDungeonParsePayload(row.payload)) continue
     if (isPartialDungeonClearParse(row.payload, row.duration_sec ?? 0, row.app_version)) continue
+
+    // Contaminated multi-isSelf uploads are untrusted for fallback aggregates.
+    if (!soleSelfPartyMember(members)) continue
 
     const dpsDur = dpsDurationFromPayload(row.payload, row.duration_sec, members)
 

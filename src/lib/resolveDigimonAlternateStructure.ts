@@ -122,6 +122,18 @@ function identityFromSkin(
   }
 }
 
+/** True when icon matches any wiki skin model (cosmetic AVM or alternate structure). */
+function findSkinModelIcon(detail: WikiDigimonDetail, iconId: string): boolean {
+  const icon = iconId.trim()
+  if (!icon) return false
+  for (const skin of detail.skins ?? []) {
+    const skinIcon = (skin.override_model ?? skin.model_id ?? '').trim()
+    if (skinIcon && skinIcon === icon) return true
+    if ((skin.model_id ?? '').trim() === icon) return true
+  }
+  return false
+}
+
 function normalizeParentPortraitIcon(
   parentDetail: WikiDigimonDetail,
   iconId: string | null,
@@ -130,7 +142,11 @@ function normalizeParentPortraitIcon(
   if (!iconId) return parentModelId || parentDetail.model_id?.trim() || null
   const parentDefault = parentModelId || parentDetail.model_id?.trim() || ''
   if (!parentDefault || iconId === parentDefault) return iconId
-  if (findAlternateStructureSkinByIcon(parentDetail, iconId)) return parentDefault
+  // Cosmetic AVM skins (Neon Rebellion Omegamon, etc.) and alt-structure skins often use
+  // model ids that are not hosted on the CDN. Leaderboard portraits should use the wiki parent.
+  if (findSkinModelIcon(parentDetail, iconId) || findAlternateStructureSkinByIcon(parentDetail, iconId)) {
+    return parentDefault
+  }
   return iconId
 }
 

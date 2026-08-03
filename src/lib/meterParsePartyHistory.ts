@@ -2,6 +2,7 @@ import {
   isBrokenMeterPartyParse,
   isMemberLeaderboardEligible,
   partyMembersFromPayload,
+  soleSelfPartyMember,
 } from './meterParsePayload'
 import type { SummaryLeaderboardEntry } from './meterLeaderboardSummary'
 import { leaderboardEligibleParses, type PublicMeterParseRow } from './meterPublicStats'
@@ -33,6 +34,8 @@ export function buildLeaderboardHistoryFromPublicParses(
   for (const row of chronological) {
     const members = partyMembersFromPayload(row.payload)
     if (isBrokenMeterPartyParse(row.payload, members)) continue
+    // Contaminated multi-isSelf uploads are untrusted.
+    if (!soleSelfPartyMember(members)) continue
 
     for (const member of members) {
       if (!isMemberLeaderboardEligible(member, row.payload, row.duration_sec, members)) continue

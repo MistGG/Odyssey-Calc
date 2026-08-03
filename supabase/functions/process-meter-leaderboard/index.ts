@@ -12,7 +12,10 @@ const ROLE_BUCKETS = ['melee', 'ranged', 'caster', 'hybrid', 'tank', 'healer'] a
 type RoleBucket = (typeof ROLE_BUCKETS)[number]
 
 const MIN_PARTY_DAMAGE_SHARE = 0.02
-/** How far apart party uploads of the same clear may be and still merge. */
+/**
+ * Same-uploader retry window only. Peer meters of one clear stay unique instances
+ * (never folded together). Each trusted upload still ranks the full party.
+ */
 const PARTY_UPLOAD_DEDUPE_WINDOW_SEC = 30 * 60
 /** Meter duration drift (Mist 72s vs Tirweth 70s) still counts as one run. */
 const PARTY_DURATION_TOLERANCE_SEC = 5
@@ -23,20 +26,18 @@ const PARTY_DURATION_TOLERANCE_SEC = 5
  */
 const PARTY_CLEAR_TIME_TOLERANCE_SEC = 1
 /**
- * When both uploads have a clear clock, peer meters of one pull finish close together.
- * Longer gaps with an identical clear clock are almost always a later farm pull
- * (same party, same clear time by coincidence) — do not soft-merge those.
+ * Same-uploader retries of one pull finish close together. Longer gaps with an
+ * identical clear clock are almost always a later farm pull.
  */
 const PARTY_UPLOAD_WITH_CLEAR_MAX_GAP_SEC = 4 * 60
 /**
- * When either upload lacks clientComplete.timeSec, only treat near-simultaneous
- * uploads as the same clear (peer meters finish within seconds; multi-minute gaps
- * are almost always a later pull with a similar meter duration).
+ * When either upload lacks clientComplete.timeSec, only collapse near-simultaneous
+ * same-uploader retries (multi-minute gaps are almost always a later pull).
  */
 const PARTY_UPLOAD_NO_CLEAR_MAX_GAP_SEC = 120
 /**
  * Same meter user re-uploading one clear (retry): raid / per-member damage must
- * match this closely. Used only when both payloads share an isSelf player.
+ * match this closely. Soft-dedupe requires a shared isSelf player.
  */
 const PARTY_REUPLOAD_RAID_REL_TOLERANCE = 0.02
 const PARTY_REUPLOAD_MEMBER_REL_TOLERANCE = 0.05
@@ -99,6 +100,8 @@ type DungeonPayload = {
   kind?: string
   sessionDurationSec?: number
   raidTotalDamage?: number
+  /** When true, DPS denominator stays on meter session despite clear-time gap. */
+  dpsPreferMeterSession?: boolean
   dungeon?: {
     leaderboardEligible?: boolean
     runOutcome?: string | null
@@ -121,7 +124,7 @@ type ParseRow = {
 
 type ProcessOptions = {
   force?: boolean
-  /** Set when merging a duplicate party upload onto the first parse in the window. */
+  /** Set when collapsing a same-uploader retry onto the first parse in the window. */
   skipDuplicateCheck?: boolean
 }
 
@@ -252,6 +255,12 @@ function selfPlayerKeysFromPayload(payload: DungeonPayload): string[] {
     keys.push(key)
   }
   return keys
+}
+
+/** Sole isSelf uploader key, or null when missing / peer-merge contaminated. */
+function soleSelfPlayerKey(payload: DungeonPayload): string | null {
+  const keys = selfPlayerKeysFromPayload(payload)
+  return keys.length === 1 ? keys[0]! : null
 }
 
 /**
@@ -452,12 +461,11 @@ async function findSoftDuplicatePartyParseInWindow(
       continue
     }
 
-    // Soft-dedupe is for peer meters of one clear (different isSelf). Same meter
-    // user farming back-to-back shares isSelf — only collapse near-identical retries.
-    if (sharesIsSelfPlayer(incomingPayload, payload)) {
-      if (!partyDamageCompatibleForReupload(incomingPayload, params.members, payload, members)) {
-        continue
-      }
+    // Soft-dedupe is same-uploader retries only. Peer meters of one clear stay
+    // unique instances and are never folded onto each other.
+    if (!sharesIsSelfPlayer(incomingPayload, payload)) continue
+    if (!partyDamageCompatibleForReupload(incomingPayload, params.members, payload, members)) {
+      continue
     }
 
     candidates.push({
@@ -607,9 +615,13 @@ function clearTimeDuration(payload: DungeonPayload, rowDurationSec: number, memb
  * Denominator for DPS: the meter session time, unless it diverges from the in-game clear
  * time by {@link DPS_CLEAR_TIME_GAP_SEC} or more — in which case the in-game clear time is used
  * (the meter combat window is unreliable when the two clocks disagree by that much).
+ * Payload flag `dpsPreferMeterSession` forces the meter session (clear time still displayed).
  */
 function dpsDurationSeconds(payload: DungeonPayload, rowDurationSec: number, members: StoredMember[]): number {
   const session = sessionDuration(payload, rowDurationSec, members)
+  if ((payload as { dpsPreferMeterSession?: unknown }).dpsPreferMeterSession === true) {
+    return session
+  }
   const cc = Number(payload.dungeon?.clientComplete?.timeSec)
   if (Number.isFinite(cc) && cc > 0 && Math.abs(cc - session) >= DPS_CLEAR_TIME_GAP_SEC) {
     return cc
@@ -1129,7 +1141,7 @@ async function processParse(
         leaderboard_summary: row.leaderboard_summary ?? canonical.leaderboard_summary,
         duration_sec: mergedDurationSec,
       }
-      // Force rewrite so isSelf skill kits refresh digimonId/role_bucket on existing entries.
+      // Force rewrite so same-uploader retry kits refresh digimonId/role_bucket.
       const merged = await processParse(mergedRow, supabase, {
         ...options,
         skipDuplicateCheck: true,
@@ -1174,6 +1186,13 @@ async function processParse(
 
   if (members.length && isBrokenPartyParse(payload, members)) {
     return { inserted: 0, skipped: 'broken party parse' }
+  }
+
+  // Multi-isSelf means peer-merge contamination — do not trust the kit, but once
+  // there is a sole uploader, rank every eligible party seat from this upload.
+  const soleSelfKey = soleSelfPlayerKey(payload)
+  if (members.length > 0 && !soleSelfKey) {
+    return { inserted: 0, skipped: 'no sole isSelf uploader' }
   }
 
   const summaryByKey = new Map<string, SummaryMember>()
@@ -1241,7 +1260,7 @@ async function processParse(
       member,
       payload,
       Number(row.duration_sec) || 0,
-      memberList,
+      members.length ? members : memberList,
       wikiCatalog,
     )
     if (!(dps > 0)) continue
@@ -1423,15 +1442,8 @@ Deno.serve(async (req) => {
   const parseId = (body.parse_id ?? body.parseId)?.trim()
   if (!parseId) return json(400, { ok: false, error: 'parse_id is required.' })
 
-  if (!force) {
-    const { count, error: countError } = await supabase
-      .from('meter_leaderboard_entries')
-      .select('*', { count: 'exact', head: true })
-      .eq('parse_id', parseId)
-    if (!countError && (count ?? 0) > 0) {
-      return json(200, { ok: true, inserted: 0, skipped: 'already processed' })
-    }
-  }
+  // Incomplete parses (uploader-only rows) are completed inside processParse via
+  // countResolvableMembers — do not short-circuit just because some entries exist.
 
   const { data, error } = await supabase
     .from('meter_parses')
