@@ -8763,9 +8763,9 @@ button.evo-tree__node {
 }
 
 .guidebook-official-row {
-  margin-top: 1.75rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(56, 189, 248, 0.1);
+  margin: 0 0 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.1);
 }
 
 .guidebook-official-row .guidebook-official__grid {

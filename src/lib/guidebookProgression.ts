@@ -39,7 +39,7 @@ export const OFFICIAL_HEROES_GUIDE_URL =
   'https://docs.thedigitalodyssey.com/s/1ea1524b-2c7e-4369-9608-36acb1ef87b0/doc/digital-odysseys-guide-for-new-heroes-6Klf1mAAUf'
 
 export const OFFICIAL_ZERO_TO_HERO_GUIDE_URL =
-  'https://docs.thedigitalodyssey.com/s/1ea1524b-2c7e-4369-9608-36acb1ef87b0/doc/digital-odysseys-zero-to-hero-guide-e3BWNVwpye'
+  'https://odyssey-calc.com#/guides/step-by-step-progression-guide'
 
 /** @deprecated Use {@link OFFICIAL_HEROES_GUIDE_URL}. */
 export const OFFICIAL_BEGINNERS_GUIDE_URL = OFFICIAL_HEROES_GUIDE_URL

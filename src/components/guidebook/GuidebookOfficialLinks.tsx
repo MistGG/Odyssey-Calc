@@ -11,7 +11,7 @@ const LINKS = [
   },
   {
     title: 'Zero to Hero Guide',
-    description: 'Step-by-step progression from a fresh account through mid game.',
+    description: 'Step-by-step progression from a fresh account through end game.',
     href: OFFICIAL_ZERO_TO_HERO_GUIDE_URL,
   },
 ] as const

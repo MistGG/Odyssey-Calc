@@ -966,14 +966,11 @@ export function TierListPage() {
           }
           const compactApiDiffById: Record<string, string[]> = {}
           const compactApiDiffs: Array<{ id: string; name: string; lines: string[] }> = []
-          let apiDiffBuckets = 0
           for (const [id, lines] of apiDiffById.entries()) {
             if (lines.length === 0) continue
             const clipped = lines.slice(0, 8)
             compactApiDiffById[id] = clipped
             compactApiDiffs.push({ id, name: working.entries[id]?.name ?? id, lines: clipped })
-            apiDiffBuckets += 1
-            if (apiDiffBuckets >= 60) break
           }
           const historyRow: TierListChangeHistoryRow = {
             id: `${nextSummary.finishedAt}-${Math.random().toString(36).slice(2, 8)}`,

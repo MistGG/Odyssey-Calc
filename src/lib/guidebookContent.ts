@@ -113,6 +113,9 @@ export const GUIDEBOOK_DARK_DIGICORE_CURSED_PUPPET_ITEM_ID = 'i1seu0dp'
 /** DarkDigicore: Fullmetal Tyrant — dark earring craft. */
 export const GUIDEBOOK_DARK_DIGICORE_FULLMETAL_TYRANT_ITEM_ID = 'iis0g67'
 
+/** DarkDigicore: Fiendish Clown — dark bracelet craft. */
+export const GUIDEBOOK_DARK_DIGICORE_FIENDISH_CLOWN_ITEM_ID = 'i8qmioc'
+
 /** Shared dark accessory craft materials (excluding prerequisite corrupted piece and respective DarkDigicore). */
 export const GUIDEBOOK_DARK_ACCESSORY_SHARED_MATERIALS: readonly GuidebookCorruptedCraftMaterial[] = [
   {
@@ -165,6 +168,14 @@ export const GUIDEBOOK_DARK_GEAR_GUIDES: readonly GuidebookDarkGearGuide[] = [
     respectiveDarkDigicoreItemId: GUIDEBOOK_DARK_DIGICORE_FULLMETAL_TYRANT_ITEM_ID,
     respectiveDarkDigicoreLabel: 'DarkDigicore: Fullmetal Tyrant',
     gearLabel: 'earring',
+  },
+  {
+    slug: 'dark-bracelet',
+    craftLabel: 'dark bracelet',
+    prerequisiteLabel: 'Corrupted bracelet',
+    respectiveDarkDigicoreItemId: GUIDEBOOK_DARK_DIGICORE_FIENDISH_CLOWN_ITEM_ID,
+    respectiveDarkDigicoreLabel: 'DarkDigicore: Fiendish Clown',
+    gearLabel: 'bracelet',
   },
 ]
 
@@ -237,110 +248,6 @@ export type GuidebookCorruptedGearRollLine = {
   stats: string
   hint?: string
   tone?: 'dps' | 'tank'
-}
-
-export type GuidebookCorruptedGearGuide = {
-  slug: string
-  craftLabel: string
-  dataTitle: string
-  gearLabel: string
-  materials: readonly GuidebookCorruptedCraftMaterial[]
-  rolls: readonly GuidebookCorruptedGearRollLine[]
-  /** Wiki item id for the data piece when available. */
-  dataItemId?: string
-}
-
-export const GUIDEBOOK_CORRUPTED_GEAR_GUIDES: readonly GuidebookCorruptedGearGuide[] = [
-  {
-    slug: 'corrupted-ring',
-    craftLabel: 'corrupted ring',
-    dataTitle: 'Ring Data: Corrupted Seadragon',
-    gearLabel: 'ring',
-    materials: GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
-    rolls: [
-      {
-        label: 'Skill Heavy Digimon',
-        hint:
-          'Such as Healers, Casters and Digimon that have significantly more skill weighting in their rotation.',
-        stats: 'Basic Attribute (ATT), Basic Attribute (ATT), SK%, SK%',
-        tone: 'dps',
-      },
-      {
-        label: 'Auto Heavy Digimon',
-        hint:
-          'Such as Melee, Ranged and Digimon that have most of their damage weighting in auto attacks.',
-        stats: 'Basic Attribute (ATT), Basic Attribute (ATT), AT%, AT%',
-        tone: 'dps',
-      },
-      {
-        label: 'Tank',
-        stats: 'HP, HP, Defense (or Basic Attribute), Defense (or Basic Attribute)',
-        tone: 'tank',
-      },
-    ],
-  },
-  {
-    slug: 'corrupted-necklace',
-    craftLabel: 'corrupted necklace',
-    dataTitle: 'Necklace Data: Cursed Puppet',
-    gearLabel: 'necklace',
-    materials: GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
-    rolls: [
-      {
-        label: 'Skill Heavy Digimon',
-        hint:
-          'Such as Healers, Casters and Digimon that have significantly more skill weighting in their rotation.',
-        stats: 'Basic Attribute (ATT), SK%, SK%, AT%',
-        tone: 'dps',
-      },
-      {
-        label: 'Auto Heavy Digimon',
-        hint:
-          'Such as Melee, Ranged and Digimon that have most of their damage weighting in auto attacks.',
-        stats: 'Basic Attribute (ATT), AT%, AT%, SK%',
-        tone: 'dps',
-      },
-      {
-        label: 'Tank',
-        stats:
-          'HP, HP, BL (Defense if your block seals can take you to near 100%), Defense (or Basic Attribute)',
-        tone: 'tank',
-      },
-    ],
-  },
-  {
-    slug: 'corrupted-earring',
-    craftLabel: 'corrupted earring',
-    dataTitle: 'Earring Data: Fullmetal Tyrant',
-    gearLabel: 'earring',
-    materials: GUIDEBOOK_CORRUPTED_CRAFT_MATERIALS,
-    rolls: [
-      {
-        label: 'Skill Heavy Digimon',
-        hint:
-          'Such as Healers, Casters and Digimon that have significantly more skill weighting in their rotation.',
-        stats: 'Critical Damage, Critical Damage, SK%, SK%',
-        tone: 'dps',
-      },
-      {
-        label: 'Auto Heavy Digimon',
-        hint:
-          'Such as Melee, Ranged and Digimon that have most of their damage weighting in auto attacks.',
-        stats: 'Critical Damage, Critical Damage, AT%, AT%',
-        tone: 'dps',
-      },
-      {
-        label: 'Tank',
-        stats:
-          'HP, HP, BL (Defense if your block seals can take you to near 100%), BL (Defense if your block seals can take you to near 100%)',
-        tone: 'tank',
-      },
-    ],
-  },
-]
-
-export function guidebookCorruptedGearGuide(slug: string): GuidebookCorruptedGearGuide | undefined {
-  return GUIDEBOOK_CORRUPTED_GEAR_GUIDES.find((g) => g.slug === slug)
 }
 
 export type GuidebookRingRollLine = {

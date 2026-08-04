@@ -285,7 +285,7 @@ function diffTierApiSnapshot(prev, next) {
   return lines
 }
 
-function buildApiDiffsFromCaches(priorCache, newCache, maxBuckets = 60) {
+function buildApiDiffsFromCaches(priorCache, newCache) {
   const apiDiffById = {}
   const apiDiffs = []
   for (const id of Object.keys(newCache?.entries ?? {})) {
@@ -301,7 +301,6 @@ function buildApiDiffsFromCaches(priorCache, newCache, maxBuckets = 60) {
       name: newCache.entries[id]?.name ?? id,
       lines: clipped,
     })
-    if (apiDiffs.length >= maxBuckets) break
   }
   return { apiDiffById, apiDiffs }
 }

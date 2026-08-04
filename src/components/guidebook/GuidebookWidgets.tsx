@@ -113,7 +113,6 @@ import {
   GUIDEBOOK_CORRUPTED_ACCESSORY_CRAFT_COUNT,
   GUIDEBOOK_CORRUPTED_RING_DARK_DIGICORE_COUNT,
   GUIDEBOOK_CORRUPTED_RING_ENERGIZED_DIGICORE_COUNT,
-  GUIDEBOOK_CORRUPTED_GEAR_GUIDES,
   GUIDEBOOK_CLONE_RECOMMENDATIONS,
   GUIDEBOOK_DARK_DIGICORE_ITEM_ID,
   GUIDEBOOK_DARK_GEAR_GUIDES,
@@ -124,7 +123,7 @@ import {
   GUIDEBOOK_PREPARING_APOCALYPSE_ENERGIZED_DIGICORE_COUNT,
   GUIDEBOOK_PREPARING_APOCALYPSE_QUEST_ID,
   type GuidebookCorruptedCraftMaterial,
-  type GuidebookCorruptedGearGuide,
+  type GuidebookCorruptedGearRollLine,
   type GuidebookDarkGearGuide,
   type GuidebookRingEntry,
   GUIDEBOOK_UNCAP_50_DUNGEON_ID,
@@ -2561,7 +2560,7 @@ function GuidebookCorruptedGearRollNotes({
   rolls,
   ariaLabel,
 }: {
-  rolls: GuidebookCorruptedGearGuide['rolls']
+  rolls: readonly GuidebookCorruptedGearRollLine[]
   ariaLabel: string
 }) {
   return (
@@ -2582,7 +2581,7 @@ function GuidebookCorruptedSection({
 }: {
   step: number
   title: string
-  lead?: string
+  lead?: ReactNode
   children: ReactNode
 }) {
   const titleId = `guidebook-corrupted-section-${step}-${title.replace(/\s+/g, '-').toLowerCase()}`
@@ -2746,7 +2745,13 @@ function GuidebookCorruptedCraftSection() {
     <GuidebookCorruptedSection
       step={1}
       title="Craft corrupted accessories"
-      lead="Ring, necklace, and earring at the Blacksmith in Olympus. Material costs below are per accessory."
+      lead={
+        <>
+          Ring, necklace, earring and bracelet at the Blacksmith in Olympus.
+          <br />
+          Material costs below are per accessory.
+        </>
+      }
     >
       {materialA && materialB ? (
         <>
@@ -2800,41 +2805,19 @@ function GuidebookCorruptedCraftSection() {
   )
 }
 
+const GUIDEBOOK_CORRUPTED_STAT_RECOMMENDATIONS_URL =
+  'https://odyssey-calc.com#/guides/step-by-step-progression-guide?section=pf-corrupted-dark-accessories-stats'
+
 function GuidebookCorruptedStatRecommendationsSection() {
   return (
-    <GuidebookCorruptedSection
-      step={3}
-      title="Stat recommendations"
-      lead="Roll these stats when crafting each corrupted accessory from its data piece."
-    >
-      <div className="guidebook-corrupted-stat-blocks">
-        {GUIDEBOOK_CORRUPTED_GEAR_GUIDES.map((guide) => (
-          <article key={guide.slug} className="guidebook-corrupted-stat-block">
-            <header className="guidebook-corrupted-stat-block__head">
-              <h4 className="guidebook-corrupted-stat-block__title">{guide.dataTitle}</h4>
-              <p className="guidebook-corrupted-stat-block__craft muted">
-                Crafts into {guide.craftLabel}
-              </p>
-            </header>
-            <GuidebookCorruptedGearRollNotes
-              rolls={guide.rolls}
-              ariaLabel={`${guide.dataTitle} stat rolls`}
-            />
-            {guide.dataItemId ? (
-              <div className="guidebook-corrupted-subsection guidebook-corrupted-subsection--sources">
-                <h4 className="guidebook-corrupted-subsection__title">Where to farm</h4>
-                <GuideGearRaidSourcesSection
-                  gearLabel={guide.gearLabel}
-                  itemIds={[guide.dataItemId]}
-                  showWip={false}
-                  dungeonAriaLabel={`${guide.dataTitle} dungeons`}
-                  dungeonEmptyMessage={`No dungeon sources are listed for ${guide.dataTitle} yet.`}
-                />
-              </div>
-            ) : null}
-          </article>
-        ))}
-      </div>
+    <GuidebookCorruptedSection step={3} title="Stat recommendations">
+      <p className="guidebook-corrupted-subsection__text">
+        Use the{' '}
+        <a href={GUIDEBOOK_CORRUPTED_STAT_RECOMMENDATIONS_URL} target="_blank" rel="noreferrer">
+          Zero to Hero guide
+        </a>{' '}
+        for stat recommendations.
+      </p>
     </GuidebookCorruptedSection>
   )
 }
