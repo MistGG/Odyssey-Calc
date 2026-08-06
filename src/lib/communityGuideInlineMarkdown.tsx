@@ -1,5 +1,15 @@
-import type { ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { CommunityGuideImage } from '../components/communityGuides/CommunityGuideImage'
+import {
+  parseCommunityGuideSameSectionHref,
+  scrollToCommunityGuideHeading,
+} from './communityGuides'
 import { isAllowedCommunityGuideImageUrl } from './communityGuideImageUrl'
 import { parseCommunityGuideFontSpanClasses } from './communityGuideFontMarkup'
 
@@ -7,6 +17,48 @@ const FONT_SPAN_RE = /<span class="(cg-font[^"]*)">([\s\S]*?)<\/span>/g
 
 const INLINE_MD_RE =
   /(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|`[^`]+`|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))/g
+
+export const CommunityGuideNavContext = createContext<{ guideSlug?: string }>({})
+
+function CommunityGuideMdLink({
+  href,
+  label,
+}: {
+  href: string
+  label: string
+}) {
+  const { guideSlug } = useContext(CommunityGuideNavContext)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sectionId = guideSlug
+    ? parseCommunityGuideSameSectionHref(href, guideSlug)
+    : null
+
+  if (sectionId) {
+    const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault()
+      const next = new URLSearchParams(searchParams)
+      next.set('section', sectionId)
+      setSearchParams(next, { replace: true })
+      scrollToCommunityGuideHeading(sectionId)
+    }
+    return (
+      <a href={href} className="community-guide-md__link" onClick={onClick}>
+        {label}
+      </a>
+    )
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className="community-guide-md__link"
+    >
+      {label}
+    </a>
+  )
+}
 
 function renderInlineMarkdownToken(token: string, key: string): ReactNode {
   if (token.startsWith('**')) {
@@ -40,17 +92,7 @@ function renderInlineMarkdownToken(token: string, key: string): ReactNode {
   }
   const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
   if (linkMatch) {
-    return (
-      <a
-        key={key}
-        href={linkMatch[2]}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="community-guide-md__link"
-      >
-        {linkMatch[1]}
-      </a>
-    )
+    return <CommunityGuideMdLink key={key} href={linkMatch[2]!} label={linkMatch[1]!} />
   }
   return token
 }

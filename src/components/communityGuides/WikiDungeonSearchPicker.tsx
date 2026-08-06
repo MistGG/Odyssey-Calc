@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getGuidebookDungeonsCached, loadGuidebookAllDungeons } from '../../lib/guidebookWikiCache'
 import { guidebookDungeonDifficultySlug } from '../../lib/guidebookDungeonPanel'
 import { dungeonWikiDifficultyLabels } from '../../lib/wikiDungeons'
 import type { WikiDungeonListItem } from '../../types/wikiApi'
 
 type WikiDungeonSearchPickerProps = {
-  onSelect: (dungeon: WikiDungeonListItem, difficulty: string) => void
+  onSelect: (dungeon: WikiDungeonListItem, difficulty: string, imageUrl?: string) => void
+  onUploadImage?: (file: File) => Promise<string>
   label?: string
 }
 
 export function WikiDungeonSearchPicker({
   onSelect,
+  onUploadImage,
   label = 'Search dungeons',
 }: WikiDungeonSearchPickerProps) {
   const [loading, setLoading] = useState(true)
@@ -18,6 +20,10 @@ export function WikiDungeonSearchPicker({
   const [dungeons, setDungeons] = useState<WikiDungeonListItem[]>(() => getGuidebookDungeonsCached(500) ?? [])
   const [filter, setFilter] = useState('')
   const [picked, setPicked] = useState<WikiDungeonListItem | null>(null)
+  const [pickedDifficulty, setPickedDifficulty] = useState<string | null>(null)
+  const [uploadBusy, setUploadBusy] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -64,6 +70,86 @@ export function WikiDungeonSearchPicker({
     [picked],
   )
 
+  const finish = (imageUrl?: string) => {
+    if (!picked || !pickedDifficulty) return
+    onSelect(picked, pickedDifficulty, imageUrl)
+  }
+
+  const onPickDifficulty = (diff: string) => {
+    setPickedDifficulty(diff)
+    setUploadError(null)
+    if (!onUploadImage) {
+      onSelect(picked!, diff)
+    }
+  }
+
+  const onFileChange = async (file: File | null) => {
+    if (!file || !onUploadImage) return
+    setUploadBusy(true)
+    setUploadError(null)
+    try {
+      const url = await onUploadImage(file)
+      finish(url)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Image upload failed.')
+    } finally {
+      setUploadBusy(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  if (picked && pickedDifficulty && onUploadImage) {
+    return (
+      <div className="wiki-entity-picker wiki-entity-picker--difficulty">
+        <button
+          type="button"
+          className="wiki-entity-picker__back"
+          onClick={() => {
+            setPickedDifficulty(null)
+            setUploadError(null)
+          }}
+          disabled={uploadBusy}
+        >
+          ← Back
+        </button>
+        <p className="wiki-entity-picker__picked-name">{picked.name}</p>
+        <p className="wiki-entity-picker__diff-prompt">
+          Location image <span className="wiki-entity-picker__optional">(optional)</span>
+        </p>
+        <p className="wiki-entity-picker__hint">
+          Add a map / entrance screenshot for this dungeon card, or skip.
+        </p>
+        <div className="wiki-entity-picker__image-actions">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="wiki-entity-picker__file"
+            disabled={uploadBusy}
+            onChange={(e) => void onFileChange(e.target.files?.[0] ?? null)}
+          />
+          <button
+            type="button"
+            className="community-guides-btn community-guides-btn--ghost"
+            disabled={uploadBusy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadBusy ? 'Uploading…' : 'Upload image'}
+          </button>
+          <button
+            type="button"
+            className="community-guides-btn"
+            disabled={uploadBusy}
+            onClick={() => finish()}
+          >
+            Skip
+          </button>
+        </div>
+        {uploadError ? <p className="wiki-entity-picker__hint wiki-entity-picker__hint--error">{uploadError}</p> : null}
+      </div>
+    )
+  }
+
   if (picked) {
     return (
       <div className="wiki-entity-picker wiki-entity-picker--difficulty">
@@ -78,7 +164,7 @@ export function WikiDungeonSearchPicker({
               key={diff}
               type="button"
               className={`guidebook-dungeon-diff guidebook-dungeon-diff--${guidebookDungeonDifficultySlug(diff)} wiki-entity-picker__diff-bubble`}
-              onClick={() => onSelect(picked, diff)}
+              onClick={() => onPickDifficulty(diff)}
             >
               {diff}
             </button>

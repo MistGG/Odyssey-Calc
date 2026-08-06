@@ -1,6 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { wikiQuestPageUrl } from '../../api/questService'
-import { inlineCommunityGuideMarkdown } from '../../lib/communityGuideInlineMarkdown'
+import {
+  CommunityGuideNavContext,
+  inlineCommunityGuideMarkdown,
+} from '../../lib/communityGuideInlineMarkdown'
 import { digimonPortraitUrl, wikiItemIconUrl } from '../../lib/digimonImage'
 import {
   getGuidebookDigimonDetailCached,
@@ -197,17 +200,21 @@ function renderLineWithEmbeds(line: string, lineKey: string): ReactNode {
 }
 
 function CommunityGuideDungeonBlock({ embed }: { embed: CommunityGuideEmbed }) {
+  const locationImageUrl = embed.imageUrl?.trim() || undefined
   return (
     <div className="community-guide-dungeon-block">
       <GuidebookDungeonPanel
         layout="single"
-        showLocationImage={false}
+        // Only author-supplied images — never fall back to guidebook map assets.
+        showLocationImage={Boolean(locationImageUrl)}
+        collapseLoot
         ariaLabel={embed.label ?? 'Dungeon'}
         cards={[
           {
             dungeonId: embed.id,
             nameFallback: embed.label ?? 'Dungeon',
             difficulty: embed.difficulty ?? 'Normal',
+            locationImageUrl,
           },
         ]}
       />
@@ -380,7 +387,16 @@ function renderMarkdownChunk(
   return renderProseParagraph(lines, key)
 }
 
-export function CommunityGuideBody({ body, embedded = false }: { body: string; embedded?: boolean }) {
+export function CommunityGuideBody({
+  body,
+  embedded = false,
+  guideSlug,
+}: {
+  body: string
+  embedded?: boolean
+  /** When set, same-guide `?section=` share links scroll in-page instead of opening a new tab. */
+  guideSlug?: string
+}) {
   const blocks = mergeGuideBodyBlocksWithTables(splitGuideBodyBlocks(body))
   const headingIds = communityGuideHeadingIdQueue(body)
   const headingIdByBlock = new Map<number, string>()
@@ -406,21 +422,23 @@ export function CommunityGuideBody({ body, embedded = false }: { body: string; e
     return <p className="community-guide-body__empty">This guide has no content yet.</p>
   }
   return (
-    <div className={className}>
-      {blocks.map((block, i) => {
-        if (block.kind === 'spacer') {
-          const size = Math.min(3, block.blankLines)
-          return (
-            <div
-              key={`sp-${i}`}
-              className={`community-guide-body__spacer community-guide-body__spacer--${size}`}
-              aria-hidden
-            />
-          )
-        }
-        return renderMarkdownChunk(block.text, i, headingIdByBlock.get(i))
-      })}
-    </div>
+    <CommunityGuideNavContext.Provider value={{ guideSlug }}>
+      <div className={className}>
+        {blocks.map((block, i) => {
+          if (block.kind === 'spacer') {
+            const size = Math.min(3, block.blankLines)
+            return (
+              <div
+                key={`sp-${i}`}
+                className={`community-guide-body__spacer community-guide-body__spacer--${size}`}
+                aria-hidden
+              />
+            )
+          }
+          return renderMarkdownChunk(block.text, i, headingIdByBlock.get(i))
+        })}
+      </div>
+    </CommunityGuideNavContext.Provider>
   )
 }
 

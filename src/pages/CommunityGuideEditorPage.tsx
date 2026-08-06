@@ -719,13 +719,14 @@ export function CommunityGuideEditorPage() {
   )
 
   const onDungeonSelect = useCallback(
-    (dungeon: WikiDungeonListItem, difficulty: string) => {
+    (dungeon: WikiDungeonListItem, difficulty: string, imageUrl?: string) => {
       insertBlockEmbed(
         communityGuideEmbedToken({
           kind: 'dungeon',
           id: dungeon.id,
           label: dungeon.name,
           difficulty,
+          imageUrl,
         }),
       )
     },
@@ -1236,7 +1237,10 @@ export function CommunityGuideEditorPage() {
               <WikiDigimonSearchPicker onSelect={onDigimonSelect} />
             ) : null}
             {activePicker === 'dungeon' ? (
-              <WikiDungeonSearchPicker onSelect={onDungeonSelect} />
+              <WikiDungeonSearchPicker
+                onSelect={onDungeonSelect}
+                onUploadImage={supabase && userId ? onUploadBodyImage : undefined}
+              />
             ) : null}
 
             {!showPreview ? (
@@ -1312,8 +1316,11 @@ export function CommunityGuideEditorPage() {
                         .map(({ platform, url }) => ({ platform, url: url.trim() }))}
                     />
                     <div className="community-guides-editor__preview-layout">
-                      <CommunityGuideBody body={liveSnapshot.body} />
-                      <CommunityGuideToc body={liveSnapshot.body} />
+                      <CommunityGuideBody
+                        body={liveSnapshot.body}
+                        guideSlug={guideSlug ?? undefined}
+                      />
+                      <CommunityGuideToc body={liveSnapshot.body} slug={guideSlug ?? undefined} />
                     </div>
                   </>
                 ) : (
@@ -1324,8 +1331,8 @@ export function CommunityGuideEditorPage() {
                         .map(({ platform, url }) => ({ platform, url: url.trim() }))}
                     />
                     <div className="community-guides-editor__preview-layout">
-                      <CommunityGuideBody body={body} />
-                      <CommunityGuideToc body={body} />
+                      <CommunityGuideBody body={body} guideSlug={guideSlug ?? undefined} />
+                      <CommunityGuideToc body={body} slug={guideSlug ?? undefined} />
                     </div>
                   </>
                 )}

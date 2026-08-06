@@ -26192,6 +26192,45 @@ a.guidebook-step__label:hover {
   color: #94a3b8;
 }
 
+.guidebook-uncap-dungeon-card__label--inline {
+  margin: 0;
+}
+
+.guidebook-uncap-dungeon-card__loot-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0 0 0.4rem;
+  padding: 0.15rem 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.guidebook-uncap-dungeon-card__loot-toggle:hover .guidebook-uncap-dungeon-card__loot-toggle-meta,
+.guidebook-uncap-dungeon-card__loot-toggle:focus-visible .guidebook-uncap-dungeon-card__loot-toggle-meta {
+  color: #e2e8f0;
+}
+
+.guidebook-uncap-dungeon-card__loot-toggle:focus-visible {
+  outline: 2px solid rgba(103, 232, 249, 0.55);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.guidebook-uncap-dungeon-card__loot-toggle-meta {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+
 .guidebook-uncap-dungeon-card__boss {
   display: flex;
   align-items: center;
@@ -33500,6 +33539,7 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .wiki-entity-picker {
+  position: relative;
   margin-bottom: 1rem;
   padding: 0.85rem;
   border: 1px solid var(--border);
@@ -33579,6 +33619,35 @@ a.guidebook-monster-panel__loot-btn:hover {
   margin: 0;
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.wiki-entity-picker__optional {
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.wiki-entity-picker__image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wiki-entity-picker__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wiki-entity-picker__hint--error {
+  color: var(--danger);
 }
 
 .wiki-entity-picker__diff-bubbles {
@@ -33930,7 +33999,9 @@ a.guidebook-monster-panel__loot-btn:hover {
 }
 
 .community-guide-dungeon-block .guidebook-uncap-dungeons--single {
-  max-width: 100%;
+  width: 22rem;
+  max-width: min(22rem, 100%);
+  margin-inline: 0;
 }
 
 .community-guide-dungeon-link {

@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
+  collectCommunityGuideDungeonEmbedImageUrls,
+  rewriteCommunityGuideDungeonEmbedImageUrls,
+} from './communityGuideEmbed'
+import {
   collectCommunityGuideMarkdownImageUrls,
   extensionForGuideImageMime,
   guideImageCdnUrl,
@@ -205,7 +209,11 @@ export async function persistCommunityGuideImageUrls(
   for (const url of collectCommunityGuideMarkdownImageUrls(input.body)) {
     await ensure(url)
   }
-  const body = rewriteCommunityGuideMarkdownImageUrls(input.body, replacements)
+  for (const url of collectCommunityGuideDungeonEmbedImageUrls(input.body)) {
+    await ensure(url)
+  }
+  const withMarkdown = rewriteCommunityGuideMarkdownImageUrls(input.body, replacements)
+  const body = rewriteCommunityGuideDungeonEmbedImageUrls(withMarkdown, replacements)
   return {
     thumbnailUrl,
     body,

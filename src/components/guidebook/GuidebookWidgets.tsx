@@ -1351,6 +1351,29 @@ function GuidebookDungeonLocationSlot({ media }: { media: GuidebookDungeonMedia 
   )
 }
 
+function GuidebookDungeonCustomLocationSlot({
+  src,
+  alt,
+}: {
+  src: string
+  alt: string
+}) {
+  const [missing, setMissing] = useState(false)
+  if (missing) return null
+  return (
+    <div className="guidebook-uncap-dungeon-card__location">
+      <img
+        src={src}
+        alt={alt}
+        className="guidebook-uncap-dungeon-card__location-img"
+        loading="lazy"
+        decoding="async"
+        onError={() => setMissing(true)}
+      />
+    </div>
+  )
+}
+
 function GuidebookDungeonPanelCard({
   dungeonId,
   nameFallback,
@@ -1359,6 +1382,8 @@ function GuidebookDungeonPanelCard({
   bossId,
   highlightLoot,
   showLocationImage = true,
+  locationImageUrl,
+  collapseLoot = false,
 }: {
   dungeonId: string
   nameFallback: string
@@ -1367,12 +1392,20 @@ function GuidebookDungeonPanelCard({
   bossId?: string
   highlightLoot?: GuidebookRaidSourceDungeonCard['highlightLoot']
   showLocationImage?: boolean
+  locationImageUrl?: string
+  collapseLoot?: boolean
 }) {
   const { ref, visible } = useWhenVisible<HTMLElement>()
   const media = GUIDEBOOK_DUNGEON_MEDIA[dungeonId]
+  const customLocationSrc = locationImageUrl?.trim() || ''
+  const [lootOpen, setLootOpen] = useState(!collapseLoot)
   const [detail, setDetail] = useState<WikiDungeonDetail | null>(() =>
     getGuidebookDungeonDetailCached(dungeonId),
   )
+
+  useEffect(() => {
+    setLootOpen(!collapseLoot)
+  }, [collapseLoot, dungeonId, difficulty])
 
   useEffect(() => {
     if (!visible) return
@@ -1429,10 +1462,15 @@ function GuidebookDungeonPanelCard({
   const bossHpLabel = formatGuidebookBossHp(boss?.hp)
   const diffSlug = guidebookDungeonDifficultySlug(difficulty)
   const gearBindTag = highlightLoot ? guidebookGearDropBindTag(highlightLoot.itemId) : null
+  const showLootList = !collapseLoot || lootOpen
 
   return (
     <article ref={ref} className="guidebook-uncap-dungeon-card">
-      {showLocationImage && media ? <GuidebookDungeonLocationSlot media={media} /> : null}
+      {showLocationImage && customLocationSrc ? (
+        <GuidebookDungeonCustomLocationSlot src={customLocationSrc} alt={`${name} location`} />
+      ) : showLocationImage && media ? (
+        <GuidebookDungeonLocationSlot media={media} />
+      ) : null}
 
       <div className="guidebook-uncap-dungeon-card__title-block">
         {badgeLabel ? <span className="guidebook-uncap-dungeon-card__uncap">{badgeLabel}</span> : null}
@@ -1481,42 +1519,60 @@ function GuidebookDungeonPanelCard({
 
       {loot.length > 0 ? (
         <section className="guidebook-uncap-dungeon-card__section">
-          <h5 className="guidebook-uncap-dungeon-card__label">Loot</h5>
-          <ul className="guidebook-uncap-dungeon-card__loot">
-            {loot.map((row) => (
-              <li
-                key={row.itemId}
-                className={
-                  highlightLoot
-                    ? 'guidebook-uncap-dungeon-card__loot-item guidebook-uncap-dungeon-card__loot-item--target'
-                    : 'guidebook-uncap-dungeon-card__loot-item'
-                }
-              >
-                {highlightLoot ? (
-                  <div className="guidebook-dungeon-target-loot">
+          {collapseLoot ? (
+            <button
+              type="button"
+              className="guidebook-uncap-dungeon-card__loot-toggle"
+              aria-expanded={lootOpen}
+              onClick={() => setLootOpen((open) => !open)}
+            >
+              <span className="guidebook-uncap-dungeon-card__label guidebook-uncap-dungeon-card__label--inline">
+                Loot
+              </span>
+              <span className="guidebook-uncap-dungeon-card__loot-toggle-meta">
+                {lootOpen ? 'Hide' : `Show (${loot.length})`}
+              </span>
+            </button>
+          ) : (
+            <h5 className="guidebook-uncap-dungeon-card__label">Loot</h5>
+          )}
+          {showLootList ? (
+            <ul className="guidebook-uncap-dungeon-card__loot">
+              {loot.map((row) => (
+                <li
+                  key={row.itemId}
+                  className={
+                    highlightLoot
+                      ? 'guidebook-uncap-dungeon-card__loot-item guidebook-uncap-dungeon-card__loot-item--target'
+                      : 'guidebook-uncap-dungeon-card__loot-item'
+                  }
+                >
+                  {highlightLoot ? (
+                    <div className="guidebook-dungeon-target-loot">
+                      <GuidebookItemHoverLink
+                        itemId={row.itemId}
+                        labelFallback={row.name}
+                        iconId={row.iconId}
+                        hint={highlightLoot.qtyLabel}
+                        bindTag={gearBindTag ?? undefined}
+                      />
+                      <div className="guidebook-dungeon-drop-rate" aria-label="Drop rate">
+                        <span className="guidebook-dungeon-drop-rate__value">{highlightLoot.rateLabel}</span>
+                        <span className="guidebook-dungeon-drop-rate__label">drop rate</span>
+                      </div>
+                    </div>
+                  ) : (
                     <GuidebookItemHoverLink
                       itemId={row.itemId}
                       labelFallback={row.name}
                       iconId={row.iconId}
-                      hint={highlightLoot.qtyLabel}
-                      bindTag={gearBindTag ?? undefined}
+                      hint={row.hint}
                     />
-                    <div className="guidebook-dungeon-drop-rate" aria-label="Drop rate">
-                      <span className="guidebook-dungeon-drop-rate__value">{highlightLoot.rateLabel}</span>
-                      <span className="guidebook-dungeon-drop-rate__label">drop rate</span>
-                    </div>
-                  </div>
-                ) : (
-                  <GuidebookItemHoverLink
-                    itemId={row.itemId}
-                    labelFallback={row.name}
-                    iconId={row.iconId}
-                    hint={row.hint}
-                  />
-                )}
-              </li>
-            ))}
-          </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
     </article>
@@ -1528,6 +1584,7 @@ export function GuidebookDungeonPanel({
   layout = 'pair',
   ariaLabel = 'Dungeons',
   showLocationImage = true,
+  collapseLoot = false,
 }: {
   cards: {
     dungeonId: string
@@ -1537,10 +1594,13 @@ export function GuidebookDungeonPanel({
     bossId?: string
     dropRatePermil?: number
     highlightLoot?: GuidebookRaidSourceDungeonCard['highlightLoot']
+    locationImageUrl?: string
+    collapseLoot?: boolean
   }[]
   layout?: 'pair' | 'single'
   ariaLabel?: string
   showLocationImage?: boolean
+  collapseLoot?: boolean
 }) {
   const sortedCards = useMemo(() => sortGuidebookDungeonCards(cards), [cards])
 
@@ -1554,6 +1614,7 @@ export function GuidebookDungeonPanel({
           key={`${card.dungeonId}-${card.difficulty}`}
           {...card}
           showLocationImage={showLocationImage}
+          collapseLoot={card.collapseLoot ?? collapseLoot}
         />
       ))}
     </div>

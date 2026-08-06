@@ -306,7 +306,7 @@ export function CommunityGuideDetailPage() {
             ) : null}
 
             <section className="community-guides-detail__content" aria-label="Guide content">
-              <CommunityGuideBody body={guide.body} embedded />
+              <CommunityGuideBody body={guide.body} embedded guideSlug={guide.slug} />
             </section>
           </div>
 

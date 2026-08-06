@@ -266,6 +266,67 @@ export function communityGuideSectionShareUrl(slug: string, sectionId: string): 
   return `${resolveAppSiteOrigin()}#${path}?section=${encodeURIComponent(id)}`
 }
 
+const GUIDE_HEADING_SCROLL_OFFSET = 96
+
+/** Smooth-scroll to a guide heading id (TOC / in-body section links). */
+export function scrollToCommunityGuideHeading(id: string) {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return
+  const el = document.getElementById(id)
+  if (!el) return
+  const top = Math.max(
+    0,
+    el.getBoundingClientRect().top + window.scrollY - GUIDE_HEADING_SCROLL_OFFSET,
+  )
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
+/**
+ * If `href` is a HashRouter deep link to the same guide with `?section=`,
+ * return that section id. Otherwise null (treat as external).
+ */
+export function parseCommunityGuideSameSectionHref(
+  href: string,
+  guideSlug: string,
+): string | null {
+  const slug = guideSlug.trim()
+  const trimmed = href.trim()
+  if (!slug || !trimmed) return null
+
+  let hashPath = ''
+  if (trimmed.startsWith('#')) {
+    hashPath = trimmed.slice(1)
+  } else {
+    try {
+      const parsed = new URL(trimmed)
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+      hashPath = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.hash
+    } catch {
+      return null
+    }
+  }
+
+  hashPath = hashPath.trim()
+  if (!hashPath) return null
+  if (!hashPath.startsWith('/')) hashPath = `/${hashPath}`
+
+  const qIndex = hashPath.indexOf('?')
+  const path = (qIndex >= 0 ? hashPath.slice(0, qIndex) : hashPath).replace(/\/+$/, '') || '/'
+  const query = qIndex >= 0 ? hashPath.slice(qIndex + 1) : ''
+  const match = path.match(/^\/guides\/([^/]+)$/)
+  if (!match) return null
+
+  let pathSlug = match[1] ?? ''
+  try {
+    pathSlug = decodeURIComponent(pathSlug)
+  } catch {
+    /* keep raw */
+  }
+  if (pathSlug !== slug) return null
+
+  const section = new URLSearchParams(query).get('section')?.trim() ?? ''
+  return section || null
+}
+
 export async function copyCommunityGuideShareLink(slug: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(communityGuideShareUrl(slug))

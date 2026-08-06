@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { copyCommunityGuideSectionShareLink } from '../../lib/communityGuides'
+import {
+  copyCommunityGuideSectionShareLink,
+  scrollToCommunityGuideHeading,
+} from '../../lib/communityGuides'
 import {
   communityGuideHeadingDepth,
   extractCommunityGuideToc,
   type CommunityGuideTocEntry,
 } from '../../lib/communityGuideToc'
 
+/** Keep in sync with `scrollToCommunityGuideHeading` offset. */
 const SCROLL_OFFSET = 96
-
-function scrollToGuideHeading(id: string) {
-  const el = document.getElementById(id)
-  if (!el) return
-  const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET)
-  window.scrollTo({ top, behavior: 'smooth' })
-}
 
 function LinkIcon() {
   return (
@@ -118,7 +115,7 @@ export function CommunityGuideToc({ body, slug }: CommunityGuideTocProps) {
     const t = window.setTimeout(() => {
       lockScrollSpy(sectionFromUrl)
       setActiveId(sectionFromUrl)
-      scrollToGuideHeading(sectionFromUrl)
+      scrollToCommunityGuideHeading(sectionFromUrl)
     }, 0)
     return () => window.clearTimeout(t)
   }, [entries, sectionFromUrl, lockScrollSpy])
@@ -155,7 +152,7 @@ export function CommunityGuideToc({ body, slug }: CommunityGuideTocProps) {
       const next = new URLSearchParams(searchParams)
       next.set('section', id)
       setSearchParams(next, { replace: true })
-      scrollToGuideHeading(id)
+      scrollToCommunityGuideHeading(id)
     },
     [lockScrollSpy, searchParams, setSearchParams],
   )
