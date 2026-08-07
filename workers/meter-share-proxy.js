@@ -22,7 +22,7 @@ const OG_WIDTH = 1200
 const OG_HEIGHT = 630
 const GUIDE_IMAGE_PATH_RE = /^\/guide-images\/([^/]+)\/([^/]+)$/i
 /** Path version — bump when OG composition changes so edge/Cache API can't serve stale tiny thumbs. */
-const COMMUNITY_GUIDE_OG_PATH_VERSION = '4'
+const COMMUNITY_GUIDE_OG_PATH_VERSION = '5'
 const COMMUNITY_GUIDE_OG_RE = /^\/guides\/([^/]+?)-og(?:-v\d+)?\.png$/i
 const COMMUNITY_GUIDE_SHARE_RE = /^\/guides\/([^/]+?)(?:\.html)?\/?$/i
 
@@ -383,12 +383,16 @@ async function handleCommunityGuideOg(request, env, url, supabaseUrl) {
   )
   const cached = await cache.match(cacheKey)
   if (cached) {
-    const hit = new Headers(cached.headers)
-    hit.set('X-Odyssey-Cache', 'HIT')
-    return new Response(request.method === 'HEAD' ? null : cached.body, {
-      status: cached.status,
-      headers: hit,
-    })
+    const cachedLen = Number(cached.headers.get('Content-Length') || 0)
+    // Never serve a poisoned empty PNG (HEAD misses used to cache null bodies).
+    if (cached.ok && cachedLen > 1024) {
+      const hit = new Headers(cached.headers)
+      hit.set('X-Odyssey-Cache', 'HIT')
+      return new Response(request.method === 'HEAD' ? null : cached.body, {
+        status: cached.status,
+        headers: hit,
+      })
+    }
   }
 
   try {
@@ -397,16 +401,25 @@ async function handleCommunityGuideOg(request, env, url, supabaseUrl) {
       authorName: String(guide.author_name || '').trim(),
       thumbnailUrl,
     })
+    const body = await imageRes.arrayBuffer()
+    if (!body.byteLength) {
+      throw new Error('OG render produced empty body')
+    }
     const headers = new Headers(imageRes.headers)
     headers.set('Access-Control-Allow-Origin', '*')
     headers.set('Cache-Control', 'public, max-age=300')
+    headers.set('Content-Length', String(body.byteLength))
     headers.set('X-Odyssey-Cache', 'MISS')
-    const body = request.method === 'HEAD' ? null : await imageRes.arrayBuffer()
+    // Always cache the full image body. Never put a HEAD response with a null
+    // body into Cache API — that poisoned Discord with 0-byte "PNGs".
     const out = new Response(body, { status: 200, headers })
     try {
       await cache.put(cacheKey, out.clone())
     } catch {
       // ignore cache put failures
+    }
+    if (request.method === 'HEAD') {
+      return new Response(null, { status: 200, headers })
     }
     return out
   } catch (err) {

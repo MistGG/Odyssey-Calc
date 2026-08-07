@@ -273,7 +273,7 @@ export function communityGuideAppUrl(slug: string, sectionId?: string): string {
 }
 
 /** Bump when share OG HTML/image shape changes so Discord re-scrapes. */
-const COMMUNITY_GUIDE_SHARE_PREVIEW_VERSION = '4'
+const COMMUNITY_GUIDE_SHARE_PREVIEW_VERSION = '5'
 
 /**
  * Crawlable share URL for Discord / social previews.
