@@ -182,7 +182,8 @@ function readImageSize(buffer, contentType) {
 }
 
 function fitContain(srcW, srcH, maxW, maxH) {
-  const scale = Math.min(maxW / srcW, maxH / srcH, 1)
+  // Allow upscaling — Discord OG frames are 1200×630; author thumbs are often smaller.
+  const scale = Math.min(maxW / Math.max(1, srcW), maxH / Math.max(1, srcH))
   return {
     width: Math.max(1, Math.round(srcW * scale)),
     height: Math.max(1, Math.round(srcH * scale)),
@@ -197,7 +198,8 @@ async function fetchThumbnailDataUri(thumbnailUrl) {
   const buffer = await res.arrayBuffer()
   if (!buffer.byteLength || buffer.byteLength > 5 * 1024 * 1024) return null
   const size = readImageSize(buffer, contentType)
-  const fitted = fitContain(size.width, size.height, OG_WIDTH - 80, OG_HEIGHT - 80)
+  // Fill most of the OG canvas; keep a small inset so edges aren't clipped.
+  const fitted = fitContain(size.width, size.height, OG_WIDTH - 48, OG_HEIGHT - 48)
   const dataUri = `data:${contentType};base64,${arrayBufferToBase64(buffer)}`
   return { dataUri, width: fitted.width, height: fitted.height }
 }
@@ -447,7 +449,7 @@ async function handleCommunityGuideShare(request, env, url, publicOrigin, appOri
   const thumbnailUrl = String(guide.thumbnail_url || '').trim()
   const hasCustomThumbnail = isHttpUrl(thumbnailUrl)
   const ogImageUrl = hasCustomThumbnail
-    ? `${publicOrigin}/guides/${encSlug}-og.png`
+    ? `${publicOrigin}/guides/${encSlug}-og.png?v=3`
     : `${DEFAULT_APP_ORIGIN}/logo.png`
   const authorName = String(guide.author_name || '').trim()
   const excerpt = plainGuideExcerpt(guide.body)
