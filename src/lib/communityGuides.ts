@@ -273,7 +273,7 @@ export function communityGuideAppUrl(slug: string, sectionId?: string): string {
 }
 
 /** Bump when share OG HTML/image shape changes so Discord re-scrapes. */
-const COMMUNITY_GUIDE_SHARE_PREVIEW_VERSION = '3'
+const COMMUNITY_GUIDE_SHARE_PREVIEW_VERSION = '4'
 
 /**
  * Crawlable share URL for Discord / social previews.
@@ -832,6 +832,7 @@ export async function updateCommunityGuide(
 
   if (preservePublishedLive) {
     // Keep live title/body/status; store WIP privately until publish.
+    // Cover image is an exception: apply to the live page immediately (no republish).
     updateRow = {
       status: 'published',
       has_unpublished_draft: true,
@@ -840,6 +841,9 @@ export async function updateCommunityGuide(
       draft_thumbnail_url: thumbnailUrl,
       draft_social_links: socialLinks,
       updated_at: new Date().toISOString(),
+    }
+    if (thumbnailUrl !== null || persistedInput.thumbnailUrl === '') {
+      updateRow.thumbnail_url = thumbnailUrl
     }
     if (updateAuthorName) {
       updateRow.author_name = authorName
@@ -895,6 +899,50 @@ export async function updateCommunityGuide(
     if (expectedUpdatedAt) throw new CommunityGuideVersionConflictError()
     throw new Error('Guide not found or you do not have permission to edit it.')
   }
+  try {
+    await attachCommunityGuideImagesToGuide(supabase, guideId, persisted.durableUrls)
+  } catch {
+    // best-effort
+  }
+  return normalizeCommunityGuide(data as Record<string, unknown>)
+}
+
+/**
+ * Update the live cover image on a published guide without publishing body edits
+ * or writing a changelog entry.
+ */
+export async function updateCommunityGuideLiveThumbnail(
+  supabase: SupabaseClient,
+  guideId: string,
+  userId: string,
+  thumbnailUrl: string | null | undefined,
+): Promise<CommunityGuide> {
+  if (!userId) throw new Error('Not authenticated.')
+  if (!guideId) throw new Error('Guide id is required.')
+
+  const persisted = await persistCommunityGuideImageUrls(supabase, {
+    thumbnailUrl,
+    body: '',
+    guideId,
+  })
+  const nextThumb = normalizeCommunityGuideThumbnailUrl(persisted.thumbnailUrl)
+
+  const updateRow: Record<string, unknown> = {
+    thumbnail_url: nextThumb,
+    draft_thumbnail_url: nextThumb,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from('community_guides')
+    .update(updateRow)
+    .eq('id', guideId)
+    .select('*')
+    .single()
+
+  if (error) throw new Error(formatCommunityGuideError(error.message))
+  if (!data) throw new Error('Guide not found.')
+
   try {
     await attachCommunityGuideImagesToGuide(supabase, guideId, persisted.durableUrls)
   } catch {

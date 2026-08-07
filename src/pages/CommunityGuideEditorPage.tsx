@@ -47,6 +47,7 @@ import {
   resolveCommunityGuideEditorContent,
   resolveCommunityGuideLiveContent,
   updateCommunityGuide,
+  updateCommunityGuideLiveThumbnail,
   type CommunityGuide,
 } from '../lib/communityGuides'
 import type {
@@ -936,6 +937,32 @@ export function CommunityGuideEditorPage() {
     [supabase, userId, id],
   )
 
+  const applyLiveThumbnail = useCallback(
+    async (nextUrl: string) => {
+      if (!supabase || !user || !id || guideStatus !== 'published') return null
+      const updated = await updateCommunityGuideLiveThumbnail(
+        supabase,
+        id,
+        user.id,
+        nextUrl || null,
+      )
+      const live = resolveCommunityGuideLiveContent(updated)
+      setLiveSnapshot((prev) =>
+        prev
+          ? { ...prev, thumbnail_url: live.thumbnail_url }
+          : {
+              title: live.title,
+              body: live.body,
+              thumbnail_url: live.thumbnail_url,
+              social_links: socialDraftsFromLinks(live.social_links),
+            },
+      )
+      serverUpdatedAtRef.current = updated.updated_at
+      return updated
+    },
+    [supabase, user, id, guideStatus],
+  )
+
   const onUploadThumbnail = useCallback(
     async (file: File) => {
       if (!supabase || !userId) throw new Error('Sign in to upload images.')
@@ -947,14 +974,25 @@ export function CommunityGuideEditorPage() {
           guideId: id ?? null,
         })
         setThumbnailUrl(row.public_url)
-        markDirty()
+        if (id && guideStatus === 'published') {
+          // Cover goes live immediately — no publish / changelog required.
+          await applyLiveThumbnail(row.public_url)
+          rememberSyncedContent({
+            title: formSnapshotRef.current.title,
+            body: formSnapshotRef.current.body,
+            thumbnailUrl: row.public_url,
+            socialLinks: formSnapshotRef.current.socialLinks,
+          })
+        } else {
+          markDirty()
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Thumbnail upload failed.')
       } finally {
         setThumbnailBusy(false)
       }
     },
-    [supabase, userId, id, markDirty],
+    [supabase, userId, id, guideStatus, markDirty, applyLiveThumbnail, rememberSyncedContent],
   )
 
   const onRemoveThumbnail = useCallback(async () => {
@@ -967,13 +1005,31 @@ export function CommunityGuideEditorPage() {
         if (row) await deleteCommunityGuideImage(supabase, row)
       }
       setThumbnailUrl('')
-      markDirty()
+      if (id && guideStatus === 'published') {
+        await applyLiveThumbnail('')
+        rememberSyncedContent({
+          title: formSnapshotRef.current.title,
+          body: formSnapshotRef.current.body,
+          thumbnailUrl: '',
+          socialLinks: formSnapshotRef.current.socialLinks,
+        })
+      } else {
+        markDirty()
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not remove thumbnail.')
     } finally {
       setThumbnailBusy(false)
     }
-  }, [supabase, thumbnailUrl, markDirty])
+  }, [
+    supabase,
+    thumbnailUrl,
+    markDirty,
+    id,
+    guideStatus,
+    applyLiveThumbnail,
+    rememberSyncedContent,
+  ])
 
   if (!authReady || loading) {
     return <p className="community-guides-status">Loading editor…</p>
@@ -1094,7 +1150,33 @@ export function CommunityGuideEditorPage() {
                 value={thumbnailUrl}
                 onChange={(e) => {
                   setThumbnailUrl(e.target.value)
-                  markDirty()
+                  if (guideStatus !== 'published') markDirty()
+                }}
+                onBlur={() => {
+                  if (!id || guideStatus !== 'published') return
+                  const next = thumbnailUrl.trim()
+                  const live = liveSnapshot?.thumbnail_url?.trim() ?? ''
+                  if (next === live) return
+                  if (next && !isAllowedCommunityGuideImageUrl(next)) return
+                  void (async () => {
+                    setThumbnailBusy(true)
+                    setError(null)
+                    try {
+                      await applyLiveThumbnail(next)
+                      rememberSyncedContent({
+                        title: formSnapshotRef.current.title,
+                        body: formSnapshotRef.current.body,
+                        thumbnailUrl: next,
+                        socialLinks: formSnapshotRef.current.socialLinks,
+                      })
+                    } catch (err) {
+                      setError(
+                        err instanceof Error ? err.message : 'Could not update cover image.',
+                      )
+                    } finally {
+                      setThumbnailBusy(false)
+                    }
+                  })()
                 }}
                 placeholder="https://example.com/cover.png"
               />
@@ -1130,8 +1212,9 @@ export function CommunityGuideEditorPage() {
                 ) : null}
               </div>
               <span className="community-guides-field__hint">
-                Upload or paste a URL. Remote links are copied into Odyssey storage on save so they
-                are never lost. Leave blank to use the site logo.
+                Upload or paste a URL. On a published guide, cover changes apply live
+                immediately (no republish or changelog). Remote links are copied into Odyssey
+                storage when applied. Leave blank to use the site logo.
               </span>
             </label>
 

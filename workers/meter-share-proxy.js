@@ -22,9 +22,19 @@ const OG_WIDTH = 1200
 const OG_HEIGHT = 630
 const GUIDE_IMAGE_PATH_RE = /^\/guide-images\/([^/]+)\/([^/]+)$/i
 /** Path version — bump when OG composition changes so edge/Cache API can't serve stale tiny thumbs. */
-const COMMUNITY_GUIDE_OG_PATH_VERSION = '3'
+const COMMUNITY_GUIDE_OG_PATH_VERSION = '4'
 const COMMUNITY_GUIDE_OG_RE = /^\/guides\/([^/]+?)-og(?:-v\d+)?\.png$/i
 const COMMUNITY_GUIDE_SHARE_RE = /^\/guides\/([^/]+?)(?:\.html)?\/?$/i
+
+function shortFingerprint(value) {
+  const s = String(value || '')
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return (h >>> 0).toString(36)
+}
 
 const ROUTES = [
   { re: /^\/meter-player\/([^/]+)\.html$/i, file: 'index.html', rewrite: true },
@@ -362,10 +372,13 @@ async function handleCommunityGuideOg(request, env, url, supabaseUrl) {
   const loaded = await loadPublishedGuideOrResponse(env, supabaseUrl, slug)
   if (loaded.error) return loaded.error
 
+  const guide = loaded.guide
+  const thumbnailUrl = String(guide.thumbnail_url || '').trim()
+  const thumbFp = shortFingerprint(thumbnailUrl)
   const cache = caches.default
-  // Versioned key so composition fixes aren't stuck behind Cache API / CDN hits.
+  // Fingerprint by live cover URL so cover swaps aren't stuck behind Cache API hits.
   const cacheKey = new Request(
-    `${url.origin}/guides/${encodeURIComponent(slug)}-og-v${COMMUNITY_GUIDE_OG_PATH_VERSION}.png`,
+    `${url.origin}/guides/${encodeURIComponent(slug)}-og-v${COMMUNITY_GUIDE_OG_PATH_VERSION}.png?t=${thumbFp}`,
     { method: 'GET' },
   )
   const cached = await cache.match(cacheKey)
@@ -378,12 +391,11 @@ async function handleCommunityGuideOg(request, env, url, supabaseUrl) {
     })
   }
 
-  const guide = loaded.guide
   try {
     const imageRes = await renderCommunityGuideOgPng({
       title: String(guide.title || slug).trim() || slug,
       authorName: String(guide.author_name || '').trim(),
-      thumbnailUrl: String(guide.thumbnail_url || '').trim(),
+      thumbnailUrl,
     })
     const headers = new Headers(imageRes.headers)
     headers.set('Access-Control-Allow-Origin', '*')
@@ -399,9 +411,8 @@ async function handleCommunityGuideOg(request, env, url, supabaseUrl) {
     return out
   } catch (err) {
     console.error('guide og render failed', err)
-    const fallback = String(guide.thumbnail_url || '').trim()
-    if (isHttpUrl(fallback)) {
-      return Response.redirect(fallback, 302)
+    if (isHttpUrl(thumbnailUrl)) {
+      return Response.redirect(thumbnailUrl, 302)
     }
     return new Response('OG image failed', { status: 500 })
   }
@@ -432,8 +443,18 @@ async function handleCommunityGuideShare(request, env, url, publicOrigin, appOri
   const loaded = await loadPublishedGuideOrResponse(env, supabaseUrl, slug)
   if (loaded.error) return loaded.error
 
+  const guide = loaded.guide
+  const section = (url.searchParams.get('section') || '').trim()
+  const encSlug = encodeURIComponent(guide.slug || slug)
+  const thumbnailUrl = String(guide.thumbnail_url || '').trim()
+  const hasCustomThumbnail = isHttpUrl(thumbnailUrl)
+  const thumbFp = shortFingerprint(thumbnailUrl)
   const cache = caches.default
-  const cacheKey = new Request(url.toString(), { method: 'GET' })
+  // Include cover fingerprint so HTML meta doesn't keep pointing at a stale OG image.
+  const cacheKey = new Request(
+    `${url.origin}/guides/${encSlug}?ogv=${COMMUNITY_GUIDE_OG_PATH_VERSION}&t=${thumbFp}&section=${encodeURIComponent(section)}`,
+    { method: 'GET' },
+  )
   const cached = await cache.match(cacheKey)
   if (cached) {
     const hit = new Headers(cached.headers)
@@ -444,18 +465,13 @@ async function handleCommunityGuideShare(request, env, url, publicOrigin, appOri
     })
   }
 
-  const guide = loaded.guide
-  const section = (url.searchParams.get('section') || '').trim()
-  const encSlug = encodeURIComponent(guide.slug || slug)
   const appPath = `/#/guides/${encSlug}`
   const appUrl = section
     ? `${appOrigin}${appPath}?section=${encodeURIComponent(section)}`
     : `${appOrigin}${appPath}`
   const sharePageUrl = `${publicOrigin}/guides/${encSlug}${section ? `?section=${encodeURIComponent(section)}` : ''}`
-  const thumbnailUrl = String(guide.thumbnail_url || '').trim()
-  const hasCustomThumbnail = isHttpUrl(thumbnailUrl)
   const ogImageUrl = hasCustomThumbnail
-    ? `${publicOrigin}/guides/${encSlug}-og-v${COMMUNITY_GUIDE_OG_PATH_VERSION}.png`
+    ? `${publicOrigin}/guides/${encSlug}-og-v${COMMUNITY_GUIDE_OG_PATH_VERSION}.png?t=${thumbFp}`
     : `${DEFAULT_APP_ORIGIN}/logo.png`
   const authorName = String(guide.author_name || '').trim()
   const excerpt = plainGuideExcerpt(guide.body)
