@@ -1,5 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { resolveAppSiteOrigin } from '../config/site'
+import {
+  DEFAULT_METER_SHARE_PUBLIC_ORIGIN,
+  resolveAppSiteOrigin,
+} from '../config/site'
 import { isAllowedCommunityGuideImageUrl } from './communityGuideImageUrl'
 import {
   attachCommunityGuideImagesToGuide,
@@ -252,18 +255,36 @@ export function formatCommunityGuideError(message: string): string {
   return message
 }
 
-/** Hash-router deep link for a published guide. */
-export function communityGuideShareUrl(slug: string): string {
+/** Crawlable share origin (Discord OG). Falls back to the production Worker domain. */
+export function resolveCommunityGuideShareOrigin(): string {
+  const fromEnv = (import.meta.env.VITE_METER_SHARE_PUBLIC_ORIGIN as string | undefined)?.trim()
+  if (fromEnv) return fromEnv.replace(/\/$/, '')
+  return DEFAULT_METER_SHARE_PUBLIC_ORIGIN
+}
+
+/** In-app HashRouter URL for a published guide. */
+export function communityGuideAppUrl(slug: string, sectionId?: string): string {
   const path = `/guides/${encodeURIComponent(slug)}`
+  const section = sectionId?.trim()
+  if (section) {
+    return `${resolveAppSiteOrigin()}#${path}?section=${encodeURIComponent(section)}`
+  }
   return `${resolveAppSiteOrigin()}#${path}`
 }
 
-/** Deep link to a chapter/heading on a published guide (`#/guides/slug?section=id`). */
+/**
+ * Crawlable share URL for Discord / social previews.
+ * Served by share.odyssey-calc.com with og:image = guide thumbnail when set.
+ */
+export function communityGuideShareUrl(slug: string): string {
+  return `${resolveCommunityGuideShareOrigin()}/guides/${encodeURIComponent(slug)}`
+}
+
+/** Deep link to a chapter/heading (crawlable share page → SPA section). */
 export function communityGuideSectionShareUrl(slug: string, sectionId: string): string {
   const id = sectionId.trim()
   if (!id) return communityGuideShareUrl(slug)
-  const path = `/guides/${encodeURIComponent(slug)}`
-  return `${resolveAppSiteOrigin()}#${path}?section=${encodeURIComponent(id)}`
+  return `${communityGuideShareUrl(slug)}?section=${encodeURIComponent(id)}`
 }
 
 const GUIDE_HEADING_SCROLL_OFFSET = 96
@@ -280,9 +301,17 @@ export function scrollToCommunityGuideHeading(id: string) {
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
+function decodeGuidePathSlug(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
 /**
- * If `href` is a HashRouter deep link to the same guide with `?section=`,
- * return that section id. Otherwise null (treat as external).
+ * If `href` points at the same guide with `?section=`, return that section id.
+ * Supports HashRouter app links and crawlable share.odyssey-calc.com/guides/... URLs.
  */
 export function parseCommunityGuideSameSectionHref(
   href: string,
@@ -291,6 +320,24 @@ export function parseCommunityGuideSameSectionHref(
   const slug = guideSlug.trim()
   const trimmed = href.trim()
   if (!slug || !trimmed) return null
+
+  // Crawlable share Worker: https://share.odyssey-calc.com/guides/{slug}?section=
+  try {
+    const absolute = trimmed.startsWith('#') ? null : new URL(trimmed)
+    if (absolute && (absolute.protocol === 'http:' || absolute.protocol === 'https:')) {
+      const path = absolute.pathname.replace(/\/+$/, '') || '/'
+      const shareMatch = path.match(/^\/guides\/([^/]+?)(?:\.html)?$/i)
+      if (shareMatch) {
+        const pathSlug = decodeGuidePathSlug(shareMatch[1] ?? '')
+        if (pathSlug === slug) {
+          return absolute.searchParams.get('section')?.trim() || null
+        }
+        return null
+      }
+    }
+  } catch {
+    /* fall through to hash parsing */
+  }
 
   let hashPath = ''
   if (trimmed.startsWith('#')) {
@@ -315,12 +362,7 @@ export function parseCommunityGuideSameSectionHref(
   const match = path.match(/^\/guides\/([^/]+)$/)
   if (!match) return null
 
-  let pathSlug = match[1] ?? ''
-  try {
-    pathSlug = decodeURIComponent(pathSlug)
-  } catch {
-    /* keep raw */
-  }
+  const pathSlug = decodeGuidePathSlug(match[1] ?? '')
   if (pathSlug !== slug) return null
 
   const section = new URLSearchParams(query).get('section')?.trim() ?? ''
