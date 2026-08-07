@@ -36,6 +36,7 @@ Community guide share pages at `/guides/{slug}` expose Open Graph tags (title + 
 - OG image: `https://share.odyssey-calc.com/meter-player/{playerKey}-og.png?d={cacheKey}`
 - Guide images: `https://share.odyssey-calc.com/guide-images/{userId}/{file}`
 - Community guides: `https://share.odyssey-calc.com/guides/{slug}` (optional `?section=`)
+- Community guide OG image: `https://share.odyssey-calc.com/guides/{slug}-og.png` (1200×630, thumbnail centered)
 
 Share HTML links (and delayed-redirects) to the app at `https://odyssey-calc.com/#/guides/...` / `#/meter/player/...` after Discord reads the preview.
 

@@ -1,0 +1,13 @@
+{
+  "name": "odyssey-meter-share",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "meter-share-proxy.js",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "workers-og": "^0.0.27"
+  }
+}

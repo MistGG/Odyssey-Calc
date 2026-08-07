@@ -272,19 +272,28 @@ export function communityGuideAppUrl(slug: string, sectionId?: string): string {
   return `${resolveAppSiteOrigin()}#${path}`
 }
 
+/** Bump when share OG HTML/image shape changes so Discord re-scrapes. */
+const COMMUNITY_GUIDE_SHARE_PREVIEW_VERSION = '2'
+
 /**
  * Crawlable share URL for Discord / social previews.
- * Served by share.odyssey-calc.com with og:image = guide thumbnail when set.
+ * Served by share.odyssey-calc.com with a centered 1200×630 og:image when a thumbnail is set.
  */
 export function communityGuideShareUrl(slug: string): string {
-  return `${resolveCommunityGuideShareOrigin()}/guides/${encodeURIComponent(slug)}`
+  const url = new URL(
+    `${resolveCommunityGuideShareOrigin()}/guides/${encodeURIComponent(slug)}`,
+  )
+  url.searchParams.set('v', COMMUNITY_GUIDE_SHARE_PREVIEW_VERSION)
+  return url.toString()
 }
 
 /** Deep link to a chapter/heading (crawlable share page → SPA section). */
 export function communityGuideSectionShareUrl(slug: string, sectionId: string): string {
   const id = sectionId.trim()
   if (!id) return communityGuideShareUrl(slug)
-  return `${communityGuideShareUrl(slug)}?section=${encodeURIComponent(id)}`
+  const url = new URL(communityGuideShareUrl(slug))
+  url.searchParams.set('section', id)
+  return url.toString()
 }
 
 const GUIDE_HEADING_SCROLL_OFFSET = 96
