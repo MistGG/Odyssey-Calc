@@ -21,7 +21,9 @@ const DEFAULT_APP_ORIGIN = 'https://odyssey-calc.com'
 const OG_WIDTH = 1200
 const OG_HEIGHT = 630
 const GUIDE_IMAGE_PATH_RE = /^\/guide-images\/([^/]+)\/([^/]+)$/i
-const COMMUNITY_GUIDE_OG_RE = /^\/guides\/([^/]+?)-og\.png$/i
+/** Path version — bump when OG composition changes so edge/Cache API can't serve stale tiny thumbs. */
+const COMMUNITY_GUIDE_OG_PATH_VERSION = '3'
+const COMMUNITY_GUIDE_OG_RE = /^\/guides\/([^/]+?)-og(?:-v\d+)?\.png$/i
 const COMMUNITY_GUIDE_SHARE_RE = /^\/guides\/([^/]+?)(?:\.html)?\/?$/i
 
 const ROUTES = [
@@ -361,7 +363,11 @@ async function handleCommunityGuideOg(request, env, url, supabaseUrl) {
   if (loaded.error) return loaded.error
 
   const cache = caches.default
-  const cacheKey = new Request(url.toString(), { method: 'GET' })
+  // Versioned key so composition fixes aren't stuck behind Cache API / CDN hits.
+  const cacheKey = new Request(
+    `${url.origin}/guides/${encodeURIComponent(slug)}-og-v${COMMUNITY_GUIDE_OG_PATH_VERSION}.png`,
+    { method: 'GET' },
+  )
   const cached = await cache.match(cacheKey)
   if (cached) {
     const hit = new Headers(cached.headers)
@@ -449,7 +455,7 @@ async function handleCommunityGuideShare(request, env, url, publicOrigin, appOri
   const thumbnailUrl = String(guide.thumbnail_url || '').trim()
   const hasCustomThumbnail = isHttpUrl(thumbnailUrl)
   const ogImageUrl = hasCustomThumbnail
-    ? `${publicOrigin}/guides/${encSlug}-og.png?v=3`
+    ? `${publicOrigin}/guides/${encSlug}-og-v${COMMUNITY_GUIDE_OG_PATH_VERSION}.png`
     : `${DEFAULT_APP_ORIGIN}/logo.png`
   const authorName = String(guide.author_name || '').trim()
   const excerpt = plainGuideExcerpt(guide.body)
