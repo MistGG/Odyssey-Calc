@@ -60,9 +60,14 @@ function asRole(raw: string | null | undefined): MeterRoleBucket | null {
 /** REST-only client; polyfill WebSocket on Node < 22 for @supabase/realtime-js init. */
 async function createMeterSupabase() {
   const options: {
-    auth: { persistSession: boolean }
+    auth: { persistSession: boolean; autoRefreshToken: boolean }
+    global: { headers: Record<string, string> }
     realtime?: { transport: typeof WebSocket }
-  } = { auth: { persistSession: false } }
+  } = {
+    auth: { persistSession: false, autoRefreshToken: false },
+    // Gateway requires an official Odyssey client header (same as the website).
+    global: { headers: { 'x-odyssey-client': 'odyssey-calc' } },
+  }
   if (typeof WebSocket === 'undefined') {
     const { default: ws } = await import('ws')
     options.realtime = { transport: ws as unknown as typeof WebSocket }
