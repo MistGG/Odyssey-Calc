@@ -42,6 +42,8 @@ import {
   serializeScopeLeaderboardPools,
   writeCachedPlayerProfile,
 } from '../lib/meterPlayerProfileCache'
+import { fetchPlayerSeasonTier } from '../lib/meterPlayerTierLookup'
+import type { PlayerTierId } from '../lib/meterPlayerTiers'
 import { loadWikiDungeonsForMeter } from '../lib/wikiDungeons'
 
 type ProfileLocationState = {
@@ -97,10 +99,20 @@ export function MeterPlayerProfilePage() {
   )
   const [hofLoading, setHofLoading] = useState(() => !boot.cached)
   const [hofError, setHofError] = useState<string | null>(null)
+  const [seasonTier, setSeasonTier] = useState<PlayerTierId | null>(null)
+  const [seasonTierCycleLabel, setSeasonTierCycleLabel] = useState('')
 
   useEffect(() => {
     if (!playerKey) return
     let cancelled = false
+
+    setSeasonTier(null)
+    setSeasonTierCycleLabel('')
+    void fetchPlayerSeasonTier(playerKey).then((row) => {
+      if (cancelled) return
+      setSeasonTier(row?.tier ?? null)
+      setSeasonTierCycleLabel(row?.cycleLabel ?? '')
+    })
 
     const cycle = getDefaultMeterLeaderboardCycle()
     const cached = readCachedPlayerProfile(playerKey, cycle.id)
@@ -366,6 +378,8 @@ export function MeterPlayerProfilePage() {
 
       <MeterPlayerProfileCard
         displayName={displayName}
+        seasonTier={seasonTier}
+        seasonTierCycleLabel={seasonTierCycleLabel}
         favoriteDigimon={favoriteDigimon}
         peakDps={peakDps}
         peakDpsPool={peakDpsPool}

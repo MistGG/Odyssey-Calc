@@ -50,8 +50,10 @@
         var access = params.access_token
         var refresh = params.refresh_token
         try {
-          sessionStorage.setItem('odyssey-password-recovery', '1')
+          // Only mark recovery when tokens are present. An empty visit must not
+          // leave a sticky flag that interferes with a normal signed-in session.
           if (access && refresh) {
+            sessionStorage.setItem('odyssey-password-recovery', '1')
             sessionStorage.setItem(
               'odyssey-recovery-session',
               JSON.stringify({ access_token: access, refresh_token: refresh }),

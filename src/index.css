@@ -18235,6 +18235,95 @@ button.evo-tree__node {
   margin: 0 auto;
 }
 
+.meter-profile-card__name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  margin: 0 0 0.55rem;
+}
+
+.meter-profile-card__name-row .meter-profile-card__name {
+  margin: 0;
+}
+
+.meter-profile-season-tier {
+  cursor: help;
+  z-index: 2;
+}
+
+/* Open below the badge; card overflow:hidden clips upward tooltips. */
+.meter-profile-card:has(.meter-profile-season-tier:hover),
+.meter-profile-card:has(.meter-profile-season-tier:focus-within) {
+  overflow: visible;
+  z-index: 5;
+}
+
+.meter-profile-season-tier__badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.08rem;
+  padding: 0.28rem 0.65rem 0.32rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--tier-color, #888) 55%, transparent);
+  background: color-mix(in srgb, var(--tier-color, #888) 14%, rgba(0, 0, 0, 0.35));
+  line-height: 1.15;
+}
+
+.meter-profile-season-tier__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.meter-profile-season-tier__name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--tier-color, #e5cc80);
+  letter-spacing: 0.01em;
+}
+
+.meter-profile-season-tier__tooltip {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
+  right: auto;
+  transform: translateY(-4px);
+  min-width: 260px;
+  max-width: min(300px, 70vw);
+  text-align: left;
+  z-index: 40;
+}
+
+.meter-profile-season-tier:hover .meter-profile-season-tier__tooltip,
+.meter-profile-season-tier:focus-within .meter-profile-season-tier__tooltip {
+  transform: translateY(0);
+}
+
+.meter-profile-season-tier__tooltip strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #f8fafc;
+  font-size: 0.8rem;
+}
+
+.meter-profile-season-tier__tooltip-lead {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #94a3b8;
+}
+
+.meter-profile-season-tier__tooltip ul {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.2rem;
+  color: #cbd5e1;
+}
+
 .meter-public-head {
   flex-wrap: wrap;
   gap: 0.5rem 1rem;

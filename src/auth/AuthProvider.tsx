@@ -145,16 +145,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     void (async () => {
+      // Consume stash immediately so a failed recovery cannot retry on every reload.
+      // Failed setSession() refreshes the recovery token and, on error, GoTrue calls
+      // _removeSession() — which would wipe a perfectly valid login if we retried.
       const stashed = peekStashedRecoverySession()
       if (stashed) {
+        clearStashedRecoverySession()
         setRecovery(true)
+        const { data: prior } = await supabase.auth.getSession()
+        if (cancelled) return
+        const priorTokens =
+          prior.session?.access_token && prior.session?.refresh_token
+            ? {
+                access_token: prior.session.access_token,
+                refresh_token: prior.session.refresh_token,
+              }
+            : null
         const { error } = await supabase.auth.setSession(stashed)
         if (error) {
           if (import.meta.env.DEV) {
             console.warn('[auth] setSession (recovery):', error.message)
           }
-        } else {
-          clearStashedRecoverySession()
+          setRecovery(false)
+          // Restore the previous login when recovery tokens are stale/used.
+          if (priorTokens) {
+            const restored = await supabase.auth.setSession(priorTokens)
+            if (restored.error && import.meta.env.DEV) {
+              console.warn('[auth] restore session after recovery failure:', restored.error.message)
+            }
+          }
         }
       }
       if (cancelled) return

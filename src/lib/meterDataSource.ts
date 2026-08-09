@@ -48,23 +48,19 @@ export function getMeterAnonSupabase(): SupabaseClient | null {
   }
 
   meterAnonClient = createClient(url, key, {
-
     auth: {
-
+      // Isolate from AuthProvider's persisted session — shared storageKey causes
+      // "Multiple GoTrueClient" races that can drop the signed-in user.
+      storageKey: 'odyssey-meter-anon',
       persistSession: false,
-
       autoRefreshToken: false,
-
       detectSessionInUrl: false,
-
     },
-
     global: {
       headers: {
         'x-odyssey-client': 'odyssey-calc',
       },
     },
-
   })
 
   return meterAnonClient

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { MeterProfileHallOfFameBadge, type MeterProfileHofBadgeVariant } from './MeterProfileHallOfFameBadge'
+import { MeterPlayerSeasonTierBadge } from './MeterPlayerSeasonTierBadge'
 import { digimonPortraitUrl } from '../lib/digimonImage'
 import { parseScoreColor, dpsToPercentile } from '../lib/meterPublicStats'
 import type { PlayerFavoriteDigimon } from '../lib/meterPlayerProfile'
+import type { PlayerTierId } from '../lib/meterPlayerTiers'
 
 function formatInt(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -15,6 +17,8 @@ function tamerInitial(name: string): string {
 
 export function MeterPlayerProfileCard({
   displayName,
+  seasonTier,
+  seasonTierCycleLabel,
   favoriteDigimon,
   peakDps,
   peakDpsPool,
@@ -29,6 +33,8 @@ export function MeterPlayerProfileCard({
   backTo,
 }: {
   displayName: string
+  seasonTier: PlayerTierId | null
+  seasonTierCycleLabel?: string
   favoriteDigimon: PlayerFavoriteDigimon | null
   peakDps: number
   peakDpsPool: number[]
@@ -89,7 +95,12 @@ export function MeterPlayerProfileCard({
 
         <div className="meter-profile-card__identity">
           <p className="meter-profile-card__eyebrow">Tamer</p>
-          <h2 className="meter-profile-card__name">{displayName}</h2>
+          <div className="meter-profile-card__name-row">
+            <h2 className="meter-profile-card__name">{displayName}</h2>
+            {seasonTier ? (
+              <MeterPlayerSeasonTierBadge tier={seasonTier} cycleLabel={seasonTierCycleLabel} />
+            ) : null}
+          </div>
 
           {!hallOfFameLoading && currentSeasonBadge && currentSeasonBadge.recordCount > 0 ? (
             <div className="meter-profile-card__hof-badges">

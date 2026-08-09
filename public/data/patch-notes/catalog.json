@@ -1,14 +1,142 @@
 {
-  "syncedAt": "2026-06-30T03:45:43.486Z",
+  "syncedAt": "2026-08-04T15:06:47.982Z",
   "shareId": "2bb157c9-224d-48ab-a6f2-697589ebe97a",
   "officialUrl": "https://docs.thedigitalodyssey.com/s/2bb157c9-224d-48ab-a6f2-697589ebe97a/?theme=dark",
   "entries": [
     {
+      "id": "b073ec66-0bb9-4d24-8b58-9a33cbb36f29",
+      "slug": "2026-08-01-patch-notes-nkiSvXkAus",
+      "title": "[2026-08-01] Patch Notes",
+      "text": "",
+      "updatedAt": "2026-08-01T06:14:21.210Z",
+      "publishedAt": "2026-08-01T06:14:21.219Z"
+    },
+    {
+      "id": "7878156b-1ad1-48b8-bb17-f5107374560b",
+      "slug": "2026-07-30-patch-notes-Mq4pjfBStQ",
+      "title": "[2026-07-30] Patch Notes",
+      "text": "",
+      "updatedAt": "2026-08-01T06:13:56.421Z",
+      "publishedAt": "2026-07-30T01:53:14.784Z"
+    },
+    {
+      "id": "3ef571fc-87cf-46a3-99f7-33f9f04b12ff",
+      "slug": "2026-07-28-patch-notes-Jrkxi5EVEB",
+      "title": "[2026-07-28] Patch Notes",
+      "text": "",
+      "updatedAt": "2026-07-28T22:13:51.814Z",
+      "publishedAt": "2026-07-28T22:02:05.722Z"
+    },
+    {
+      "id": "a399a887-987a-4a4f-9afc-4369c08f8d3e",
+      "slug": "2026-07-24-patch-note-3-psO4cfDx2s",
+      "title": "[2026]-07-24 Patch Note 3",
+      "text": "",
+      "updatedAt": "2026-07-24T01:23:28.492Z",
+      "publishedAt": "2026-07-24T01:23:06.621Z"
+    },
+    {
+      "id": "769672ea-4f91-4742-a12d-503f50942590",
+      "slug": "2026-07-23-patch-notes-2-MQex1tFGkx",
+      "title": "[2026]-07-23 Patch notes 2",
+      "text": "\\",
+      "updatedAt": "2026-07-24T00:02:15.239Z",
+      "publishedAt": "2026-07-24T00:01:55.639Z"
+    },
+    {
+      "id": "3c0046da-279d-476f-ad31-8df1d2b9e502",
+      "slug": "2026-07-23-patch-notes-gphGRzIM0Z",
+      "title": "[2026]-07-23 Patch Notes",
+      "text": "",
+      "updatedAt": "2026-07-23T18:02:42.487Z",
+      "publishedAt": "2026-07-23T17:04:34.610Z"
+    },
+    {
+      "id": "e4f53f22-c146-45a6-be54-6a73d970cd6b",
+      "slug": "2026-07-16-patch-notes-4TfS84u6Cq",
+      "title": "[2026]-07-16 Patch Notes",
+      "text": "**Fixes**\n\n* Fixed various visual glitches affecting multiple Digimon, including issues with Marsmon's cape, Rosemon's cape, and the transparent/black texture artifacts on Belphemon Sleep Mode.\n* Fixed an issue that prevented some Digimon models from displaying all of their visual effects. This restores missing effects on Digimon such as Meramon and several upcoming Digimon. The issue also exists in the original DMO client.",
+      "updatedAt": "2026-07-16T23:46:13.625Z",
+      "publishedAt": "2026-07-16T23:43:49.759Z"
+    },
+    {
+      "id": "7fe12106-ee68-4569-9029-ff80e5b90ce1",
+      "slug": "2026-07-15-patch-notes-Cli0fNrEpw",
+      "title": "[2026]-07-15 Patch Notes",
+      "text": "# Jump Booster UI Redesign\n\nThe Jump Booster interface has been completely redesigned to provide clearer navigation and more useful destination information.\n\n## Map Navigation\n\n* Destinations are organized into an expandable region and map tree.\n* Added search by map or region name.\n* Map status is displayed visually:\n  * **Cyan:** Current map\n  * **Green:** Unlocked\n  * **Red:** Locked\n* Status icons accompany the colors for improved accessibility.\n\n## Map Information\n\n* Added proportional minimap previews.\n* Added monster and NPC lists for each destination.\n* Monsters can be clicked to view their loot tables.\n* NPC lists only display currently available NPCs.\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzQ5ZTU1MTFiLTU3YWYtNDdkMC04ZTdjLWZjNzhhMTc1MWZkMi9mZTQ3NmQwZS01OTViLTQ0OGMtOTlmOS01NjQ2Mzk3NGNiNjcvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODU4NTYwMDAsImV4cCI6MTc4NTg1OTYwMH0.bPXboj0j2xIcsmrn7gRHSUv8Jp7q66Me020-A9VHbMY \" =800x557\")",
+      "updatedAt": "2026-07-15T21:02:13.804Z",
+      "publishedAt": "2026-07-15T20:56:53.502Z"
+    },
+    {
+      "id": "7cbb4ab3-8e43-4f91-bbcd-d13720301aab",
+      "slug": "2026-07-14-patch-notes-rrFT01JeUj",
+      "title": "[2026]-07-14 Patch Notes",
+      "text": "## Quest Helper Improvements\n\nThe Quest Helper has been redesigned to make tracking objectives and completing quests faster and easier.\n\n### Improved Quest Tracking\n\n* Quests are organized by category, with completed quests presented in a dedicated section.\n* Quest titles display overall objective progress at a glance.\n* Individual objectives display their current and required amounts.\n* Long quest titles and objectives are handled more cleanly with improved wrapping, alignment, and tooltips.\n* The tracker automatically resizes to fit its content while remaining within the screen.\n\n### Navigation and Completion Actions\n\n* Select a quest objective to start or stop navigation to its destination.\n* Select a quest title to open its full description.\n* Completed quests display their destination and provide contextual actions to move, cancel navigation, use the Digivice, or complete the quest.\n* Navigation can guide players to the appropriate quest-completion NPC.\n\n### Layout and Persistence\n\n* Added controls to collapse or expand the Quest Helper.\n* Added a position lock to prevent accidental movement.\n* The collapsed state, lock state, and custom screen position are saved between sessions.\n* Reduced unnecessary tracker rebuilds for smoother quest updates.\n\n## Discord Rich Presence\n\nDiscord Rich Presence has been added to the game client, allowing players to share their current in-game activity through their Discord profile.\n\n### Activity Information\n\nRich Presence can display:\n\n* Current game activity and location\n* Session duration\n* Current party size\n* Tamer and Digimon levels\n* Official Tamer and Digimon names, such as Taichi and Agumon\n\nPlayer's tamer names are not displayed. Detailed mode uses the official Tamer identity and the Digimon's current form.\n\n### Privacy Settings\n\nRich Presence can be configured under **Options → Interface**:\n\n* **Off:** Disables Discord Rich Presence.\n* **Generic:** Displays general activity and levels without location or character names.\n* **Detailed:** Displays location, official Tamer and Digimon names, and their levels.\n\n### Reliability Improvements\n\n* Rich Presence automatically refreshes after Discord reconnects.\n* Activity is restored if another running client instance clears it.\n* The client periodically republishes its activity to prevent it from disappearing unexpectedly.\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzQ5ZTU1MTFiLTU3YWYtNDdkMC04ZTdjLWZjNzhhMTc1MWZkMi9lOTZjNzJhNC01OTJmLTQ4ZjYtOWFlMC1lYzY2NGIwOTY3YzYvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODU4NTYwMDAsImV4cCI6MTc4NTg1OTYwMH0.guVzzfHG3PujPtEyJwswcRa79CnRglx8Q60ZkB2BhAE \" =433x172\")",
+      "updatedAt": "2026-07-15T21:02:21.634Z",
+      "publishedAt": "2026-07-14T23:11:24.856Z"
+    },
+    {
+      "id": "8497522d-2226-42f5-b254-9eb763982cff",
+      "slug": "2026-07-08-patch-notes-YhnSIseYjm",
+      "title": "[2026]-07-08 Patch Notes",
+      "text": "",
+      "updatedAt": "2026-07-08T11:32:34.963Z",
+      "publishedAt": "2026-07-08T11:32:34.969Z"
+    },
+    {
+      "id": "78606e91-17cc-404f-af0c-6a35423b3985",
+      "slug": "2026-07-07-patch-notes-8fMhv4uiVC",
+      "title": "[2026]-07-07 Patch Notes",
+      "text": "## CHANGES\n\n* Added **Warp Evolution** for **Boltmon** to the **Candlemon** evolution line. This resolves an issue where players could become unable to evolve after dying inside **SS-locked dungeons**.\n* The **Wiki** now displays **Digimon stats** at **Level 90** using the **130% size factor**, providing more accurate stat references for comparing Digimon.\n* Reduced the **Network Collapse** event quest objective from **3** targets to **1**, making event progression faster.\n* **Limit Break** quests now require completing the corresponding **Story Mode** dungeon instead of the **Normal Mode** version.\n* Fixed an issue where the **Tamer Skill** and **Extra** bars could appear in the wrong position after logging in.\n* Fixed an issue that prevented deleting Tamers with **non-ASCII** characters in their names.\n* Fixed an issue that prevented creating or renaming Digimon with **non-ASCII** characters in their names.",
+      "updatedAt": "2026-07-08T11:32:24.902Z",
+      "publishedAt": "2026-07-07T21:19:23.593Z"
+    },
+    {
+      "id": "69f9cce5-8abd-4fbe-8d4d-76f162327229",
+      "slug": "2026-07-06-patch-notes-DnWMlfVb6f",
+      "title": "[2026-07-06] Patch Notes",
+      "text": "## Changes\n\n* Antimacro checks have been greatly reduced in Dungeons;",
+      "updatedAt": "2026-07-06T11:47:12.161Z",
+      "publishedAt": "2026-07-06T11:46:11.939Z"
+    },
+    {
+      "id": "f861a899-554f-4ba4-ae58-d798f0626c92",
+      "slug": "2026-07-03-patch-notes-FnJbMmvYMp",
+      "title": "[2026-07-03] Patch Notes",
+      "text": "",
+      "updatedAt": "2026-07-02T23:54:13.793Z",
+      "publishedAt": "2026-07-02T23:54:13.797Z"
+    },
+    {
+      "id": "e55bed02-6e0f-4d48-8397-7fc9829c57f0",
+      "slug": "2026-07-02-patch-notes-Fe1uiJXhh6",
+      "title": "[2026-07-02] Patch Notes",
+      "text": "",
+      "updatedAt": "2026-07-02T23:54:33.971Z",
+      "publishedAt": "2026-07-02T03:35:57.972Z"
+    },
+    {
+      "id": "725a6e2c-f47e-447d-92a3-d733b50895ba",
+      "slug": "2026-07-01-patch-notes-KDDq40h7dd",
+      "title": "[2026-07-01] Patch Notes",
+      "text": "",
+      "updatedAt": "2026-07-01T17:57:30.403Z",
+      "publishedAt": "2026-07-01T17:57:30.409Z"
+    },
+    {
+      "id": "b2c78c46-1272-490a-8568-d7077ddf7400",
+      "slug": "2026-06-30-patch-notes-YUJbZiSZne",
+      "title": "[2026-06-30] Patch Notes",
+      "text": "\\",
+      "updatedAt": "2026-07-01T17:57:23.386Z",
+      "publishedAt": "2026-07-01T17:47:50.716Z"
+    },
+    {
       "id": "90788144-5f30-4070-a4ef-b67a9e87a694",
-      "slug": "2026-06-25examon-hard-fix-DaVZ6W3PJH",
-      "title": "[2026-06-25]Examon Hard Fix",
+      "slug": "2026-06-25-examon-hard-fix-DaVZ6W3PJH",
+      "title": "[2026-06-25] Examon Hard Fix",
       "text": "PATCH NOTES\n\n**Fixed**\n\n* Fixed an issue where **Examon (Hard)** was not dropping its intended raid rewards.\n\nThe raid now correctly drops the following rewards:\n\n| Item | Rate | Quantity |\n|------|:----:|:--------:|\n| Olympian Token | 100% | 250      |\n| Olympian Data Core | 100% | 1        |\n| Chrome Digizoid Shards | 100% | 1–5      |\n| Chrome Digizoid | 100% | 1        |\n| Examon Seal | 100% | 2–10     |\n| Olympian Data Fragment | 100% | 2        |\n\n**Rework**\n\n* **Examon Seal** now grants secondary stats when reaching the Master tier.\n\n| Seal | Master Requirement | AT  | HP  |\n|------|-------------------:|----:|----:|\n| Examon Seal | 1,000              | +7.0% | +2.0% |",
-      "updatedAt": "2026-06-25T15:18:53.826Z",
+      "updatedAt": "2026-07-01T17:47:28.645Z",
       "publishedAt": "2026-06-25T15:11:03.759Z"
     },
     {
@@ -439,7 +567,7 @@
       "id": "fb8e3245-eb93-4c3f-af87-a47b247e8ce0",
       "slug": "2026-04-25-AaZ7sCq7oU",
       "title": "2026-04-25",
-      "text": "\\\n* Added an interface to confirm Digimon deletion in order to prevent accidentally deleting\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzBlMDVjMTFjLTkxYWYtNDMwYS04YTIxLTE2NThmM2Y2M2FjNi85MzRlODI0NS02NDRiLTRhOTEtYWY4Ny0yMDVkZDA1ZjliOTYvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODI3OTExNDMsImV4cCI6MTc4Mjc5NDc0M30.Ez9K1WMQRsE_sW_9eFx47sYcv_Aac_JcNo93Z6ffgYs \" =471x266\")\n\n\nFixed Stale Buffs inside dungeons;",
+      "text": "\\\n* Added an interface to confirm Digimon deletion in order to prevent accidentally deleting\n\n\n ![](https://docs.thedigitalodyssey.com/api/files.get?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ1cGxvYWRzLzBlMDVjMTFjLTkxYWYtNDMwYS04YTIxLTE2NThmM2Y2M2FjNi85MzRlODI0NS02NDRiLTRhOTEtYWY4Ny0yMDVkZDA1ZjliOTYvaW1hZ2UucG5nIiwidHlwZSI6ImF0dGFjaG1lbnQiLCJpYXQiOjE3ODU4NTYwMDgsImV4cCI6MTc4NTg1OTYwOH0.BwF0TPDuSm0E6gehPH-oQGRmqqVE7Jn4BAvLB1rFC7U \" =471x266\")\n\n\nFixed Stale Buffs inside dungeons;",
       "updatedAt": "2026-04-26T00:02:08.919Z",
       "publishedAt": "2026-04-25T23:11:12.983Z"
     },
