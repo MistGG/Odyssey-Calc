@@ -1,6 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { syncPointGrantsAfterUpload } from './pointGrants.ts'
-import { resolveEffectiveDigimonIdentity } from './alternateStructure.ts'
+import {
+  collectAlternateStructureOverrideIds,
+  fetchWikiDetail,
+  resolveEffectiveDigimonIdentity,
+} from './alternateStructure.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -640,8 +644,60 @@ function memberDps(
   return dur > 0 ? damage / dur : 0
 }
 
-/** Digimon with the highest damage this run (not end-of-run swap). */
-function memberPrimaryDigimon(
+function digimonRowHasRoleSkills(dg: {
+  skills?: Array<{ skillKey?: string | null; skill?: string | null }> | null
+}): boolean {
+  for (const skill of dg.skills ?? []) {
+    const key = String(skill.skillKey ?? '').trim().toLowerCase()
+    const name = String(skill.skill ?? '').trim().toLowerCase()
+    if (key && key !== '(basic)') return true
+    if (name && name !== '(basic)' && name !== 'auto attack') return true
+  }
+  return false
+}
+
+/**
+ * When parent + alternate-structure digimon both dealt damage, prefer the alt if it
+ * used any non-basic skills — do not pick by whichever role racked more damage.
+ */
+async function preferAlternateStructurePrimaryId(member: StoredMember): Promise<string | null> {
+  const digimons = memberDigimons(member)
+  const totals = new Map<string, number>()
+  const rowsById = new Map<string, (typeof digimons)[number]>()
+  for (const dg of digimons) {
+    const id = dg.digimonId?.trim() ?? ''
+    if (!id) continue
+    const damage = Math.max(0, Number(dg.totalDamage) || 0)
+    if (damage <= 0) continue
+    totals.set(id, (totals.get(id) ?? 0) + damage)
+    const prev = rowsById.get(id)
+    if (!prev || damage > Math.max(0, Number(prev.totalDamage) || 0)) rowsById.set(id, dg)
+  }
+  const ids = [...totals.keys()]
+  if (ids.length < 2) return null
+  const idSet = new Set(ids)
+
+  let bestAlt: string | null = null
+  let bestAltDamage = -1
+  for (const parentId of ids) {
+    const detail = await fetchWikiDetail(parentId)
+    if (!detail) continue
+    for (const overrideId of collectAlternateStructureOverrideIds(detail)) {
+      if (!idSet.has(overrideId)) continue
+      const altRow = rowsById.get(overrideId)
+      if (!altRow || !digimonRowHasRoleSkills(altRow)) continue
+      const dmg = totals.get(overrideId) ?? 0
+      if (dmg > bestAltDamage) {
+        bestAltDamage = dmg
+        bestAlt = overrideId
+      }
+    }
+  }
+  return bestAlt
+}
+
+/** Digimon used for leaderboard role (alt skills beat max-damage parent). */
+async function memberPrimaryDigimon(
   member: StoredMember,
   _wikiCatalog?: Map<string, RoleBucket | null>,
 ) {
@@ -658,6 +714,9 @@ function memberPrimaryDigimon(
     if (!prev || damage > Math.max(0, Number(prev.totalDamage) || 0)) rowsById.set(id, dg)
   }
 
+  const preferredAlt = await preferAlternateStructurePrimaryId(member)
+  if (preferredAlt && rowsById.has(preferredAlt)) return rowsById.get(preferredAlt)
+
   let bestId: string | null = null
   let bestDamage = -1
   for (const [id, damage] of totals) {
@@ -669,10 +728,10 @@ function memberPrimaryDigimon(
   return bestId ? rowsById.get(bestId) : undefined
 }
 
-function primaryDigimonDamage(
+async function primaryDigimonDamage(
   member: StoredMember,
   wikiCatalog?: Map<string, RoleBucket | null>,
-): number {
+): Promise<number> {
   const digimons = memberDigimons(member)
   if (digimons.length <= 1) return memberDamageTotal(member)
   const totals = new Map<string, number>()
@@ -682,7 +741,7 @@ function primaryDigimonDamage(
     totals.set(id, (totals.get(id) ?? 0) + Math.max(0, Number(dg.totalDamage) || 0))
   }
   if (totals.size <= 1) return memberDamageTotal(member)
-  const primary = memberPrimaryDigimon(member, wikiCatalog)
+  const primary = await memberPrimaryDigimon(member, wikiCatalog)
   if (!primary) return memberDamageTotal(member)
   const dmg = Math.max(0, totals.get(primary.digimonId?.trim() ?? '') ?? 0)
   return dmg > 0 ? dmg : memberDamageTotal(member)
@@ -721,7 +780,7 @@ async function memberDpsForLeaderboard(
     digimons.length > 1 && memberHasMultipleRoleBuckets(member, wikiCatalog)
       ? memberDamageTotal(member)
       : digimons.length > 1
-        ? primaryDigimonDamage(member, wikiCatalog)
+        ? await primaryDigimonDamage(member, wikiCatalog)
         : memberDamageTotal(member)
   const dur = Math.max(dpsDurationSeconds(payload, rowDurationSec, members), Number(member.durationSec) || 0, 1e-6)
   return dur > 0 ? damage / dur : 0
@@ -838,36 +897,40 @@ function getWikiMetaCatalog(): Map<string, { name: string; modelId: string; role
   return wikiMetaCatalog ?? new Map()
 }
 
-function primaryDigimonSkillKeys(
-  primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
-): string[] {
+type PrimaryDigimonRow = NonNullable<Awaited<ReturnType<typeof memberPrimaryDigimon>>>
+
+/** All non-basic skills across the tamer's digimon rows (parent + alt kits). */
+function memberSkillKeys(member: StoredMember): string[] {
   const keys: string[] = []
   const seen = new Set<string>()
-  for (const skill of primary.skills ?? []) {
-    const key = String(skill.skillKey ?? '').trim().toLowerCase()
-    if (!key || key === '(basic)' || seen.has(key)) continue
-    seen.add(key)
-    keys.push(key)
+  for (const dg of memberDigimons(member)) {
+    for (const skill of dg.skills ?? []) {
+      const key = String(skill.skillKey ?? '').trim().toLowerCase()
+      if (!key || key === '(basic)' || seen.has(key)) continue
+      seen.add(key)
+      keys.push(key)
+    }
   }
   return keys
 }
 
-function primaryDigimonSkillNames(
-  primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
-): string[] {
+function memberSkillNames(member: StoredMember): string[] {
   const names: string[] = []
   const seen = new Set<string>()
-  for (const skill of primary.skills ?? []) {
-    const name = String(skill.skill ?? '').trim().toLowerCase()
-    if (!name || name === '(basic)' || name === 'auto attack' || seen.has(name)) continue
-    seen.add(name)
-    names.push(name)
+  for (const dg of memberDigimons(member)) {
+    for (const skill of dg.skills ?? []) {
+      const name = String(skill.skill ?? '').trim().toLowerCase()
+      if (!name || name === '(basic)' || name === 'auto attack' || seen.has(name)) continue
+      seen.add(name)
+      names.push(name)
+    }
   }
   return names
 }
 
 async function resolvePrimaryDigimonIdentity(
-  primary: NonNullable<ReturnType<typeof memberPrimaryDigimon>>,
+  member: StoredMember,
+  primary: PrimaryDigimonRow,
   wikiCatalog: Map<string, RoleBucket | null>,
   roleCache: Map<string, RoleBucket | null>,
 ): Promise<{
@@ -887,8 +950,8 @@ async function resolvePrimaryDigimonIdentity(
     parentModelId: parentMeta?.modelId || null,
     parentName: parentMeta?.name || null,
     parentRole: parentMeta?.role || null,
-    skillKeys: primaryDigimonSkillKeys(primary),
-    skillNames: primaryDigimonSkillNames(primary),
+    skillKeys: memberSkillKeys(member),
+    skillNames: memberSkillNames(member),
   })
 
   const digimonId = effective.digimonId || parentDigimonId
@@ -964,9 +1027,9 @@ async function resolveRoleBucket(
   roleCache: Map<string, RoleBucket | null>,
   wikiCatalog: Map<string, RoleBucket | null>,
 ): Promise<RoleBucket | null> {
-  const primary = memberPrimaryDigimon(member, wikiCatalog)
+  const primary = await memberPrimaryDigimon(member, wikiCatalog)
   if (!primary?.digimonId?.trim()) return null
-  const resolved = await resolvePrimaryDigimonIdentity(primary, wikiCatalog, roleCache)
+  const resolved = await resolvePrimaryDigimonIdentity(member, primary, wikiCatalog, roleCache)
   return resolved.roleBucket
 }
 
@@ -989,7 +1052,7 @@ async function buildSummaryFromPayload(
   const out: SummaryMember[] = []
   for (const member of members) {
     if (!isMemberLeaderboardEligible(member, sessionDur, dungeonLeaderboardEligible)) continue
-    const primary = memberPrimaryDigimon(member, wikiCatalog)
+    const primary = await memberPrimaryDigimon(member, wikiCatalog)
     const dps = await memberDpsForLeaderboard(member, payload, rowDurationSec, members, wikiCatalog)
     if (!primary?.digimonId?.trim()) {
       out.push({
@@ -1004,7 +1067,7 @@ async function buildSummaryFromPayload(
       })
       continue
     }
-    const resolved = await resolvePrimaryDigimonIdentity(primary, wikiCatalog, roleCache)
+    const resolved = await resolvePrimaryDigimonIdentity(member, primary, wikiCatalog, roleCache)
     out.push({
       playerKey: normalizePlayerKey(member),
       displayName: member.tamerName?.trim() || member.displayLabel?.trim() || '',
@@ -1244,9 +1307,9 @@ async function processParse(
     const playerKey = normalizePlayerKey(member)
     if (!playerKey || (!force && existingPlayerKeys.has(playerKey))) continue
     const sm = summaryByKey.get(playerKey)
-    const primary = memberPrimaryDigimon(member, wikiCatalog)
+    const primary = await memberPrimaryDigimon(member, wikiCatalog)
     if (!primary?.digimonId?.trim()) continue
-    const resolved = await resolvePrimaryDigimonIdentity(primary, wikiCatalog, roleCache)
+    const resolved = await resolvePrimaryDigimonIdentity(member, primary, wikiCatalog, roleCache)
     const roleBucket = resolved.roleBucket
     if (!roleBucket) continue
 

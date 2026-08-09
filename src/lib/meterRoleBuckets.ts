@@ -228,10 +228,39 @@ function pickLeaderboardDigimonRow(
   return bestRow
 }
 
+function digimonRowHasRoleSkills(
+  dg: ReturnType<typeof memberDigimonBreakdowns>[number],
+): boolean {
+  for (const skill of dg.skills ?? []) {
+    const key = String(skill.skillKey ?? '').trim().toLowerCase()
+    const name = String(skill.skill ?? '').trim().toLowerCase()
+    if (key && key !== '(basic)') return true
+    if (name && name !== '(basic)' && name !== 'auto attack') return true
+  }
+  return false
+}
+
 function pickLeaderboardDigimon(
   digimons: ReturnType<typeof memberDigimonBreakdowns>,
+  alternateStructureIds?: ReadonlySet<string> | null,
 ): (typeof digimons)[number] | null {
   const totals = digimonIdDamageTotals(digimons)
+  // Prefer alternate-structure digimon when any alt kit skills are present.
+  if (alternateStructureIds?.size && totals.size > 1) {
+    let bestAltId: string | null = null
+    let bestAltDamage = -1
+    for (const [id, damage] of totals) {
+      if (damage <= 0 || !alternateStructureIds.has(id)) continue
+      const row = pickLeaderboardDigimonRow(digimons, id)
+      if (!row || !digimonRowHasRoleSkills(row)) continue
+      if (damage > bestAltDamage) {
+        bestAltDamage = damage
+        bestAltId = id
+      }
+    }
+    if (bestAltId) return pickLeaderboardDigimonRow(digimons, bestAltId)
+  }
+
   let bestId: string | null = null
   let bestDamage = -1
   for (const [id, damage] of totals) {
@@ -244,7 +273,7 @@ function pickLeaderboardDigimon(
   return pickLeaderboardDigimonRow(digimons, bestId)
 }
 
-/** Digimon used for leaderboard role + label (highest damage this run). */
+/** Digimon used for leaderboard role + label (alt skills beat max-damage parent). */
 export function memberTopDigimonUsed(
   member: MeterPartyMemberStored,
   _digimonRoleById?: Map<string, string>,
@@ -262,7 +291,7 @@ export function memberTopDigimonUsed(
     )
   }
   const digimons = memberDigimonBreakdowns(member)
-  const best = pickLeaderboardDigimon(digimons)
+  const best = pickLeaderboardDigimon(digimons, alternateStructureIdSet)
   if (best) {
     return {
       digimonId: best.digimonId,
@@ -295,6 +324,8 @@ export type WikiDigimonCatalogEntry = {
 
 let catalogCache: Map<string, WikiDigimonCatalogEntry> | null = null
 let catalogPromise: Promise<Map<string, WikiDigimonCatalogEntry>> | null = null
+/** Known Alternate Structure Module override digimon ids (from tier-list cache). */
+let alternateStructureIdSet: Set<string> | null = null
 
 const ROLE_MAP_SESSION_KEY = 'odyssey-meter-digi-roles-v2'
 const CATALOG_SESSION_KEY = 'odyssey-meter-digi-catalog-v2'
@@ -323,6 +354,7 @@ async function mergeAlternateStructureCatalog(
     if (!res.ok) return
     const snapshot = (await res.json()) as TierListLiveSnapshot
     const altIds = snapshot.cache?.alternateStructureIds ?? []
+    alternateStructureIdSet = new Set(altIds.map((id) => id.trim()).filter(Boolean))
     const entries = snapshot.cache?.entries ?? {}
     for (const id of altIds) {
       const entry = entries[id]
@@ -385,6 +417,8 @@ export async function fetchWikiDigimonCatalog(): Promise<Map<string, WikiDigimon
   if (sessionCatalog) {
     catalogCache = sessionCatalog
     roleMapCache = new Map([...sessionCatalog].map(([id, e]) => [id, e.role]))
+    // Session catalog may predate alt-id caching — refresh override id set in background.
+    void mergeAlternateStructureCatalog(sessionCatalog)
     return sessionCatalog
   }
 

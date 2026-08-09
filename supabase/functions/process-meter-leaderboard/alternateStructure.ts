@@ -257,25 +257,17 @@ function alternateStructureSkillScore(
     if (inOverride && !inParent) overrideKeyExclusive += 1
   }
 
-  let parentNameExclusive = 0
   let overrideNameExclusive = 0
   for (const name of usedNames) {
     const inParent = parentNames.has(name)
     const inOverride = overrideNames.has(name)
-    if (inParent && !inOverride) parentNameExclusive += 1
     if (inOverride && !inParent) overrideNameExclusive += 1
   }
 
-  // EventStream peer skill *names* are authoritative for same-model alts.
-  if (overrideNameExclusive > parentNameExclusive) {
-    return overrideNameExclusive - parentNameExclusive
-  }
-  if (overrideNameExclusive > 0 && parentNameExclusive === 0) {
-    return overrideNameExclusive
-  }
-
-  if (overrideKeyExclusive > parentKeyExclusive) return overrideKeyExclusive - parentKeyExclusive
-  if (overrideKeyExclusive > 0 && parentKeyExclusive === 0) return overrideKeyExclusive
+  // Any alternate-structure-exclusive skill selects the alt role — even when the
+  // parent kit is also present (peer party_skill often emits parent ids/names too).
+  if (overrideNameExclusive > 0) return overrideNameExclusive
+  if (overrideKeyExclusive > 0) return overrideKeyExclusive
   if (overrideKeyHits > 0 && parentKeyExclusive === 0 && overrideKeyHits >= parentKeyHits) {
     return overrideKeyHits
   }
@@ -322,7 +314,7 @@ async function findBestAlternateStructureSkinBySkills(
   return best?.skin ?? null
 }
 
-async function fetchWikiDetail(digimonId: string): Promise<WikiDetail | null> {
+export async function fetchWikiDetail(digimonId: string): Promise<WikiDetail | null> {
   const cached = parentDetailCache.get(digimonId)
   if (cached) return cached
   try {
@@ -336,6 +328,20 @@ async function fetchWikiDetail(digimonId: string): Promise<WikiDetail | null> {
   } catch {
     return null
   }
+}
+
+/** Override digimon ids linked from Alternate Structure Module skins on a parent. */
+export function collectAlternateStructureOverrideIds(detail: WikiDetail): string[] {
+  const ids: string[] = []
+  const seen = new Set<string>()
+  for (const skin of detail.skins ?? []) {
+    if (!isAlternateStructureSkin(skin)) continue
+    const overrideId = (skin.override_id ?? '').trim()
+    if (!overrideId || seen.has(overrideId)) continue
+    seen.add(overrideId)
+    ids.push(overrideId)
+  }
+  return ids
 }
 
 export async function resolveEffectiveDigimonIdentity(params: {
