@@ -24,7 +24,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 22+ has native WebSocket (required by current @supabase/supabase-js).
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -36,7 +37,7 @@ jobs:
           # Prefer service role when set (full table reads); fall back to anon in the script.
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npx tsx scripts/build-meter-player-tiers.ts
+        run: npx --yes tsx scripts/build-meter-player-tiers.ts
 
       - name: Commit tier lookup snapshot
         id: commit_lookup

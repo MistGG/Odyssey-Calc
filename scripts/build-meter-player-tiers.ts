@@ -57,7 +57,20 @@ function asRole(raw: string | null | undefined): MeterRoleBucket | null {
   return ROLE_BUCKETS.has(v) ? v : null
 }
 
-const sb = createClient(url, key, { auth: { persistSession: false } })
+/** REST-only client; polyfill WebSocket on Node < 22 for @supabase/realtime-js init. */
+async function createMeterSupabase() {
+  const options: {
+    auth: { persistSession: boolean }
+    realtime?: { transport: typeof WebSocket }
+  } = { auth: { persistSession: false } }
+  if (typeof WebSocket === 'undefined') {
+    const { default: ws } = await import('ws')
+    options.realtime = { transport: ws as unknown as typeof WebSocket }
+  }
+  return createClient(url, key, options)
+}
+
+const sb = await createMeterSupabase()
 const cycle = getDefaultMeterLeaderboardCycle()
 const window = meterLeaderboardCycleWindow(cycle)
 
