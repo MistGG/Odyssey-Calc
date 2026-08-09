@@ -1,0 +1,68 @@
+name: Meter player tiers refresh
+
+# Daily rebuild of public/data/meter-player-tier-lookup.json (companion + profile ranks).
+on:
+  schedule:
+    # 08:00 UTC daily
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      pushed: ${{ steps.commit_lookup.outputs.pushed }}
+      sha: ${{ steps.commit_lookup.outputs.sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild meter player tier lookup
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          # Prefer service role when set (full table reads); fall back to anon in the script.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npx tsx scripts/build-meter-player-tiers.ts
+
+      - name: Commit tier lookup snapshot
+        id: commit_lookup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/meter-player-tier-lookup.json
+          if git diff --staged --quiet; then
+            echo "No meter player tier lookup changes to commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "chore(meter): refresh player tier lookup"
+          git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # Bot pushes do not trigger push workflows. Deploy Pages on the new commit when needed.
+  deploy-pages:
+    needs: rebuild
+    if: needs.rebuild.outputs.pushed == 'true'
+    uses: ./.github/workflows/deploy-pages.yml
+    with:
+      ref: ${{ needs.rebuild.outputs.sha }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    secrets: inherit

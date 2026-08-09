@@ -36,6 +36,7 @@ scripts/*
 !scripts/invalidate-meter-parses.mjs
 !scripts/wipe-tier-change-history.mjs
 !scripts/pull-supabase-api-logs.mjs
+!scripts/build-meter-player-tiers.ts
 
 # Local API dumps, benches, and ad-hoc fixtures (not for production)
 tmp-*.json
