@@ -1,6 +1,417 @@
 {
-  "updated_at": "2026-08-08T18:42:48.750Z",
+  "updated_at": "2026-08-09T01:48:55.424Z",
   "runs": [
+    {
+      "id": "2026-08-09T01:48:55.445Z-60zu8c",
+      "finishedAt": "2026-08-09T01:48:55.445Z",
+      "mode": "force",
+      "refreshedCount": 468,
+      "apiCount": 18,
+      "tierCount": 4,
+      "sampleDigimon": [
+        {
+          "id": "d8tqj96",
+          "name": "Digmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "cause": "api"
+        },
+        {
+          "id": "d189uuci",
+          "name": "Holsmon",
+          "cause": "api"
+        },
+        {
+          "id": "d16lihoe",
+          "name": "Lighdramon",
+          "cause": "api"
+        },
+        {
+          "id": "d1pnobwx",
+          "name": "Betamon",
+          "cause": "api"
+        },
+        {
+          "id": "dht027o",
+          "name": "Betamon[Apocalymon]",
+          "cause": "api"
+        },
+        {
+          "id": "d1titkoy",
+          "name": "Gawappamon",
+          "cause": "api"
+        },
+        {
+          "id": "dfu0d1h",
+          "name": "Gekomon",
+          "cause": "api"
+        },
+        {
+          "id": "dgro4ey",
+          "name": "Gesomon",
+          "cause": "api"
+        },
+        {
+          "id": "d1ykxfmc",
+          "name": "Guilmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1mjgc4g",
+          "name": "Guilmon[ChaosDukemon]",
+          "cause": "api"
+        },
+        {
+          "id": "d1ddyiem",
+          "name": "MarineDevimon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1pnobwx": [
+          "Skill Aqua Recovery description: \"Sprays a fine mist of. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Sprays a fine mist of. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\"",
+          "Skill Aqua Recovery buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\""
+        ],
+        "dht027o": [
+          "Skill Aqua Recovery description: \"Sprays a fine mist of. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Sprays a fine mist of. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\"",
+          "Skill Aqua Recovery buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\""
+        ],
+        "d1tvr03j": [
+          "HP: 21004 -> 21587",
+          "Attack: 10528 -> 10865",
+          "Stats.ds: 20789 -> 21450",
+          "Stats.defense: 525 -> 539",
+          "Skill Fire Rocket base_dmg: 13800 -> 14352",
+          "Skill Fire Rocket scaling: 1656 -> 1722",
+          "Skill Fire Rocket cast_time: 1.37 -> 2.5",
+          "Skill Kunckle Fire base_dmg: 17808 -> 19233"
+        ],
+        "d1titkoy": [
+          "Skill Sonic Restoration description: \"Spins a. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Spins a. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Sonic Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "dfu0d1h": [
+          "Skill Frog Serenade description: \"Plays a lullaby on its horn that resonates through the party, knitting wounds and clearing mental fatigue. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Plays a lullaby on its horn that resonates through the party, knitting wounds and clearing mental fatigue. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Frog Serenade buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "dgro4ey": [
+          "Skill Abyssal Restoration description: \"Releases a cloud of regenerative ink that seeps into the party wounds and replenishes spent stamina. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Releases a cloud of regenerative ink that seeps into the party wounds and replenishes spent stamina. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Abyssal Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "d1ykxfmc": [
+          "Skill Will of DigiGnome description: \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Will of DigiGnome buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "d1mjgc4g": [
+          "Skill Will of DigiGnome description: \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Will of DigiGnome buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "d189uuci": [
+          "Rank: 5 -> 6",
+          "HP: 18440 -> 23979",
+          "Attack: 5136 -> 3903",
+          "Stats.ds: 24373 -> 49972",
+          "Stats.defense: 617 -> 615",
+          "Stats.crit_rate: 4290 -> 4154",
+          "Stats.hit_rate: 488 -> 1450",
+          "Stats.dex: 0 -> 1500"
+        ],
+        "d16lihoe": [
+          "Role: \"Melee DPS\" -> \"Caster\"",
+          "Rank: 5 -> 6",
+          "HP: 18440 -> 18570",
+          "Attack: 5171 -> 5289",
+          "Stats.ds: 24557 -> 40648",
+          "Stats.defense: 617 -> 513",
+          "Stats.crit_rate: 4062 -> 4373",
+          "Stats.atk_speed: 1500 -> 2000"
+        ],
+        "d1ddyiem": [
+          "Skill Abyssal Restoration description: \"Draws life force from the ocean floor, channeling abyssal energy that mends wounds and. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Draws life force from the ocean floor, channeling abyssal energy that mends wounds and. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Abyssal Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "d16751fe": [
+          "Skill Nume Gambit description: \"Numemon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Numemon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\"",
+          "Skill Nume Gambit buff description: \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\""
+        ],
+        "d153rkba": [
+          "Skill Tidal Recovery description: \"Hums a soothing tidal melody that washes away fatigue and closes wounds. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Hums a soothing tidal melody that washes away fatigue and closes wounds. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\"",
+          "Skill Tidal Recovery buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\""
+        ],
+        "d1968bbg": [
+          "Skill Putrid Gambit description: \"Raremon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Raremon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\"",
+          "Skill Putrid Gambit buff description: \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\""
+        ],
+        "d1s8sxz0": [
+          "Skill Hydro Restoration description: \"Recites a sacred water sutra, purifying and. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Recites a sacred water sutra, purifying and. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Hydro Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "d7q1dfi": [
+          "Skill Lord Chorus description: \"Conducts a grand orchestral chorus, each note resonating through the party to. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Conducts a grand orchestral chorus, each note resonating through the party to. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+          "Skill Lord Chorus buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+        ],
+        "d7k5lfc": [
+          "Skill Wind-up Gambit description: \"Toy Agumon rallies the party. Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Toy Agumon rallies the party. Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\"",
+          "Skill Wind-up Gambit buff description: \"Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\""
+        ],
+        "dzgt7kb": [
+          "Skill Feast of the Damned description: \"Lets loose a ravenous cry that drains the battlefield vigor and floods the party with dark vitality. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\" -> \"Lets loose a ravenous cry that drains the battlefield vigor and floods the party with dark vitality. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\"",
+          "Skill Feast of the Damned buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\""
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1pnobwx",
+          "name": "Betamon",
+          "lines": [
+            "Skill Aqua Recovery description: \"Sprays a fine mist of. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Sprays a fine mist of. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\"",
+            "Skill Aqua Recovery buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "dht027o",
+          "name": "Betamon[Apocalymon]",
+          "lines": [
+            "Skill Aqua Recovery description: \"Sprays a fine mist of. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Sprays a fine mist of. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\"",
+            "Skill Aqua Recovery buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "lines": [
+            "HP: 21004 -> 21587",
+            "Attack: 10528 -> 10865",
+            "Stats.ds: 20789 -> 21450",
+            "Stats.defense: 525 -> 539",
+            "Skill Fire Rocket base_dmg: 13800 -> 14352",
+            "Skill Fire Rocket scaling: 1656 -> 1722",
+            "Skill Fire Rocket cast_time: 1.37 -> 2.5",
+            "Skill Kunckle Fire base_dmg: 17808 -> 19233"
+          ]
+        },
+        {
+          "id": "d1titkoy",
+          "name": "Gawappamon",
+          "lines": [
+            "Skill Sonic Restoration description: \"Spins a. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Spins a. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Sonic Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "dfu0d1h",
+          "name": "Gekomon",
+          "lines": [
+            "Skill Frog Serenade description: \"Plays a lullaby on its horn that resonates through the party, knitting wounds and clearing mental fatigue. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Plays a lullaby on its horn that resonates through the party, knitting wounds and clearing mental fatigue. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Frog Serenade buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "dgro4ey",
+          "name": "Gesomon",
+          "lines": [
+            "Skill Abyssal Restoration description: \"Releases a cloud of regenerative ink that seeps into the party wounds and replenishes spent stamina. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Releases a cloud of regenerative ink that seeps into the party wounds and replenishes spent stamina. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Abyssal Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1ykxfmc",
+          "name": "Guilmon",
+          "lines": [
+            "Skill Will of DigiGnome description: \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Will of DigiGnome buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d1mjgc4g",
+          "name": "Guilmon[ChaosDukemon]",
+          "lines": [
+            "Skill Will of DigiGnome description: \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Calls upon the DigiGnomes to mend the party and replenish their spent energy. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Will of DigiGnome buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d189uuci",
+          "name": "Holsmon",
+          "lines": [
+            "Rank: 5 -> 6",
+            "HP: 18440 -> 23979",
+            "Attack: 5136 -> 3903",
+            "Stats.ds: 24373 -> 49972",
+            "Stats.defense: 617 -> 615",
+            "Stats.crit_rate: 4290 -> 4154",
+            "Stats.hit_rate: 488 -> 1450",
+            "Stats.dex: 0 -> 1500"
+          ]
+        },
+        {
+          "id": "d16lihoe",
+          "name": "Lighdramon",
+          "lines": [
+            "Role: \"Melee DPS\" -> \"Caster\"",
+            "Rank: 5 -> 6",
+            "HP: 18440 -> 18570",
+            "Attack: 5171 -> 5289",
+            "Stats.ds: 24557 -> 40648",
+            "Stats.defense: 617 -> 513",
+            "Stats.crit_rate: 4062 -> 4373",
+            "Stats.atk_speed: 1500 -> 2000"
+          ]
+        },
+        {
+          "id": "d1ddyiem",
+          "name": "MarineDevimon",
+          "lines": [
+            "Skill Abyssal Restoration description: \"Draws life force from the ocean floor, channeling abyssal energy that mends wounds and. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Draws life force from the ocean floor, channeling abyssal energy that mends wounds and. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Abyssal Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d16751fe",
+          "name": "Numemon",
+          "lines": [
+            "Skill Nume Gambit description: \"Numemon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Numemon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\"",
+            "Skill Nume Gambit buff description: \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d153rkba",
+          "name": "Otamamon",
+          "lines": [
+            "Skill Tidal Recovery description: \"Hums a soothing tidal melody that washes away fatigue and closes wounds. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Hums a soothing tidal melody that washes away fatigue and closes wounds. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\"",
+            "Skill Tidal Recovery buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1968bbg",
+          "name": "Raremon",
+          "lines": [
+            "Skill Putrid Gambit description: \"Raremon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Raremon rallies the party. Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\"",
+            "Skill Putrid Gambit buff description: \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Increases Attack Power by 775 (+72 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1s8sxz0",
+          "name": "Shawujingmon",
+          "lines": [
+            "Skill Hydro Restoration description: \"Recites a sacred water sutra, purifying and. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Recites a sacred water sutra, purifying and. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Hydro Restoration buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d7q1dfi",
+          "name": "Tonosama Gekomon",
+          "lines": [
+            "Skill Lord Chorus description: \"Conducts a grand orchestral chorus, each note resonating through the party to. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Conducts a grand orchestral chorus, each note resonating through the party to. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\"",
+            "Skill Lord Chorus buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d7k5lfc",
+          "name": "ToyAgumon",
+          "lines": [
+            "Skill Wind-up Gambit description: \"Toy Agumon rallies the party. Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Toy Agumon rallies the party. Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\"",
+            "Skill Wind-up Gambit buff description: \"Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and increases Stat9 by 25% for 15 seconds.\" -> \"Increases Attack Power by 440 (+40 per Skill Level), increases Evasion by 1.50% (+2.44% per Skill Level), and grants a Shield of 100 (+300 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "dzgt7kb",
+          "name": "Venom Vamdemon",
+          "lines": [
+            "Skill Feast of the Damned description: \"Lets loose a ravenous cry that drains the battlefield vigor and floods the party with dark vitality. Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\" -> \"Lets loose a ravenous cry that drains the battlefield vigor and floods the party with dark vitality. Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\"",
+            "Skill Feast of the Damned buff description: \"Increases Stat2 by 5% of MaxStat, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\" -> \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 12 seconds.\""
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-08-09T01:48:55.445Z",
+        "mode": "force",
+        "refreshedCount": 468,
+        "dpsUp": [
+          {
+            "id": "d189uuci",
+            "name": "Holsmon",
+            "role": "Support",
+            "before": 4715.729683277963,
+            "after": 21210.012798351647,
+            "delta": 16494.283115073682
+          },
+          {
+            "id": "d16lihoe",
+            "name": "Lighdramon",
+            "role": "Caster",
+            "before": 5287.693096488895,
+            "after": 77271.45392255072,
+            "delta": 71983.76082606183
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1tvr03j",
+            "name": "Fradramon",
+            "role": "Melee DPS",
+            "before": 60392.43717105773,
+            "after": 48732.2152425655,
+            "delta": -11660.221928492232
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d8tqj96",
+            "name": "Digmon",
+            "role": "Tank",
+            "after": 17331.48776857222
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "d8tqj96",
+            "name": "Digmon",
+            "role": "Tank",
+            "after": 3.6257425321108183
+          }
+        ],
+        "healerUp": [
+          {
+            "id": "d189uuci",
+            "name": "Holsmon",
+            "role": "Support",
+            "before": 0.2621668711480213,
+            "after": 5.926317077853184,
+            "delta": 5.6641502067051634
+          }
+        ],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "d189uuci",
+            "name": "Holsmon",
+            "role": "Support",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "d16lihoe",
+            "name": "Lighdramon",
+            "role": "Caster",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "d8tqj96",
+            "name": "Digmon",
+            "role": "Tank",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-08-08T18:42:48.770Z-revmyq",
       "finishedAt": "2026-08-08T18:42:48.770Z",
@@ -10248,32 +10659,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-07-10T03:05:04.164Z",
-        "mode": "force",
-        "refreshedCount": 443,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-07-09T19:54:04.926Z-9k064z",
-      "finishedAt": "2026-07-09T19:54:04.926Z",
-      "mode": "force",
-      "refreshedCount": 443,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-07-09T19:54:04.926Z",
         "mode": "force",
         "refreshedCount": 443,
         "dpsUp": [],
