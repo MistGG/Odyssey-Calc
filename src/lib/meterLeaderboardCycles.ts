@@ -1,22 +1,35 @@
 /**
- * Leaderboard ranking cycles. Edit when a new cycle starts: set `endsAt` on the
- * outgoing cycle and add a new live entry without `endsAt`.
+ * Leaderboard ranking cycles vs HoF seasons.
  *
- * Also insert/update the matching row in `meter_leaderboard_cycles` (Supabase) and
- * call `refresh_meter_hof_cycle_summary` for the outgoing cycle when it ends.
- *
- * Windows filter meter_leaderboard_entries.created_at on the server (bounded RPC
- * rows only — no full parse payloads).
+ * Ranking windows (Part 1 / Part 2) only affect /meter leaderboard filters.
+ * HoF, record breaks, Breaker themes, and season ranks stay on the parent
+ * season (`hofSeasonId` / non-`rankingOnly` rows) — keep that in sync with
+ * `meter_leaderboard_cycles` in Supabase.
  */
 export type MeterLeaderboardCycle = {
   id: string
   label: string
   /** Inclusive UTC instant (full ISO). */
   startsAt: string
-  /** Exclusive UTC instant; omit on the current live cycle. */
+  /** Exclusive UTC instant for ranking; omit on the current live ranking window. */
   endsAt?: string | null
+  /**
+   * HoF / record-break window end. When set (including `null` = still live),
+   * overrides `endsAt` for Hall of Fame. Use so Part 1 can close for rankings
+   * while the Verdandi HoF season stays open.
+   */
+  hofEndsAt?: string | null
+  /** Label for HoF / season UI when it should differ from the ranking label. */
+  hofLabel?: string
+  /**
+   * Ranking-only part (e.g. Verdandi Part 2). Hidden from HoF season pickers;
+   * HoF uses `hofSeasonId` instead.
+   */
+  rankingOnly?: boolean
+  /** Parent HoF season id when `rankingOnly` (e.g. verdandi-2 → verdandi). */
+  hofSeasonId?: string
   note?: string
-  /** Party bar / rewards theme granted for HoF breaks in this cycle. */
+  /** Party bar / rewards theme granted for HoF breaks in this season. */
   hofThemeId: 'hall-of-fame' | 'magia-hall-of-fame' | 'verdandi-hall-of-fame'
   hofThemeLabel: string
 }
@@ -32,6 +45,12 @@ export const MAGIA_CYCLE_START_UTC = '2026-06-16T00:30:00.000Z'
  * Magia cycle end. Magia includes all of July 22 Arizona.
  */
 export const VERDANDI_CYCLE_START_UTC = '2026-07-23T07:00:00.000Z'
+
+/**
+ * August 8, 2026 1:00 PM Arizona (America/Phoenix, UTC−7) — Verdandi Part 2
+ * leaderboard ranking window only (HoF season stays on `verdandi`).
+ */
+export const VERDANDI_2_CYCLE_START_UTC = '2026-08-08T20:00:00.000Z'
 
 /** April 20, 2026 00:00 Arizona (America/Phoenix, UTC−7) — Olympus cycle start. */
 export const OLYMPUS_CYCLE_START_UTC = '2026-04-20T07:00:00.000Z'
@@ -55,13 +74,27 @@ export const METER_LEADERBOARD_CYCLES: MeterLeaderboardCycle[] = [
   },
   {
     id: 'verdandi',
-    label: 'Verdandi Cycle: July 23 - Current',
+    label: 'Verdandi Cycle Part 1: July 23 - August 8',
+    hofLabel: 'Verdandi Cycle: July 23 - Current',
     startsAt: VERDANDI_CYCLE_START_UTC,
+    endsAt: VERDANDI_2_CYCLE_START_UTC,
+    /** Ranking Part 1 closed; HoF / ranks / Breaker stay on the open season. */
+    hofEndsAt: null,
+    hofThemeId: 'verdandi-hall-of-fame',
+    hofThemeLabel: 'Verdandi Breaker',
+  },
+  {
+    id: 'verdandi-2',
+    label: 'Verdandi Cycle Part 2: August 8 - Current',
+    startsAt: VERDANDI_2_CYCLE_START_UTC,
+    rankingOnly: true,
+    hofSeasonId: 'verdandi',
     hofThemeId: 'verdandi-hall-of-fame',
     hofThemeLabel: 'Verdandi Breaker',
   },
 ]
 
+/** Live ranking window (Verdandi Part 2). */
 export function isMeterLeaderboardCycleLive(cycle: MeterLeaderboardCycle): boolean {
   return cycle.endsAt == null || cycle.endsAt === ''
 }
@@ -77,6 +110,7 @@ export function getMeterLeaderboardCycle(id: string): MeterLeaderboardCycle | nu
   return METER_LEADERBOARD_CYCLES.find((c) => c.id === trimmed) ?? null
 }
 
+/** Ranking window for /meter leaderboards. */
 export function meterLeaderboardCycleWindow(cycle: MeterLeaderboardCycle): {
   windowStart: string
   windowEnd: string | null
@@ -87,8 +121,54 @@ export function meterLeaderboardCycleWindow(cycle: MeterLeaderboardCycle): {
   }
 }
 
+/** HoF seasons only — excludes ranking-only parts like verdandi-2. */
+export function getMeterHofSeasonCycles(): MeterLeaderboardCycle[] {
+  return METER_LEADERBOARD_CYCLES.filter((cycle) => !cycle.rankingOnly)
+}
+
+export function resolveMeterHofSeasonCycle(cycle: MeterLeaderboardCycle): MeterLeaderboardCycle {
+  if (!cycle.hofSeasonId) return cycle
+  return getMeterLeaderboardCycle(cycle.hofSeasonId) ?? cycle
+}
+
+export function getMeterHofSeasonCycle(id: string): MeterLeaderboardCycle | null {
+  const cycle = getMeterLeaderboardCycle(id)
+  if (!cycle) return null
+  if (cycle.rankingOnly) return resolveMeterHofSeasonCycle(cycle)
+  return cycle
+}
+
+export function meterHofSeasonWindow(cycle: MeterLeaderboardCycle): {
+  windowStart: string
+  windowEnd: string | null
+} {
+  const season = resolveMeterHofSeasonCycle(cycle)
+  const windowEnd = season.hofEndsAt !== undefined ? season.hofEndsAt : (season.endsAt ?? null)
+  return {
+    windowStart: season.startsAt,
+    windowEnd,
+  }
+}
+
+export function isMeterHofSeasonLive(cycle: MeterLeaderboardCycle): boolean {
+  const { windowEnd } = meterHofSeasonWindow(cycle)
+  return windowEnd == null || windowEnd === ''
+}
+
+export function getDefaultMeterHofSeasonCycle(): MeterLeaderboardCycle {
+  const seasons = getMeterHofSeasonCycles()
+  const live = seasons.find(isMeterHofSeasonLive)
+  return live ?? seasons[seasons.length - 1]!
+}
+
+export function meterHofSeasonLabel(cycle: MeterLeaderboardCycle): string {
+  const season = resolveMeterHofSeasonCycle(cycle)
+  return season.hofLabel?.trim() || season.label
+}
+
 /** Short cycle name for profile UI (e.g. "Magia Cycle" without date range). */
 export function meterLeaderboardCycleShortLabel(cycle: MeterLeaderboardCycle): string {
-  const short = cycle.label.split(':')[0]?.trim()
-  return short || cycle.label
+  const label = cycle.rankingOnly ? meterHofSeasonLabel(cycle) : cycle.hofLabel?.trim() || cycle.label
+  const short = label.split(':')[0]?.trim()
+  return short || label
 }

@@ -9,11 +9,12 @@ import {
 } from '../lib/meterHallOfFame'
 import { fetchRecentMeterParseSelection } from '../lib/meterDataSource'
 import {
-  getDefaultMeterLeaderboardCycle,
-  getMeterLeaderboardCycle,
-  isMeterLeaderboardCycleLive,
-  METER_LEADERBOARD_CYCLES,
-  meterLeaderboardCycleWindow,
+  getDefaultMeterHofSeasonCycle,
+  getMeterHofSeasonCycle,
+  getMeterHofSeasonCycles,
+  isMeterHofSeasonLive,
+  meterHofSeasonLabel,
+  meterHofSeasonWindow,
 } from '../lib/meterLeaderboardCycles'
 import { METER_ROLE_BUCKETS } from '../lib/meterRoleBuckets'
 import {
@@ -38,7 +39,7 @@ export function MeterHallOfFamePage() {
   const [wikiDungeons, setWikiDungeons] = useState<Awaited<ReturnType<typeof loadWikiDungeonsForMeter>>>([])
   const [dungeonId, setDungeonId] = useState('')
   const [difficultyId, setDifficultyId] = useState<number | null>(null)
-  const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterLeaderboardCycle().id)
+  const [leaderboardCycleId, setLeaderboardCycleId] = useState(() => getDefaultMeterHofSeasonCycle().id)
   const [bootLoading, setBootLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -77,16 +78,15 @@ export function MeterHallOfFamePage() {
   )
 
   const leaderboardCycle = useMemo(
-    () => getMeterLeaderboardCycle(leaderboardCycleId) ?? getDefaultMeterLeaderboardCycle(),
+    () => getMeterHofSeasonCycle(leaderboardCycleId) ?? getDefaultMeterHofSeasonCycle(),
     [leaderboardCycleId],
   )
 
-  const cycleWindow = useMemo(() => meterLeaderboardCycleWindow(leaderboardCycle), [leaderboardCycle])
+  const cycleWindow = useMemo(() => meterHofSeasonWindow(leaderboardCycle), [leaderboardCycle])
 
   useEffect(() => {
-    if (queryCycleId && getMeterLeaderboardCycle(queryCycleId)) {
-      setLeaderboardCycleId(queryCycleId)
-    }
+    const fromQuery = queryCycleId ? getMeterHofSeasonCycle(queryCycleId) : null
+    if (fromQuery) setLeaderboardCycleId(fromQuery.id)
   }, [queryCycleId])
 
   const syncSearchParams = useCallback(
@@ -284,19 +284,19 @@ export function MeterHallOfFamePage() {
             onChange={(e) => handleCycleChange(e.target.value)}
             disabled={bootLoading}
           >
-            {METER_LEADERBOARD_CYCLES.map((cycle) => (
+            {getMeterHofSeasonCycles().map((cycle) => (
               <option key={cycle.id} value={cycle.id}>
-                {cycle.label}
-                {isMeterLeaderboardCycleLive(cycle) ? ' (live)' : ''}
+                {meterHofSeasonLabel(cycle)}
+                {isMeterHofSeasonLive(cycle) ? ' (live)' : ''}
               </option>
             ))}
           </select>
         </label>
       </div>
 
-      {!isMeterLeaderboardCycleLive(leaderboardCycle) ? (
+      {!isMeterHofSeasonLive(leaderboardCycle) ? (
         <p className="meter-public-cycle-note meter-parses-muted" role="status">
-          {leaderboardCycle.label}.
+          {meterHofSeasonLabel(leaderboardCycle)}.
         </p>
       ) : null}
 

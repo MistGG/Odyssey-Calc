@@ -9,9 +9,9 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import {
-  getDefaultMeterLeaderboardCycle,
+  getDefaultMeterHofSeasonCycle,
+  meterHofSeasonWindow,
   meterLeaderboardCycleShortLabel,
-  meterLeaderboardCycleWindow,
 } from '../src/lib/meterLeaderboardCycles'
 import { filterGoldRecordBreaksByScope } from '../src/lib/meterHallOfFame'
 import {
@@ -76,8 +76,8 @@ async function createMeterSupabase() {
 }
 
 const sb = await createMeterSupabase()
-const cycle = getDefaultMeterLeaderboardCycle()
-const window = meterLeaderboardCycleWindow(cycle)
+const cycle = getDefaultMeterHofSeasonCycle()
+const window = meterHofSeasonWindow(cycle)
 
 console.log(`Building player tiers for ${cycle.id} since ${window.windowStart}...`)
 

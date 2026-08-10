@@ -1,10 +1,11 @@
 import { getMeterAnonSupabase } from './meterDataSource'
 import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
 import {
-  getDefaultMeterLeaderboardCycle,
-  isMeterLeaderboardCycleLive,
-  METER_LEADERBOARD_CYCLES,
-  meterLeaderboardCycleWindow,
+  getDefaultMeterHofSeasonCycle,
+  getMeterHofSeasonCycles,
+  isMeterHofSeasonLive,
+  meterHofSeasonWindow,
+  resolveMeterHofSeasonCycle,
   type MeterLeaderboardCycle,
 } from './meterLeaderboardCycles'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
@@ -664,13 +665,13 @@ export async function fetchPlayerHallOfFamePastCycleBadges(
   const { counts, error } = await fetchPlayerHofCycleCountsMap(playerKey)
   if (error) return { cycles: [], error }
 
-  const cycles = METER_LEADERBOARD_CYCLES.filter(
-    (cycle) => !isMeterLeaderboardCycleLive(cycle) && (counts[cycle.id] ?? 0) > 0,
-  ).map((cycle) => ({
-    cycle,
-    recordCount: counts[cycle.id] ?? 0,
-    entries: [] as ProfileHallOfFameEntry[],
-  }))
+  const cycles = getMeterHofSeasonCycles()
+    .filter((cycle) => !isMeterHofSeasonLive(cycle) && (counts[cycle.id] ?? 0) > 0)
+    .map((cycle) => ({
+      cycle,
+      recordCount: counts[cycle.id] ?? 0,
+      entries: [] as ProfileHallOfFameEntry[],
+    }))
 
   return { cycles, error: null }
 }
@@ -690,27 +691,28 @@ export async function fetchPlayerHallOfFameForCycle(
     }
   }
 
-  const recordCount = counts[cycle.id] ?? 0
+  const season = resolveMeterHofSeasonCycle(cycle)
+  const recordCount = counts[season.id] ?? 0
   const needsEntries = !options?.countsOnly && !options?.stopAfterFirst && recordCount > 0
 
   if (!needsEntries) {
     return {
-      summary: { cycle, recordCount, entries: [] },
+      summary: { cycle: season, recordCount, entries: [] },
       error: null,
     }
   }
 
-  const window = meterLeaderboardCycleWindow(cycle)
+  const window = meterHofSeasonWindow(season)
   const res = await fetchPlayerHallOfFameFromPlayerRpc(playerKey, wikiDungeons, {
     maxScopes: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
-    leaderboardCycleId: cycle.id,
+    leaderboardCycleId: season.id,
     windowStart: window.windowStart,
     windowEnd: window.windowEnd,
   })
 
   return {
     summary: {
-      cycle,
+      cycle: season,
       recordCount,
       entries: res.entries,
     },
@@ -732,9 +734,11 @@ export async function fetchPlayerHallOfFameByCycles(
 
   const countsOnly = options?.countsOnly ?? options?.stopAfterFirst ?? false
 
+  const seasons = getMeterHofSeasonCycles()
+
   if (countsOnly) {
     return {
-      cycles: METER_LEADERBOARD_CYCLES.map((cycle) => ({
+      cycles: seasons.map((cycle) => ({
         cycle,
         recordCount: counts[cycle.id] ?? 0,
         entries: [] as ProfileHallOfFameEntry[],
@@ -744,7 +748,7 @@ export async function fetchPlayerHallOfFameByCycles(
   }
 
   const results = await Promise.all(
-    METER_LEADERBOARD_CYCLES.map((cycle) =>
+    seasons.map((cycle) =>
       fetchPlayerHallOfFameForCycle(key, wikiDungeons, cycle, {
         maxScopes: options?.maxScopes ?? METER_HOF_PROFILE_SCOPE_LIMIT,
         stopAfterFirst: options?.stopAfterFirst,
@@ -766,7 +770,7 @@ export async function fetchPlayerHallOfFameByCycles(
 }
 
 export function currentLiveHallOfFameCycle(): MeterLeaderboardCycle {
-  return getDefaultMeterLeaderboardCycle()
+  return getDefaultMeterHofSeasonCycle()
 }
 
 export function playerHallOfFameCycleSummariesForProfile(
@@ -778,10 +782,10 @@ export function playerHallOfFameCycleSummariesForProfile(
   pastCycles: PlayerHallOfFameCycleSummary[]
   allBadges: PlayerHallOfFameCycleSummary[]
 } {
-  const live = cycles.find((row) => isMeterLeaderboardCycleLive(row.cycle)) ?? null
+  const live = cycles.find((row) => isMeterHofSeasonLive(row.cycle)) ?? null
   const currentCycleEntries = live?.entries ?? []
   const pastCycles = cycles.filter(
-    (row) => !isMeterLeaderboardCycleLive(row.cycle) && row.recordCount > 0,
+    (row) => !isMeterHofSeasonLive(row.cycle) && row.recordCount > 0,
   )
   const allBadges = cycles.filter((row) => row.recordCount > 0)
   return {

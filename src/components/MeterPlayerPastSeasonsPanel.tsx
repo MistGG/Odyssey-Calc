@@ -4,8 +4,8 @@ import {
   type PlayerHallOfFameCycleSummary,
 } from '../lib/meterHallOfFame'
 import {
-  isMeterLeaderboardCycleLive,
-  METER_LEADERBOARD_CYCLES,
+  getMeterHofSeasonCycles,
+  isMeterHofSeasonLive,
   meterLeaderboardCycleShortLabel,
 } from '../lib/meterLeaderboardCycles'
 import { meterHofVariantForCycleId } from '../lib/meterHofVariant'
@@ -17,7 +17,7 @@ export function MeterPlayerPastSeasonsPanel({
   playerKey: string
 }) {
   const pastCycleDefs = useMemo(
-    () => METER_LEADERBOARD_CYCLES.filter((cycle) => !isMeterLeaderboardCycleLive(cycle)),
+    () => getMeterHofSeasonCycles().filter((cycle) => !isMeterHofSeasonLive(cycle)),
     [],
   )
   const [expanded, setExpanded] = useState(false)

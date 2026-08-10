@@ -6,7 +6,7 @@ import {
   METER_HOF_PROFILE_SCOPE_LIMIT,
 } from './meterHallOfFame'
 import {
-  getDefaultMeterLeaderboardCycle,
+  getDefaultMeterHofSeasonCycle,
   getMeterLeaderboardCycle,
 } from './meterLeaderboardCycles'
 import { normalizeRoutePlayerKey } from './meterPlayerProfile'
@@ -30,7 +30,7 @@ function hofThemeCycleId(themeId: MeterPartyBarThemeId): string | null {
   return null
 }
 
-/** Break count for a HoF reward theme card (per cycle). */
+/** Break count for a HoF reward theme card (per HoF season). */
 export function hofRecordCountForThemeId(
   themeId: MeterPartyBarThemeId,
   counts: Record<string, number>,
@@ -49,7 +49,7 @@ export async function fetchMeterPlayerHofRecordCount(
   const key = playerKey.trim().toLowerCase()
   if (!key) return { count: 0, error: null }
 
-  const cycleId = options?.cycleId?.trim() || getDefaultMeterLeaderboardCycle().id
+  const cycleId = options?.cycleId?.trim() || getDefaultMeterHofSeasonCycle().id
   const { counts, error } = await fetchPlayerHofCycleCountsMap(key)
   if (error) return { count: 0, error }
 

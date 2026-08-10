@@ -26,12 +26,6 @@ const HOF_GRANT_THEME_IDS = [
   VERDANDI_HALL_OF_FAME_THEME_ID,
 ] as const
 
-const HOF_GRANT_CYCLE_BY_THEME = {
-  [HALL_OF_FAME_THEME_ID]: 'olympus',
-  [MAGIA_HALL_OF_FAME_THEME_ID]: 'magia',
-  [VERDANDI_HALL_OF_FAME_THEME_ID]: 'verdandi',
-} as const
-
 function withHofRecordCounts(
   themes: MeterRewardTheme[],
   hofRecordCounts: Record<string, number>,
@@ -97,8 +91,7 @@ export function useMeterRewardsCatalog(
     const themes: MeterRewardTheme[] = withHofRecordCounts([...purchasedThemes], hofRecordCounts)
 
     for (const themeId of HOF_GRANT_THEME_IDS) {
-      const cycleId = HOF_GRANT_CYCLE_BY_THEME[themeId]
-      const count = hofRecordCounts[cycleId] ?? 0
+      const count = hofRecordCountForThemeId(themeId, hofRecordCounts)
       if (!userQualifiesForHallOfFameTheme(count)) continue
       const theme = getMeterPartyBarTheme(themeId)
       if (theme && !themes.some((t) => t.id === theme.id)) {

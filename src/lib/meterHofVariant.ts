@@ -9,7 +9,7 @@ import {
 /** Profile / share / overlay chrome keyed by leaderboard cycle id. */
 export function meterHofVariantForCycleId(cycleId: string | null | undefined): MeterHofOverlayVariant {
   const id = cycleId?.trim().toLowerCase()
-  if (id === 'verdandi') return 'verdandi'
+  if (id === 'verdandi' || id?.startsWith('verdandi-')) return 'verdandi'
   if (id === 'magia') return 'magia'
   return 'olympus'
 }

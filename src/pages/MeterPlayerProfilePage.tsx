@@ -31,9 +31,9 @@ import {
   type ProfileHallOfFameEntry,
 } from '../lib/meterHallOfFame'
 import {
-  getDefaultMeterLeaderboardCycle,
+  getDefaultMeterHofSeasonCycle,
+  meterHofSeasonWindow,
   meterLeaderboardCycleShortLabel,
-  meterLeaderboardCycleWindow,
 } from '../lib/meterLeaderboardCycles'
 import { meterHofVariantForCycleId } from '../lib/meterHofVariant'
 import {
@@ -66,11 +66,11 @@ export function MeterPlayerProfilePage() {
   const playerKey = normalizeRoutePlayerKey(playerKeyParam ?? '')
   const [boot] = useState(() => {
     const key = normalizeRoutePlayerKey(playerKeyParam ?? '')
-    const cycle = getDefaultMeterLeaderboardCycle()
+    const hofCycle = getDefaultMeterHofSeasonCycle()
     return {
-      cached: key ? readCachedPlayerProfile(key, cycle.id) : null,
-      cycleId: cycle.id,
-      cycleLabel: meterLeaderboardCycleShortLabel(cycle),
+      cached: key ? readCachedPlayerProfile(key, hofCycle.id) : null,
+      hofCycleId: hofCycle.id,
+      hofCycleLabel: meterLeaderboardCycleShortLabel(hofCycle),
     }
   })
 
@@ -89,10 +89,10 @@ export function MeterPlayerProfilePage() {
     () => boot.cached?.hofEntries ?? [],
   )
   const [hofCurrentCycleId, setHofCurrentCycleId] = useState(
-    () => boot.cached?.hofCurrentCycleId ?? boot.cycleId,
+    () => boot.cached?.hofCurrentCycleId ?? boot.hofCycleId,
   )
   const [hofCurrentCycleShortLabel, setHofCurrentCycleShortLabel] = useState(
-    () => boot.cached?.hofCurrentCycleShortLabel ?? boot.cycleLabel,
+    () => boot.cached?.hofCurrentCycleShortLabel ?? boot.hofCycleLabel,
   )
   const [hofCurrentSeasonCount, setHofCurrentSeasonCount] = useState(
     () => boot.cached?.hofCurrentSeasonCount ?? 0,
@@ -114,8 +114,9 @@ export function MeterPlayerProfilePage() {
       setSeasonTierCycleLabel(row?.cycleLabel ?? '')
     })
 
-    const cycle = getDefaultMeterLeaderboardCycle()
-    const cached = readCachedPlayerProfile(playerKey, cycle.id)
+    const hofCycle = getDefaultMeterHofSeasonCycle()
+    const seasonWindow = meterHofSeasonWindow(hofCycle)
+    const cached = readCachedPlayerProfile(playerKey, hofCycle.id)
     if (cached) {
       setLeaderboardEntries(cached.entries)
       setScopeLeaderboardPools(deserializeScopeLeaderboardPools(cached.scopePools))
@@ -135,8 +136,8 @@ export function MeterPlayerProfilePage() {
       setHofLoading(true)
       setHofError(null)
       setHofEntries([])
-      setHofCurrentCycleId(cycle.id)
-      setHofCurrentCycleShortLabel(meterLeaderboardCycleShortLabel(cycle))
+      setHofCurrentCycleId(hofCycle.id)
+      setHofCurrentCycleShortLabel(meterLeaderboardCycleShortLabel(hofCycle))
       setHofCurrentSeasonCount(0)
     }
 
@@ -147,7 +148,7 @@ export function MeterPlayerProfilePage() {
 
       const [leaderboardRes, hofRes] = await Promise.all([
         fetchPlayerMeterLeaderboardEntries(playerKey),
-        fetchPlayerHallOfFameForCycle(playerKey, dungeons, cycle),
+        fetchPlayerHallOfFameForCycle(playerKey, dungeons, hofCycle),
       ])
       if (cancelled) return
 
@@ -158,17 +159,16 @@ export function MeterPlayerProfilePage() {
       }
       setLeaderboardEntries(leaderboardRes.entries)
 
-      const cycleWindow = meterLeaderboardCycleWindow(cycle)
       const cycleEntries = filterLeaderboardEntriesInCycleWindow(
         leaderboardRes.entries,
-        cycleWindow.windowStart,
-        cycleWindow.windowEnd,
+        seasonWindow.windowStart,
+        seasonWindow.windowEnd,
       )
       const bestFromEntries = buildPlayerBestParsesFromLeaderboardEntries(cycleEntries, dungeons)
       const pools = await buildScopeLeaderboardDpsPoolsFromPrecomputed(bestFromEntries, {
-        leaderboardCycleId: cycle.id,
-        windowStart: cycleWindow.windowStart,
-        windowEnd: cycleWindow.windowEnd,
+        leaderboardCycleId: hofCycle.id,
+        windowStart: seasonWindow.windowStart,
+        windowEnd: seasonWindow.windowEnd,
       })
       if (cancelled) return
       setScopeLeaderboardPools(pools)
@@ -176,8 +176,8 @@ export function MeterPlayerProfilePage() {
 
       let nextHofEntries: ProfileHallOfFameEntry[] = []
       let nextHofSeasonCount = 0
-      let nextHofCycleId = cycle.id
-      let nextHofCycleLabel = meterLeaderboardCycleShortLabel(cycle)
+      let nextHofCycleId = hofCycle.id
+      let nextHofCycleLabel = meterLeaderboardCycleShortLabel(hofCycle)
 
       if (hofRes.error) {
         if (!cached) setHofError(hofRes.error)
@@ -200,7 +200,7 @@ export function MeterPlayerProfilePage() {
       if (!leaderboardRes.error) {
         writeCachedPlayerProfile({
           playerKey,
-          cycleId: cycle.id,
+          cycleId: hofCycle.id,
           entries: leaderboardRes.entries,
           scopePools: serializeScopeLeaderboardPools(pools),
           hofEntries: hofRes.error ? (cached?.hofEntries ?? []) : nextHofEntries,
@@ -225,7 +225,7 @@ export function MeterPlayerProfilePage() {
   }, [nav?.displayName, leaderboardEntries, playerKey])
 
   const currentCycleWindow = useMemo(
-    () => meterLeaderboardCycleWindow(getDefaultMeterLeaderboardCycle()),
+    () => meterHofSeasonWindow(getDefaultMeterHofSeasonCycle()),
     [],
   )
 
