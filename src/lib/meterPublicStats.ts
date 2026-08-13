@@ -13,6 +13,7 @@ import {
   type MeterPartyMemberStored,
 } from './meterParsePayload'
 import { collapseCoUploadedParseRows, excludeSupersededCoUploadParses } from './meterCoUploadMerge'
+import { canonicalMeterPlayerIdentity } from './meterPlayerAliases'
 import { dpsToPercentile, parseScoreColor } from './meterParseScoreColor'
 import {
   digimonIdToBucket,
@@ -175,13 +176,13 @@ export function aggregatePublicMeterStats(
       if (!bucket) continue
       const primaryDigimonId = memberPrimaryDigimonId(member, digimonRoleById)
       const dps = memberDpsInParse(member, row.payload, row.duration_sec, members, digimonRoleById)
-      const pKey = normalizePlayerKey(member)
-      const prev = playerBest[bucket].get(pKey)
+      const identity = canonicalMeterPlayerIdentity(normalizePlayerKey(member), playerDisplayName(member))
+      const prev = playerBest[bucket].get(identity.playerKey)
       if (!prev || dps > prev.dps) {
         const topDg = memberTopDigimonUsed(member, digimonRoleById)
-        playerBest[bucket].set(pKey, {
-          playerKey: pKey,
-          displayName: playerDisplayName(member),
+        playerBest[bucket].set(identity.playerKey, {
+          playerKey: identity.playerKey,
+          displayName: identity.displayName,
           dps,
           digimonId: topDg?.digimonId ?? '',
           digimonName: topDg?.digimonName ?? '',

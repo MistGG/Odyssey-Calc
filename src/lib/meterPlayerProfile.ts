@@ -22,17 +22,25 @@ import { fetchPrecomputedMeterLeaderboard } from './meterLeaderboardPrecomputed'
 import type { PlayerLeaderboardEntryRow } from './meterDataSource'
 import { difficultySelectOptions, dungeonSelectOptions } from './wikiDungeons'
 import type { WikiDungeonListItem } from '../types/wikiApi'
+import {
+  canonicalMeterPlayerIdentity,
+  canonicalMeterPlayerKey,
+  normalizeMeterPlayerKey,
+} from './meterPlayerAliases'
 
-export function meterPlayerProfilePath(playerKey: string): string {
-  return `/meter/player/${encodeURIComponent(playerKey.trim().toLowerCase())}`
-}
+export {
+  canonicalMeterPlayerKey,
+  canonicalMeterPlayerIdentity,
+  collapseAliasedPlayerRanks,
+  METER_PLAYER_KEY_ALIASES,
+} from './meterPlayerAliases'
 
 export function normalizeRoutePlayerKey(raw: string): string {
-  try {
-    return decodeURIComponent(raw).trim().toLowerCase()
-  } catch {
-    return raw.trim().toLowerCase()
-  }
+  return normalizeMeterPlayerKey(raw)
+}
+
+export function meterPlayerProfilePath(playerKey: string): string {
+  return `/meter/player/${encodeURIComponent(canonicalMeterPlayerKey(playerKey))}`
 }
 
 export const METER_PROFILE_IDENTITY_NOTICE =
@@ -49,9 +57,10 @@ export function selfTamerFromMember(member: MeterPartyMemberStored): SignedInMet
   if (!member.isSelf) return null
   const displayName = playerDisplayName(member)
   if (!displayName) return null
+  const identity = canonicalMeterPlayerIdentity(normalizePlayerKey(member), displayName)
   return {
-    playerKey: normalizePlayerKey(member),
-    displayName,
+    playerKey: identity.playerKey,
+    displayName: identity.displayName,
     confirmedFromUpload: true,
   }
 }
@@ -111,11 +120,14 @@ export function resolveSignedInMeterIdentities(
 ): SignedInMeterIdentity[] {
   const confirmedKey =
     options?.confirmedPlayerKeys
-      ?.map((k) => k?.trim().toLowerCase() || '')
+      ?.map((k) => (k ? canonicalMeterPlayerKey(k) : ''))
       .find(Boolean) || null
   const confirmedDisplayName =
     options?.confirmedDisplayNames?.map((n) => n?.trim() || '').find(Boolean) || null
-  const confirmedDisplayKey = confirmedDisplayName?.toLowerCase() || null
+  const confirmedDisplayIdentity = confirmedDisplayName
+    ? canonicalMeterPlayerIdentity(confirmedDisplayName, confirmedDisplayName)
+    : null
+  const confirmedDisplayKey = confirmedDisplayIdentity?.playerKey || null
 
   // One authoritative confirmed identity — never union a divergent cache name with the DB key.
   const authoritativeKey = confirmedKey || confirmedDisplayKey
@@ -129,15 +141,15 @@ export function resolveSignedInMeterIdentities(
     if (existing) {
       existing.confirmedFromUpload = true
       if (
-        confirmedDisplayName &&
+        confirmedDisplayIdentity &&
         confirmedDisplayKey === authoritativeKey &&
-        confirmedDisplayName !== existing.displayName
+        confirmedDisplayIdentity.displayName !== existing.displayName
       ) {
-        existing.displayName = confirmedDisplayName
+        existing.displayName = confirmedDisplayIdentity.displayName
       }
     } else {
       const displayName =
-        (confirmedDisplayKey === authoritativeKey ? confirmedDisplayName : null) ||
+        (confirmedDisplayKey === authoritativeKey ? confirmedDisplayIdentity?.displayName : null) ||
         (profileKey === authoritativeKey ? profileName : null) ||
         authoritativeKey
       byKey.set(authoritativeKey, {

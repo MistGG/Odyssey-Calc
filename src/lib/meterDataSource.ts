@@ -18,6 +18,7 @@ import {
 } from './meterParseDigimonNames'
 import { fetchDigimonRoleMap } from './meterRoleBuckets'
 import { mapPool } from './meterPlayerProfile'
+import { canonicalMeterPlayerIdentity, canonicalMeterPlayerKey } from './meterPlayerAliases'
 import type { MeterUploadScope } from './meterScopeList'
 
 
@@ -609,14 +610,14 @@ function mapPlayerLeaderboardRpcRow(
   if (!parseId || !dungeonId || difficultyId < 2) return null
   const dps = Number(row.dps) || 0
   if (dps <= 0) return null
-  const key = row.player_key?.trim().toLowerCase() ?? fallbackKey
+  const identity = canonicalMeterPlayerIdentity(row.player_key?.trim() || fallbackKey, row.display_name)
   return {
     parseId,
     dungeonId,
     difficultyId,
     roleBucket: role,
-    playerKey: key,
-    displayName: row.display_name?.trim() || key,
+    playerKey: identity.playerKey,
+    displayName: identity.displayName,
     dps,
     digimonId: row.digimon_id?.trim() ?? '',
     digimonName: row.digimon_name?.trim() ?? '',
@@ -633,7 +634,7 @@ export async function fetchPlayerMeterLeaderboardEntries(
   const supabase = getMeterAnonSupabase()
   if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
 
-  const key = playerKey.trim().toLowerCase()
+  const key = canonicalMeterPlayerKey(playerKey)
   if (!key) return { entries: [], error: null }
 
   const { data, error } = await supabase.rpc('get_meter_player_leaderboard_entries', {

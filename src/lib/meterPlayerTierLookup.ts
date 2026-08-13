@@ -1,3 +1,4 @@
+import { canonicalMeterPlayerKey, METER_PLAYER_KEY_ALIASES } from './meterPlayerAliases'
 import type { PlayerTierId } from './meterPlayerTiers'
 import { PLAYER_TIER_IDS } from './meterPlayerTiers'
 
@@ -25,6 +26,15 @@ function isTierId(value: string): value is PlayerTierId {
   return TIER_SET.has(value)
 }
 
+function betterPlayerTier(
+  a: PlayerTierId | undefined,
+  b: PlayerTierId | undefined,
+): PlayerTierId | undefined {
+  if (!a) return b
+  if (!b) return a
+  return PLAYER_TIER_IDS.indexOf(a) <= PLAYER_TIER_IDS.indexOf(b) ? a : b
+}
+
 async function loadTierLookup(): Promise<TierLookup | null> {
   try {
     const res = await fetch(DATA_URL, { cache: 'force-cache' })
@@ -35,6 +45,12 @@ async function loadTierLookup(): Promise<TierLookup | null> {
       const key = rawKey.trim().toLowerCase()
       if (!key || !isTierId(rawTier)) continue
       byPlayer.set(key, rawTier)
+    }
+    for (const [fromKey, toKey] of Object.entries(METER_PLAYER_KEY_ALIASES)) {
+      const merged = betterPlayerTier(byPlayer.get(toKey), byPlayer.get(fromKey))
+      if (!merged) continue
+      byPlayer.set(toKey, merged)
+      byPlayer.set(fromKey, merged)
     }
     return { cycleLabel: json.cycleLabel || json.cycleId || '', byPlayer }
   } catch {
@@ -51,11 +67,11 @@ function getLookup(): Promise<TierLookup | null> {
 export async function fetchPlayerSeasonTier(
   playerKey: string,
 ): Promise<{ tier: PlayerTierId; cycleLabel: string } | null> {
-  const key = playerKey.trim().toLowerCase()
+  const key = canonicalMeterPlayerKey(playerKey)
   if (!key) return null
   const lookup = await getLookup()
   if (!lookup) return null
-  const tier = lookup.byPlayer.get(key)
+  const tier = lookup.byPlayer.get(key) ?? lookup.byPlayer.get(playerKey.trim().toLowerCase())
   if (!tier) return null
   return { tier, cycleLabel: lookup.cycleLabel }
 }

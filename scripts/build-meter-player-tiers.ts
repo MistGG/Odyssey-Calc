@@ -20,6 +20,7 @@ import {
   type PlayerTierHofCounts,
 } from '../src/lib/meterPlayerTiers'
 import { METER_ROLE_BUCKET_LABELS, type MeterRoleBucket } from '../src/lib/meterRoleBuckets'
+import { canonicalMeterPlayerIdentity, METER_PLAYER_KEY_ALIASES } from '../src/lib/meterPlayerAliases'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const envPath = resolve(root, '.env.local')
@@ -101,13 +102,13 @@ while (true) {
   if (!rows.length) break
   for (const row of rows) {
     const role = asRole(row.role_bucket)
-    const playerKey = String(row.player_key ?? '').trim().toLowerCase()
+    const identity = canonicalMeterPlayerIdentity(String(row.player_key ?? ''), String(row.display_name ?? ''))
     const dungeonId = String(row.dungeon_id ?? '').trim()
     const dps = Number(row.dps)
-    if (!role || !playerKey || !dungeonId || !(dps > 0)) continue
+    if (!role || !identity.playerKey || !dungeonId || !(dps > 0)) continue
     entries.push({
-      playerKey,
-      displayName: String(row.display_name ?? playerKey).trim() || playerKey,
+      playerKey: identity.playerKey,
+      displayName: identity.displayName,
       dps,
       roleBucket: role,
       dungeonId,
@@ -163,17 +164,17 @@ const hofCountsByPlayer: Record<string, PlayerTierHofCounts> = {}
       const role = asRole(row.role_bucket)
       const dps = Number(row.dps) || 0
       const parseId = String(row.parse_id ?? '').trim()
-      const playerKey = String(row.player_key ?? '').trim().toLowerCase()
+      const identity = canonicalMeterPlayerIdentity(String(row.player_key ?? ''), String(row.display_name ?? ''))
       const dungeonId = String(row.dungeon_id ?? '').trim()
       const difficultyId = Number(row.difficulty_id) || 0
-      if (!role || dps <= 0 || !parseId || !playerKey || !dungeonId || difficultyId < 2) return null
+      if (!role || dps <= 0 || !parseId || !identity.playerKey || !dungeonId || difficultyId < 2) return null
       return {
         roleBucket: role,
         roleLabel: METER_ROLE_BUCKET_LABELS[role],
         parseId,
         achievedAt: row.created_at ?? '',
-        playerKey,
-        displayName: String(row.display_name ?? playerKey).trim() || playerKey,
+        playerKey: identity.playerKey,
+        displayName: identity.displayName,
         dps,
         digimonId: String(row.digimon_id ?? '').trim(),
         digimonName: String(row.digimon_name ?? '').trim(),
@@ -221,6 +222,10 @@ const lookup = {
   cycleId: snapshot.cycleId,
   cycleLabel: snapshot.cycleLabel,
   tiers: Object.fromEntries(snapshot.players.map((p) => [p.playerKey, p.tier])),
+}
+for (const [fromKey, toKey] of Object.entries(METER_PLAYER_KEY_ALIASES)) {
+  const tier = lookup.tiers[toKey]
+  if (tier) lookup.tiers[fromKey] = tier
 }
 
 const outDir = resolve(root, 'public/data')

@@ -9,6 +9,7 @@ import {
   type MeterLeaderboardCycle,
 } from './meterLeaderboardCycles'
 import { applyOfficialNamesToPlayerRankEntries } from './meterParseDigimonNames'
+import { canonicalMeterPlayerIdentity, canonicalMeterPlayerKey } from './meterPlayerAliases'
 import { dpsToPercentile } from './meterParseScoreColor'
 import type { PlayerRankEntry } from './meterPublicStats'
 import {
@@ -280,15 +281,15 @@ function mapHofGoldRpcRow(row: HofGoldRpcRow): Omit<MeterHallOfFameEntry, 'curre
   if (dps <= 0) return null
   const parseId = row.parse_id?.trim?.() ?? String(row.parse_id ?? '').trim()
   if (!parseId) return null
-  const playerKey = row.player_key?.trim().toLowerCase() ?? ''
-  if (!playerKey) return null
+  const identity = canonicalMeterPlayerIdentity(row.player_key, row.display_name)
+  if (!identity.playerKey) return null
   return {
     roleBucket: role,
     roleLabel: METER_ROLE_BUCKET_LABELS[role],
     parseId,
     achievedAt: row.created_at ?? '',
-    playerKey,
-    displayName: row.display_name?.trim() || playerKey,
+    playerKey: identity.playerKey,
+    displayName: identity.displayName,
     dps,
     digimonId: row.digimon_id?.trim() ?? '',
     digimonName: row.digimon_name?.trim() ?? '',
@@ -438,7 +439,7 @@ async function fetchPlayerMeterScopes(
   const supabase = getMeterAnonSupabase()
   if (!supabase) return []
 
-  const key = playerKey.trim().toLowerCase()
+  const key = canonicalMeterPlayerKey(playerKey)
   const { data, error } = await supabase.rpc('get_meter_player_scopes', {
     p_player_key: key,
     p_limit: limit,
@@ -491,7 +492,7 @@ async function fetchPlayerHallOfFameFromPlayerRpc(
   const supabase = getMeterAnonSupabase()
   if (!supabase) return { entries: [], error: 'Supabase is not configured.' }
 
-  const key = playerKey.trim().toLowerCase()
+  const key = canonicalMeterPlayerKey(playerKey)
   if (!key) return { entries: [], error: null }
 
   const { data, error } = await supabase.rpc('get_meter_player_hof_gold_breaks', {
@@ -637,7 +638,7 @@ export async function fetchPlayerHofCycleCountsMap(
   const supabase = getMeterAnonSupabase()
   if (!supabase) return { counts: {}, error: 'Supabase is not configured.' }
 
-  const key = playerKey.trim().toLowerCase()
+  const key = canonicalMeterPlayerKey(playerKey)
   if (!key) return { counts: {}, error: null }
 
   const { data, error } = await supabase.rpc('get_meter_player_hof_cycle_counts', {

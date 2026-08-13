@@ -1,7 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MeterSubNav } from '../components/MeterSubNav'
-import { meterPlayerProfilePath, normalizeRoutePlayerKey } from '../lib/meterPlayerProfile'
+import {
+  canonicalMeterPlayerKey,
+  meterPlayerProfilePath,
+  normalizeRoutePlayerKey,
+} from '../lib/meterPlayerProfile'
 
 export function MeterTamerSearchPage() {
   const navigate = useNavigate()
@@ -10,9 +14,12 @@ export function MeterTamerSearchPage() {
   const submit = (e?: FormEvent) => {
     e?.preventDefault()
     const trimmed = query.trim()
-    const key = normalizeRoutePlayerKey(trimmed)
-    if (!key) return
-    navigate(meterPlayerProfilePath(key), { state: { displayName: trimmed } })
+    const rawKey = normalizeRoutePlayerKey(trimmed)
+    if (!rawKey) return
+    const key = canonicalMeterPlayerKey(rawKey)
+    navigate(meterPlayerProfilePath(key), {
+      state: rawKey === key ? { displayName: trimmed } : undefined,
+    })
   }
 
   return (

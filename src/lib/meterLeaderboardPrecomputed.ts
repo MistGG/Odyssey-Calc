@@ -1,4 +1,5 @@
 import { getMeterAnonSupabase } from './meterDataSource'
+import { collapseAliasedPlayerRanks, canonicalMeterPlayerIdentity } from './meterPlayerAliases'
 import {
   getCachedLeaderboardStats,
   setCachedLeaderboardStats,
@@ -61,9 +62,10 @@ function isRoleBucket(value: string): value is MeterRoleBucket {
 }
 
 function mapPlayerRow(row: PlayerRow): PlayerRankEntry {
+  const identity = canonicalMeterPlayerIdentity(row.player_key, row.display_name)
   return {
-    playerKey: row.player_key,
-    displayName: row.display_name || row.player_key,
+    playerKey: identity.playerKey,
+    displayName: identity.displayName,
     dps: Number(row.dps) || 0,
     digimonId: row.digimon_id ?? '',
     digimonName: row.digimon_name ?? '',
@@ -152,10 +154,9 @@ async function fetchPrecomputedMeterLeaderboardUncached(
   const sortedDpsByBucket = emptyBucketRecord<number[]>()
 
   for (const bucket of METER_ROLE_BUCKETS) {
-    const entries = players
-      .filter((row) => row.role_bucket === bucket)
-      .map(mapPlayerRow)
-      .sort((a, b) => b.dps - a.dps)
+    const entries = collapseAliasedPlayerRanks(
+      players.filter((row) => row.role_bucket === bucket).map(mapPlayerRow),
+    )
     playersByBucket[bucket] = entries
     sortedDpsByBucket[bucket] = entries.map((e) => e.dps).sort((a, b) => a - b)
   }

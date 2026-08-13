@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { useSignedInMeterProfile } from '../hooks/useSignedInMeterProfile'
 import { MeterPlayerProfileCard } from '../components/MeterPlayerProfileCard'
@@ -20,6 +20,8 @@ import {
   displayNameFromLeaderboardEntries,
   filterLeaderboardEntriesInCycleWindow,
   leaderboardDpsPoolForBestEntry,
+  canonicalMeterPlayerKey,
+  meterPlayerProfilePath,
   METER_PROFILE_IDENTITY_NOTICE,
   normalizeRoutePlayerKey,
   sortPlayerBestParsesByParseScore,
@@ -63,9 +65,10 @@ export function MeterPlayerProfilePage() {
   const location = useLocation()
   const nav = (location.state as ProfileLocationState | null) ?? null
 
-  const playerKey = normalizeRoutePlayerKey(playerKeyParam ?? '')
+  const routePlayerKey = normalizeRoutePlayerKey(playerKeyParam ?? '')
+  const playerKey = canonicalMeterPlayerKey(routePlayerKey)
   const [boot] = useState(() => {
-    const key = normalizeRoutePlayerKey(playerKeyParam ?? '')
+    const key = canonicalMeterPlayerKey(playerKeyParam ?? '')
     const hofCycle = getDefaultMeterHofSeasonCycle()
     return {
       cached: key ? readCachedPlayerProfile(key, hofCycle.id) : null,
@@ -349,6 +352,10 @@ export function MeterPlayerProfilePage() {
     playerKey,
     nav?.ownProfile,
   ])
+
+  if (routePlayerKey && routePlayerKey !== playerKey) {
+    return <Navigate to={meterPlayerProfilePath(playerKey)} replace />
+  }
 
   if (!playerKey) {
     return (

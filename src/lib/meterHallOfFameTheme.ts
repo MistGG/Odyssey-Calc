@@ -9,7 +9,7 @@ import {
   getDefaultMeterHofSeasonCycle,
   getMeterLeaderboardCycle,
 } from './meterLeaderboardCycles'
-import { normalizeRoutePlayerKey } from './meterPlayerProfile'
+import { canonicalMeterPlayerKey } from './meterPlayerProfile'
 import { fetchStoredConfirmedPlayerKey } from './meterPointGrants'
 import type { OlympusHofBreakForGrant } from './meterPointGrants'
 import type { WikiDungeonListItem } from '../types/wikiApi'
@@ -103,9 +103,9 @@ export async function resolveMeterPlayerKeyForHof(
   profileDisplayName: string | null,
 ): Promise<string | null> {
   const stored = await fetchStoredConfirmedPlayerKey(client)
-  if (stored) return stored
+  if (stored) return canonicalMeterPlayerKey(stored)
   const name = profileDisplayName?.trim()
-  return name ? normalizeRoutePlayerKey(name) : null
+  return name ? canonicalMeterPlayerKey(name) : null
 }
 
 export function userQualifiesForHallOfFameTheme(recordCount: number): boolean {

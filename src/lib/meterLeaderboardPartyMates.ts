@@ -1,6 +1,7 @@
 import { digimonPortraitUrl } from './digimonImage'
 import { resolveEffectiveDigimonIdentity } from './resolveDigimonAlternateStructure'
 import { getMeterAnonSupabase } from './meterDataSource'
+import { canonicalMeterPlayerIdentity } from './meterPlayerAliases'
 import { fetchWikiDigimonCatalog, METER_ROLE_BUCKETS, wikiRoleToBucket, type MeterRoleBucket } from './meterRoleBuckets'
 
 export type PlayerPartyMateIcon = {
@@ -179,14 +180,15 @@ export async function fetchLeaderboardPartyMates(params: {
   const leaderboardMateKeys = new Set<string>()
   for (const raw of (data ?? []) as PartyMateRow[]) {
     if (!isRoleBucket(raw.role_bucket)) continue
-    const playerKey = raw.player_key?.trim().toLowerCase()
-    const mateKey = raw.mate_player_key?.trim().toLowerCase()
+    const playerKey = canonicalMeterPlayerIdentity(raw.player_key).playerKey
+    const mate = canonicalMeterPlayerIdentity(raw.mate_player_key, raw.mate_display_name)
+    const mateKey = mate.playerKey
     const digimonId = raw.digimon_id?.trim()
     if (!playerKey || !mateKey || !digimonId) continue
 
     const bucketMap = byBucket[raw.role_bucket]
     const prev = bucketMap[playerKey] ?? EMPTY_PARTY_SNAPSHOT
-    if (prev.mates.some((mate) => mate.playerKey === mateKey)) continue
+    if (prev.mates.some((existing) => existing.playerKey === mateKey)) continue
 
     const skillKeys = parseSkillKeys(raw.skill_keys)
     const mateMapKey = `${raw.role_bucket}:${playerKey}:${mateKey}`
@@ -203,7 +205,7 @@ export async function fetchLeaderboardPartyMates(params: {
         ...prev.mates,
         {
           playerKey: mateKey,
-          displayName: raw.mate_display_name?.trim() || mateKey,
+          displayName: mate.displayName,
           digimonId,
           digimonName: raw.digimon_name?.trim() || digimonId,
           iconId: raw.icon_id,

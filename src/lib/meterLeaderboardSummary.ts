@@ -1,4 +1,5 @@
 import { getMeterAnonSupabase } from './meterDataSource'
+import { canonicalMeterPlayerIdentity } from './meterPlayerAliases'
 
 const METER_PARSES_PUBLIC_TABLE = 'meter_parses_public'
 import type { DigimonBarEntry, PlayerRankEntry, MeterPublicAggregates } from './meterPublicStats'
@@ -106,9 +107,9 @@ export function buildEntriesFromParseSummaries(
   const out: SummaryLeaderboardEntry[] = []
   for (const parse of parses) {
     for (const member of parse.summary.members) {
-      const playerKey = member.playerKey?.trim().toLowerCase()
+      const identity = canonicalMeterPlayerIdentity(member.playerKey, member.displayName)
       const dps = Number(member.dps) || 0
-      if (!playerKey || dps <= 0) continue
+      if (!identity.playerKey || dps <= 0) continue
       const roleBucket = resolveSummaryMemberRole(member, digimonRoleById)
       if (!roleBucket) continue
       out.push({
@@ -116,8 +117,8 @@ export function buildEntriesFromParseSummaries(
         achievedAt: parse.createdAt,
         roleBucket,
         roleLabel: METER_ROLE_BUCKET_LABELS[roleBucket],
-        playerKey,
-        displayName: member.displayName?.trim() || playerKey,
+        playerKey: identity.playerKey,
+        displayName: identity.displayName,
         dps,
         digimonId: member.digimonId ?? '',
         digimonName: member.digimonName ?? '',
