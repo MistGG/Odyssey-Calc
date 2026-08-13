@@ -21,10 +21,10 @@ export function canonicalMeterPlayerKey(raw: string): string {
 }
 
 export function canonicalMeterPlayerIdentity(
-  playerKey: string,
-  displayName?: string,
+  playerKey: string | null | undefined,
+  displayName?: string | null,
 ): { playerKey: string; displayName: string } {
-  const rawKey = normalizeMeterPlayerKey(playerKey)
+  const rawKey = normalizeMeterPlayerKey(playerKey ?? '')
   const key = canonicalMeterPlayerKey(rawKey)
   const aliased = key !== rawKey
   const canonicalDisplay = CANONICAL_DISPLAY_NAMES[key]
