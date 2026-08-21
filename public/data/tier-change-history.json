@@ -1,6 +1,595 @@
 {
-  "updated_at": "2026-08-21T15:00:36.260Z",
+  "updated_at": "2026-08-21T15:26:11.819Z",
   "runs": [
+    {
+      "id": "2026-08-21T15:26:11.840Z-ngdgq0",
+      "finishedAt": "2026-08-21T15:26:11.840Z",
+      "mode": "force",
+      "refreshedCount": 469,
+      "apiCount": 19,
+      "tierCount": 20,
+      "sampleDigimon": [
+        {
+          "id": "d8tqj96",
+          "name": "Digmon",
+          "cause": "api"
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "cause": "api"
+        },
+        {
+          "id": "dkn5pci",
+          "name": "Examon",
+          "cause": "api"
+        },
+        {
+          "id": "d1fozle5",
+          "name": "Flybeemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "cause": "api"
+        },
+        {
+          "id": "d76d61m",
+          "name": "Gargomon",
+          "cause": "api"
+        },
+        {
+          "id": "d189uuci",
+          "name": "Holsmon",
+          "cause": "api"
+        },
+        {
+          "id": "d16lihoe",
+          "name": "Lighdramon",
+          "cause": "api"
+        },
+        {
+          "id": "d104y2rc",
+          "name": "Lilithmon",
+          "cause": "api"
+        },
+        {
+          "id": "doa5jy",
+          "name": "Magnamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "dkkjn9r",
+          "name": "Toucanmon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1fozle5": [
+          "Rank: 5 -> 6",
+          "HP: 12965 -> 12425",
+          "Attack: 7188 -> 6878",
+          "Stats.ds: 14331 -> 13670",
+          "Stats.defense: 340 -> 327"
+        ],
+        "d1tvr03j": [
+          "Rank: 5 -> 6",
+          "HP: 21587 -> 18795",
+          "Attack: 10865 -> 10554",
+          "Stats.ds: 21450 -> 20789",
+          "Stats.defense: 539 -> 526",
+          "Skill Fire Rocket base_dmg: 14352 -> 13491",
+          "Skill Fire Rocket scaling: 1722 -> 1619",
+          "Skill Kunckle Fire base_dmg: 19233 -> 18079"
+        ],
+        "d76d61m": [
+          "Rank: 5 -> 6",
+          "HP: 12926 -> 12386",
+          "Attack: 7209 -> 6899",
+          "Stats.ds: 14155 -> 13494",
+          "Stats.defense: 336 -> 323"
+        ],
+        "d189uuci": [
+          "HP: 23979 -> 23304",
+          "Attack: 3903 -> 3782",
+          "Stats.ds: 49972 -> 48541",
+          "Stats.defense: 615 -> 601",
+          "Skill Red Sun ds_cost: 82 -> 208",
+          "Skill Mach Impulse ds_cost: 110 -> 448",
+          "Skill Eagle Warcry ds_cost: 6550 -> 6450"
+        ],
+        "d16lihoe": [
+          "HP: 18570 -> 18030",
+          "Attack: 5289 -> 5087",
+          "Stats.ds: 40648 -> 38961",
+          "Stats.defense: 513 -> 500",
+          "Skill Blue Thunder base_dmg: 3258 -> 3128",
+          "Skill Blue Thunder scaling: 293 -> 281",
+          "Skill Lightning Blade base_dmg: 15863 -> 15228",
+          "Skill Lightning Blade scaling: 1192 -> 1144"
+        ],
+        "d104y2rc": [
+          "HP: 18411 -> 20695",
+          "Attack: 5483 -> 5914",
+          "Stats.ds: 40500 -> 42525",
+          "Stats.defense: 501 -> 570",
+          "Stats.crit_rate: 4422 -> 5749",
+          "Stats.evasion: 3586 -> 4662",
+          "Stats.hit_rate: 1108 -> 1440",
+          "Stats.dex: 1171 -> 1522"
+        ],
+        "doa5jy": [
+          "HP: 18620 -> 18080",
+          "Attack: 7668 -> 7357",
+          "Stats.ds: 14731 -> 14070",
+          "Stats.defense: 4183 -> 4170"
+        ],
+        "dkkjn9r": [
+          "Rank: 5 -> 6",
+          "HP: 13069 -> 12529",
+          "Attack: 7170 -> 6860",
+          "Stats.ds: 14155 -> 13494",
+          "Stats.defense: 336 -> 323"
+        ],
+        "d60dn5t": [
+          "Rank: 5 -> 6",
+          "HP: 18492 -> 17682",
+          "Attack: 5118 -> 4902",
+          "Stats.ds: 24557 -> 23410",
+          "Stats.defense: 617 -> 590"
+        ],
+        "d16e4fy1": [
+          "Skill Gale Lance ds_cost: 700 -> 208",
+          "Skill Tempest Storm ds_cost: 1200 -> 448"
+        ],
+        "d1jinqt3": [
+          "Skill Exhaust Flame scaling: 113 -> 456",
+          "Skill Plasma Blade scaling: 72 -> 290"
+        ],
+        "d1rs2wlk": [
+          "Skill Fire Mitt scaling: 18 -> 99",
+          "Skill Fireball scaling: 66 -> 265",
+          "Skill Hazard's Glimpse scaling: 138 -> 207"
+        ],
+        "d1dnnjni": [
+          "Skill Dark Despair base_dmg: 5244 -> 5595",
+          "Skill Dark Despair scaling: 472 -> 503",
+          "Skill Chaos Degrade base_dmg: 17094 -> 18239",
+          "Skill Chaos Degrade scaling: 1025 -> 1094",
+          "Skill Holy Desire base_dmg: 24697 -> 26352",
+          "Skill Holy Desire scaling: 1728 -> 1844",
+          "Skill Twilight Severance base_dmg: 109649 -> 116996",
+          "Skill Twilight Severance scaling: 5483 -> 5850"
+        ],
+        "dko51ol": [
+          "Skill Grace Cross Freezer scaling: 479 -> 718",
+          "Skill Cocytus Breath scaling: 1179 -> 1768",
+          "Skill Garuru Burst cooldown: 10 -> 6.5"
+        ],
+        "d1ja7r7v": [
+          "Skill Supreme Cannon base_dmg: 63844 -> 69029",
+          "Skill Supreme Cannon scaling: 7657 -> 8278"
+        ],
+        "dk8fjur": [
+          "Skill Double Edge Sigma scaling: 105 -> 422",
+          "Skill Atomic Megalo Blaster scaling: 175 -> 703"
+        ],
+        "d1ajjnwd": [
+          "Skill Digitalize of Soul scaling: 1472 -> 2208",
+          "Skill Kyukyoku Senjin Ouryuken scaling: 1833 -> 2750",
+          "Skill Seiken Grandalpha scaling: 4950 -> 7425"
+        ],
+        "dd3xj39": [
+          "Skill Shining V Force scaling: 1472 -> 2208",
+          "Skill Dragon Impulse scaling: 4740 -> 7110"
+        ],
+        "d8tqj96": [
+          "HP: 38552 -> 37540",
+          "Attack: 4603 -> 4468",
+          "Stats.ds: 20741 -> 20080",
+          "Stats.defense: 2027 -> 1986",
+          "Skill Gold Rush scaling: 495 -> 738",
+          "Skill Drill Revolution scaling: 1215 -> 1818"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1fozle5",
+          "name": "Flybeemon",
+          "lines": [
+            "Rank: 5 -> 6",
+            "HP: 12965 -> 12425",
+            "Attack: 7188 -> 6878",
+            "Stats.ds: 14331 -> 13670",
+            "Stats.defense: 340 -> 327"
+          ]
+        },
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "lines": [
+            "Rank: 5 -> 6",
+            "HP: 21587 -> 18795",
+            "Attack: 10865 -> 10554",
+            "Stats.ds: 21450 -> 20789",
+            "Stats.defense: 539 -> 526",
+            "Skill Fire Rocket base_dmg: 14352 -> 13491",
+            "Skill Fire Rocket scaling: 1722 -> 1619",
+            "Skill Kunckle Fire base_dmg: 19233 -> 18079"
+          ]
+        },
+        {
+          "id": "d76d61m",
+          "name": "Gargomon",
+          "lines": [
+            "Rank: 5 -> 6",
+            "HP: 12926 -> 12386",
+            "Attack: 7209 -> 6899",
+            "Stats.ds: 14155 -> 13494",
+            "Stats.defense: 336 -> 323"
+          ]
+        },
+        {
+          "id": "d189uuci",
+          "name": "Holsmon",
+          "lines": [
+            "HP: 23979 -> 23304",
+            "Attack: 3903 -> 3782",
+            "Stats.ds: 49972 -> 48541",
+            "Stats.defense: 615 -> 601",
+            "Skill Red Sun ds_cost: 82 -> 208",
+            "Skill Mach Impulse ds_cost: 110 -> 448",
+            "Skill Eagle Warcry ds_cost: 6550 -> 6450"
+          ]
+        },
+        {
+          "id": "d16lihoe",
+          "name": "Lighdramon",
+          "lines": [
+            "HP: 18570 -> 18030",
+            "Attack: 5289 -> 5087",
+            "Stats.ds: 40648 -> 38961",
+            "Stats.defense: 513 -> 500",
+            "Skill Blue Thunder base_dmg: 3258 -> 3128",
+            "Skill Blue Thunder scaling: 293 -> 281",
+            "Skill Lightning Blade base_dmg: 15863 -> 15228",
+            "Skill Lightning Blade scaling: 1192 -> 1144"
+          ]
+        },
+        {
+          "id": "d104y2rc",
+          "name": "Lilithmon",
+          "lines": [
+            "HP: 18411 -> 20695",
+            "Attack: 5483 -> 5914",
+            "Stats.ds: 40500 -> 42525",
+            "Stats.defense: 501 -> 570",
+            "Stats.crit_rate: 4422 -> 5749",
+            "Stats.evasion: 3586 -> 4662",
+            "Stats.hit_rate: 1108 -> 1440",
+            "Stats.dex: 1171 -> 1522"
+          ]
+        },
+        {
+          "id": "doa5jy",
+          "name": "Magnamon",
+          "lines": [
+            "HP: 18620 -> 18080",
+            "Attack: 7668 -> 7357",
+            "Stats.ds: 14731 -> 14070",
+            "Stats.defense: 4183 -> 4170"
+          ]
+        },
+        {
+          "id": "dkkjn9r",
+          "name": "Toucanmon",
+          "lines": [
+            "Rank: 5 -> 6",
+            "HP: 13069 -> 12529",
+            "Attack: 7170 -> 6860",
+            "Stats.ds: 14155 -> 13494",
+            "Stats.defense: 336 -> 323"
+          ]
+        },
+        {
+          "id": "d60dn5t",
+          "name": "Yaksamon",
+          "lines": [
+            "Rank: 5 -> 6",
+            "HP: 18492 -> 17682",
+            "Attack: 5118 -> 4902",
+            "Stats.ds: 24557 -> 23410",
+            "Stats.defense: 617 -> 590"
+          ]
+        },
+        {
+          "id": "d16e4fy1",
+          "name": "White Gale Ornismon",
+          "lines": [
+            "Skill Gale Lance ds_cost: 700 -> 208",
+            "Skill Tempest Storm ds_cost: 1200 -> 448"
+          ]
+        },
+        {
+          "id": "d1jinqt3",
+          "name": "Growlmon X",
+          "lines": [
+            "Skill Exhaust Flame scaling: 113 -> 456",
+            "Skill Plasma Blade scaling: 72 -> 290"
+          ]
+        },
+        {
+          "id": "d1rs2wlk",
+          "name": "Guilmon X",
+          "lines": [
+            "Skill Fire Mitt scaling: 18 -> 99",
+            "Skill Fireball scaling: 66 -> 265",
+            "Skill Hazard's Glimpse scaling: 138 -> 207"
+          ]
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Dark Despair base_dmg: 5244 -> 5595",
+            "Skill Dark Despair scaling: 472 -> 503",
+            "Skill Chaos Degrade base_dmg: 17094 -> 18239",
+            "Skill Chaos Degrade scaling: 1025 -> 1094",
+            "Skill Holy Desire base_dmg: 24697 -> 26352",
+            "Skill Holy Desire scaling: 1728 -> 1844",
+            "Skill Twilight Severance base_dmg: 109649 -> 116996",
+            "Skill Twilight Severance scaling: 5483 -> 5850"
+          ]
+        },
+        {
+          "id": "dko51ol",
+          "name": "MetalGarurumon X",
+          "lines": [
+            "Skill Grace Cross Freezer scaling: 479 -> 718",
+            "Skill Cocytus Breath scaling: 1179 -> 1768",
+            "Skill Garuru Burst cooldown: 10 -> 6.5"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Supreme Cannon base_dmg: 63844 -> 69029",
+            "Skill Supreme Cannon scaling: 7657 -> 8278"
+          ]
+        },
+        {
+          "id": "dk8fjur",
+          "name": "WarGrowlmon X",
+          "lines": [
+            "Skill Double Edge Sigma scaling: 105 -> 422",
+            "Skill Atomic Megalo Blaster scaling: 175 -> 703"
+          ]
+        },
+        {
+          "id": "d1ajjnwd",
+          "name": "Alphamon Ouryuken",
+          "lines": [
+            "Skill Digitalize of Soul scaling: 1472 -> 2208",
+            "Skill Kyukyoku Senjin Ouryuken scaling: 1833 -> 2750",
+            "Skill Seiken Grandalpha scaling: 4950 -> 7425"
+          ]
+        },
+        {
+          "id": "dd3xj39",
+          "name": "Ulforce V-Dramon X",
+          "lines": [
+            "Skill Shining V Force scaling: 1472 -> 2208",
+            "Skill Dragon Impulse scaling: 4740 -> 7110"
+          ]
+        },
+        {
+          "id": "d8tqj96",
+          "name": "Digmon",
+          "lines": [
+            "HP: 38552 -> 37540",
+            "Attack: 4603 -> 4468",
+            "Stats.ds: 20741 -> 20080",
+            "Stats.defense: 2027 -> 1986",
+            "Skill Gold Rush scaling: 495 -> 738",
+            "Skill Drill Revolution scaling: 1215 -> 1818"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-08-21T15:26:11.840Z",
+        "mode": "force",
+        "refreshedCount": 469,
+        "dpsUp": [
+          {
+            "id": "d104y2rc",
+            "name": "Lilithmon",
+            "role": "Caster",
+            "before": 68474.846677717,
+            "after": 90464.60403723954,
+            "delta": 21989.75735952254
+          },
+          {
+            "id": "d1jinqt3",
+            "name": "Growlmon X",
+            "role": "Tank",
+            "before": 3304.8851448716528,
+            "after": 4677.7324222912985,
+            "delta": 1372.8472774196457
+          },
+          {
+            "id": "d1rs2wlk",
+            "name": "Guilmon X",
+            "role": "Tank",
+            "before": 2413.210756130033,
+            "after": 3623.240682777778,
+            "delta": 1210.029926647745
+          },
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 94259.18710308369,
+            "after": 100607.06083427313,
+            "delta": 6347.8737311894365
+          },
+          {
+            "id": "dko51ol",
+            "name": "MetalGarurumon X",
+            "role": "Tank",
+            "before": 13912.281046662996,
+            "after": 17858.75757362638,
+            "delta": 3946.4765269633826
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 102328.80875291568,
+            "after": 103731.67033132509,
+            "delta": 1402.8615784094145
+          },
+          {
+            "id": "dk8fjur",
+            "name": "WarGrowlmon X",
+            "role": "Tank",
+            "before": 6878.562624168511,
+            "after": 10022.643511086482,
+            "delta": 3144.080886917971
+          },
+          {
+            "id": "d1ajjnwd",
+            "name": "Alphamon Ouryuken",
+            "role": "Tank",
+            "before": 43356.099867914134,
+            "after": 55130.287529150504,
+            "delta": 11774.18766123637
+          },
+          {
+            "id": "dd3xj39",
+            "name": "Ulforce V-Dramon X",
+            "role": "Tank",
+            "before": 51308.985673876894,
+            "after": 58763.935690515864,
+            "delta": 7454.95001663897
+          },
+          {
+            "id": "d8tqj96",
+            "name": "Digmon",
+            "role": "Tank",
+            "before": 17331.48776857222,
+            "after": 20499.583882905277,
+            "delta": 3168.096114333057
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1fozle5",
+            "name": "Flybeemon",
+            "role": "Hybrid",
+            "before": 6865.204884585984,
+            "after": 6643.113065477695,
+            "delta": -222.0918191082883
+          },
+          {
+            "id": "d1tvr03j",
+            "name": "Fradramon",
+            "role": "Melee DPS",
+            "before": 48732.2152425655,
+            "after": 45962.37817148779,
+            "delta": -2769.837071077709
+          },
+          {
+            "id": "d76d61m",
+            "name": "Gargomon",
+            "role": "Support",
+            "before": 6828.738942222228,
+            "after": 6615.020808888893,
+            "delta": -213.71813333333466
+          },
+          {
+            "id": "d189uuci",
+            "name": "Holsmon",
+            "role": "Support",
+            "before": 21210.012798351647,
+            "after": 21154.616604945066,
+            "delta": -55.396193406581006
+          },
+          {
+            "id": "d16lihoe",
+            "name": "Lighdramon",
+            "role": "Caster",
+            "before": 77271.45392255072,
+            "after": 74178.6744485878,
+            "delta": -3092.779473962917
+          },
+          {
+            "id": "doa5jy",
+            "name": "Magnamon",
+            "role": "Tank",
+            "before": 7948.683424265934,
+            "after": 7789.91566714682,
+            "delta": -158.76775711911432
+          },
+          {
+            "id": "dkkjn9r",
+            "name": "Toucanmon",
+            "role": "Support",
+            "before": 7262.528108333329,
+            "after": 7029.1446944444515,
+            "delta": -233.38341388887784
+          },
+          {
+            "id": "d60dn5t",
+            "name": "Yaksamon",
+            "role": "Melee DPS",
+            "before": 5463.484458666667,
+            "after": 5293.696554666657,
+            "delta": -169.7879040000098
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "dhoymox",
+            "name": "Dynasmon X",
+            "role": "Caster",
+            "after": 110544.22685975609
+          },
+          {
+            "id": "dkn5pci",
+            "name": "Examon",
+            "role": "Ranged DPS",
+            "after": 103511.32182848886
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "dhoymox",
+            "name": "Dynasmon X",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "dkn5pci",
+            "name": "Examon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-08-21T15:00:36.291Z-b2vng6",
       "finishedAt": "2026-08-21T15:00:36.291Z",
@@ -10648,32 +11237,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-07-22T08:34:27.367Z",
-        "mode": "force",
-        "refreshedCount": 442,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-07-22T02:43:00.791Z-b1ghhm",
-      "finishedAt": "2026-07-22T02:43:00.791Z",
-      "mode": "force",
-      "refreshedCount": 442,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-07-22T02:43:00.791Z",
         "mode": "force",
         "refreshedCount": 442,
         "dpsUp": [],
