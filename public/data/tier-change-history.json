@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-08-22T18:28:29.048Z",
+  "updated_at": "2026-08-23T01:24:28.741Z",
   "runs": [
+    {
+      "id": "2026-08-23T01:24:28.756Z-e8scmd",
+      "finishedAt": "2026-08-23T01:24:28.756Z",
+      "mode": "force",
+      "refreshedCount": 469,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-08-23T01:24:28.756Z",
+        "mode": "force",
+        "refreshedCount": 469,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-08-22T18:28:29.077Z-i5aj1e",
       "finishedAt": "2026-08-22T18:28:29.077Z",
@@ -10896,65 +10922,6 @@
             "to": "complete"
           }
         ]
-      }
-    },
-    {
-      "id": "2026-07-23T14:06:22.812Z-9i94oe",
-      "finishedAt": "2026-07-23T14:06:22.812Z",
-      "mode": "force",
-      "refreshedCount": 443,
-      "apiCount": 1,
-      "tierCount": 1,
-      "sampleDigimon": [
-        {
-          "id": "d1diof57",
-          "name": "Arkadimon Adult",
-          "cause": "api"
-        }
-      ],
-      "apiDiffById": {
-        "d1diof57": [
-          "HP: 8276 -> 11076",
-          "Attack: 4337 -> 5947",
-          "Stats.ds: 9862 -> 13292",
-          "Stats.defense: 212 -> 282"
-        ]
-      },
-      "apiDiffs": [
-        {
-          "id": "d1diof57",
-          "name": "Arkadimon Adult",
-          "lines": [
-            "HP: 8276 -> 11076",
-            "Attack: 4337 -> 5947",
-            "Stats.ds: 9862 -> 13292",
-            "Stats.defense: 212 -> 282"
-          ]
-        }
-      ],
-      "summary": {
-        "finishedAt": "2026-07-23T14:06:22.812Z",
-        "mode": "force",
-        "refreshedCount": 443,
-        "dpsUp": [
-          {
-            "id": "d1diof57",
-            "name": "Arkadimon Adult",
-            "role": "Melee DPS",
-            "before": 9296.884174485618,
-            "after": 10226.79697874445,
-            "delta": 929.9128042588327
-          }
-        ],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
       }
     }
   ]
