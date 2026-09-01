@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
-import { wikiItemPageUrl } from '../api/itemService'
 import { wikiDungeonPageUrl } from '../api/dungeonService'
 import {
   wikiDungeonDetailMatchesSearch,
@@ -44,14 +44,9 @@ function DungeonLootMatches({ matches }: { matches: DungeonLootSearchMatch[] }) 
               </span>
             )}
             <div className="dungeons-loot-match__body">
-              <a
-                className="dungeons-loot-match__name"
-                href={wikiItemPageUrl(match.itemId)}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
+              <Link className="dungeons-loot-match__name" to={`/wiki?item=${encodeURIComponent(match.itemId)}`}>
                 {match.itemName}
-              </a>
+              </Link>
               {match.meta ? <span className="dungeons-loot-match__meta">{match.meta}</span> : null}
               <span className="dungeons-loot-match__context">
                 {match.difficulty} · {match.context}

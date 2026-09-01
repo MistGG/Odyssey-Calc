@@ -32,6 +32,7 @@ import { CommunityGuideInvitePage } from './pages/CommunityGuideInvitePage'
 import { DungeonsPage } from './pages/DungeonsPage'
 import { PatchNotesPage } from './pages/PatchNotesPage'
 import { PatchPromoPage } from './pages/PatchPromoPage'
+import { WikiItemRedirect, WikiPage } from './pages/WikiPage'
 
 export default function App() {
   return (
@@ -51,6 +52,8 @@ export default function App() {
           <Route path="patch-notes" element={<PatchNotesPage />} />
           <Route path="patch-notes/:slug" element={<PatchNotesPage />} />
           <Route path="dungeons" element={<DungeonsPage />} />
+          <Route path="wiki" element={<WikiPage />} />
+          <Route path="wiki/item/:id" element={<WikiItemRedirect />} />
           <Route path="auth" element={<AuthPage />} />
           <Route path="digimon/:id" element={<DigimonDetailPage />} />
           <Route path="lab" element={<DpsLabPage />} />

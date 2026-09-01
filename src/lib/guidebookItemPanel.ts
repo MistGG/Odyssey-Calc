@@ -2,9 +2,48 @@ import type { WikiItemDetail, WikiItemDropSource, WikiItemRaidSource } from '../
 import { findDungeonDifficultyForRaidItem } from './guidebookDungeonPanel'
 import { loadGuidebookDungeonDetail } from './guidebookWikiCache'
 
+const WIKI_ITEM_TAG_RE = /@<tc:\d+>([\s\S]*?)(?:@<\/tc(?::\d+)?>|$)/gi
+
+function cleanWikiItemLabel(raw: string): string {
+  return raw.replace(/^<|>$/g, '').replace(/\s+/g, ' ').trim()
+}
+
+function cleanWikiItemFlavor(raw: string): string {
+  return raw
+    .replace(/@<tc:\d+>/gi, '')
+    .replace(/@<\/tc(?::\d+)?>/gi, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/ +([.,;:])/g, '$1')
+    .trim()
+}
+
+/** Pull `@<tc:…>` labels out of a wiki item description for badges. */
+export function parseWikiItemDescription(description: string): { text: string; labels: string[] } {
+  const labels: string[] = []
+  const seen = new Set<string>()
+  const flavor = description.replace(WIKI_ITEM_TAG_RE, (_, inner: string) => {
+    const label = cleanWikiItemLabel(inner ?? '')
+    if (label) {
+      const key = label.toLowerCase()
+      if (!seen.has(key)) {
+        seen.add(key)
+        labels.push(label)
+      }
+    }
+    return ' '
+  })
+
+  return {
+    text: cleanWikiItemFlavor(flavor),
+    labels,
+  }
+}
+
 /** Split wiki item description into plain text and `@<tc:…>highlight@</tc:…>` segments. */
 export function splitWikiItemDescription(description: string): { text: string; highlight?: boolean }[] {
-  const re = /@<tc:\d+>(.*?)@<\/tc:\d+>/gi
+  const re = /@<tc:\d+>(.*?)@<\/tc(?::\d+)?>/gi
   const parts: { text: string; highlight?: boolean }[] = []
   let last = 0
   let match: RegExpExecArray | null

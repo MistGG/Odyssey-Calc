@@ -33,6 +33,7 @@ export function Layout() {
   const digimonActive = pathname === '/digimon' || pathname.startsWith('/digimon/')
   const toolsActive = pathname.startsWith('/lab') || pathname.startsWith('/gear')
   const tierActive = pathname.startsWith('/tier-list') || pathname.startsWith('/changes')
+  const wikiActive = pathname === '/wiki' || pathname.startsWith('/wiki/')
   const guidesActive =
     pathname.startsWith('/guidebook') ||
     pathname.startsWith('/guides') ||
@@ -80,6 +81,13 @@ export function Layout() {
                 className={digimonActive ? navLinkClass(true) : navLinkClass(false)}
               >
                 Digimon
+              </NavLink>
+
+              <NavLink
+                to="/wiki"
+                className={wikiActive ? navLinkClass(true) : navLinkClass(false)}
+              >
+                Wiki
               </NavLink>
 
               <NavMenuGroup

@@ -1,4 +1,4 @@
-import { WIKI_API_BASE, WIKI_SITE_ORIGIN } from '../config/env'
+import { WIKI_API_BASE } from '../config/env'
 import type { WikiItemDetail, WikiItemListResponse } from '../types/wikiApi'
 import { fetchJson } from './http'
 import { normalizeWikiPagedList } from './wikiPagedList'
@@ -26,9 +26,9 @@ export function wikiItemDetailUrl(id: string) {
   return u.toString()
 }
 
-/** Public wiki page for an item (`/wiki#item/{id}`). */
+/** In-app wiki item page (`/#/wiki?item={id}`). */
 export function wikiItemPageUrl(id: string) {
-  return `${WIKI_SITE_ORIGIN}/wiki#item/${encodeURIComponent(id)}`
+  return `#/wiki?item=${encodeURIComponent(id)}`
 }
 
 export async function fetchWikiItemsPage(pageZeroBased = 0, perPage = 50, searchQuery?: string) {

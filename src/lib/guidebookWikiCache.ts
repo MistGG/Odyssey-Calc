@@ -381,6 +381,14 @@ function itemSearchCacheKey(pageZeroBased: number, perPage: number, searchQuery:
   return JSON.stringify({ page: pageZeroBased, perPage, search: searchQuery.trim() })
 }
 
+export function getGuidebookItemSearchCached(
+  searchQuery: string,
+  pageZeroBased = 0,
+  perPage = 50,
+): WikiItemListResponse | null {
+  return itemSearchCache.get(itemSearchCacheKey(pageZeroBased, perPage, searchQuery)) ?? null
+}
+
 export function loadGuidebookItemSearch(
   searchQuery: string,
   pageZeroBased = 0,
