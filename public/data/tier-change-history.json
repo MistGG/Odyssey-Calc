@@ -1,6 +1,386 @@
 {
-  "updated_at": "2026-09-03T16:00:20.726Z",
+  "updated_at": "2026-09-03T20:44:28.942Z",
   "runs": [
+    {
+      "id": "2026-09-03T20:44:28.964Z-nliy7o",
+      "finishedAt": "2026-09-03T20:44:28.964Z",
+      "mode": "force",
+      "refreshedCount": 474,
+      "apiCount": 7,
+      "tierCount": 21,
+      "sampleDigimon": [
+        {
+          "id": "d76d61m",
+          "name": "Gargomon",
+          "cause": "api"
+        },
+        {
+          "id": "doa5jy",
+          "name": "Magnamon",
+          "cause": "api"
+        },
+        {
+          "id": "ddkag3n",
+          "name": "Millenniumon",
+          "cause": "api"
+        },
+        {
+          "id": "d7a46gc",
+          "name": "Nefertimon",
+          "cause": "api"
+        },
+        {
+          "id": "dk8z8dv",
+          "name": "Pegasmon",
+          "cause": "api"
+        },
+        {
+          "id": "d3xkpn5",
+          "name": "Magnamon(Black)",
+          "cause": "api"
+        },
+        {
+          "id": "d1d6hjvi",
+          "name": "Millenniumon",
+          "cause": "api"
+        },
+        {
+          "id": "d17wcc7a",
+          "name": "Obsidian Valor Ulforce V-dramon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1k8ts4t",
+          "name": "BlackWarGreymon X",
+          "cause": "tier"
+        },
+        {
+          "id": "d1jpeu3d",
+          "name": "WarGreymon X",
+          "cause": "tier"
+        },
+        {
+          "id": "dkn5pci",
+          "name": "Examon",
+          "cause": "tier"
+        },
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "cause": "tier"
+        }
+      ],
+      "apiDiffById": {
+        "d76d61m": [
+          "Role: \"Support\" -> \"Tank\"",
+          "HP: 12386 -> 37753",
+          "Attack: 6899 -> 4499",
+          "Stats.ds: 13494 -> 20002",
+          "Stats.defense: 323 -> 1931",
+          "Stats.crit_rate: 3412 -> 4473",
+          "Stats.evasion: 3650 -> 3463",
+          "Stats.hit_rate: 510 -> 1825"
+        ],
+        "doa5jy": [
+          "HP: 18080 -> 38453",
+          "Attack: 7357 -> 4570",
+          "Stats.ds: 14070 -> 20045",
+          "Stats.defense: 4170 -> 2033",
+          "Stats.crit_rate: 4712 -> 4565",
+          "Stats.evasion: 4000 -> 3406",
+          "Stats.hit_rate: 490 -> 1838",
+          "Stats.dex: 0 -> 1550"
+        ],
+        "ddkag3n": [
+          "Rank: 6 -> 7",
+          "HP: 19575 -> 49837",
+          "Attack: 9375 -> 14131",
+          "Stats.ds: 16722 -> 38013",
+          "Stats.defense: 558 -> 2410",
+          "Stats.crit_rate: 4810 -> 4611",
+          "Stats.evasion: 3675 -> 3220",
+          "Stats.hit_rate: 510 -> 1450"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d76d61m",
+          "name": "Gargomon",
+          "lines": [
+            "Role: \"Support\" -> \"Tank\"",
+            "HP: 12386 -> 37753",
+            "Attack: 6899 -> 4499",
+            "Stats.ds: 13494 -> 20002",
+            "Stats.defense: 323 -> 1931",
+            "Stats.crit_rate: 3412 -> 4473",
+            "Stats.evasion: 3650 -> 3463",
+            "Stats.hit_rate: 510 -> 1825"
+          ]
+        },
+        {
+          "id": "doa5jy",
+          "name": "Magnamon",
+          "lines": [
+            "HP: 18080 -> 38453",
+            "Attack: 7357 -> 4570",
+            "Stats.ds: 14070 -> 20045",
+            "Stats.defense: 4170 -> 2033",
+            "Stats.crit_rate: 4712 -> 4565",
+            "Stats.evasion: 4000 -> 3406",
+            "Stats.hit_rate: 490 -> 1838",
+            "Stats.dex: 0 -> 1550"
+          ]
+        },
+        {
+          "id": "ddkag3n",
+          "name": "Millenniumon",
+          "lines": [
+            "Rank: 6 -> 7",
+            "HP: 19575 -> 49837",
+            "Attack: 9375 -> 14131",
+            "Stats.ds: 16722 -> 38013",
+            "Stats.defense: 558 -> 2410",
+            "Stats.crit_rate: 4810 -> 4611",
+            "Stats.evasion: 3675 -> 3220",
+            "Stats.hit_rate: 510 -> 1450"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-09-03T20:44:28.964Z",
+        "mode": "force",
+        "refreshedCount": 474,
+        "dpsUp": [
+          {
+            "id": "d76d61m",
+            "name": "Gargomon",
+            "role": "Tank",
+            "before": 6615.020808888893,
+            "after": 18591.820990529148,
+            "delta": 11976.800181640254
+          },
+          {
+            "id": "doa5jy",
+            "name": "Magnamon",
+            "role": "Tank",
+            "before": 7789.91566714682,
+            "after": 20821.845873455586,
+            "delta": 13031.930206308767
+          },
+          {
+            "id": "ddkag3n",
+            "name": "Millenniumon",
+            "role": "Hybrid",
+            "before": 18991.630804908502,
+            "after": 48186.81370899252,
+            "delta": 29195.18290408402
+          },
+          {
+            "id": "d17wcc7a",
+            "name": "Obsidian Valor Ulforce V-dramon",
+            "role": "Melee DPS",
+            "before": 39263.02816710113,
+            "after": 44516.88269168138,
+            "delta": 5253.854524580245
+          },
+          {
+            "id": "d1k8ts4t",
+            "name": "BlackWarGreymon X",
+            "role": "Melee DPS",
+            "before": 48450.94438651961,
+            "after": 49308.72214538041,
+            "delta": 857.7777588608005
+          },
+          {
+            "id": "d1jpeu3d",
+            "name": "WarGreymon X",
+            "role": "Melee DPS",
+            "before": 48450.94438651961,
+            "after": 49314.53408318157,
+            "delta": 863.5896966619621
+          },
+          {
+            "id": "dkn5pci",
+            "name": "Examon",
+            "role": "Ranged DPS",
+            "before": 103511.32182848886,
+            "after": 109386.99840028776,
+            "delta": 5875.676571798904
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "dffhh64",
+            "name": "Alphamon",
+            "role": "Melee DPS",
+            "before": 54220.7041909143,
+            "after": 49442.909251106175,
+            "delta": -4777.7949398081255
+          },
+          {
+            "id": "d31fxga",
+            "name": "Beelzebumon BlastMode",
+            "role": "Ranged DPS",
+            "before": 38726.296792688845,
+            "after": 38503.653524367925,
+            "delta": -222.64326832092047
+          },
+          {
+            "id": "d16lzzvt",
+            "name": "BlackSaintGalgomon",
+            "role": "Ranged DPS",
+            "before": 32267.839895090594,
+            "after": 31826.29970339638,
+            "delta": -441.5401916942137
+          },
+          {
+            "id": "d1tvr03j",
+            "name": "Fradramon",
+            "role": "Melee DPS",
+            "before": 45962.37817148779,
+            "after": 45834.65791558541,
+            "delta": -127.720255902379
+          },
+          {
+            "id": "dw24vbb",
+            "name": "Fujinmon",
+            "role": "Melee DPS",
+            "before": 56974.45747619877,
+            "after": 54645.07000911766,
+            "delta": -2329.3874670811056
+          },
+          {
+            "id": "dpbsan4",
+            "name": "Ophanimon Falldown Mode",
+            "role": "Melee DPS",
+            "before": 49558.631865356154,
+            "after": 48066.30691056601,
+            "delta": -1492.3249547901432
+          },
+          {
+            "id": "dzkw288",
+            "name": "VictoryGreymon",
+            "role": "Melee DPS",
+            "before": 42444.81353842386,
+            "after": 42252.660600343996,
+            "delta": -192.15293807986745
+          },
+          {
+            "id": "dnwhdoz",
+            "name": "Alphamon Ouryuken",
+            "role": "Melee DPS",
+            "before": 101463.21028775086,
+            "after": 98995.25913434687,
+            "delta": -2467.951153403992
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 103731.67033132509,
+            "after": 102958.62050952108,
+            "delta": -773.0498218040157
+          },
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "before": 94340.95555443363,
+            "after": 91623.23115835001,
+            "delta": -2717.7243960836204
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d7a46gc",
+            "name": "Nefertimon",
+            "role": "Caster",
+            "after": 78281.43707143246
+          },
+          {
+            "id": "dk8z8dv",
+            "name": "Pegasmon",
+            "role": "Ranged DPS",
+            "after": 29648.35068919658
+          },
+          {
+            "id": "d3xkpn5",
+            "name": "Magnamon(Black)",
+            "role": "Melee DPS",
+            "after": 48078.767107151194
+          },
+          {
+            "id": "d1d6hjvi",
+            "name": "Millenniumon",
+            "role": "Ranged DPS",
+            "after": 120417.17403464878
+          }
+        ],
+        "tankUp": [
+          {
+            "id": "d76d61m",
+            "name": "Gargomon",
+            "role": "Tank",
+            "before": 2.11134197230487,
+            "after": 3.5774185640809706,
+            "delta": 1.4660765917761007
+          },
+          {
+            "id": "doa5jy",
+            "name": "Magnamon",
+            "role": "Tank",
+            "before": 2.541686309844973,
+            "after": 3.604258696558407,
+            "delta": 1.062572386713434
+          }
+        ],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "d76d61m",
+            "name": "Gargomon",
+            "role": "Tank",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "doa5jy",
+            "name": "Magnamon",
+            "role": "Tank",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "d7a46gc",
+            "name": "Nefertimon",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "dk8z8dv",
+            "name": "Pegasmon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d3xkpn5",
+            "name": "Magnamon(Black)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1d6hjvi",
+            "name": "Millenniumon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-09-03T16:00:20.745Z-vg46ld",
       "finishedAt": "2026-09-03T16:00:20.745Z",
@@ -4064,32 +4444,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-08-03T09:51:11.275Z",
-        "mode": "force",
-        "refreshedCount": 467,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-08-03T02:49:57.390Z-t8gcyo",
-      "finishedAt": "2026-08-03T02:49:57.390Z",
-      "mode": "force",
-      "refreshedCount": 467,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-08-03T02:49:57.390Z",
         "mode": "force",
         "refreshedCount": 467,
         "dpsUp": [],
