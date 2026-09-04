@@ -1,6 +1,207 @@
 {
-  "updated_at": "2026-09-04T03:14:26.579Z",
+  "updated_at": "2026-09-04T06:21:54.221Z",
   "runs": [
+    {
+      "id": "2026-09-04T06:21:54.238Z-ncbsf4",
+      "finishedAt": "2026-09-04T06:21:54.238Z",
+      "mode": "force",
+      "refreshedCount": 474,
+      "apiCount": 0,
+      "tierCount": 14,
+      "sampleDigimon": [
+        {
+          "id": "dffhh64",
+          "name": "Alphamon",
+          "cause": "tier"
+        },
+        {
+          "id": "d31fxga",
+          "name": "Beelzebumon BlastMode",
+          "cause": "tier"
+        },
+        {
+          "id": "d16lzzvt",
+          "name": "BlackSaintGalgomon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "cause": "tier"
+        },
+        {
+          "id": "dw24vbb",
+          "name": "Fujinmon",
+          "cause": "tier"
+        },
+        {
+          "id": "dpbsan4",
+          "name": "Ophanimon Falldown Mode",
+          "cause": "tier"
+        },
+        {
+          "id": "dzkw288",
+          "name": "VictoryGreymon",
+          "cause": "tier"
+        },
+        {
+          "id": "dnwhdoz",
+          "name": "Alphamon Ouryuken",
+          "cause": "tier"
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1fjn61",
+          "name": "Omegamon",
+          "cause": "tier"
+        },
+        {
+          "id": "d17wcc7a",
+          "name": "Obsidian Valor Ulforce V-dramon",
+          "cause": "tier"
+        },
+        {
+          "id": "d1k8ts4t",
+          "name": "BlackWarGreymon X",
+          "cause": "tier"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-09-04T06:21:54.238Z",
+        "mode": "force",
+        "refreshedCount": 474,
+        "dpsUp": [
+          {
+            "id": "dffhh64",
+            "name": "Alphamon",
+            "role": "Melee DPS",
+            "before": 49442.909251106175,
+            "after": 54220.7041909143,
+            "delta": 4777.7949398081255
+          },
+          {
+            "id": "d31fxga",
+            "name": "Beelzebumon BlastMode",
+            "role": "Ranged DPS",
+            "before": 38503.653524367925,
+            "after": 38726.296792688845,
+            "delta": 222.64326832092047
+          },
+          {
+            "id": "d16lzzvt",
+            "name": "BlackSaintGalgomon",
+            "role": "Ranged DPS",
+            "before": 31826.29970339638,
+            "after": 32267.839895090594,
+            "delta": 441.5401916942137
+          },
+          {
+            "id": "d1tvr03j",
+            "name": "Fradramon",
+            "role": "Melee DPS",
+            "before": 45834.65791558541,
+            "after": 45962.37817148779,
+            "delta": 127.720255902379
+          },
+          {
+            "id": "dw24vbb",
+            "name": "Fujinmon",
+            "role": "Melee DPS",
+            "before": 54645.07000911766,
+            "after": 56974.45747619877,
+            "delta": 2329.3874670811056
+          },
+          {
+            "id": "dpbsan4",
+            "name": "Ophanimon Falldown Mode",
+            "role": "Melee DPS",
+            "before": 48066.30691056601,
+            "after": 49558.631865356154,
+            "delta": 1492.3249547901432
+          },
+          {
+            "id": "dzkw288",
+            "name": "VictoryGreymon",
+            "role": "Melee DPS",
+            "before": 42252.660600343996,
+            "after": 42444.81353842386,
+            "delta": 192.15293807986745
+          },
+          {
+            "id": "dnwhdoz",
+            "name": "Alphamon Ouryuken",
+            "role": "Melee DPS",
+            "before": 98995.25913434687,
+            "after": 101463.21028775086,
+            "delta": 2467.951153403992
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 102958.62050952108,
+            "after": 107990.7935997862,
+            "delta": 5032.173090265118
+          },
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "before": 91623.23115835001,
+            "after": 94340.95555443363,
+            "delta": 2717.7243960836204
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d17wcc7a",
+            "name": "Obsidian Valor Ulforce V-dramon",
+            "role": "Melee DPS",
+            "before": 44516.88269168138,
+            "after": 39263.02816710113,
+            "delta": -5253.854524580245
+          },
+          {
+            "id": "d1k8ts4t",
+            "name": "BlackWarGreymon X",
+            "role": "Melee DPS",
+            "before": 49308.72214538041,
+            "after": 48450.94438651961,
+            "delta": -857.7777588608005
+          },
+          {
+            "id": "d1jpeu3d",
+            "name": "WarGreymon X",
+            "role": "Melee DPS",
+            "before": 49314.53408318157,
+            "after": 48450.94438651961,
+            "delta": -863.5896966619621
+          },
+          {
+            "id": "dkn5pci",
+            "name": "Examon",
+            "role": "Ranged DPS",
+            "before": 109386.99840028776,
+            "after": 103511.32182848886,
+            "delta": -5875.676571798904
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-09-04T03:14:26.602Z-bo32a3",
       "finishedAt": "2026-09-04T03:14:26.602Z",
@@ -4418,32 +4619,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-08-03T19:37:52.827Z",
-        "mode": "force",
-        "refreshedCount": 467,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-08-03T14:43:32.049Z-6jhpmv",
-      "finishedAt": "2026-08-03T14:43:32.049Z",
-      "mode": "force",
-      "refreshedCount": 467,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-08-03T14:43:32.049Z",
         "mode": "force",
         "refreshedCount": 467,
         "dpsUp": [],
