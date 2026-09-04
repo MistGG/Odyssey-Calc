@@ -1,4 +1,4 @@
-import type { CommunityRotation } from './communityRotations'
+import type { ApprovedRotationsMap } from './communityRotations'
 import { TIER_DPS_SIM_REVISION } from './dpsSim'
 import type { SustainedDpsEntry } from './tierList'
 
@@ -18,13 +18,17 @@ export type TierFightResimCacheRootV1 = {
   byParamKey: Record<string, Record<string, TierFightResimCachedRow>>
 }
 
-export function communityRotationsMapFingerprint(map: ReadonlyMap<string, CommunityRotation>): string {
+export function communityRotationsMapFingerprint(map: ApprovedRotationsMap): string {
   if (map.size === 0) return '0'
   let h = 5381
-  for (const [id, r] of [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-    const chunk = `${id}\0${r.updated_at}\0${r.skill_ids.join(',')}`
-    for (let i = 0; i < chunk.length; i += 1) {
-      h = Math.imul(h, 33) + chunk.charCodeAt(i)
+  for (const id of [...map.keys()].sort((a, b) => a.localeCompare(b))) {
+    const byMod = map.get(id)
+    if (!byMod) continue
+    for (const [modKey, r] of [...byMod.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      const chunk = `${id}\0${modKey}\0${r.updated_at}\0${r.skill_ids.join(',')}`
+      for (let i = 0; i < chunk.length; i += 1) {
+        h = Math.imul(h, 33) + chunk.charCodeAt(i)
+      }
     }
   }
   return (h >>> 0).toString(36)

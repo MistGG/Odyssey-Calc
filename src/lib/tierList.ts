@@ -169,9 +169,9 @@ export type SustainedDpsEntry = {
   supportScoreRevision?: number
   /** Last DPS row used this revision of `simulateRotation` (see `TIER_DPS_SIM_REVISION` in dpsSim). */
   dpsSimRevision?: number
-  /** When a community rotation is used for DPS scoring, stores the author's display name. */
+  /** Author of the community rotation used for the default (no-modifier) DPS column. */
   communityRotationAuthor?: string
-  /** Supabase id of the community_rotations row used (for deduplication / display). */
+  /** Supabase id of the default-column community_rotations row (for deduplication / display). */
   communityRotationId?: string
   /** Compact API snapshot used to show field-level wiki changes on the Changes page. */
   apiSnapshot?: TierApiSnapshot

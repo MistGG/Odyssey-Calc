@@ -39,6 +39,66 @@ export function communityRotationToTierModifiers(
   }
 }
 
+/** `crit:clone:cancel` — one approved rotation is stored per Digimon + modifier set. */
+export function communityRotationModifierKey(modifiers: TierSubmissionModifiers = {}): string {
+  return [
+    modifiers.forceAutoCrit === true ? '1' : '0',
+    modifiers.perfectAtClone === true ? '1' : '0',
+    modifiers.autoAttackAnimationCancel === true ? '1' : '0',
+  ].join(':')
+}
+
+export function communityRotationKeyFromRow(
+  row: Pick<CommunityRotation, 'force_auto_crit' | 'perfect_at_clone' | 'anim_cancel'>,
+): string {
+  return communityRotationModifierKey(communityRotationToTierModifiers(row))
+}
+
+/** digimon_id → (modifier key → best approved rotation for that set). */
+export type ApprovedRotationsMap = Map<string, Map<string, CommunityRotation>>
+
+export function emptyApprovedRotationsMap(): ApprovedRotationsMap {
+  return new Map()
+}
+
+/** Best approved rotation for this Digimon and modifier set at the current sim revision. */
+export function pickApprovedRotation(
+  map: ApprovedRotationsMap,
+  digimonId: string,
+  modifiers: TierSubmissionModifiers = {},
+  simRevision: number = TIER_DPS_SIM_REVISION,
+): CommunityRotation | null {
+  const row = map.get(digimonId)?.get(communityRotationModifierKey(modifiers))
+  return communityRotationUsableInLab(row, simRevision) ? row : null
+}
+
+export function communityRotationSimOptions(row: CommunityRotation | null | undefined) {
+  if (!communityRotationUsableInLab(row)) return {}
+  return {
+    customRotation: row.skill_ids.map((skillId) => ({ skillId })),
+    customRotationFiller:
+      row.filler_ids.length > 0 ? row.filler_ids.map((skillId) => ({ skillId })) : undefined,
+    customRotationFullCycles: 0 as const,
+    manualSupportOnly: true as const,
+  }
+}
+
+/** Star / author for the modifier set currently shown on the tier list. */
+export function communityRotationAuthorForModifiers(
+  map: ApprovedRotationsMap,
+  digimonId: string,
+  modifiers: TierSubmissionModifiers,
+  bakedDefaultAuthor?: string,
+): string | undefined {
+  const live = pickApprovedRotation(map, digimonId, modifiers)
+  if (live) return live.author_name
+  const isDefault =
+    modifiers.forceAutoCrit !== true &&
+    modifiers.perfectAtClone !== true &&
+    modifiers.autoAttackAnimationCancel !== true
+  return isDefault ? bakedDefaultAuthor : undefined
+}
+
 const TIER_SUBMIT_DPS_EPSILON = 0.1
 
 function idsEqual(a: string[], b: string[]): boolean {
@@ -136,10 +196,10 @@ export function isRotationSubmittedLocally(compareKey: string): boolean {
   }
 }
 
-/** Fetch the single best approved rotation per digimon. Returns a map keyed by digimon_id. */
+/** Best approved rotation per Digimon and modifier set (highest comparable_dps wins a slot). */
 export async function fetchApprovedRotations(
   supabase: SupabaseClient,
-): Promise<Map<string, CommunityRotation>> {
+): Promise<ApprovedRotationsMap> {
   const { data, error } = await supabase
     .from('community_rotations')
     .select('*')
@@ -148,13 +208,16 @@ export async function fetchApprovedRotations(
 
   if (error || !data) return new Map()
 
-  // Keep only the highest-DPS approved rotation per digimon
-  const map = new Map<string, CommunityRotation>()
+  const map: ApprovedRotationsMap = new Map()
   for (const raw of data as CommunityRotation[]) {
     const row = normalizeCommunityRotation(raw)
-    if (!map.has(row.digimon_id)) {
-      map.set(row.digimon_id, row)
+    const key = communityRotationKeyFromRow(row)
+    let byMod = map.get(row.digimon_id)
+    if (!byMod) {
+      byMod = new Map()
+      map.set(row.digimon_id, byMod)
     }
+    if (!byMod.has(key)) byMod.set(key, row)
   }
   return map
 }

@@ -1,5 +1,11 @@
 import { fetchDigimonDetail } from '../api/digimonService'
-import type { CommunityRotation } from './communityRotations'
+import {
+  communityRotationModifierKey,
+  communityRotationSimOptions,
+  communityRotationUsableInLab,
+  fetchApprovedRotations,
+  type CommunityRotation,
+} from './communityRotations'
 import { computeDpsAoeCategoryScores } from './aoeTierScore'
 import { BURST_DPS_WINDOW_SEC } from './dpsTierScore'
 import {
@@ -22,7 +28,6 @@ import { tierSkillsSignature } from './tierSkillsSignature'
 import { levelMapForSkills } from '../pages/tierList/tierListModel'
 import type { WikiDigimonDetail } from '../types/wikiApi'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { fetchApprovedRotations } from './communityRotations'
 
 function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
   return {
@@ -67,9 +72,18 @@ function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
 /** Rebuild one tier-list cache row (same rules as Update tier list for a single Digimon). */
 export function buildSustainedDpsEntryForDigimon(
   detail: WikiDigimonDetail,
-  communityRotation: CommunityRotation | null,
+  approvedByModifiers?: ReadonlyMap<string, CommunityRotation> | null,
 ): SustainedDpsEntry {
   const levels = levelMapForSkills(detail.skills)
+  const rotationFor = (options?: {
+    forceAutoCrit?: boolean
+    perfectAtClone?: boolean
+    autoAttackAnimationCancel?: boolean
+  }) => {
+    if (!approvedByModifiers) return null
+    const row = approvedByModifiers.get(communityRotationModifierKey(options))
+    return communityRotationUsableInLab(row) ? row : null
+  }
   const runComparableSim = (
     durationSec: number,
     options?: {
@@ -92,17 +106,7 @@ export function buildSustainedDpsEntryForDigimon(
       cfg.baseCritRateStat,
       {
         ...cfg.options,
-        ...(communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
-          ? {
-              customRotation: communityRotation.skill_ids.map((sid) => ({ skillId: sid })),
-              customRotationFiller:
-                communityRotation.filler_ids.length > 0
-                  ? communityRotation.filler_ids.map((sid) => ({ skillId: sid }))
-                  : undefined,
-              customRotationFullCycles: 0,
-              manualSupportOnly: true,
-            }
-          : {}),
+        ...communityRotationSimOptions(rotationFor(options)),
       },
     )
   }
@@ -233,14 +237,8 @@ export function buildSustainedDpsEntryForDigimon(
     skillsSignature: tierSkillsSignature(detail.skills),
     supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
     dpsSimRevision: TIER_DPS_SIM_REVISION,
-    communityRotationAuthor:
-      communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
-        ? communityRotation.author_name
-        : undefined,
-    communityRotationId:
-      communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
-        ? communityRotation.id
-        : undefined,
+    communityRotationAuthor: rotationFor()?.author_name,
+    communityRotationId: rotationFor()?.id,
     apiSnapshot: buildTierApiSnapshot(detail),
   }
 }
@@ -262,8 +260,7 @@ export async function refreshTierListDigimonInCache(
   try {
     const detail = await fetchDigimonDetail(digimonId, { wikiRefresh: true })
     const approved = await fetchApprovedRotations(supabase)
-    const communityRotation = approved.get(digimonId) ?? null
-    cache.entries[digimonId] = buildSustainedDpsEntryForDigimon(detail, communityRotation)
+    cache.entries[digimonId] = buildSustainedDpsEntryForDigimon(detail, approved.get(digimonId))
     saveTierListCache(cache)
     return { status: 'updated' }
   } catch (e) {

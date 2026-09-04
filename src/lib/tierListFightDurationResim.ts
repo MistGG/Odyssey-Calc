@@ -1,9 +1,5 @@
-import type { CommunityRotation } from './communityRotations'
-import {
-  clampRotationDurationSec,
-  simulateRotation,
-  TIER_DPS_SIM_REVISION,
-} from './dpsSim'
+import { communityRotationSimOptions, type CommunityRotation } from './communityRotations'
+import { clampRotationDurationSec, simulateRotation } from './dpsSim'
 import { buildComparableRotationConfig } from './rotationComparable'
 import type { SustainedDpsEntry, TierApiSkillSnapshot } from './tierList'
 import type { WikiCombatStats, WikiSkill } from '../types/wikiApi'
@@ -81,16 +77,7 @@ export function resimTierEntrySustainedAtFightDuration(
     targetEnemyAttribute: target || undefined,
   })
 
-  const communityOpts =
-    com && com.sim_revision === TIER_DPS_SIM_REVISION
-      ? {
-          customRotation: com.skill_ids.map((skillId) => ({ skillId })),
-          customRotationFiller:
-            com.filler_ids.length > 0 ? com.filler_ids.map((skillId) => ({ skillId })) : undefined,
-          customRotationFullCycles: 0 as const,
-          manualSupportOnly: true as const,
-        }
-      : {}
+  const communityOpts = communityRotationSimOptions(com)
 
   const sim = simulateRotation(
     skills,

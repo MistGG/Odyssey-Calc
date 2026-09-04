@@ -2,7 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
-import { fetchApprovedRotations, type CommunityRotation } from '../lib/communityRotations'
+import {
+  communityRotationAuthorForModifiers,
+  emptyApprovedRotationsMap,
+  fetchApprovedRotations,
+  pickApprovedRotation,
+  type ApprovedRotationsMap,
+} from '../lib/communityRotations'
+import { buildSustainedDpsEntryForDigimon } from '../lib/tierListDigimonEntry'
 import { useAuth } from '../auth/useAuth'
 import { fetchDigimonDetail } from '../api/digimonService'
 import { EnemyAttributeTargetField } from '../components/EnemyAttributeTargetField'
@@ -11,8 +18,6 @@ import {
   adjustDpsRotationCategoryScoresForAttributeTarget,
   adjustRotationDpsForAttributeTarget,
 } from '../lib/attributeAdvantage'
-import { computeDpsAoeCategoryScores } from '../lib/aoeTierScore'
-import { BURST_DPS_WINDOW_SEC } from '../lib/dpsTierScore'
 import {
   clampTierFightDurationSec,
   clampTierFightDurationSecFree,
@@ -29,17 +34,9 @@ import {
   writeTierFightDurationResimCacheRoot,
   type TierFightResimCacheRootV1,
 } from '../lib/tierListFightDurationResimCacheStorage'
-import {
-  DEFAULT_ROTATION_SIM_DURATION_SEC,
-  simulateRotation,
-  TIER_DPS_SIM_REVISION,
-} from '../lib/dpsSim'
-import { buildComparableRotationConfig } from '../lib/rotationComparable'
-import { computeHealerTierScore } from '../lib/healerTierScore'
-import { computeTankTierScore } from '../lib/tankTierScore'
+import { DEFAULT_ROTATION_SIM_DURATION_SEC } from '../lib/dpsSim'
 import {
   contentStatusLabel,
-  getDigimonContentStatus,
   type DigimonContentStatus,
 } from '../lib/contentStatus'
 import {
@@ -73,14 +70,13 @@ import {
   upsertListMetaFromDetail,
 } from '../lib/digimonAlternateStructure'
 import { digimonStageBorderColor, digimonStageTierFilterStyle } from '../lib/digimonStage'
-import { tierSkillsSignature } from '../lib/tierSkillsSignature'
 import {
   WIKI_ATTRIBUTE_OPTIONS,
   WIKI_ELEMENT_OPTIONS,
   WIKI_FAMILY_OPTIONS,
 } from '../lib/wikiListFacetOptions'
 import { WIKI_RANK_LABELS, wikiRankLabelFromNumber } from '../lib/wikiRank'
-import type { WikiDigimonDetail, WikiDigimonListItem } from '../types/wikiApi'
+import type { WikiDigimonListItem } from '../types/wikiApi'
 import { fetchPublishedTierListSnapshot, fetchPublishedTierChangeHistory } from '../lib/tierListPublished'
 import {
   appendTierChangeHistory,
@@ -88,7 +84,6 @@ import {
   fetchAllDigimonIndex,
   formatTierStatus,
   labHrefForTierEntry,
-  levelMapForSkills,
   loadTierUpdateSummaryFromStorage,
   loadTierChangeHistory,
   RATE_LIMIT_COOLDOWN_MS,
@@ -137,46 +132,6 @@ function collapseTierRefreshCause(cause?: TierRefreshCauseFlags): TierChangeCaus
   if (!cause) return 'tier'
   if (cause.api) return 'api'
   return 'tier'
-}
-
-function buildTierApiSnapshot(detail: WikiDigimonDetail): TierApiSnapshot {
-  return {
-    id: detail.id,
-    name: detail.name,
-    role: detail.role,
-    attribute: detail.attribute,
-    element: detail.element,
-    rank: detail.rank,
-    hp: detail.hp,
-    attack: detail.attack,
-    stats: {
-      hp: detail.stats?.hp ?? 0,
-      ds: detail.stats?.ds ?? 0,
-      attack: detail.stats?.attack ?? 0,
-      defense: detail.stats?.defense ?? 0,
-      crit_rate: detail.stats?.crit_rate ?? 0,
-      atk_speed: detail.stats?.atk_speed ?? 0,
-      evasion: detail.stats?.evasion ?? 0,
-      hit_rate: detail.stats?.hit_rate ?? 0,
-      block_rate: detail.stats?.block_rate ?? 0,
-      dex: detail.stats?.dex ?? 0,
-      int: detail.stats?.int ?? 0,
-    },
-    skills: (detail.skills ?? []).map((s) => ({
-      id: s.id,
-      name: s.name,
-      base_dmg: s.base_dmg,
-      scaling: s.scaling,
-      cast_time_sec: s.cast_time_sec,
-      cooldown_sec: s.cooldown_sec,
-      ds_cost: s.ds_cost,
-      radius: s.radius,
-      description: s.description,
-      buff_name: s.buff?.name,
-      buff_description: s.buff?.description,
-      buff_duration: s.buff?.duration,
-    })),
-  }
 }
 
 function diffTierApiSnapshot(prev: TierApiSnapshot | undefined, next: TierApiSnapshot): string[] {
@@ -323,8 +278,8 @@ export function TierListPage() {
   const [dpsTargetEnemyAttribute, setDpsTargetEnemyAttribute] = useState<string>(() =>
     readTierDpsTargetEnemyAttribute(),
   )
-  const [communityRotationsMap, setCommunityRotationsMap] = useState<Map<string, CommunityRotation>>(
-    () => new Map(),
+  const [communityRotationsMap, setCommunityRotationsMap] = useState<ApprovedRotationsMap>(
+    emptyApprovedRotationsMap,
   )
   const [ignoreIncomplete, setIgnoreIncomplete] = useState<boolean>(readTierIgnoreIncomplete)
 
@@ -563,7 +518,7 @@ export function TierListPage() {
 
       setStatus('Fetching Digimon index…')
       // Load approved community rotations (if Supabase is configured); used per-Digimon below
-      let communityRotations = new Map<string, CommunityRotation>()
+      let communityRotations: ApprovedRotationsMap = emptyApprovedRotationsMap()
       if (supabase) {
         try {
           communityRotations = await fetchApprovedRotations(supabase)
@@ -669,191 +624,11 @@ export function TierListPage() {
             const detail = await fetchDigimonDetail(id, wikiRefresh)
           upsertListMetaFromDetail(detail, workingMeta, working.listSignatures)
           const prevApiSnapshot = working.entries[id]?.apiSnapshot
-          const nextApiSnapshot = buildTierApiSnapshot(detail)
-          const levels = levelMapForSkills(detail.skills)
-          const communityRotation = communityRotations.get(id)
-          const runComparableSim = (
-            durationSec: number,
-            options?: {
-              forceAutoCrit?: boolean
-              perfectAtClone?: boolean
-              autoAttackAnimationCancel?: boolean
-            },
-          ) => {
-            const cfg = buildComparableRotationConfig(detail, durationSec, 1, {
-              ...options,
-              targetEnemyAttribute: '',
-            })
-            return simulateRotation(
-              detail.skills,
-              levels,
-              cfg.durationSec,
-              cfg.targets,
-              cfg.baseAttack,
-              cfg.attackSpeed,
-              cfg.baseCritRateStat,
-              {
-                ...cfg.options,
-                ...(communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
-                  ? {
-                      customRotation: communityRotation.skill_ids.map((sid) => ({ skillId: sid })),
-                      customRotationFiller:
-                        communityRotation.filler_ids.length > 0
-                          ? communityRotation.filler_ids.map((sid) => ({ skillId: sid }))
-                          : undefined,
-                      customRotationFullCycles: 0,
-                      manualSupportOnly: true,
-                    }
-                  : {}),
-              },
-            )
-          }
-          const sim = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC)
-          const simBurst = runComparableSim(BURST_DPS_WINDOW_SEC)
-          const simAutoCrit = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
-            forceAutoCrit: true,
-          })
-          const simPerfectAtClone = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
-            perfectAtClone: true,
-          })
-          const simBurstAutoCrit = runComparableSim(BURST_DPS_WINDOW_SEC, { forceAutoCrit: true })
-          const simBurstPerfectAtClone = runComparableSim(BURST_DPS_WINDOW_SEC, {
-            perfectAtClone: true,
-          })
-          const simPerfectAtCloneAutoCrit = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
-            perfectAtClone: true,
-            forceAutoCrit: true,
-          })
-          const simBurstPerfectAtCloneAutoCrit = runComparableSim(BURST_DPS_WINDOW_SEC, {
-            perfectAtClone: true,
-            forceAutoCrit: true,
-          })
-          const simAnimationCancel = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
-            autoAttackAnimationCancel: true,
-          })
-          const simBurstAnimationCancel = runComparableSim(BURST_DPS_WINDOW_SEC, {
-            autoAttackAnimationCancel: true,
-          })
-          const simAnimationCancelAutoCrit = runComparableSim(DEFAULT_ROTATION_SIM_DURATION_SEC, {
-            autoAttackAnimationCancel: true,
-            forceAutoCrit: true,
-          })
-          const simBurstAnimationCancelAutoCrit = runComparableSim(BURST_DPS_WINDOW_SEC, {
-            autoAttackAnimationCancel: true,
-            forceAutoCrit: true,
-          })
-          const simPerfectAtCloneAnimationCancel = runComparableSim(
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            {
-              perfectAtClone: true,
-              autoAttackAnimationCancel: true,
-            },
-          )
-          const simBurstPerfectAtCloneAnimationCancel = runComparableSim(BURST_DPS_WINDOW_SEC, {
-            perfectAtClone: true,
-            autoAttackAnimationCancel: true,
-          })
-          const simPerfectAtCloneAnimationCancelAutoCrit = runComparableSim(
-            DEFAULT_ROTATION_SIM_DURATION_SEC,
-            {
-              perfectAtClone: true,
-              autoAttackAnimationCancel: true,
-              forceAutoCrit: true,
-            },
-          )
-          const simBurstPerfectAtCloneAnimationCancelAutoCrit = runComparableSim(
-            BURST_DPS_WINDOW_SEC,
-            {
-              perfectAtClone: true,
-              autoAttackAnimationCancel: true,
-              forceAutoCrit: true,
-            },
-          )
-          const aoeScores = computeDpsAoeCategoryScores(detail)
-          const tank = computeTankTierScore(detail)
-          const healer = computeHealerTierScore(detail)
-          const entry: SustainedDpsEntry = {
-            id: detail.id,
-            name: detail.name,
-            role: detail.role,
-            stage: detail.stage,
-            dps: sim.dps,
-            dpsCategoryScores: {
-              sustained: sim.dps,
-              burst: simBurst.dps,
-              sustainedAutoDps: sim.autoDps,
-              burstAutoDps: simBurst.autoDps,
-            },
-            dpsCategoryScoresAutoCrit: {
-              sustained: simAutoCrit.dps,
-              burst: simBurstAutoCrit.dps,
-              sustainedAutoDps: simAutoCrit.autoDps,
-              burstAutoDps: simBurstAutoCrit.autoDps,
-            },
-            dpsCategoryScoresPerfectAtClone: {
-              sustained: simPerfectAtClone.dps,
-              burst: simBurstPerfectAtClone.dps,
-              sustainedAutoDps: simPerfectAtClone.autoDps,
-              burstAutoDps: simBurstPerfectAtClone.autoDps,
-            },
-            dpsCategoryScoresPerfectAtCloneAutoCrit: {
-              sustained: simPerfectAtCloneAutoCrit.dps,
-              burst: simBurstPerfectAtCloneAutoCrit.dps,
-              sustainedAutoDps: simPerfectAtCloneAutoCrit.autoDps,
-              burstAutoDps: simBurstPerfectAtCloneAutoCrit.autoDps,
-            },
-            dpsCategoryScoresAnimationCancel: {
-              sustained: simAnimationCancel.dps,
-              burst: simBurstAnimationCancel.dps,
-              sustainedAutoDps: simAnimationCancel.autoDps,
-              burstAutoDps: simBurstAnimationCancel.autoDps,
-            },
-            dpsCategoryScoresAnimationCancelAutoCrit: {
-              sustained: simAnimationCancelAutoCrit.dps,
-              burst: simBurstAnimationCancelAutoCrit.dps,
-              sustainedAutoDps: simAnimationCancelAutoCrit.autoDps,
-              burstAutoDps: simBurstAnimationCancelAutoCrit.autoDps,
-            },
-            dpsCategoryScoresPerfectAtCloneAnimationCancel: {
-              sustained: simPerfectAtCloneAnimationCancel.dps,
-              burst: simBurstPerfectAtCloneAnimationCancel.dps,
-              sustainedAutoDps: simPerfectAtCloneAnimationCancel.autoDps,
-              burstAutoDps: simBurstPerfectAtCloneAnimationCancel.autoDps,
-            },
-            dpsCategoryScoresPerfectAtCloneAnimationCancelAutoCrit: {
-              sustained: simPerfectAtCloneAnimationCancelAutoCrit.dps,
-              burst: simBurstPerfectAtCloneAnimationCancelAutoCrit.dps,
-              sustainedAutoDps: simPerfectAtCloneAnimationCancelAutoCrit.autoDps,
-              burstAutoDps: simBurstPerfectAtCloneAnimationCancelAutoCrit.autoDps,
-            },
-            aoeCategoryScores: aoeScores,
-            tankScore: tank.score,
-            tankCategoryScores: tank.categoryScores,
-            tankEffectiveDisplay: tank.effectiveDisplay,
-            healerScore: healer.score,
-            healerCategoryScores: healer.categoryScores,
-            healerDisplayMetrics: {
-              healHps: healer.healSustainHps,
-              shieldHps: healer.shieldSustainHps,
-              buffPctEquiv: healer.buffDmgGainDisplay,
-              intTotal: healer.intStat,
-            },
-            status: getDigimonContentStatus(detail.skills),
-            checkedAt: new Date().toISOString(),
-            skillsSignature: tierSkillsSignature(detail.skills),
-            supportScoreRevision: TIER_SUPPORT_SCORE_REVISION,
-            dpsSimRevision: TIER_DPS_SIM_REVISION,
-            communityRotationAuthor:
-              communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
-                ? communityRotation.author_name
-                : undefined,
-            communityRotationId:
-              communityRotation && communityRotation.sim_revision === TIER_DPS_SIM_REVISION
-                ? communityRotation.id
-                : undefined,
-            apiSnapshot: nextApiSnapshot,
-          }
-          const apiDiffLines = diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
+          const entry = buildSustainedDpsEntryForDigimon(detail, communityRotations.get(id))
+          const nextApiSnapshot = entry.apiSnapshot
+          const apiDiffLines = nextApiSnapshot
+            ? diffTierApiSnapshot(prevApiSnapshot, nextApiSnapshot)
+            : []
           if (apiDiffLines.length > 0) {
             apiDiffById.set(id, apiDiffLines)
             const prevCause = refreshCauseById.get(id)
@@ -1220,7 +995,7 @@ export function TierListPage() {
           const sim = resimTierEntrySustainedAtFightDuration(e, dur, {
             modifiers,
             targetEnemyAttribute: dpsTargetEnemyAttribute,
-            communityRotation: communityRotationsMap.get(id),
+            communityRotation: pickApprovedRotation(communityRotationsMap, id, modifiers),
           })
           if (!sim) continue
           resimDoneIds.add(id)
@@ -2270,6 +2045,16 @@ export function TierListPage() {
                                                 return '…'
                                               })()
                                             : e.dps.toFixed(1)
+                                    const communityAuthor = communityRotationAuthorForModifiers(
+                                      communityRotationsMap,
+                                      e.id,
+                                      {
+                                        forceAutoCrit: dpsForceAutoCrit,
+                                        perfectAtClone: dpsPerfectAtClone,
+                                        autoAttackAnimationCancel: dpsAutoAnimCancel,
+                                      },
+                                      e.communityRotationAuthor,
+                                    )
                                     return (
                                       <li
                                         key={`${tier}-${role}-${e.id}`}
@@ -2297,11 +2082,11 @@ export function TierListPage() {
                                           <span className="tier-entry-name">{e.name}</span>
                                           <span className="tier-entry-dps-wrap">
                                             <span className="tier-entry-dps">{scoreLabel}</span>
-                                            {e.communityRotationAuthor && tierMode === 'dps' ? (
+                                            {tierMode === 'dps' && communityAuthor ? (
                                               <span
                                                 className="tier-community-badge"
-                                                title={`Community rotation by ${e.communityRotationAuthor}`}
-                                                aria-label={`Community rotation by ${e.communityRotationAuthor}`}
+                                                title={`Community rotation by ${communityAuthor}`}
+                                                aria-label={`Community rotation by ${communityAuthor}`}
                                               >
                                                 ★
                                               </span>
