@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-09-06T03:15:08.572Z",
+  "updated_at": "2026-09-06T10:28:31.653Z",
   "runs": [
+    {
+      "id": "2026-09-06T10:28:31.680Z-e3rbp9",
+      "finishedAt": "2026-09-06T10:28:31.680Z",
+      "mode": "force",
+      "refreshedCount": 473,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-09-06T10:28:31.680Z",
+        "mode": "force",
+        "refreshedCount": 473,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-09-06T03:15:08.592Z-gxflac",
       "finishedAt": "2026-09-06T03:15:08.592Z",
@@ -4593,32 +4619,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-08-06T02:37:45.511Z",
-        "mode": "force",
-        "refreshedCount": 467,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-08-05T19:37:34.770Z-e2ohmq",
-      "finishedAt": "2026-08-05T19:37:34.770Z",
-      "mode": "force",
-      "refreshedCount": 467,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-08-05T19:37:34.770Z",
         "mode": "force",
         "refreshedCount": 467,
         "dpsUp": [],
