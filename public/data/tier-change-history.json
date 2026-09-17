@@ -1,6 +1,355 @@
 {
-  "updated_at": "2026-09-17T16:28:18.100Z",
+  "updated_at": "2026-09-17T21:06:17.325Z",
   "runs": [
+    {
+      "id": "2026-09-17T21:06:17.345Z-ph8drs",
+      "finishedAt": "2026-09-17T21:06:17.345Z",
+      "mode": "force",
+      "refreshedCount": 490,
+      "apiCount": 18,
+      "tierCount": 18,
+      "sampleDigimon": [
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "cause": "api"
+        },
+        {
+          "id": "d18amvwr",
+          "name": "ImperialDramon",
+          "cause": "api"
+        },
+        {
+          "id": "d11q5ri9",
+          "name": "ImperialDramon Fighter Mode",
+          "cause": "api"
+        },
+        {
+          "id": "dg28pbm",
+          "name": "Magnamon X",
+          "cause": "api"
+        },
+        {
+          "id": "dnqtruu",
+          "name": "Minervamon",
+          "cause": "api"
+        },
+        {
+          "id": "dcoukr",
+          "name": "Omegamon Alter-S",
+          "cause": "api"
+        },
+        {
+          "id": "d373j05",
+          "name": "Paildramon",
+          "cause": "api"
+        },
+        {
+          "id": "d1p46ckq",
+          "name": "Qinglongmon",
+          "cause": "api"
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "cause": "api"
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "cause": "api"
+        },
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        },
+        {
+          "id": "d1xachp6",
+          "name": "ImperialDramon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-09-17T21:06:17.345Z",
+        "mode": "force",
+        "refreshedCount": 490,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "after": 0
+          },
+          {
+            "id": "d18amvwr",
+            "name": "ImperialDramon",
+            "role": "Ranged DPS",
+            "after": 111961.81220846427
+          },
+          {
+            "id": "d11q5ri9",
+            "name": "ImperialDramon Fighter Mode",
+            "role": "Melee DPS",
+            "after": 122108.38670252796
+          },
+          {
+            "id": "dg28pbm",
+            "name": "Magnamon X",
+            "role": "Tank",
+            "after": 57228.70478990675
+          },
+          {
+            "id": "dnqtruu",
+            "name": "Minervamon",
+            "role": "Melee DPS",
+            "after": 101718.4581554948
+          },
+          {
+            "id": "dcoukr",
+            "name": "Omegamon Alter-S",
+            "role": "Melee DPS",
+            "after": 125569.74512157546
+          },
+          {
+            "id": "d373j05",
+            "name": "Paildramon",
+            "role": "Ranged DPS",
+            "after": 38279.04698971035
+          },
+          {
+            "id": "d1p46ckq",
+            "name": "Qinglongmon",
+            "role": "Support",
+            "after": 20751.562533663368
+          },
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Hybrid",
+            "after": 0
+          },
+          {
+            "id": "dugzqs",
+            "name": "Sistermon Noir",
+            "role": "Hybrid",
+            "after": 0
+          },
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          },
+          {
+            "id": "d1xachp6",
+            "name": "ImperialDramon",
+            "role": "Tank",
+            "after": 55698.68199988912
+          },
+          {
+            "id": "dah9l0h",
+            "name": "ImperialDramon Fighter Mode",
+            "role": "Hybrid",
+            "after": 80871.7920851019
+          },
+          {
+            "id": "dmi2w5v",
+            "name": "Magnamon X",
+            "role": "Support",
+            "after": 36093.977473927414
+          },
+          {
+            "id": "d1qovngl",
+            "name": "Minervamon",
+            "role": "Tank",
+            "after": 61194.28069245593
+          },
+          {
+            "id": "d1oz6yb5",
+            "name": "Omegamon Alter-S",
+            "role": "Ranged DPS",
+            "after": 114257.24130376447
+          },
+          {
+            "id": "d1vnl7dv",
+            "name": "Paildramon",
+            "role": "Tank",
+            "after": 20890.54235682819
+          },
+          {
+            "id": "d1gvzyx2",
+            "name": "Qinglongmon",
+            "role": "Tank",
+            "after": 20685.240021965954
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "dg28pbm",
+            "name": "Magnamon X",
+            "role": "Tank",
+            "after": 3.986748011430133
+          },
+          {
+            "id": "d1xachp6",
+            "name": "ImperialDramon",
+            "role": "Tank",
+            "after": 3.999981597062134
+          },
+          {
+            "id": "d1qovngl",
+            "name": "Minervamon",
+            "role": "Tank",
+            "after": 3.9857852711573454
+          },
+          {
+            "id": "d1vnl7dv",
+            "name": "Paildramon",
+            "role": "Tank",
+            "after": 3.600705431711923
+          },
+          {
+            "id": "d1gvzyx2",
+            "name": "Qinglongmon",
+            "role": "Tank",
+            "after": 3.6073153008725694
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d1p46ckq",
+            "name": "Qinglongmon",
+            "role": "Support",
+            "after": 5.832634435234372
+          },
+          {
+            "id": "dmi2w5v",
+            "name": "Magnamon X",
+            "role": "Support",
+            "after": 6.734164724756048
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "to": "incomplete"
+          },
+          {
+            "id": "d18amvwr",
+            "name": "ImperialDramon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d11q5ri9",
+            "name": "ImperialDramon Fighter Mode",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dg28pbm",
+            "name": "Magnamon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "dnqtruu",
+            "name": "Minervamon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dcoukr",
+            "name": "Omegamon Alter-S",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d373j05",
+            "name": "Paildramon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1p46ckq",
+            "name": "Qinglongmon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Hybrid",
+            "to": "incomplete"
+          },
+          {
+            "id": "dugzqs",
+            "name": "Sistermon Noir",
+            "role": "Hybrid",
+            "to": "incomplete"
+          },
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d1xachp6",
+            "name": "ImperialDramon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "dah9l0h",
+            "name": "ImperialDramon Fighter Mode",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "dmi2w5v",
+            "name": "Magnamon X",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d1qovngl",
+            "name": "Minervamon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1oz6yb5",
+            "name": "Omegamon Alter-S",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1vnl7dv",
+            "name": "Paildramon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1gvzyx2",
+            "name": "Qinglongmon",
+            "role": "Tank",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-09-17T16:28:18.121Z-peutse",
       "finishedAt": "2026-09-17T16:28:18.121Z",
@@ -4213,32 +4562,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-08-17T12:50:13.869Z",
-        "mode": "force",
-        "refreshedCount": 468,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-08-17T07:01:55.342Z-bbv3y8",
-      "finishedAt": "2026-08-17T07:01:55.342Z",
-      "mode": "force",
-      "refreshedCount": 468,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-08-17T07:01:55.342Z",
         "mode": "force",
         "refreshedCount": 468,
         "dpsUp": [],
