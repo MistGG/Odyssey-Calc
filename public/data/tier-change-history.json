@@ -1,6 +1,86 @@
 {
-  "updated_at": "2026-09-18T03:28:54.585Z",
+  "updated_at": "2026-09-18T10:47:52.132Z",
   "runs": [
+    {
+      "id": "2026-09-18T10:47:52.153Z-x37g8w",
+      "finishedAt": "2026-09-18T10:47:52.153Z",
+      "mode": "force",
+      "refreshedCount": 492,
+      "apiCount": 2,
+      "tierCount": 2,
+      "sampleDigimon": [
+        {
+          "id": "d72tale",
+          "name": "Dynasmon X",
+          "cause": "api"
+        },
+        {
+          "id": "du5z3qp",
+          "name": "Examon",
+          "cause": "api"
+        },
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1tvr03j": [
+          "Skill Knuckle Fire name: \"Kunckle Fire\" -> \"Knuckle Fire\""
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1tvr03j",
+          "name": "Fradramon",
+          "lines": [
+            "Skill Knuckle Fire name: \"Kunckle Fire\" -> \"Knuckle Fire\""
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-09-18T10:47:52.153Z",
+        "mode": "force",
+        "refreshedCount": 492,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "d72tale",
+            "name": "Dynasmon X",
+            "role": "Melee DPS",
+            "after": 96846.54859635836
+          },
+          {
+            "id": "du5z3qp",
+            "name": "Examon",
+            "role": "Hybrid",
+            "after": 55445.189226139424
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "d72tale",
+            "name": "Dynasmon X",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "du5z3qp",
+            "name": "Examon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-09-18T03:28:54.606Z-kzby0f",
       "finishedAt": "2026-09-18T03:28:54.606Z",
@@ -4536,32 +4616,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-08-18T06:49:35.452Z",
-        "mode": "force",
-        "refreshedCount": 468,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-08-17T18:46:04.449Z-5dxarj",
-      "finishedAt": "2026-08-17T18:46:04.449Z",
-      "mode": "force",
-      "refreshedCount": 468,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-08-17T18:46:04.449Z",
         "mode": "force",
         "refreshedCount": 468,
         "dpsUp": [],
