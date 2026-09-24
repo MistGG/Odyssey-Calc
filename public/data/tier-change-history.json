@@ -1,6 +1,354 @@
 {
-  "updated_at": "2026-09-24T16:43:12.232Z",
+  "updated_at": "2026-09-24T21:20:17.537Z",
   "runs": [
+    {
+      "id": "2026-09-24T21:20:17.557Z-5zi8vq",
+      "finishedAt": "2026-09-24T21:20:17.557Z",
+      "mode": "force",
+      "refreshedCount": 493,
+      "apiCount": 12,
+      "tierCount": 12,
+      "sampleDigimon": [
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "cause": "api"
+        },
+        {
+          "id": "d9mgz4g",
+          "name": "BlackWarGreymon(Dark Tower)",
+          "cause": "api"
+        },
+        {
+          "id": "d104y2rc",
+          "name": "Lilithmon",
+          "cause": "api"
+        },
+        {
+          "id": "d17lxyxv",
+          "name": "Lilithmon X",
+          "cause": "api"
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "cause": "api"
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "cause": "api"
+        },
+        {
+          "id": "d1mu63gm",
+          "name": "Sistermon Noir(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "d11bwh9c",
+          "name": "WarGreymon(Overdrive)",
+          "cause": "api"
+        },
+        {
+          "id": "d8jjf95",
+          "name": "BlackWarGreymon(Dark Tower)",
+          "cause": "api"
+        },
+        {
+          "id": "dg63th8",
+          "name": "Lilithmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d4mt9th",
+          "name": "WarGreymon(Overdrive)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d104y2rc": [
+          "HP: 20695 -> 18411",
+          "Attack: 5914 -> 5483",
+          "Stats.ds: 42525 -> 40500",
+          "Stats.defense: 570 -> 501",
+          "Stats.crit_rate: 5749 -> 4422",
+          "Stats.evasion: 4662 -> 3586",
+          "Stats.hit_rate: 1440 -> 1108",
+          "Stats.dex: 1522 -> 1171"
+        ],
+        "d9fr4zr": [
+          "Rank: 6 -> 8",
+          "Skill added: Skill 1",
+          "Skill added: Skill 2",
+          "Skill added: Skill 3",
+          "Skill added: Skill 4",
+          "Skill added: Skill 5"
+        ],
+        "dp7qngj": [
+          "Attribute: \"Virus\" -> \"Vaccine\"",
+          "Rank: 1 -> 5",
+          "Skill added: Skill 1",
+          "Skill added: Skill 2",
+          "Skill added: Skill 3",
+          "Skill added: Skill 4",
+          "Skill added: Skill 5"
+        ],
+        "dugzqs": [
+          "Rank: 2 -> 6",
+          "Skill added: Skill 1",
+          "Skill added: Skill 2",
+          "Skill added: Skill 3",
+          "Skill added: Skill 4",
+          "Skill added: Skill 5"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d104y2rc",
+          "name": "Lilithmon",
+          "lines": [
+            "HP: 20695 -> 18411",
+            "Attack: 5914 -> 5483",
+            "Stats.ds: 42525 -> 40500",
+            "Stats.defense: 570 -> 501",
+            "Stats.crit_rate: 5749 -> 4422",
+            "Stats.evasion: 4662 -> 3586",
+            "Stats.hit_rate: 1440 -> 1108",
+            "Stats.dex: 1522 -> 1171"
+          ]
+        },
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "lines": [
+            "Rank: 6 -> 8",
+            "Skill added: Skill 1",
+            "Skill added: Skill 2",
+            "Skill added: Skill 3",
+            "Skill added: Skill 4",
+            "Skill added: Skill 5"
+          ]
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "lines": [
+            "Attribute: \"Virus\" -> \"Vaccine\"",
+            "Rank: 1 -> 5",
+            "Skill added: Skill 1",
+            "Skill added: Skill 2",
+            "Skill added: Skill 3",
+            "Skill added: Skill 4",
+            "Skill added: Skill 5"
+          ]
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "lines": [
+            "Rank: 2 -> 6",
+            "Skill added: Skill 1",
+            "Skill added: Skill 2",
+            "Skill added: Skill 3",
+            "Skill added: Skill 4",
+            "Skill added: Skill 5"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-09-24T21:20:17.557Z",
+        "mode": "force",
+        "refreshedCount": 493,
+        "dpsUp": [
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "before": 0,
+            "after": 5790.305217795208,
+            "delta": 5790.305217795208
+          },
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Hybrid",
+            "before": 0,
+            "after": 1988.2985324506003,
+            "delta": 1988.2985324506003
+          },
+          {
+            "id": "dugzqs",
+            "name": "Sistermon Noir",
+            "role": "Hybrid",
+            "before": 0,
+            "after": 2546.6453940065844,
+            "delta": 2546.6453940065844
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d104y2rc",
+            "name": "Lilithmon",
+            "role": "Caster",
+            "before": 90464.60403723954,
+            "after": 68474.846677717,
+            "delta": -21989.75735952254
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d9mgz4g",
+            "name": "BlackWarGreymon(Dark Tower)",
+            "role": "Tank",
+            "after": 64389.077538053134
+          },
+          {
+            "id": "d17lxyxv",
+            "name": "Lilithmon X",
+            "role": "Support",
+            "after": 44181.00688666665
+          },
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Hybrid",
+            "after": 1988.2985324506003
+          },
+          {
+            "id": "d1mu63gm",
+            "name": "Sistermon Noir(Awakened)",
+            "role": "Hybrid",
+            "after": 2546.6453940065844
+          },
+          {
+            "id": "d11bwh9c",
+            "name": "WarGreymon(Overdrive)",
+            "role": "Melee DPS",
+            "after": 132081.55980810424
+          },
+          {
+            "id": "d8jjf95",
+            "name": "BlackWarGreymon(Dark Tower)",
+            "role": "Melee DPS",
+            "after": 132081.55980810424
+          },
+          {
+            "id": "dg63th8",
+            "name": "Lilithmon X",
+            "role": "Caster",
+            "after": 94872.40407286564
+          },
+          {
+            "id": "d4mt9th",
+            "name": "WarGreymon(Overdrive)",
+            "role": "Tank",
+            "after": 64389.077538053134
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "d9mgz4g",
+            "name": "BlackWarGreymon(Dark Tower)",
+            "role": "Tank",
+            "after": 3.9477598351213388
+          },
+          {
+            "id": "d4mt9th",
+            "name": "WarGreymon(Overdrive)",
+            "role": "Tank",
+            "after": 3.9477598351213388
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d17lxyxv",
+            "name": "Lilithmon X",
+            "role": "Support",
+            "after": 6.208468805875429
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Hybrid",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "dugzqs",
+            "name": "Sistermon Noir",
+            "role": "Hybrid",
+            "from": "incomplete",
+            "to": "complete"
+          },
+          {
+            "id": "d9mgz4g",
+            "name": "BlackWarGreymon(Dark Tower)",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d17lxyxv",
+            "name": "Lilithmon X",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d1mu63gm",
+            "name": "Sistermon Noir(Awakened)",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d11bwh9c",
+            "name": "WarGreymon(Overdrive)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d8jjf95",
+            "name": "BlackWarGreymon(Dark Tower)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dg63th8",
+            "name": "Lilithmon X",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "d4mt9th",
+            "name": "WarGreymon(Overdrive)",
+            "role": "Tank",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-09-24T16:43:12.250Z-r5sjee",
       "finishedAt": "2026-09-24T16:43:12.250Z",
@@ -4067,32 +4415,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-08-24T12:54:13.956Z",
-        "mode": "force",
-        "refreshedCount": 469,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-08-24T07:05:18.798Z-mhgz8i",
-      "finishedAt": "2026-08-24T07:05:18.798Z",
-      "mode": "force",
-      "refreshedCount": 469,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-08-24T07:05:18.798Z",
         "mode": "force",
         "refreshedCount": 469,
         "dpsUp": [],
