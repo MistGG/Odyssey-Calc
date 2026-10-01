@@ -1,6 +1,350 @@
 {
-  "updated_at": "2026-10-01T12:40:04.220Z",
+  "updated_at": "2026-10-01T22:31:55.830Z",
   "runs": [
+    {
+      "id": "2026-10-01T22:31:55.853Z-jvurwt",
+      "finishedAt": "2026-10-01T22:31:55.853Z",
+      "mode": "force",
+      "refreshedCount": 493,
+      "apiCount": 11,
+      "tierCount": 8,
+      "sampleDigimon": [
+        {
+          "id": "dcoukr",
+          "name": "Omegamon Alter-S",
+          "cause": "api"
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "cause": "api"
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "cause": "api"
+        },
+        {
+          "id": "d1mu63gm",
+          "name": "Sistermon Noir(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "d1fjn61",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1qovngl",
+          "name": "Minervamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1gvzyx2",
+          "name": "Qinglongmon",
+          "cause": "api"
+        },
+        {
+          "id": "d9mgz4g",
+          "name": "BlackWarGreymon(Dark Tower)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1fjn61": [
+          "Skill Garuru Cannon base_dmg: 38703 -> 46444",
+          "Skill Garuru Cannon scaling: 4641 -> 5569",
+          "Skill Grey Sword base_dmg: 61149 -> 73379",
+          "Skill Grey Sword scaling: 7337 -> 8804",
+          "Skill Supreme Cannon base_dmg: 70435 -> 84522",
+          "Skill Supreme Cannon scaling: 8450 -> 10140",
+          "Skill Omega Blast base_dmg: 383819 -> 460583",
+          "Skill Omega Blast scaling: 34543 -> 41452"
+        ],
+        "dhoymox": [
+          "Skill Dragon's Roar base_dmg: 5875 -> 6374",
+          "Skill Dragon's Roar scaling: 530 -> 575",
+          "Skill Dragon's Gust base_dmg: 18193 -> 19739",
+          "Skill Dragon's Gust scaling: 1090 -> 1183",
+          "Skill Breath of Wyvern base_dmg: 26879 -> 29164",
+          "Skill Breath of Wyvern scaling: 1881 -> 2041",
+          "Skill Soul Dragon Onslaught base_dmg: 121357 -> 131672",
+          "Skill Soul Dragon Onslaught scaling: 6068 -> 6584"
+        ],
+        "d9fr4zr": [
+          "Skill Skill 1 cast_time: 2.8 -> 0.5",
+          "Skill Skill 2 cast_time: 2.8 -> 1.2",
+          "Skill Skill 3 cast_time: 2.8 -> 2.1",
+          "Skill Skill 4 cast_time: 2.8 -> 2.3",
+          "Skill Skill 5 cast_time: 2.8 -> 1.2"
+        ],
+        "dcoukr": [
+          "Attack: 17050 -> 17561",
+          "Skill Garuru Sword base_dmg: 37260 -> 47923",
+          "Skill Garuru Sword scaling: 4471 -> 5751",
+          "Skill Grey Cannon base_dmg: 54728 -> 70391",
+          "Skill Grey Cannon scaling: 6569 -> 8450",
+          "Skill Plasma Sweep base_dmg: 52019 -> 66906",
+          "Skill Plasma Sweep scaling: 6242 -> 8029",
+          "Skill Fenrir Break base_dmg: 368867 -> 443393"
+        ],
+        "dp7qngj": [
+          "Role: \"Hybrid\" -> \"Support\""
+        ],
+        "dugzqs": [
+          "Role: \"Hybrid\" -> \"Ranged DPS\"",
+          "Skill Skill 1 cast_time: 2.8 -> 1.2",
+          "Skill Skill 2 cast_time: 2.8 -> 1.8",
+          "Skill Skill 3 cast_time: 2.8 -> 2.2",
+          "Skill Skill 4 cast_time: 2.8 -> 3.3",
+          "Skill Skill 5 cast_time: 2.8 -> 2.1"
+        ],
+        "d1qovngl": [
+          "Skill Olympia's Resolve name: \"Goddess Bastion\" -> \"Olympia's Resolve\""
+        ],
+        "d1gvzyx2": [
+          "Skill Eastern Sky Blessing name: \"Eastern Bastion\" -> \"Eastern Sky Blessing\"",
+          "Skill Azure Coil name: \"Azure Dragon Ward\" -> \"Azure Coil\""
+        ],
+        "d9mgz4g": [
+          "Skill Dark Tower Field name: \"Spire Ward\" -> \"Dark Tower Field\"",
+          "Skill Unyielding Tower name: \"Dark Tower Bastion\" -> \"Unyielding Tower\""
+        ],
+        "d1dyhy6u": [
+          "Role: \"Hybrid\" -> \"Support\"",
+          "Skill Skill 1 cast_time: 2.8 -> 1.8",
+          "Skill Skill 2 cast_time: 2.8 -> 2.7",
+          "Skill Skill 3 cast_time: 2.8 -> 5.2",
+          "Skill Skill 4 cast_time: 2.8 -> 4.5",
+          "Skill Skill 5 cast_time: 2.8 -> 1.2"
+        ],
+        "d1mu63gm": [
+          "Role: \"Hybrid\" -> \"Ranged DPS\"",
+          "Skill Skill 1 cast_time: 2.8 -> 1.5",
+          "Skill Skill 2 cast_time: 2.8 -> 1.6",
+          "Skill Skill 3 cast_time: 2.8 -> 3.9",
+          "Skill Skill 4 cast_time: 2.8 -> 2.7",
+          "Skill Skill 5 cast_time: 2.8 -> 1.1"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1fjn61",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Garuru Cannon base_dmg: 38703 -> 46444",
+            "Skill Garuru Cannon scaling: 4641 -> 5569",
+            "Skill Grey Sword base_dmg: 61149 -> 73379",
+            "Skill Grey Sword scaling: 7337 -> 8804",
+            "Skill Supreme Cannon base_dmg: 70435 -> 84522",
+            "Skill Supreme Cannon scaling: 8450 -> 10140",
+            "Skill Omega Blast base_dmg: 383819 -> 460583",
+            "Skill Omega Blast scaling: 34543 -> 41452"
+          ]
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "lines": [
+            "Skill Dragon's Roar base_dmg: 5875 -> 6374",
+            "Skill Dragon's Roar scaling: 530 -> 575",
+            "Skill Dragon's Gust base_dmg: 18193 -> 19739",
+            "Skill Dragon's Gust scaling: 1090 -> 1183",
+            "Skill Breath of Wyvern base_dmg: 26879 -> 29164",
+            "Skill Breath of Wyvern scaling: 1881 -> 2041",
+            "Skill Soul Dragon Onslaught base_dmg: 121357 -> 131672",
+            "Skill Soul Dragon Onslaught scaling: 6068 -> 6584"
+          ]
+        },
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "lines": [
+            "Skill Skill 1 cast_time: 2.8 -> 0.5",
+            "Skill Skill 2 cast_time: 2.8 -> 1.2",
+            "Skill Skill 3 cast_time: 2.8 -> 2.1",
+            "Skill Skill 4 cast_time: 2.8 -> 2.3",
+            "Skill Skill 5 cast_time: 2.8 -> 1.2"
+          ]
+        },
+        {
+          "id": "dcoukr",
+          "name": "Omegamon Alter-S",
+          "lines": [
+            "Attack: 17050 -> 17561",
+            "Skill Garuru Sword base_dmg: 37260 -> 47923",
+            "Skill Garuru Sword scaling: 4471 -> 5751",
+            "Skill Grey Cannon base_dmg: 54728 -> 70391",
+            "Skill Grey Cannon scaling: 6569 -> 8450",
+            "Skill Plasma Sweep base_dmg: 52019 -> 66906",
+            "Skill Plasma Sweep scaling: 6242 -> 8029",
+            "Skill Fenrir Break base_dmg: 368867 -> 443393"
+          ]
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Support\""
+          ]
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Ranged DPS\"",
+            "Skill Skill 1 cast_time: 2.8 -> 1.2",
+            "Skill Skill 2 cast_time: 2.8 -> 1.8",
+            "Skill Skill 3 cast_time: 2.8 -> 2.2",
+            "Skill Skill 4 cast_time: 2.8 -> 3.3",
+            "Skill Skill 5 cast_time: 2.8 -> 2.1"
+          ]
+        },
+        {
+          "id": "d1qovngl",
+          "name": "Minervamon",
+          "lines": [
+            "Skill Olympia's Resolve name: \"Goddess Bastion\" -> \"Olympia's Resolve\""
+          ]
+        },
+        {
+          "id": "d1gvzyx2",
+          "name": "Qinglongmon",
+          "lines": [
+            "Skill Eastern Sky Blessing name: \"Eastern Bastion\" -> \"Eastern Sky Blessing\"",
+            "Skill Azure Coil name: \"Azure Dragon Ward\" -> \"Azure Coil\""
+          ]
+        },
+        {
+          "id": "d9mgz4g",
+          "name": "BlackWarGreymon(Dark Tower)",
+          "lines": [
+            "Skill Dark Tower Field name: \"Spire Ward\" -> \"Dark Tower Field\"",
+            "Skill Unyielding Tower name: \"Dark Tower Bastion\" -> \"Unyielding Tower\""
+          ]
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Support\"",
+            "Skill Skill 1 cast_time: 2.8 -> 1.8",
+            "Skill Skill 2 cast_time: 2.8 -> 2.7",
+            "Skill Skill 3 cast_time: 2.8 -> 5.2",
+            "Skill Skill 4 cast_time: 2.8 -> 4.5",
+            "Skill Skill 5 cast_time: 2.8 -> 1.2"
+          ]
+        },
+        {
+          "id": "d1mu63gm",
+          "name": "Sistermon Noir(Awakened)",
+          "lines": [
+            "Role: \"Hybrid\" -> \"Ranged DPS\"",
+            "Skill Skill 1 cast_time: 2.8 -> 1.5",
+            "Skill Skill 2 cast_time: 2.8 -> 1.6",
+            "Skill Skill 3 cast_time: 2.8 -> 3.9",
+            "Skill Skill 4 cast_time: 2.8 -> 2.7",
+            "Skill Skill 5 cast_time: 2.8 -> 1.1"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-01T22:31:55.853Z",
+        "mode": "force",
+        "refreshedCount": 493,
+        "dpsUp": [
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "before": 94340.95555443363,
+            "after": 111761.78110157744,
+            "delta": 17420.825547143802
+          },
+          {
+            "id": "dhoymox",
+            "name": "Dynasmon X",
+            "role": "Caster",
+            "before": 110544.22685975609,
+            "after": 128387.85026884709,
+            "delta": 17843.623409091
+          },
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "before": 5790.305217795208,
+            "after": 10855.758813988425,
+            "delta": 5065.453596193217
+          },
+          {
+            "id": "dcoukr",
+            "name": "Omegamon Alter-S",
+            "role": "Melee DPS",
+            "before": 125569.74512157546,
+            "after": 156093.07827682505,
+            "delta": 30523.333155249595
+          },
+          {
+            "id": "dugzqs",
+            "name": "Sistermon Noir",
+            "role": "Ranged DPS",
+            "before": 2546.6453940065844,
+            "after": 4322.593414462843,
+            "delta": 1775.9480204562583
+          },
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Support",
+            "before": 1988.2985324506003,
+            "after": 2799.2242631578983,
+            "delta": 810.925730707298
+          },
+          {
+            "id": "d1mu63gm",
+            "name": "Sistermon Noir(Awakened)",
+            "role": "Ranged DPS",
+            "before": 2546.6453940065844,
+            "after": 4325.047779270532,
+            "delta": 1778.402385263948
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Support",
+            "before": 1988.2985324506003,
+            "after": 1899.4736071428558,
+            "delta": -88.82492530774448
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-10-01T12:40:04.236Z-z6xeue",
       "finishedAt": "2026-10-01T12:40:04.236Z",
@@ -4409,32 +4753,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-01T11:19:31.634Z",
-        "mode": "force",
-        "refreshedCount": 470,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-01T03:53:16.395Z-8r5u8y",
-      "finishedAt": "2026-09-01T03:53:16.395Z",
-      "mode": "force",
-      "refreshedCount": 470,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-01T03:53:16.395Z",
         "mode": "force",
         "refreshedCount": 470,
         "dpsUp": [],
