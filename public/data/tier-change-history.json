@@ -1,6 +1,159 @@
 {
-  "updated_at": "2026-10-01T22:31:55.830Z",
+  "updated_at": "2026-10-02T04:23:11.083Z",
   "runs": [
+    {
+      "id": "2026-10-02T04:23:11.106Z-cqcv6u",
+      "finishedAt": "2026-10-02T04:23:11.106Z",
+      "mode": "force",
+      "refreshedCount": 494,
+      "apiCount": 4,
+      "tierCount": 3,
+      "sampleDigimon": [
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "cause": "api"
+        },
+        {
+          "id": "d17lxyxv",
+          "name": "Lilithmon X",
+          "cause": "api"
+        },
+        {
+          "id": "dg63th8",
+          "name": "Lilithmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d4mt9th",
+          "name": "WarGreymon(Overdrive)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1dnnjni": [
+          "Skill Dark Despair base_dmg: 5595 -> 6468",
+          "Skill Dark Despair scaling: 503 -> 581",
+          "Skill Chaos Degrade base_dmg: 18239 -> 21084",
+          "Skill Chaos Degrade scaling: 1094 -> 1265",
+          "Skill Holy Desire base_dmg: 26352 -> 30463",
+          "Skill Holy Desire scaling: 1844 -> 2132",
+          "Skill Twilight Severance base_dmg: 116996 -> 135247",
+          "Skill Twilight Severance scaling: 5850 -> 6763"
+        ],
+        "d17lxyxv": [
+          "Skill Cauldron Veil name: \"Cauldron Ward\" -> \"Cauldron Veil\""
+        ],
+        "dg63th8": [
+          "Skill Nazar Nail base_dmg: 8521 -> 7815",
+          "Skill Nazar Nail scaling: 766 -> 702",
+          "Skill Phantom Pain base_dmg: 26110 -> 23946",
+          "Skill Phantom Pain scaling: 1567 -> 1437",
+          "Skill Abyss Butterfly base_dmg: 37725 -> 34598",
+          "Skill Abyss Butterfly scaling: 2640 -> 2422",
+          "Skill Seventh Fascinate base_dmg: 160363 -> 147074",
+          "Skill Seventh Fascinate scaling: 8019 -> 7355"
+        ],
+        "d4mt9th": [
+          "Skill Courage Unbroken name: \"Overdrive Bastion\" -> \"Courage Unbroken\""
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Dark Despair base_dmg: 5595 -> 6468",
+            "Skill Dark Despair scaling: 503 -> 581",
+            "Skill Chaos Degrade base_dmg: 18239 -> 21084",
+            "Skill Chaos Degrade scaling: 1094 -> 1265",
+            "Skill Holy Desire base_dmg: 26352 -> 30463",
+            "Skill Holy Desire scaling: 1844 -> 2132",
+            "Skill Twilight Severance base_dmg: 116996 -> 135247",
+            "Skill Twilight Severance scaling: 5850 -> 6763"
+          ]
+        },
+        {
+          "id": "d17lxyxv",
+          "name": "Lilithmon X",
+          "lines": [
+            "Skill Cauldron Veil name: \"Cauldron Ward\" -> \"Cauldron Veil\""
+          ]
+        },
+        {
+          "id": "dg63th8",
+          "name": "Lilithmon X",
+          "lines": [
+            "Skill Nazar Nail base_dmg: 8521 -> 7815",
+            "Skill Nazar Nail scaling: 766 -> 702",
+            "Skill Phantom Pain base_dmg: 26110 -> 23946",
+            "Skill Phantom Pain scaling: 1567 -> 1437",
+            "Skill Abyss Butterfly base_dmg: 37725 -> 34598",
+            "Skill Abyss Butterfly scaling: 2640 -> 2422",
+            "Skill Seventh Fascinate base_dmg: 160363 -> 147074",
+            "Skill Seventh Fascinate scaling: 8019 -> 7355"
+          ]
+        },
+        {
+          "id": "d4mt9th",
+          "name": "WarGreymon(Overdrive)",
+          "lines": [
+            "Skill Courage Unbroken name: \"Overdrive Bastion\" -> \"Courage Unbroken\""
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-02T04:23:11.106Z",
+        "mode": "force",
+        "refreshedCount": 494,
+        "dpsUp": [
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 100607.06083427313,
+            "after": 115481.64110638772,
+            "delta": 14874.580272114588
+          },
+          {
+            "id": "dg63th8",
+            "name": "Lilithmon X",
+            "role": "Caster",
+            "before": 94872.40407286564,
+            "after": 112057.47303831173,
+            "delta": 17185.068965446088
+          }
+        ],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-01T22:31:55.853Z-jvurwt",
       "finishedAt": "2026-10-01T22:31:55.853Z",
@@ -4727,32 +4880,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-01T16:15:27.195Z",
-        "mode": "force",
-        "refreshedCount": 470,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-01T11:19:31.634Z-vsdjos",
-      "finishedAt": "2026-09-01T11:19:31.634Z",
-      "mode": "force",
-      "refreshedCount": 470,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-01T11:19:31.634Z",
         "mode": "force",
         "refreshedCount": 470,
         "dpsUp": [],
