@@ -1,6 +1,52 @@
 {
-  "updated_at": "2026-10-04T04:38:17.929Z",
+  "updated_at": "2026-10-04T11:57:43.601Z",
   "runs": [
+    {
+      "id": "2026-10-04T11:57:43.624Z-zshepj",
+      "finishedAt": "2026-10-04T11:57:43.624Z",
+      "mode": "force",
+      "refreshedCount": 494,
+      "apiCount": 1,
+      "tierCount": 1,
+      "sampleDigimon": [
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-10-04T11:57:43.624Z",
+        "mode": "force",
+        "refreshedCount": 494,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-04T04:38:17.953Z-bg23ol",
       "finishedAt": "2026-10-04T04:38:17.953Z",
@@ -4866,32 +4912,6 @@
             "to": "complete"
           }
         ]
-      }
-    },
-    {
-      "id": "2026-09-03T16:00:20.745Z-vg46ld",
-      "finishedAt": "2026-09-03T16:00:20.745Z",
-      "mode": "force",
-      "refreshedCount": 470,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-03T16:00:20.745Z",
-        "mode": "force",
-        "refreshedCount": 470,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
       }
     }
   ]
