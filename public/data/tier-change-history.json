@@ -1,6 +1,1195 @@
 {
-  "updated_at": "2026-10-08T13:01:51.837Z",
+  "updated_at": "2026-10-08T23:07:05.208Z",
   "runs": [
+    {
+      "id": "2026-10-08T23:07:05.232Z-is73x8",
+      "finishedAt": "2026-10-08T23:07:05.232Z",
+      "mode": "force",
+      "refreshedCount": 504,
+      "apiCount": 65,
+      "tierCount": 15,
+      "sampleDigimon": [
+        {
+          "id": "dr8399q",
+          "name": "Dukemon(Realized)",
+          "cause": "api"
+        },
+        {
+          "id": "dct15xi",
+          "name": "Gankoomon X",
+          "cause": "api"
+        },
+        {
+          "id": "dbmbkuo",
+          "name": "Jesmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1i0fx35",
+          "name": "SaintGalgomon(Realized)",
+          "cause": "api"
+        },
+        {
+          "id": "d15g4nfs",
+          "name": "Sakuyamon(Realized)",
+          "cause": "api"
+        },
+        {
+          "id": "d10r15zr",
+          "name": "Sistermon Ciel",
+          "cause": "api"
+        },
+        {
+          "id": "d1oz6yb5",
+          "name": "Omegamon Alter-S",
+          "cause": "api"
+        },
+        {
+          "id": "dyzu1et",
+          "name": "Dukemon(Realized)",
+          "cause": "api"
+        },
+        {
+          "id": "dq2sie2",
+          "name": "Gankoomon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1wnyiwo",
+          "name": "Jesmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d7tgi4w",
+          "name": "SaintGalgomon(Realized)",
+          "cause": "api"
+        },
+        {
+          "id": "d1e5c50k",
+          "name": "Sakuyamon(Realized)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "dqcps0z": [
+          "Skill Angelic Empowerment buff name: \"Angelic Empowerment\" -> \"Dark Attribute (U)\"",
+          "Skill Angelic Empowerment buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "d1soic64": [
+          "Skill Ironhide Plate buff name: \"Ironhide Plate\" -> \"Virus Attribute (U)\"",
+          "Skill Ironhide Plate buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Skill Damage of Virus Attribute Digimon increases.\"",
+          "Skill Armored Bastion buff name: \"Osteo Shield\" -> \"Wind Attribute (U)\"",
+          "Skill Armored Bastion buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.41% (+2.41% per Skill Level) for 15 seconds.\" -> \"Wind attribute Digimon attribute damage increases.\""
+        ],
+        "djdhlsa": [
+          "Skill Ape Fury buff name: \"Ape Fury\" -> \"Data Attribute (SSS)\"",
+          "Skill Ape Fury buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "dj782yu": [
+          "Skill Sky Empowerment buff name: \"Sky Empowerment\" -> \"Electric Attribute (SSS)\"",
+          "Skill Sky Empowerment buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Accuracy of Electric Attribute Digimon increases.\""
+        ],
+        "d1diof57": [
+          "Skill Prison of Darkness buff name: \"Adaptive Arcana\" -> \"Data Attribute (SSS)\"",
+          "Skill Prison of Darkness buff description: \"Increases Attack Power by 642 (+60 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "daknlcd": [
+          "Skill Ghostly Chant buff name: \"Bakemon - Sharpen\" -> \"Vaccine Attribute (U)\"",
+          "Skill Ghostly Chant buff description: \"Increases Critical Damage by 15%, increases Critical Rate by 5% (+1.80% per Skill Level), and increases Skill Damage by 3% (+1% per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1s6qnpj": [
+          "Skill Phoenix Recovery buff name: \"Birdramon - Fortify Line\" -> \"Wood Attribute (U)\"",
+          "Skill Phoenix Recovery buff description: \"Reduces damage taken by 10%, increases MaxHP by 200 (+42 per Skill Level), and increases DE by 15 (+4 per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\"",
+          "Skill Meteor Wing Anthem buff name: \"Birdramon - Tempest\" -> \"Vaccine Attribute (SSS+)\"",
+          "Skill Meteor Wing Anthem buff description: \"Increases Attack Power by 430, increases Attack Speed by 2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1x1d68d": [
+          "Skill Nightstalker's Focus buff name: \"Nightstalker's Focus\" -> \"Data Attribute (SSS+)\"",
+          "Skill Nightstalker's Focus buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d1okikjz": [
+          "Skill Data Armor buff name: \"Data Armor\" -> \"Ice Attribute (SSS)\"",
+          "Skill Data Armor buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"Ice attribute Digimon attribute damage increases.\"",
+          "Skill Network Shield buff name: \"Tough Cocoon\" -> \"Wind Attribute (SSS+)\"",
+          "Skill Network Shield buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.76% (+2.76% per Skill Level) for 15 seconds.\" -> \"Wind attribute Digimon attribute damage increases.\""
+        ],
+        "dcswzqb": [
+          "Skill Verdant Scales buff name: \"Dragon Recovery\" -> \"Unknown Attribute (SSS)\"",
+          "Skill Verdant Scales buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"The Health of Unknown Attribute Digimon increases.\"",
+          "Skill Emerald Aura buff name: \"Malachite Core\" -> \"Fire Attribute (U)\"",
+          "Skill Emerald Aura buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.47% (+2.47% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+        ],
+        "d1lshomj": [
+          "Skill Predator Rampage buff name: \"Darktyranomon - Battle Roar\" -> \"Vaccine Attribute (U)\"",
+          "Skill Predator Rampage buff description: \"Increases Attack Power by 645, increases Skill Damage by 5% (+1% per Skill Level), and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1o9p1gd": [
+          "Skill Quick Draw Fury buff name: \"Sheriff's Aim\" -> \"Vaccine Attribute (SSS)\"",
+          "Skill Quick Draw Fury buff description: \"Increases Skill Damage by 20% and increases Critical Rate by 2% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "dnj0fix": [
+          "Skill Devil's Embrace buff name: \"Devil's Embrace\" -> \"Data Attribute (U)\"",
+          "Skill Devil's Embrace buff description: \"Increases Attack Power by 620 (+58 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d1uoxuqq": [
+          "Skill Dark Metal Edge buff name: \"Dark Metal Edge\" -> \"Data Attribute (SSS)\"",
+          "Skill Dark Metal Edge buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "dh27skg": [
+          "Skill Earthen Fortification buff name: \"Earthen Fortification\" -> \"Virus Attribute (SSS)\"",
+          "Skill Earthen Fortification buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"The Skill Damage of Virus Attribute Digimon increases.\"",
+          "Skill Earthen Wall buff name: \"Bedrock Drill\" -> \"Earth Attribute (SSS+)\"",
+          "Skill Earthen Wall buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.52% (+2.52% per Skill Level) for 15 seconds.\" -> \"The Health of Earth Attribute Digimon increases.\""
+        ],
+        "d1epigw": [
+          "Skill Hounds Ward buff name: \"Hounds Ward\" -> \"Steel Attribute (SSS)\"",
+          "Skill Hounds Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"Damage taken by Digimon with the Iron attribute is reduced.\""
+        ],
+        "d12lyp36": [
+          "Skill Venom Ward buff name: \"Venom Ward\" -> \"Steel Attribute (SSS+)\"",
+          "Skill Venom Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"Damage taken by Digimon with the Iron attribute is reduced.\""
+        ],
+        "decl9ek": [
+          "Skill Exceed Power buff name: \"Exceed Power\" -> \"Data Attribute (U)\"",
+          "Skill Exceed Power buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "dnve9z5": [
+          "Skill Swarm Deterrent buff name: \"Hive Mend\" -> \"Unknown Attribute (U)\"",
+          "Skill Swarm Deterrent buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"The Health of Unknown Attribute Digimon increases.\"",
+          "Skill Swarm Shield buff name: \"Venom Shell\" -> \"Wood Attribute (SSS)\"",
+          "Skill Swarm Shield buff description: \"Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 80 (+8 per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\""
+        ],
+        "d18czwbu": [
+          "Skill Rapid Fire Focus buff name: \"Gatling Cadence\" -> \"Vaccine Attribute (SSS)\"",
+          "Skill Rapid Fire Focus buff description: \"Increases Attack Speed by 9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d19wwz3y": [
+          "Skill Iron Plating buff name: \"Iron Plating\" -> \"Fire Attribute (SSS+)\"",
+          "Skill Iron Plating buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+          "Skill Warning Siren buff name: \"Defense Wall\" -> \"Wood Attribute (SSS+)\"",
+          "Skill Warning Siren buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.71% (+2.71% per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\""
+        ],
+        "dmod5tv": [
+          "Skill Wolf Endurance buff name: \"Wolf's Endurance\" -> \"Fire Attribute (SSS)\"",
+          "Skill Wolf Endurance buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+          "Skill Pack Protection buff name: \"Frost Barrier\" -> \"Dark Attribute (SSS+)\"",
+          "Skill Pack Protection buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.59% (+2.59% per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "dzaw7o1": [
+          "Skill Dark Wolf Fury buff name: \"Dark Wolf Fury\" -> \"Data Attribute (U)\"",
+          "Skill Dark Wolf Fury buff description: \"Increases Attack Power by 642 (+60 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d18gxr8i": [
+          "Skill Holy Ring Empower buff name: \"Holy Ring Empower\" -> \"Electric Attribute (SSS+)\"",
+          "Skill Holy Ring Empower buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Accuracy of Electric Attribute Digimon increases.\""
+        ],
+        "d1titkoy": [
+          "Skill Sonic Restoration buff name: \"Sonic Restoration\" -> \"Ice Attribute (U)\"",
+          "Skill Sonic Restoration buff description: \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Ice attribute Digimon attribute damage increases.\"",
+          "Skill River Rally buff name: \"Disc Spin\" -> \"Wood Attribute (U)\"",
+          "Skill River Rally buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.81% (+2.81% per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\""
+        ],
+        "d1rwu6j6": [
+          "Skill Mega Roar buff name: \"Leviathan Shell\" -> \"Fire Attribute (SSS+)\"",
+          "Skill Mega Roar buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.66% (+2.66% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+        ],
+        "dgro4ey": [
+          "Skill Abyssal Restoration buff name: \"Ink Screen\" -> \"Fire Attribute (SSS+)\"",
+          "Skill Abyssal Restoration buff description: \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+          "Skill Abyssal Ward buff name: \"Depth Shroud\" -> \"Dark Attribute (SSS+)\"",
+          "Skill Abyssal Ward buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.58% (+2.58% per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "d9dx2bx": [
+          "Skill Assault Protocol buff name: \"GizumonAT - Warband\" -> \"Vaccine Attribute (SSS+)\"",
+          "Skill Assault Protocol buff description: \"Increases Attack Power by 516, increases Critical Damage by 5% (+1% per Skill Level), and increases Skill Damage by 3% (+1% per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1ycr0rn": [
+          "Skill Parrying Stance buff name: \"Blade Guard\" -> \"Vaccine Attribute (U)\"",
+          "Skill Parrying Stance buff description: \"Reduces damage taken by 6% and increases DE by 5 (+8 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\"",
+          "Skill Knightly Resolve buff name: \"Rapier Resolve\" -> \"Earth Attribute (SSS)\"",
+          "Skill Knightly Resolve buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.72% (+2.72% per Skill Level) for 15 seconds.\" -> \"The Health of Earth Attribute Digimon increases.\""
+        ],
+        "d1dj8zva": [
+          "Skill Dark Rex Power buff name: \"Dark Rex Power\" -> \"Data Attribute (SSS+)\"",
+          "Skill Dark Rex Power buff description: \"Increases Attack Power by 647 (+60 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d121uwg6": [
+          "Skill Bear Rampage buff name: \"Bear Rampage\" -> \"Data Attribute (SSS+)\"",
+          "Skill Bear Rampage buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d1u1j6kk": [
+          "Skill Plasma Guard buff name: \"Plasma Guard\" -> \"Fire Attribute (SSS)\"",
+          "Skill Plasma Guard buff description: \"Reduces damage taken by 6% and increases DE by 5 (+8 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+          "Skill Hazard Barrier buff name: \"Crimson Hazard\" -> \"Dark Attribute (SSS)\"",
+          "Skill Hazard Barrier buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "d1i982g0": [
+          "Skill Frost Barrier buff name: \"Frost Barrier\" -> \"Vaccine Attribute (U)\"",
+          "Skill Frost Barrier buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\"",
+          "Skill Glacial Bulwark buff name: \"Permafrost Shell\" -> \"Fire Attribute (U)\"",
+          "Skill Glacial Bulwark buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.75% (+2.75% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+        ],
+        "d1warrod": [
+          "Skill Avalanche Aegis buff name: \"Avalanche Aegis\" -> \"Water Attribute (U)\"",
+          "Skill Avalanche Aegis buff description: \"Gives a Shield of 600 (+85 per Skill Level) and increases DE by 30 (+9 per Skill Level) for 20 seconds.\" -> \"Increases the skill damage of Water-attribute Digimon.\"",
+          "Skill Northern Shield buff name: \"Icicle Coat\" -> \"Dark Attribute (SSS)\"",
+          "Skill Northern Shield buff description: \"Restores 80 HP per tick, reduces damage taken by 25%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "d1t82jaj": [
+          "Skill Exoskeleton buff name: \"Exoskeleton\" -> \"Water Attribute (SSS+)\"",
+          "Skill Exoskeleton buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"Increases the skill damage of Water-attribute Digimon.\"",
+          "Skill Chitin Guard buff name: \"Beetle Shell\" -> \"Light Attribute (U)\"",
+          "Skill Chitin Guard buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.37% (+2.37% per Skill Level) for 15 seconds.\" -> \"The Critical Rate of Light Attribute Digimon increases.\""
+        ],
+        "d167vxdu": [
+          "Skill Forest Fury buff name: \"Forest Volley\" -> \"Data Attribute (U)\"",
+          "Skill Forest Fury buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "dtqxlcp": [
+          "Skill Battle Ward buff name: \"Battle Ward\" -> \"Dark Attribute (U)\"",
+          "Skill Battle Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "duk9lvg": [
+          "Skill Fortress Stance buff name: \"Fortress Stance\" -> \"Vaccine Attribute (U)\"",
+          "Skill Fortress Stance buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\"",
+          "Skill Royal Guard buff name: \"Gallop Guard\" -> \"Fire Attribute (U)\"",
+          "Skill Royal Guard buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.78% (+2.78% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+        ],
+        "dcsfxgo": [
+          "Skill Fox Fire Empower buff name: \"Fox Fire Empower\" -> \"Dark Attribute (U)\"",
+          "Skill Fox Fire Empower buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "d1s5h9kq": [
+          "Skill Lion Heart buff name: \"Lion's Heart\" -> \"Fire Attribute (SSS)\"",
+          "Skill Lion Heart buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+          "Skill Beast King's Resolve buff name: \"Beast King Will\" -> \"Dark Attribute (SSS)\"",
+          "Skill Beast King's Resolve buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "dytx9gp": [
+          "Skill Lion Heart buff name: \"Lion's Heart\" -> \"Fire Attribute (SSS)\"",
+          "Skill Lion Heart buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+          "Skill Beast King's Resolve buff name: \"Beast King Will\" -> \"Dark Attribute (SSS)\"",
+          "Skill Beast King's Resolve buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "d60op71": [
+          "Skill Lock-On Targeting buff name: \"Lock-On Targeting\" -> \"Vaccine Attribute (SSS)\"",
+          "Skill Lock-On Targeting buff description: \"Increases Skill Damage by 15% and increases Attack Power by 521 (+49 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "dyni2b9": [
+          "Skill Inferno Surge buff name: \"Roaring Flame\" -> \"Vaccine Attribute (SSS+)\"",
+          "Skill Inferno Surge buff description: \"Increases Skill Damage by 15% and increases Attack Power by 521 (+49 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1cg31ad": [
+          "Skill Samurai Focus buff name: \"Samurai Discipline\" -> \"Data Attribute (SSS)\"",
+          "Skill Samurai Focus buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d153jub0": [
+          "Skill Raptor Frenzy buff name: \"Raptor Hunt\" -> \"Data Attribute (SSS+)\"",
+          "Skill Raptor Frenzy buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d1otpbm5": [
+          "Skill Predator Instinct buff name: \"Predator Instinct\" -> \"Data Attribute (SSS+)\"",
+          "Skill Predator Instinct buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d3wcljc": [
+          "Skill Tidal Restoration buff name: \"Tidal Restoration\" -> \"Virus Attribute (SSS+)\"",
+          "Skill Tidal Restoration buff description: \"Increases DS by 5% of MaxDS, restores 450 HP (+42 per Skill Level), and reduces damage taken by 4% for 20 seconds.\" -> \"The Skill Damage of Virus Attribute Digimon increases.\"",
+          "Skill Oceanic Ward buff name: \"Oceanic Ward\" -> \"Wind Attribute (SSS)\"",
+          "Skill Oceanic Ward buff description: \"Restores 230 HP per tick, reduces damage taken by 25%, and gains a Shield of 1050 (+98 per Skill Level) for 15 seconds.\" -> \"Wind attribute Digimon attribute damage increases.\""
+        ],
+        "dly041g": [
+          "Skill Combat Shield buff name: \"Combat Shield\" -> \"Water Attribute (SSS)\"",
+          "Skill Combat Shield buff description: \"Reduces damage taken by 6% and increases DE by 5 (+8 per Skill Level) for 20 seconds.\" -> \"Increases the skill damage of Water-attribute Digimon.\"",
+          "Skill Tactical Cover buff name: \"Stealth Armor\" -> \"Light Attribute (SSS+)\"",
+          "Skill Tactical Cover buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.71% (+2.71% per Skill Level) for 15 seconds.\" -> \"The Critical Rate of Light Attribute Digimon increases.\""
+        ],
+        "dqhvots": [
+          "Skill Phantom Shroud buff name: \"Phantom Shroud\" -> \"Ice Attribute (SSS+)\"",
+          "Skill Phantom Shroud buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"Ice attribute Digimon attribute damage increases.\"",
+          "Skill Spectral Veil buff name: \"Ghost Shroud\" -> \"Light Attribute (SSS)\"",
+          "Skill Spectral Veil buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.77% (+2.77% per Skill Level) for 15 seconds.\" -> \"The Critical Rate of Light Attribute Digimon increases.\""
+        ],
+        "d1ypjdkm": [
+          "Skill Star Blitz buff name: \"Star Blitz\" -> \"Data Attribute (U)\"",
+          "Skill Star Blitz buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "d8zcsxi": [
+          "Skill Sunshine Blessing buff name: \"Sunshine Blessing\" -> \"Dark Attribute (SSS+)\"",
+          "Skill Sunshine Blessing buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+        ],
+        "dfi44h3": [
+          "Skill Tidal Ward buff name: \"Tidal Ward\" -> \"Steel Attribute (U)\"",
+          "Skill Tidal Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"Damage taken by Digimon with the Iron attribute is reduced.\""
+        ],
+        "d1mk6bi9": [
+          "Skill V-Power buff name: \"Dragon Mythos\" -> \"Data Attribute (SSS)\"",
+          "Skill V-Power buff description: \"Increases Evasion by 1% (+0.14% per Skill Level), reduces damage taken by 22%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+        ],
+        "dm4j8cw": [
+          "Skill Beast Guard buff name: \"Beast Guard\" -> \"Electric Attribute (U)\"",
+          "Skill Beast Guard buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"The Accuracy of Electric Attribute Digimon increases.\""
+        ],
+        "d1s9i90b": [
+          "Skill Arcane Mastery buff name: \"Arcane Mastery\" -> \"Vaccine Attribute (SSS+)\"",
+          "Skill Arcane Mastery buff description: \"Restores 4200 HP and reduces damage taken by 10% for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1k4vnhv": [
+          "Skill Forest Rhythm buff name: \"Woodmon - Sharpen\" -> \"Vaccine Attribute (SSS+)\"",
+          "Skill Forest Rhythm buff description: \"Increases Critical Damage by 15%, increases Critical Rate by 5% (+1.80% per Skill Level), and increases Skill Damage by 3% (+1% per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+        ],
+        "d1dnnjni": [
+          "Skill Dark Despair base_dmg: 6468 -> 4697",
+          "Skill Dark Despair scaling: 581 -> 422",
+          "Skill Chaos Degrade base_dmg: 21084 -> 15312",
+          "Skill Chaos Degrade scaling: 1265 -> 918",
+          "Skill Holy Desire base_dmg: 30463 -> 22124",
+          "Skill Holy Desire scaling: 2132 -> 1549",
+          "Skill Twilight Severance base_dmg: 135247 -> 98222",
+          "Skill Twilight Severance scaling: 6763 -> 4912"
+        ],
+        "d1ja7r7v": [
+          "Skill Garuru Cannon base_dmg: 43192 -> 52694",
+          "Skill Garuru Cannon scaling: 5180 -> 6320",
+          "Skill Grey Sword base_dmg: 63439 -> 77396",
+          "Skill Grey Sword scaling: 7612 -> 9287",
+          "Skill Supreme Cannon base_dmg: 69029 -> 84215",
+          "Skill Supreme Cannon scaling: 8278 -> 10099",
+          "Skill Omega Blast base_dmg: 376946 -> 459874",
+          "Skill Omega Blast scaling: 37695 -> 45988"
+        ],
+        "dhoymox": [
+          "Skill Dragon's Roar base_dmg: 6374 -> 4770",
+          "Skill Dragon's Roar scaling: 575 -> 431",
+          "Skill Dragon's Gust base_dmg: 19739 -> 14774",
+          "Skill Dragon's Gust scaling: 1183 -> 886",
+          "Skill Breath of Wyvern base_dmg: 29164 -> 21829",
+          "Skill Breath of Wyvern scaling: 2041 -> 1528",
+          "Skill Soul Dragon Onslaught base_dmg: 131672 -> 98554",
+          "Skill Soul Dragon Onslaught scaling: 6584 -> 4928"
+        ],
+        "d1qovngl": [
+          "Skill Olympia's Resolve buff name: \"Goddess Bastion\" -> \"Olympia's Resolve\""
+        ],
+        "d1oz6yb5": [
+          "Skill Garuru Sword base_dmg: 39119 -> 43031",
+          "Skill Garuru Sword scaling: 4695 -> 5164",
+          "Skill Grey Cannon base_dmg: 57428 -> 63171",
+          "Skill Grey Cannon scaling: 6891 -> 7580",
+          "Skill Supreme Grey Cannon base_dmg: 62486 -> 68735",
+          "Skill Supreme Grey Cannon scaling: 7498 -> 8248",
+          "Skill Alter Blast base_dmg: 392024 -> 431226",
+          "Skill Alter Blast scaling: 39203 -> 43123"
+        ],
+        "d1gvzyx2": [
+          "Skill Eastern Sky Blessing buff name: \"Eastern Bastion\" -> \"Eastern Sky Blessing\"",
+          "Skill Azure Coil buff name: \"Azure Dragon Ward\" -> \"Azure Coil\""
+        ],
+        "d9mgz4g": [
+          "Skill Dark Tower Field buff name: \"Spire Ward\" -> \"Dark Tower Field\"",
+          "Skill Unyielding Tower buff name: \"Dark Tower Bastion\" -> \"Unyielding Tower\""
+        ],
+        "d17lxyxv": [
+          "Skill Cauldron Veil buff name: \"Cauldron Ward\" -> \"Cauldron Veil\""
+        ],
+        "d4mt9th": [
+          "Skill Courage Unbroken buff name: \"Overdrive Bastion\" -> \"Courage Unbroken\""
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "dqcps0z",
+          "name": "Angemon",
+          "lines": [
+            "Skill Angelic Empowerment buff name: \"Angelic Empowerment\" -> \"Dark Attribute (U)\"",
+            "Skill Angelic Empowerment buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1soic64",
+          "name": "Ankylomon",
+          "lines": [
+            "Skill Ironhide Plate buff name: \"Ironhide Plate\" -> \"Virus Attribute (U)\"",
+            "Skill Ironhide Plate buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Skill Damage of Virus Attribute Digimon increases.\"",
+            "Skill Armored Bastion buff name: \"Osteo Shield\" -> \"Wind Attribute (U)\"",
+            "Skill Armored Bastion buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.41% (+2.41% per Skill Level) for 15 seconds.\" -> \"Wind attribute Digimon attribute damage increases.\""
+          ]
+        },
+        {
+          "id": "djdhlsa",
+          "name": "Apemon",
+          "lines": [
+            "Skill Ape Fury buff name: \"Ape Fury\" -> \"Data Attribute (SSS)\"",
+            "Skill Ape Fury buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dj782yu",
+          "name": "Aquilamon",
+          "lines": [
+            "Skill Sky Empowerment buff name: \"Sky Empowerment\" -> \"Electric Attribute (SSS)\"",
+            "Skill Sky Empowerment buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Accuracy of Electric Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1diof57",
+          "name": "Arkadimon Adult",
+          "lines": [
+            "Skill Prison of Darkness buff name: \"Adaptive Arcana\" -> \"Data Attribute (SSS)\"",
+            "Skill Prison of Darkness buff description: \"Increases Attack Power by 642 (+60 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "daknlcd",
+          "name": "Bakemon",
+          "lines": [
+            "Skill Ghostly Chant buff name: \"Bakemon - Sharpen\" -> \"Vaccine Attribute (U)\"",
+            "Skill Ghostly Chant buff description: \"Increases Critical Damage by 15%, increases Critical Rate by 5% (+1.80% per Skill Level), and increases Skill Damage by 3% (+1% per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1s6qnpj",
+          "name": "Birdramon",
+          "lines": [
+            "Skill Phoenix Recovery buff name: \"Birdramon - Fortify Line\" -> \"Wood Attribute (U)\"",
+            "Skill Phoenix Recovery buff description: \"Reduces damage taken by 10%, increases MaxHP by 200 (+42 per Skill Level), and increases DE by 15 (+4 per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\"",
+            "Skill Meteor Wing Anthem buff name: \"Birdramon - Tempest\" -> \"Vaccine Attribute (SSS+)\"",
+            "Skill Meteor Wing Anthem buff description: \"Increases Attack Power by 430, increases Attack Speed by 2%, and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1x1d68d",
+          "name": "Blackgatomon",
+          "lines": [
+            "Skill Nightstalker's Focus buff name: \"Nightstalker's Focus\" -> \"Data Attribute (SSS+)\"",
+            "Skill Nightstalker's Focus buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1okikjz",
+          "name": "Chrysalimon",
+          "lines": [
+            "Skill Data Armor buff name: \"Data Armor\" -> \"Ice Attribute (SSS)\"",
+            "Skill Data Armor buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"Ice attribute Digimon attribute damage increases.\"",
+            "Skill Network Shield buff name: \"Tough Cocoon\" -> \"Wind Attribute (SSS+)\"",
+            "Skill Network Shield buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.76% (+2.76% per Skill Level) for 15 seconds.\" -> \"Wind attribute Digimon attribute damage increases.\""
+          ]
+        },
+        {
+          "id": "dcswzqb",
+          "name": "Coredramon(Green)",
+          "lines": [
+            "Skill Verdant Scales buff name: \"Dragon Recovery\" -> \"Unknown Attribute (SSS)\"",
+            "Skill Verdant Scales buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"The Health of Unknown Attribute Digimon increases.\"",
+            "Skill Emerald Aura buff name: \"Malachite Core\" -> \"Fire Attribute (U)\"",
+            "Skill Emerald Aura buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.47% (+2.47% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1lshomj",
+          "name": "Darktyranomon",
+          "lines": [
+            "Skill Predator Rampage buff name: \"Darktyranomon - Battle Roar\" -> \"Vaccine Attribute (U)\"",
+            "Skill Predator Rampage buff description: \"Increases Attack Power by 645, increases Skill Damage by 5% (+1% per Skill Level), and increases Attack Power by 775 (+72 per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1o9p1gd",
+          "name": "Deputymon",
+          "lines": [
+            "Skill Quick Draw Fury buff name: \"Sheriff's Aim\" -> \"Vaccine Attribute (SSS)\"",
+            "Skill Quick Draw Fury buff description: \"Increases Skill Damage by 20% and increases Critical Rate by 2% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dnj0fix",
+          "name": "Devimon",
+          "lines": [
+            "Skill Devil's Embrace buff name: \"Devil's Embrace\" -> \"Data Attribute (U)\"",
+            "Skill Devil's Embrace buff description: \"Increases Attack Power by 620 (+58 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1uoxuqq",
+          "name": "DexDorugamon",
+          "lines": [
+            "Skill Dark Metal Edge buff name: \"Dark Metal Edge\" -> \"Data Attribute (SSS)\"",
+            "Skill Dark Metal Edge buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dh27skg",
+          "name": "Digmon",
+          "lines": [
+            "Skill Earthen Fortification buff name: \"Earthen Fortification\" -> \"Virus Attribute (SSS)\"",
+            "Skill Earthen Fortification buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"The Skill Damage of Virus Attribute Digimon increases.\"",
+            "Skill Earthen Wall buff name: \"Bedrock Drill\" -> \"Earth Attribute (SSS+)\"",
+            "Skill Earthen Wall buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.52% (+2.52% per Skill Level) for 15 seconds.\" -> \"The Health of Earth Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1epigw",
+          "name": "Dobermon",
+          "lines": [
+            "Skill Hounds Ward buff name: \"Hounds Ward\" -> \"Steel Attribute (SSS)\"",
+            "Skill Hounds Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"Damage taken by Digimon with the Iron attribute is reduced.\""
+          ]
+        },
+        {
+          "id": "d12lyp36",
+          "name": "Dokugumon",
+          "lines": [
+            "Skill Venom Ward buff name: \"Venom Ward\" -> \"Steel Attribute (SSS+)\"",
+            "Skill Venom Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"Damage taken by Digimon with the Iron attribute is reduced.\""
+          ]
+        },
+        {
+          "id": "decl9ek",
+          "name": "ExV-mon",
+          "lines": [
+            "Skill Exceed Power buff name: \"Exceed Power\" -> \"Data Attribute (U)\"",
+            "Skill Exceed Power buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dnve9z5",
+          "name": "Flymon",
+          "lines": [
+            "Skill Swarm Deterrent buff name: \"Hive Mend\" -> \"Unknown Attribute (U)\"",
+            "Skill Swarm Deterrent buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"The Health of Unknown Attribute Digimon increases.\"",
+            "Skill Swarm Shield buff name: \"Venom Shell\" -> \"Wood Attribute (SSS)\"",
+            "Skill Swarm Shield buff description: \"Gains a Shield worth 10% of MaxHP, reduces damage taken by 25%, and increases MaxHP by 80 (+8 per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\""
+          ]
+        },
+        {
+          "id": "d18czwbu",
+          "name": "Galgomon",
+          "lines": [
+            "Skill Rapid Fire Focus buff name: \"Gatling Cadence\" -> \"Vaccine Attribute (SSS)\"",
+            "Skill Rapid Fire Focus buff description: \"Increases Attack Speed by 9% and increases Attack Power by 514 (+48 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d19wwz3y",
+          "name": "Gardromon",
+          "lines": [
+            "Skill Iron Plating buff name: \"Iron Plating\" -> \"Fire Attribute (SSS+)\"",
+            "Skill Iron Plating buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+            "Skill Warning Siren buff name: \"Defense Wall\" -> \"Wood Attribute (SSS+)\"",
+            "Skill Warning Siren buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.71% (+2.71% per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\""
+          ]
+        },
+        {
+          "id": "dmod5tv",
+          "name": "Garurumon",
+          "lines": [
+            "Skill Wolf Endurance buff name: \"Wolf's Endurance\" -> \"Fire Attribute (SSS)\"",
+            "Skill Wolf Endurance buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+            "Skill Pack Protection buff name: \"Frost Barrier\" -> \"Dark Attribute (SSS+)\"",
+            "Skill Pack Protection buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.59% (+2.59% per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dzaw7o1",
+          "name": "Garurumon(Black)",
+          "lines": [
+            "Skill Dark Wolf Fury buff name: \"Dark Wolf Fury\" -> \"Data Attribute (U)\"",
+            "Skill Dark Wolf Fury buff description: \"Increases Attack Power by 642 (+60 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d18gxr8i",
+          "name": "Gatomon",
+          "lines": [
+            "Skill Holy Ring Empower buff name: \"Holy Ring Empower\" -> \"Electric Attribute (SSS+)\"",
+            "Skill Holy Ring Empower buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Accuracy of Electric Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1titkoy",
+          "name": "Gawappamon",
+          "lines": [
+            "Skill Sonic Restoration buff name: \"Sonic Restoration\" -> \"Ice Attribute (U)\"",
+            "Skill Sonic Restoration buff description: \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"Ice attribute Digimon attribute damage increases.\"",
+            "Skill River Rally buff name: \"Disc Spin\" -> \"Wood Attribute (U)\"",
+            "Skill River Rally buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.81% (+2.81% per Skill Level) for 15 seconds.\" -> \"The Incoming Damage of Wood Attribute Digimon decreases.\""
+          ]
+        },
+        {
+          "id": "d1rwu6j6",
+          "name": "GeoGreymon",
+          "lines": [
+            "Skill Mega Roar buff name: \"Leviathan Shell\" -> \"Fire Attribute (SSS+)\"",
+            "Skill Mega Roar buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.66% (+2.66% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dgro4ey",
+          "name": "Gesomon",
+          "lines": [
+            "Skill Abyssal Restoration buff name: \"Ink Screen\" -> \"Fire Attribute (SSS+)\"",
+            "Skill Abyssal Restoration buff description: \"Increases DS by 5% of Max DS, restores 6% of MaxHP, and reduces damage taken by 4% for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+            "Skill Abyssal Ward buff name: \"Depth Shroud\" -> \"Dark Attribute (SSS+)\"",
+            "Skill Abyssal Ward buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.58% (+2.58% per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d9dx2bx",
+          "name": "GizumonAT",
+          "lines": [
+            "Skill Assault Protocol buff name: \"GizumonAT - Warband\" -> \"Vaccine Attribute (SSS+)\"",
+            "Skill Assault Protocol buff description: \"Increases Attack Power by 516, increases Critical Damage by 5% (+1% per Skill Level), and increases Skill Damage by 3% (+1% per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1ycr0rn",
+          "name": "Gladimon",
+          "lines": [
+            "Skill Parrying Stance buff name: \"Blade Guard\" -> \"Vaccine Attribute (U)\"",
+            "Skill Parrying Stance buff description: \"Reduces damage taken by 6% and increases DE by 5 (+8 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\"",
+            "Skill Knightly Resolve buff name: \"Rapier Resolve\" -> \"Earth Attribute (SSS)\"",
+            "Skill Knightly Resolve buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.72% (+2.72% per Skill Level) for 15 seconds.\" -> \"The Health of Earth Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1dj8zva",
+          "name": "Greymon(Black)",
+          "lines": [
+            "Skill Dark Rex Power buff name: \"Dark Rex Power\" -> \"Data Attribute (SSS+)\"",
+            "Skill Dark Rex Power buff description: \"Increases Attack Power by 647 (+60 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d121uwg6",
+          "name": "Grizzmon",
+          "lines": [
+            "Skill Bear Rampage buff name: \"Bear Rampage\" -> \"Data Attribute (SSS+)\"",
+            "Skill Bear Rampage buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1u1j6kk",
+          "name": "Growmon",
+          "lines": [
+            "Skill Plasma Guard buff name: \"Plasma Guard\" -> \"Fire Attribute (SSS)\"",
+            "Skill Plasma Guard buff description: \"Reduces damage taken by 6% and increases DE by 5 (+8 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+            "Skill Hazard Barrier buff name: \"Crimson Hazard\" -> \"Dark Attribute (SSS)\"",
+            "Skill Hazard Barrier buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1i982g0",
+          "name": "Icemon",
+          "lines": [
+            "Skill Frost Barrier buff name: \"Frost Barrier\" -> \"Vaccine Attribute (U)\"",
+            "Skill Frost Barrier buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\"",
+            "Skill Glacial Bulwark buff name: \"Permafrost Shell\" -> \"Fire Attribute (U)\"",
+            "Skill Glacial Bulwark buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.75% (+2.75% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1warrod",
+          "name": "Ikkakumon",
+          "lines": [
+            "Skill Avalanche Aegis buff name: \"Avalanche Aegis\" -> \"Water Attribute (U)\"",
+            "Skill Avalanche Aegis buff description: \"Gives a Shield of 600 (+85 per Skill Level) and increases DE by 30 (+9 per Skill Level) for 20 seconds.\" -> \"Increases the skill damage of Water-attribute Digimon.\"",
+            "Skill Northern Shield buff name: \"Icicle Coat\" -> \"Dark Attribute (SSS)\"",
+            "Skill Northern Shield buff description: \"Restores 80 HP per tick, reduces damage taken by 25%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1t82jaj",
+          "name": "Kabuterimon",
+          "lines": [
+            "Skill Exoskeleton buff name: \"Exoskeleton\" -> \"Water Attribute (SSS+)\"",
+            "Skill Exoskeleton buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"Increases the skill damage of Water-attribute Digimon.\"",
+            "Skill Chitin Guard buff name: \"Beetle Shell\" -> \"Light Attribute (U)\"",
+            "Skill Chitin Guard buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.37% (+2.37% per Skill Level) for 15 seconds.\" -> \"The Critical Rate of Light Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d167vxdu",
+          "name": "Kiwimon",
+          "lines": [
+            "Skill Forest Fury buff name: \"Forest Volley\" -> \"Data Attribute (U)\"",
+            "Skill Forest Fury buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dtqxlcp",
+          "name": "KnightChessmon Black",
+          "lines": [
+            "Skill Battle Ward buff name: \"Battle Ward\" -> \"Dark Attribute (U)\"",
+            "Skill Battle Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "duk9lvg",
+          "name": "KnightChessmon White",
+          "lines": [
+            "Skill Fortress Stance buff name: \"Fortress Stance\" -> \"Vaccine Attribute (U)\"",
+            "Skill Fortress Stance buff description: \"Reduces damage taken by 4% and gains a Shield of 100 (+54 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\"",
+            "Skill Royal Guard buff name: \"Gallop Guard\" -> \"Fire Attribute (U)\"",
+            "Skill Royal Guard buff description: \"Gains a Shield worth 15% of MaxHP, reduces damage taken by 20%, and increases Evasion by 2.78% (+2.78% per Skill Level) for 15 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dcsfxgo",
+          "name": "Kyubimon",
+          "lines": [
+            "Skill Fox Fire Empower buff name: \"Fox Fire Empower\" -> \"Dark Attribute (U)\"",
+            "Skill Fox Fire Empower buff description: \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1s5h9kq",
+          "name": "Leomon",
+          "lines": [
+            "Skill Lion Heart buff name: \"Lion's Heart\" -> \"Fire Attribute (SSS)\"",
+            "Skill Lion Heart buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+            "Skill Beast King's Resolve buff name: \"Beast King Will\" -> \"Dark Attribute (SSS)\"",
+            "Skill Beast King's Resolve buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dytx9gp",
+          "name": "Leomon",
+          "lines": [
+            "Skill Lion Heart buff name: \"Lion's Heart\" -> \"Fire Attribute (SSS)\"",
+            "Skill Lion Heart buff description: \"Reduces damage taken by 5% and increases MaxHP by 100 (+46 per Skill Level) for 20 seconds.\" -> \"The Critical Damage of Fire Attribute Digimon increases.\"",
+            "Skill Beast King's Resolve buff name: \"Beast King Will\" -> \"Dark Attribute (SSS)\"",
+            "Skill Beast King's Resolve buff description: \"Restores 20% of MaxHP, reduces damage taken by 20%, and gains a Shield of 400 (+40 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d60op71",
+          "name": "MechaNorimon",
+          "lines": [
+            "Skill Lock-On Targeting buff name: \"Lock-On Targeting\" -> \"Vaccine Attribute (SSS)\"",
+            "Skill Lock-On Targeting buff description: \"Increases Skill Damage by 15% and increases Attack Power by 521 (+49 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dyni2b9",
+          "name": "Meramon",
+          "lines": [
+            "Skill Inferno Surge buff name: \"Roaring Flame\" -> \"Vaccine Attribute (SSS+)\"",
+            "Skill Inferno Surge buff description: \"Increases Skill Damage by 15% and increases Attack Power by 521 (+49 per Skill Level) for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1cg31ad",
+          "name": "Musyamon",
+          "lines": [
+            "Skill Samurai Focus buff name: \"Samurai Discipline\" -> \"Data Attribute (SSS)\"",
+            "Skill Samurai Focus buff description: \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d153jub0",
+          "name": "RaptorDramon",
+          "lines": [
+            "Skill Raptor Frenzy buff name: \"Raptor Hunt\" -> \"Data Attribute (SSS+)\"",
+            "Skill Raptor Frenzy buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1otpbm5",
+          "name": "Sangloupmon",
+          "lines": [
+            "Skill Predator Instinct buff name: \"Predator Instinct\" -> \"Data Attribute (SSS+)\"",
+            "Skill Predator Instinct buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d3wcljc",
+          "name": "Seadramon",
+          "lines": [
+            "Skill Tidal Restoration buff name: \"Tidal Restoration\" -> \"Virus Attribute (SSS+)\"",
+            "Skill Tidal Restoration buff description: \"Increases DS by 5% of MaxDS, restores 450 HP (+42 per Skill Level), and reduces damage taken by 4% for 20 seconds.\" -> \"The Skill Damage of Virus Attribute Digimon increases.\"",
+            "Skill Oceanic Ward buff name: \"Oceanic Ward\" -> \"Wind Attribute (SSS)\"",
+            "Skill Oceanic Ward buff description: \"Restores 230 HP per tick, reduces damage taken by 25%, and gains a Shield of 1050 (+98 per Skill Level) for 15 seconds.\" -> \"Wind attribute Digimon attribute damage increases.\""
+          ]
+        },
+        {
+          "id": "dly041g",
+          "name": "SealsDramon",
+          "lines": [
+            "Skill Combat Shield buff name: \"Combat Shield\" -> \"Water Attribute (SSS)\"",
+            "Skill Combat Shield buff description: \"Reduces damage taken by 6% and increases DE by 5 (+8 per Skill Level) for 20 seconds.\" -> \"Increases the skill damage of Water-attribute Digimon.\"",
+            "Skill Tactical Cover buff name: \"Stealth Armor\" -> \"Light Attribute (SSS+)\"",
+            "Skill Tactical Cover buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.71% (+2.71% per Skill Level) for 15 seconds.\" -> \"The Critical Rate of Light Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dqhvots",
+          "name": "Soulmon",
+          "lines": [
+            "Skill Phantom Shroud buff name: \"Phantom Shroud\" -> \"Ice Attribute (SSS+)\"",
+            "Skill Phantom Shroud buff description: \"Reduces damage taken by 3%, increases DE by 5%, and gains a Shield of 85 (+33 per Skill Level) for 20 seconds.\" -> \"Ice attribute Digimon attribute damage increases.\"",
+            "Skill Spectral Veil buff name: \"Ghost Shroud\" -> \"Light Attribute (SSS)\"",
+            "Skill Spectral Veil buff description: \"Gains a Shield worth 8% of MaxHP, reduces damage taken by 22%, and increases Evasion by 2.77% (+2.77% per Skill Level) for 15 seconds.\" -> \"The Critical Rate of Light Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1ypjdkm",
+          "name": "Starmon",
+          "lines": [
+            "Skill Star Blitz buff name: \"Star Blitz\" -> \"Data Attribute (U)\"",
+            "Skill Star Blitz buff description: \"Increases Critical Damage by 0% (+2% per Skill Level) and increases Critical Rate by 0% (+1% per Skill Level) for 20 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d8zcsxi",
+          "name": "SunFlowmon",
+          "lines": [
+            "Skill Sunshine Blessing buff name: \"Sunshine Blessing\" -> \"Dark Attribute (SSS+)\"",
+            "Skill Sunshine Blessing buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Dark Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dfi44h3",
+          "name": "Tylomon",
+          "lines": [
+            "Skill Tidal Ward buff name: \"Tidal Ward\" -> \"Steel Attribute (U)\"",
+            "Skill Tidal Ward buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"Damage taken by Digimon with the Iron attribute is reduced.\""
+          ]
+        },
+        {
+          "id": "d1mk6bi9",
+          "name": "Veedramon",
+          "lines": [
+            "Skill V-Power buff name: \"Dragon Mythos\" -> \"Data Attribute (SSS)\"",
+            "Skill V-Power buff description: \"Increases Evasion by 1% (+0.14% per Skill Level), reduces damage taken by 22%, and gains a Shield of 300 (+30 per Skill Level) for 15 seconds.\" -> \"The Attack Power of Data Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "dm4j8cw",
+          "name": "Wendigomon",
+          "lines": [
+            "Skill Beast Guard buff name: \"Beast Guard\" -> \"Electric Attribute (U)\"",
+            "Skill Beast Guard buff description: \"Restores 1080 HP (+105 per Skill Level) and gains a Shield of 864 (+84 per Skill Level) for 15 seconds.\" -> \"The Accuracy of Electric Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1s9i90b",
+          "name": "Wizardmon",
+          "lines": [
+            "Skill Arcane Mastery buff name: \"Arcane Mastery\" -> \"Vaccine Attribute (SSS+)\"",
+            "Skill Arcane Mastery buff description: \"Restores 4200 HP and reduces damage taken by 10% for 20 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1k4vnhv",
+          "name": "Woodmon",
+          "lines": [
+            "Skill Forest Rhythm buff name: \"Woodmon - Sharpen\" -> \"Vaccine Attribute (SSS+)\"",
+            "Skill Forest Rhythm buff description: \"Increases Critical Damage by 15%, increases Critical Rate by 5% (+1.80% per Skill Level), and increases Skill Damage by 3% (+1% per Skill Level) for 15 seconds.\" -> \"The Attack Speed of Vaccine Attribute Digimon increases.\""
+          ]
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Dark Despair base_dmg: 6468 -> 4697",
+            "Skill Dark Despair scaling: 581 -> 422",
+            "Skill Chaos Degrade base_dmg: 21084 -> 15312",
+            "Skill Chaos Degrade scaling: 1265 -> 918",
+            "Skill Holy Desire base_dmg: 30463 -> 22124",
+            "Skill Holy Desire scaling: 2132 -> 1549",
+            "Skill Twilight Severance base_dmg: 135247 -> 98222",
+            "Skill Twilight Severance scaling: 6763 -> 4912"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Garuru Cannon base_dmg: 43192 -> 52694",
+            "Skill Garuru Cannon scaling: 5180 -> 6320",
+            "Skill Grey Sword base_dmg: 63439 -> 77396",
+            "Skill Grey Sword scaling: 7612 -> 9287",
+            "Skill Supreme Cannon base_dmg: 69029 -> 84215",
+            "Skill Supreme Cannon scaling: 8278 -> 10099",
+            "Skill Omega Blast base_dmg: 376946 -> 459874",
+            "Skill Omega Blast scaling: 37695 -> 45988"
+          ]
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "lines": [
+            "Skill Dragon's Roar base_dmg: 6374 -> 4770",
+            "Skill Dragon's Roar scaling: 575 -> 431",
+            "Skill Dragon's Gust base_dmg: 19739 -> 14774",
+            "Skill Dragon's Gust scaling: 1183 -> 886",
+            "Skill Breath of Wyvern base_dmg: 29164 -> 21829",
+            "Skill Breath of Wyvern scaling: 2041 -> 1528",
+            "Skill Soul Dragon Onslaught base_dmg: 131672 -> 98554",
+            "Skill Soul Dragon Onslaught scaling: 6584 -> 4928"
+          ]
+        },
+        {
+          "id": "d1qovngl",
+          "name": "Minervamon",
+          "lines": [
+            "Skill Olympia's Resolve buff name: \"Goddess Bastion\" -> \"Olympia's Resolve\""
+          ]
+        },
+        {
+          "id": "d1oz6yb5",
+          "name": "Omegamon Alter-S",
+          "lines": [
+            "Skill Garuru Sword base_dmg: 39119 -> 43031",
+            "Skill Garuru Sword scaling: 4695 -> 5164",
+            "Skill Grey Cannon base_dmg: 57428 -> 63171",
+            "Skill Grey Cannon scaling: 6891 -> 7580",
+            "Skill Supreme Grey Cannon base_dmg: 62486 -> 68735",
+            "Skill Supreme Grey Cannon scaling: 7498 -> 8248",
+            "Skill Alter Blast base_dmg: 392024 -> 431226",
+            "Skill Alter Blast scaling: 39203 -> 43123"
+          ]
+        },
+        {
+          "id": "d1gvzyx2",
+          "name": "Qinglongmon",
+          "lines": [
+            "Skill Eastern Sky Blessing buff name: \"Eastern Bastion\" -> \"Eastern Sky Blessing\"",
+            "Skill Azure Coil buff name: \"Azure Dragon Ward\" -> \"Azure Coil\""
+          ]
+        },
+        {
+          "id": "d9mgz4g",
+          "name": "BlackWarGreymon(Dark Tower)",
+          "lines": [
+            "Skill Dark Tower Field buff name: \"Spire Ward\" -> \"Dark Tower Field\"",
+            "Skill Unyielding Tower buff name: \"Dark Tower Bastion\" -> \"Unyielding Tower\""
+          ]
+        },
+        {
+          "id": "d17lxyxv",
+          "name": "Lilithmon X",
+          "lines": [
+            "Skill Cauldron Veil buff name: \"Cauldron Ward\" -> \"Cauldron Veil\""
+          ]
+        },
+        {
+          "id": "d4mt9th",
+          "name": "WarGreymon(Overdrive)",
+          "lines": [
+            "Skill Courage Unbroken buff name: \"Overdrive Bastion\" -> \"Courage Unbroken\""
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-08T23:07:05.232Z",
+        "mode": "force",
+        "refreshedCount": 504,
+        "dpsUp": [
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 107990.7935997862,
+            "after": 127215.32861699072,
+            "delta": 19224.53501720453
+          },
+          {
+            "id": "d1oz6yb5",
+            "name": "Omegamon Alter-S",
+            "role": "Ranged DPS",
+            "before": 114257.24130376447,
+            "after": 122043.12334590014,
+            "delta": 7785.882042135665
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 115481.64110638772,
+            "after": 84659.36439933923,
+            "delta": -30822.276707048484
+          },
+          {
+            "id": "dhoymox",
+            "name": "Dynasmon X",
+            "role": "Caster",
+            "before": 128387.85026884709,
+            "after": 96666.81816130824,
+            "delta": -31721.03210753885
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "dr8399q",
+            "name": "Dukemon(Realized)",
+            "role": "Tank",
+            "after": 82478.48349765409
+          },
+          {
+            "id": "dct15xi",
+            "name": "Gankoomon X",
+            "role": "Tank",
+            "after": 67778.16142812849
+          },
+          {
+            "id": "dbmbkuo",
+            "name": "Jesmon X",
+            "role": "Melee DPS",
+            "after": 131997.31613156394
+          },
+          {
+            "id": "d1i0fx35",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Tank",
+            "after": 62425.961534222224
+          },
+          {
+            "id": "d15g4nfs",
+            "name": "Sakuyamon(Realized)",
+            "role": "Support",
+            "after": 39902.89553407607
+          },
+          {
+            "id": "d10r15zr",
+            "name": "Sistermon Ciel",
+            "role": "Melee DPS",
+            "after": 2388.1748117869042
+          },
+          {
+            "id": "dyzu1et",
+            "name": "Dukemon(Realized)",
+            "role": "Melee DPS",
+            "after": 201609.54530327418
+          },
+          {
+            "id": "dq2sie2",
+            "name": "Gankoomon X",
+            "role": "Melee DPS",
+            "after": 103929.65289831882
+          },
+          {
+            "id": "d1wnyiwo",
+            "name": "Jesmon X",
+            "role": "Hybrid",
+            "after": 68382.78612816225
+          },
+          {
+            "id": "d7tgi4w",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Ranged DPS",
+            "after": 109262.412887779
+          },
+          {
+            "id": "d1e5c50k",
+            "name": "Sakuyamon(Realized)",
+            "role": "Caster",
+            "after": 95702.49772249545
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "dr8399q",
+            "name": "Dukemon(Realized)",
+            "role": "Tank",
+            "after": 3.953885188450111
+          },
+          {
+            "id": "dct15xi",
+            "name": "Gankoomon X",
+            "role": "Tank",
+            "after": 3.9610136164823446
+          },
+          {
+            "id": "d1i0fx35",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Tank",
+            "after": 3.9587752431303245
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d15g4nfs",
+            "name": "Sakuyamon(Realized)",
+            "role": "Support",
+            "after": 6.194324801630521
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "dr8399q",
+            "name": "Dukemon(Realized)",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "dct15xi",
+            "name": "Gankoomon X",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "dbmbkuo",
+            "name": "Jesmon X",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1i0fx35",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d15g4nfs",
+            "name": "Sakuyamon(Realized)",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d10r15zr",
+            "name": "Sistermon Ciel",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dyzu1et",
+            "name": "Dukemon(Realized)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dq2sie2",
+            "name": "Gankoomon X",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1wnyiwo",
+            "name": "Jesmon X",
+            "role": "Hybrid",
+            "to": "complete"
+          },
+          {
+            "id": "d7tgi4w",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1e5c50k",
+            "name": "Sakuyamon(Realized)",
+            "role": "Caster",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-08T13:01:51.858Z-r00tfk",
       "finishedAt": "2026-10-08T13:01:51.858Z",
@@ -4345,32 +5534,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-07T03:12:58.594Z",
-        "mode": "force",
-        "refreshedCount": 473,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-06T20:10:49.896Z-a2e2ta",
-      "finishedAt": "2026-09-06T20:10:49.896Z",
-      "mode": "force",
-      "refreshedCount": 473,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-06T20:10:49.896Z",
         "mode": "force",
         "refreshedCount": 473,
         "dpsUp": [],
