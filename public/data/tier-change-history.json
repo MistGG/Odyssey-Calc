@@ -1,6 +1,145 @@
 {
-  "updated_at": "2026-10-08T23:07:05.208Z",
+  "updated_at": "2026-10-09T04:53:37.788Z",
   "runs": [
+    {
+      "id": "2026-10-09T04:53:37.809Z-i29gx6",
+      "finishedAt": "2026-10-09T04:53:37.809Z",
+      "mode": "force",
+      "refreshedCount": 504,
+      "apiCount": 4,
+      "tierCount": 2,
+      "sampleDigimon": [
+        {
+          "id": "d1x1d68d",
+          "name": "Blackgatomon",
+          "cause": "api"
+        },
+        {
+          "id": "d18gxr8i",
+          "name": "Gatomon",
+          "cause": "api"
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1x1d68d": [
+          "Skill Nightstalker's Focus buff name: \"Data Attribute (SSS+)\" -> \"Nightstalker's Focus\"",
+          "Skill Nightstalker's Focus buff description: \"The Attack Power of Data Attribute Digimon increases.\" -> \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\""
+        ],
+        "d18gxr8i": [
+          "Skill Holy Ring Empower buff name: \"Electric Attribute (SSS+)\" -> \"Holy Ring Empower\"",
+          "Skill Holy Ring Empower buff description: \"The Accuracy of Electric Attribute Digimon increases.\" -> \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\""
+        ],
+        "d1dnnjni": [
+          "Skill Dark Despair base_dmg: 4697 -> 6468",
+          "Skill Dark Despair scaling: 422 -> 581",
+          "Skill Chaos Degrade base_dmg: 15312 -> 21084",
+          "Skill Chaos Degrade scaling: 918 -> 1265",
+          "Skill Holy Desire base_dmg: 22124 -> 30463",
+          "Skill Holy Desire scaling: 1549 -> 2132",
+          "Skill Twilight Severance base_dmg: 98222 -> 135247",
+          "Skill Twilight Severance scaling: 4912 -> 6763"
+        ],
+        "d1ja7r7v": [
+          "Skill Garuru Cannon base_dmg: 52694 -> 43192",
+          "Skill Garuru Cannon scaling: 6320 -> 5180",
+          "Skill Grey Sword base_dmg: 77396 -> 63439",
+          "Skill Grey Sword scaling: 9287 -> 7612",
+          "Skill Supreme Cannon base_dmg: 84215 -> 69029",
+          "Skill Supreme Cannon scaling: 10099 -> 8278",
+          "Skill Omega Blast base_dmg: 459874 -> 376946",
+          "Skill Omega Blast scaling: 45988 -> 37695"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1x1d68d",
+          "name": "Blackgatomon",
+          "lines": [
+            "Skill Nightstalker's Focus buff name: \"Data Attribute (SSS+)\" -> \"Nightstalker's Focus\"",
+            "Skill Nightstalker's Focus buff description: \"The Attack Power of Data Attribute Digimon increases.\" -> \"Increases Attack Power by 633 (+59 per Skill Level) for 20 seconds.\""
+          ]
+        },
+        {
+          "id": "d18gxr8i",
+          "name": "Gatomon",
+          "lines": [
+            "Skill Holy Ring Empower buff name: \"Electric Attribute (SSS+)\" -> \"Holy Ring Empower\"",
+            "Skill Holy Ring Empower buff description: \"The Accuracy of Electric Attribute Digimon increases.\" -> \"Restores 1080 HP (+105 per Skill Level) and increases Attack Power by 560 (+54 per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Dark Despair base_dmg: 4697 -> 6468",
+            "Skill Dark Despair scaling: 422 -> 581",
+            "Skill Chaos Degrade base_dmg: 15312 -> 21084",
+            "Skill Chaos Degrade scaling: 918 -> 1265",
+            "Skill Holy Desire base_dmg: 22124 -> 30463",
+            "Skill Holy Desire scaling: 1549 -> 2132",
+            "Skill Twilight Severance base_dmg: 98222 -> 135247",
+            "Skill Twilight Severance scaling: 4912 -> 6763"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Garuru Cannon base_dmg: 52694 -> 43192",
+            "Skill Garuru Cannon scaling: 6320 -> 5180",
+            "Skill Grey Sword base_dmg: 77396 -> 63439",
+            "Skill Grey Sword scaling: 9287 -> 7612",
+            "Skill Supreme Cannon base_dmg: 84215 -> 69029",
+            "Skill Supreme Cannon scaling: 10099 -> 8278",
+            "Skill Omega Blast base_dmg: 459874 -> 376946",
+            "Skill Omega Blast scaling: 45988 -> 37695"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-09T04:53:37.809Z",
+        "mode": "force",
+        "refreshedCount": 504,
+        "dpsUp": [
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 84659.36439933923,
+            "after": 115481.64110638772,
+            "delta": 30822.276707048484
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 127215.32861699072,
+            "after": 107990.7935997862,
+            "delta": -19224.53501720453
+          }
+        ],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-10-08T23:07:05.232Z-is73x8",
       "finishedAt": "2026-10-08T23:07:05.232Z",
@@ -5508,32 +5647,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-07T11:49:24.578Z",
-        "mode": "force",
-        "refreshedCount": 473,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-07T03:12:58.594Z-xl3cfk",
-      "finishedAt": "2026-09-07T03:12:58.594Z",
-      "mode": "force",
-      "refreshedCount": 473,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-07T03:12:58.594Z",
         "mode": "force",
         "refreshedCount": 473,
         "dpsUp": [],
