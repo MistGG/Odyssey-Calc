@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-10-21T16:50:04.498Z",
+  "updated_at": "2026-10-21T21:26:50.356Z",
   "runs": [
+    {
+      "id": "2026-10-21T21:26:50.387Z-mc09jf",
+      "finishedAt": "2026-10-21T21:26:50.387Z",
+      "mode": "force",
+      "refreshedCount": 505,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-10-21T21:26:50.387Z",
+        "mode": "force",
+        "refreshedCount": 505,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-10-21T16:50:04.524Z-oh1ywr",
       "finishedAt": "2026-10-21T16:50:04.524Z",
@@ -5369,86 +5395,6 @@
         "healerDown": [],
         "healerNew": [],
         "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-18T10:47:52.153Z-x37g8w",
-      "finishedAt": "2026-09-18T10:47:52.153Z",
-      "mode": "force",
-      "refreshedCount": 492,
-      "apiCount": 2,
-      "tierCount": 2,
-      "sampleDigimon": [
-        {
-          "id": "d72tale",
-          "name": "Dynasmon X",
-          "cause": "api"
-        },
-        {
-          "id": "du5z3qp",
-          "name": "Examon",
-          "cause": "api"
-        },
-        {
-          "id": "d1tvr03j",
-          "name": "Fradramon",
-          "cause": "api"
-        }
-      ],
-      "apiDiffById": {
-        "d1tvr03j": [
-          "Skill Knuckle Fire name: \"Kunckle Fire\" -> \"Knuckle Fire\""
-        ]
-      },
-      "apiDiffs": [
-        {
-          "id": "d1tvr03j",
-          "name": "Fradramon",
-          "lines": [
-            "Skill Knuckle Fire name: \"Kunckle Fire\" -> \"Knuckle Fire\""
-          ]
-        }
-      ],
-      "summary": {
-        "finishedAt": "2026-09-18T10:47:52.153Z",
-        "mode": "force",
-        "refreshedCount": 492,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [
-          {
-            "id": "d72tale",
-            "name": "Dynasmon X",
-            "role": "Melee DPS",
-            "after": 96846.54859635836
-          },
-          {
-            "id": "du5z3qp",
-            "name": "Examon",
-            "role": "Hybrid",
-            "after": 55445.189226139424
-          }
-        ],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": [
-          {
-            "id": "d72tale",
-            "name": "Dynasmon X",
-            "role": "Melee DPS",
-            "to": "complete"
-          },
-          {
-            "id": "du5z3qp",
-            "name": "Examon",
-            "role": "Hybrid",
-            "to": "complete"
-          }
-        ]
       }
     }
   ]
