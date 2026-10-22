@@ -1,6 +1,557 @@
 {
-  "updated_at": "2026-10-22T16:52:01.203Z",
+  "updated_at": "2026-10-22T21:23:18.033Z",
   "runs": [
+    {
+      "id": "2026-10-22T21:23:18.055Z-xexpvx",
+      "finishedAt": "2026-10-22T21:23:18.055Z",
+      "mode": "force",
+      "refreshedCount": 509,
+      "apiCount": 16,
+      "tierCount": 18,
+      "sampleDigimon": [
+        {
+          "id": "dpehw5f",
+          "name": "Armagemon[Conflation]",
+          "cause": "api"
+        },
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "cause": "api"
+        },
+        {
+          "id": "dbmbkuo",
+          "name": "Jesmon X",
+          "cause": "api"
+        },
+        {
+          "id": "dnqtruu",
+          "name": "Minervamon",
+          "cause": "api"
+        },
+        {
+          "id": "d6net83",
+          "name": "Ogudomon(weakened)",
+          "cause": "api"
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "cause": "api"
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "d10r15zr",
+          "name": "Sistermon Ciel",
+          "cause": "api"
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "cause": "api"
+        },
+        {
+          "id": "d1mu63gm",
+          "name": "Sistermon Noir(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "d1wnyiwo",
+          "name": "Jesmon X",
+          "cause": "api"
+        },
+        {
+          "id": "dq2sie2",
+          "name": "Gankoomon X",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "dpehw5f": [
+          "HP: 18100 -> 20979",
+          "Attack: 8700 -> 10356",
+          "Stats.ds: 13315 -> 16842",
+          "Stats.defense: 452 -> 524"
+        ],
+        "d6net83": [
+          "HP: 10170 -> 13049",
+          "Attack: 5752 -> 7408",
+          "Stats.ds: 11355 -> 14882",
+          "Stats.defense: 265 -> 337"
+        ],
+        "dkn5pci": [
+          "Skill Dragonic Barrier description: \"The Caledfwlch unfold to their full span and hang over the party like a vault of dragon steel. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 10 seconds.\" -> \"The Caledfwlch unfold to their full span and hang over the party like a vault of dragon steel. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 20 seconds.\"",
+          "Skill Dragonic Barrier buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 20 seconds.\"",
+          "Skill Dragonic Barrier buff duration: 10 -> 20"
+        ],
+        "d1d6hjvi": [
+          "Skill Continuum Override description: \"Millenniumon overrides the flow of the continuum around its allies. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Millenniumon overrides the flow of the continuum around its allies. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+          "Skill Continuum Override buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+          "Skill Continuum Override buff duration: 10 -> 20"
+        ],
+        "d9fr4zr": [
+          "HP: 13998 -> 29128",
+          "Attack: 8045 -> 19444",
+          "Stats.ds: 14195 -> 20426",
+          "Stats.defense: 381 -> 704",
+          "Stats.crit_rate: 3966 -> 5092",
+          "Stats.evasion: 3189 -> 3500",
+          "Stats.hit_rate: 1270 -> 1782",
+          "Stats.dex: 800 -> 1650"
+        ],
+        "d18amvwr": [
+          "Skill Imperial Formation description: \"ImperialDramon plants all four legs and locks the Positron Laser into a firing line, the party falling into formation behind the cannon. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 10 seconds.\" -> \"ImperialDramon plants all four legs and locks the Positron Laser into a firing line, the party falling into formation behind the cannon. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 20 seconds.\"",
+          "Skill Imperial Formation buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 20 seconds.\"",
+          "Skill Imperial Formation buff duration: 10 -> 20"
+        ],
+        "dp7qngj": [
+          "HP: 6757 -> 19911",
+          "Attack: 1675 -> 3488",
+          "Stats.ds: 9020 -> 43831",
+          "Stats.defense: 258 -> 475",
+          "Stats.crit_rate: 806 -> 3328",
+          "Stats.atk_speed: 1700 -> 1300",
+          "Stats.evasion: 2168 -> 2940",
+          "Stats.hit_rate: 677 -> 1455"
+        ],
+        "dugzqs": [
+          "HP: 12570 -> 14014",
+          "Attack: 2988 -> 9703",
+          "Stats.ds: 16799 -> 14528",
+          "Stats.defense: 432 -> 390",
+          "Stats.crit_rate: 1036 -> 4548",
+          "Stats.atk_speed: 1700 -> 1300",
+          "Stats.evasion: 2345 -> 3585",
+          "Stats.hit_rate: 602 -> 1397"
+        ],
+        "d1oz6yb5": [
+          "Skill Alter InForce description: \"Omegamon Alter-S forces open a distorted Omega InForce. The party reads every incoming blow a beat early and answers at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Omegamon Alter-S forces open a distorted Omega InForce. The party reads every incoming blow a beat early and answers at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+          "Skill Alter InForce buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+          "Skill Alter InForce buff duration: 10 -> 20"
+        ],
+        "d1dyhy6u": [
+          "HP: 6757 -> 27558",
+          "Attack: 1675 -> 4078",
+          "Stats.ds: 9020 -> 53147",
+          "Stats.defense: 258 -> 677",
+          "Stats.crit_rate: 806 -> 5107",
+          "Stats.atk_speed: 1700 -> 1300",
+          "Stats.evasion: 2168 -> 3500",
+          "Stats.hit_rate: 677 -> 1552"
+        ],
+        "d1mu63gm": [
+          "HP: 12570 -> 22448",
+          "Attack: 2988 -> 14438",
+          "Stats.ds: 16799 -> 21403",
+          "Stats.defense: 432 -> 511",
+          "Stats.crit_rate: 1036 -> 5070",
+          "Stats.atk_speed: 1700 -> 1300",
+          "Stats.evasion: 2345 -> 3500",
+          "Stats.hit_rate: 602 -> 1620"
+        ],
+        "d10r15zr": [
+          "HP: 10807 -> 18427",
+          "Attack: 2755 -> 5404",
+          "Stats.ds: 14757 -> 19387",
+          "Stats.defense: 393 -> 523",
+          "Stats.crit_rate: 806 -> 4173",
+          "Stats.atk_speed: 1700 -> 1200",
+          "Stats.evasion: 2168 -> 3490",
+          "Stats.hit_rate: 677 -> 1000"
+        ],
+        "dq2sie2": [
+          "Attack: 16941 -> 16083",
+          "Skill Tetsu Geta Harite base_dmg: 57528 -> 55227",
+          "Skill Tetsu Geta Harite scaling: 6902 -> 6626",
+          "Skill Tekken Rush base_dmg: 144245 -> 138475",
+          "Skill Tekken Rush scaling: 17310 -> 16618",
+          "Skill Ultimate Sengi Tengyouken base_dmg: 127284 -> 122193",
+          "Skill Ultimate Sengi Tengyouken scaling: 15273 -> 14662",
+          "Skill Plus Ultra Smash base_dmg: 388495 -> 372955"
+        ],
+        "d7tgi4w": [
+          "Skill Moumantai Warhead base_dmg: 342842 -> 377126",
+          "Skill Moumantai Warhead scaling: 41141 -> 45255"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "dpehw5f",
+          "name": "Armagemon[Conflation]",
+          "lines": [
+            "HP: 18100 -> 20979",
+            "Attack: 8700 -> 10356",
+            "Stats.ds: 13315 -> 16842",
+            "Stats.defense: 452 -> 524"
+          ]
+        },
+        {
+          "id": "d6net83",
+          "name": "Ogudomon(weakened)",
+          "lines": [
+            "HP: 10170 -> 13049",
+            "Attack: 5752 -> 7408",
+            "Stats.ds: 11355 -> 14882",
+            "Stats.defense: 265 -> 337"
+          ]
+        },
+        {
+          "id": "dkn5pci",
+          "name": "Examon",
+          "lines": [
+            "Skill Dragonic Barrier description: \"The Caledfwlch unfold to their full span and hang over the party like a vault of dragon steel. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 10 seconds.\" -> \"The Caledfwlch unfold to their full span and hang over the party like a vault of dragon steel. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 20 seconds.\"",
+            "Skill Dragonic Barrier buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+500 per Skill Level) for 20 seconds.\"",
+            "Skill Dragonic Barrier buff duration: 10 -> 20"
+          ]
+        },
+        {
+          "id": "d1d6hjvi",
+          "name": "Millenniumon",
+          "lines": [
+            "Skill Continuum Override description: \"Millenniumon overrides the flow of the continuum around its allies. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Millenniumon overrides the flow of the continuum around its allies. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+            "Skill Continuum Override buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+            "Skill Continuum Override buff duration: 10 -> 20"
+          ]
+        },
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "lines": [
+            "HP: 13998 -> 29128",
+            "Attack: 8045 -> 19444",
+            "Stats.ds: 14195 -> 20426",
+            "Stats.defense: 381 -> 704",
+            "Stats.crit_rate: 3966 -> 5092",
+            "Stats.evasion: 3189 -> 3500",
+            "Stats.hit_rate: 1270 -> 1782",
+            "Stats.dex: 800 -> 1650"
+          ]
+        },
+        {
+          "id": "d18amvwr",
+          "name": "ImperialDramon",
+          "lines": [
+            "Skill Imperial Formation description: \"ImperialDramon plants all four legs and locks the Positron Laser into a firing line, the party falling into formation behind the cannon. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 10 seconds.\" -> \"ImperialDramon plants all four legs and locks the Positron Laser into a firing line, the party falling into formation behind the cannon. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 20 seconds.\"",
+            "Skill Imperial Formation buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 3000 (+300 per Skill Level) for 20 seconds.\"",
+            "Skill Imperial Formation buff duration: 10 -> 20"
+          ]
+        },
+        {
+          "id": "dp7qngj",
+          "name": "Sistermon Blanc",
+          "lines": [
+            "HP: 6757 -> 19911",
+            "Attack: 1675 -> 3488",
+            "Stats.ds: 9020 -> 43831",
+            "Stats.defense: 258 -> 475",
+            "Stats.crit_rate: 806 -> 3328",
+            "Stats.atk_speed: 1700 -> 1300",
+            "Stats.evasion: 2168 -> 2940",
+            "Stats.hit_rate: 677 -> 1455"
+          ]
+        },
+        {
+          "id": "dugzqs",
+          "name": "Sistermon Noir",
+          "lines": [
+            "HP: 12570 -> 14014",
+            "Attack: 2988 -> 9703",
+            "Stats.ds: 16799 -> 14528",
+            "Stats.defense: 432 -> 390",
+            "Stats.crit_rate: 1036 -> 4548",
+            "Stats.atk_speed: 1700 -> 1300",
+            "Stats.evasion: 2345 -> 3585",
+            "Stats.hit_rate: 602 -> 1397"
+          ]
+        },
+        {
+          "id": "d1oz6yb5",
+          "name": "Omegamon Alter-S",
+          "lines": [
+            "Skill Alter InForce description: \"Omegamon Alter-S forces open a distorted Omega InForce. The party reads every incoming blow a beat early and answers at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Omegamon Alter-S forces open a distorted Omega InForce. The party reads every incoming blow a beat early and answers at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+            "Skill Alter InForce buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+            "Skill Alter InForce buff duration: 10 -> 20"
+          ]
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "lines": [
+            "HP: 6757 -> 27558",
+            "Attack: 1675 -> 4078",
+            "Stats.ds: 9020 -> 53147",
+            "Stats.defense: 258 -> 677",
+            "Stats.crit_rate: 806 -> 5107",
+            "Stats.atk_speed: 1700 -> 1300",
+            "Stats.evasion: 2168 -> 3500",
+            "Stats.hit_rate: 677 -> 1552"
+          ]
+        },
+        {
+          "id": "d1mu63gm",
+          "name": "Sistermon Noir(Awakened)",
+          "lines": [
+            "HP: 12570 -> 22448",
+            "Attack: 2988 -> 14438",
+            "Stats.ds: 16799 -> 21403",
+            "Stats.defense: 432 -> 511",
+            "Stats.crit_rate: 1036 -> 5070",
+            "Stats.atk_speed: 1700 -> 1300",
+            "Stats.evasion: 2345 -> 3500",
+            "Stats.hit_rate: 602 -> 1620"
+          ]
+        },
+        {
+          "id": "d10r15zr",
+          "name": "Sistermon Ciel",
+          "lines": [
+            "HP: 10807 -> 18427",
+            "Attack: 2755 -> 5404",
+            "Stats.ds: 14757 -> 19387",
+            "Stats.defense: 393 -> 523",
+            "Stats.crit_rate: 806 -> 4173",
+            "Stats.atk_speed: 1700 -> 1200",
+            "Stats.evasion: 2168 -> 3490",
+            "Stats.hit_rate: 677 -> 1000"
+          ]
+        },
+        {
+          "id": "dq2sie2",
+          "name": "Gankoomon X",
+          "lines": [
+            "Attack: 16941 -> 16083",
+            "Skill Tetsu Geta Harite base_dmg: 57528 -> 55227",
+            "Skill Tetsu Geta Harite scaling: 6902 -> 6626",
+            "Skill Tekken Rush base_dmg: 144245 -> 138475",
+            "Skill Tekken Rush scaling: 17310 -> 16618",
+            "Skill Ultimate Sengi Tengyouken base_dmg: 127284 -> 122193",
+            "Skill Ultimate Sengi Tengyouken scaling: 15273 -> 14662",
+            "Skill Plus Ultra Smash base_dmg: 388495 -> 372955"
+          ]
+        },
+        {
+          "id": "d7tgi4w",
+          "name": "SaintGalgomon(Realized)",
+          "lines": [
+            "Skill Moumantai Warhead base_dmg: 342842 -> 377126",
+            "Skill Moumantai Warhead scaling: 41141 -> 45255"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-22T21:23:18.055Z",
+        "mode": "force",
+        "refreshedCount": 509,
+        "dpsUp": [
+          {
+            "id": "dpehw5f",
+            "name": "Armagemon[Conflation]",
+            "role": "Melee DPS",
+            "before": 9461.859640444447,
+            "after": 10199.078404924458,
+            "delta": 737.2187644800106
+          },
+          {
+            "id": "d6net83",
+            "name": "Ogudomon(weakened)",
+            "role": "Hybrid",
+            "before": 4696.6516412000055,
+            "after": 5657.838504800001,
+            "delta": 961.1868635999954
+          },
+          {
+            "id": "dkn5pci",
+            "name": "Examon",
+            "role": "Ranged DPS",
+            "before": 103511.32182848886,
+            "after": 103613.30074700798,
+            "delta": 101.97891851911845
+          },
+          {
+            "id": "d1d6hjvi",
+            "name": "Millenniumon",
+            "role": "Ranged DPS",
+            "before": 120417.17403464878,
+            "after": 122629.56426193248,
+            "delta": 2212.3902272837004
+          },
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "before": 10855.758813988425,
+            "after": 159738.44556906607,
+            "delta": 148882.68675507765
+          },
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Support",
+            "before": 1899.4736071428558,
+            "after": 7760.902248533332,
+            "delta": 5861.428641390476
+          },
+          {
+            "id": "dugzqs",
+            "name": "Sistermon Noir",
+            "role": "Ranged DPS",
+            "before": 4322.593414462843,
+            "after": 38041.31723775879,
+            "delta": 33718.72382329595
+          },
+          {
+            "id": "d1oz6yb5",
+            "name": "Omegamon Alter-S",
+            "role": "Ranged DPS",
+            "before": 122043.12334590014,
+            "after": 123782.92566045154,
+            "delta": 1739.8023145514017
+          },
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Support",
+            "before": 2799.2242631578983,
+            "after": 44043.47055795901,
+            "delta": 41244.24629480111
+          },
+          {
+            "id": "d1mu63gm",
+            "name": "Sistermon Noir(Awakened)",
+            "role": "Ranged DPS",
+            "before": 4325.047779270532,
+            "after": 110306.21917000029,
+            "delta": 105981.17139072975
+          },
+          {
+            "id": "d10r15zr",
+            "name": "Sistermon Ciel",
+            "role": "Melee DPS",
+            "before": 2388.1748117869042,
+            "after": 50046.91825923141,
+            "delta": 47658.7434474445
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d18amvwr",
+            "name": "ImperialDramon",
+            "role": "Ranged DPS",
+            "before": 111961.81220846427,
+            "after": 104645.09471808239,
+            "delta": -7316.717490381881
+          },
+          {
+            "id": "dq2sie2",
+            "name": "Gankoomon X",
+            "role": "Melee DPS",
+            "before": 103929.65289831882,
+            "after": 98966.38441486142,
+            "delta": -4963.268483457403
+          },
+          {
+            "id": "d7tgi4w",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Ranged DPS",
+            "before": 109262.412887779,
+            "after": 106819.15498744001,
+            "delta": -2443.2579003389983
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "dl6kmwq",
+            "name": "BeelStarmon",
+            "role": "Caster",
+            "after": 204459.161695735
+          },
+          {
+            "id": "deqjfer",
+            "name": "BeelStarmon",
+            "role": "Support",
+            "after": 57237.54989384358
+          },
+          {
+            "id": "dy1j63w",
+            "name": "Sakuyamon(Simplified)",
+            "role": "Support",
+            "after": 39902.89553407607
+          },
+          {
+            "id": "drsr19f",
+            "name": "Sakuyamon(Simplified)",
+            "role": "Caster",
+            "after": 95702.49772249545
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [
+          {
+            "id": "dp7qngj",
+            "name": "Sistermon Blanc",
+            "role": "Support",
+            "before": 0.2458020069585629,
+            "after": 5.7402834519455865,
+            "delta": 5.494481444987024
+          },
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Support",
+            "before": 0.2458020069585629,
+            "after": 6.349858537636033,
+            "delta": 6.10405653067747
+          }
+        ],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "deqjfer",
+            "name": "BeelStarmon",
+            "role": "Support",
+            "after": 6.669256385265145
+          },
+          {
+            "id": "dy1j63w",
+            "name": "Sakuyamon(Simplified)",
+            "role": "Support",
+            "after": 6.194324801630521
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "dl6kmwq",
+            "name": "BeelStarmon",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "deqjfer",
+            "name": "BeelStarmon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dy1j63w",
+            "name": "Sakuyamon(Simplified)",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "drsr19f",
+            "name": "Sakuyamon(Simplified)",
+            "role": "Caster",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-22T16:52:01.232Z-22jljz",
       "finishedAt": "2026-10-22T16:52:01.232Z",
@@ -5359,32 +5910,6 @@
         "finishedAt": "2026-09-19T15:34:35.642Z",
         "mode": "force",
         "refreshedCount": 491,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-19T10:31:49.699Z-mjw9qh",
-      "finishedAt": "2026-09-19T10:31:49.699Z",
-      "mode": "force",
-      "refreshedCount": 492,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-19T10:31:49.699Z",
-        "mode": "force",
-        "refreshedCount": 492,
         "dpsUp": [],
         "dpsDown": [],
         "dpsNew": [],
