@@ -1,6 +1,347 @@
 {
-  "updated_at": "2026-10-22T21:23:18.033Z",
+  "updated_at": "2026-10-23T03:41:30.832Z",
   "runs": [
+    {
+      "id": "2026-10-23T03:41:30.857Z-w406w9",
+      "finishedAt": "2026-10-23T03:41:30.857Z",
+      "mode": "force",
+      "refreshedCount": 521,
+      "apiCount": 14,
+      "tierCount": 15,
+      "sampleDigimon": [
+        {
+          "id": "d1j7hjm5",
+          "name": "Aegiomon",
+          "cause": "api"
+        },
+        {
+          "id": "dnwhdoz",
+          "name": "Alphamon Ouryuken",
+          "cause": "api"
+        },
+        {
+          "id": "dm5i9q9",
+          "name": "Armagemon",
+          "cause": "api"
+        },
+        {
+          "id": "d17v82l5",
+          "name": "Armagemon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "d1q0mitc",
+          "name": "BeelStarmon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "d1qmz3oz",
+          "name": "Elecmon(Aegiomon)",
+          "cause": "api"
+        },
+        {
+          "id": "d12gvha8",
+          "name": "Fanglongmon",
+          "cause": "api"
+        },
+        {
+          "id": "dnd51zs",
+          "name": "Fanglongmon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "d1n23dww",
+          "name": "Imperialdramon Paladin Mode(Awakeend)",
+          "cause": "api"
+        },
+        {
+          "id": "d1g9i4cz",
+          "name": "Imperialdramon Paladin Mode(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "dzaqrgn",
+          "name": "Sistermon Ciel(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "d1ppbxz0",
+          "name": "Armagemon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "dnwhdoz": [
+          "Attack: 17065 -> 17475",
+          "Skill Digitalize of Soul base_dmg: 36032 -> 40356",
+          "Skill Digitalize of Soul scaling: 4325 -> 4844",
+          "Skill Kyukyoku Senjin Ouryuken base_dmg: 54492 -> 61031",
+          "Skill Kyukyoku Senjin Ouryuken scaling: 6540 -> 7325",
+          "Skill Ouryuken Ranbu base_dmg: 51795 -> 58010",
+          "Skill Ouryuken Ranbu scaling: 6216 -> 6962",
+          "Skill Seiken Gradalpha base_dmg: 367290 -> 411365"
+        ],
+        "d1ja7r7v": [
+          "Skill Omega InForce description: \"Omegamon's precognitive sense sharpens. The party perceives attacks before they land and moves at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Omegamon's precognitive sense sharpens. The party perceives attacks before they land and moves at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+          "Skill Omega InForce buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+          "Skill Omega InForce buff duration: 10 -> 20"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "dnwhdoz",
+          "name": "Alphamon Ouryuken",
+          "lines": [
+            "Attack: 17065 -> 17475",
+            "Skill Digitalize of Soul base_dmg: 36032 -> 40356",
+            "Skill Digitalize of Soul scaling: 4325 -> 4844",
+            "Skill Kyukyoku Senjin Ouryuken base_dmg: 54492 -> 61031",
+            "Skill Kyukyoku Senjin Ouryuken scaling: 6540 -> 7325",
+            "Skill Ouryuken Ranbu base_dmg: 51795 -> 58010",
+            "Skill Ouryuken Ranbu scaling: 6216 -> 6962",
+            "Skill Seiken Gradalpha base_dmg: 367290 -> 411365"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Omega InForce description: \"Omegamon's precognitive sense sharpens. The party perceives attacks before they land and moves at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Omegamon's precognitive sense sharpens. The party perceives attacks before they land and moves at reflex speed. Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+            "Skill Omega InForce buff description: \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 15%, and increases Attack Power by 2500 (+280 per Skill Level) for 20 seconds.\"",
+            "Skill Omega InForce buff duration: 10 -> 20"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-23T03:41:30.857Z",
+        "mode": "force",
+        "refreshedCount": 521,
+        "dpsUp": [
+          {
+            "id": "dnwhdoz",
+            "name": "Alphamon Ouryuken",
+            "role": "Melee DPS",
+            "before": 101463.21028775086,
+            "after": 112877.49131702927,
+            "delta": 11414.281029278412
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 127215.32861699072,
+            "after": 114606.57430690725,
+            "delta": -12608.754310083474
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d1j7hjm5",
+            "name": "Aegiomon",
+            "role": "Melee DPS",
+            "after": 5107.0055186733925
+          },
+          {
+            "id": "dm5i9q9",
+            "name": "Armagemon",
+            "role": "Tank",
+            "after": 105807.0433285318
+          },
+          {
+            "id": "d17v82l5",
+            "name": "Armagemon(Sealed)",
+            "role": "Tank",
+            "after": 71337.19848800878
+          },
+          {
+            "id": "d1q0mitc",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Ranged DPS",
+            "after": 114897.52712935979
+          },
+          {
+            "id": "d1qmz3oz",
+            "name": "Elecmon(Aegiomon)",
+            "role": "Melee DPS",
+            "after": 3740.0074750645126
+          },
+          {
+            "id": "d12gvha8",
+            "name": "Fanglongmon",
+            "role": "Tank",
+            "after": 118077.80496150022
+          },
+          {
+            "id": "dnd51zs",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Tank",
+            "after": 56168.33873274333
+          },
+          {
+            "id": "d1n23dww",
+            "name": "Imperialdramon Paladin Mode(Awakeend)",
+            "role": "Melee DPS",
+            "after": 146996.35099901544
+          },
+          {
+            "id": "d1g9i4cz",
+            "name": "Imperialdramon Paladin Mode(Sealed)",
+            "role": "Melee DPS",
+            "after": 130104.27028639479
+          },
+          {
+            "id": "dzaqrgn",
+            "name": "Sistermon Ciel(Awakened)",
+            "role": "Melee DPS",
+            "after": 95435.0500292589
+          },
+          {
+            "id": "d1ppbxz0",
+            "name": "Armagemon",
+            "role": "Caster",
+            "after": 173597.65524488656
+          },
+          {
+            "id": "d16gwq7v",
+            "name": "Fanglongmon",
+            "role": "Support",
+            "after": 42214.94200088474
+          },
+          {
+            "id": "d2pnglc",
+            "name": "Imperialdramon Paladin Mode(Awakeend)",
+            "role": "Tank",
+            "after": 106305.30642490445
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "dm5i9q9",
+            "name": "Armagemon",
+            "role": "Tank",
+            "after": 4.128103740863399
+          },
+          {
+            "id": "d17v82l5",
+            "name": "Armagemon(Sealed)",
+            "role": "Tank",
+            "after": 3.9803390350230394
+          },
+          {
+            "id": "d12gvha8",
+            "name": "Fanglongmon",
+            "role": "Tank",
+            "after": 4.151788913354992
+          },
+          {
+            "id": "dnd51zs",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Tank",
+            "after": 3.977830313137423
+          },
+          {
+            "id": "d2pnglc",
+            "name": "Imperialdramon Paladin Mode(Awakeend)",
+            "role": "Tank",
+            "after": 4.145965488664532
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d16gwq7v",
+            "name": "Fanglongmon",
+            "role": "Support",
+            "after": 5.986517844103669
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d1j7hjm5",
+            "name": "Aegiomon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dm5i9q9",
+            "name": "Armagemon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d17v82l5",
+            "name": "Armagemon(Sealed)",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1q0mitc",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1qmz3oz",
+            "name": "Elecmon(Aegiomon)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d12gvha8",
+            "name": "Fanglongmon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "dnd51zs",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1n23dww",
+            "name": "Imperialdramon Paladin Mode(Awakeend)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1g9i4cz",
+            "name": "Imperialdramon Paladin Mode(Sealed)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dzaqrgn",
+            "name": "Sistermon Ciel(Awakened)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1ppbxz0",
+            "name": "Armagemon",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "d16gwq7v",
+            "name": "Fanglongmon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d2pnglc",
+            "name": "Imperialdramon Paladin Mode(Awakeend)",
+            "role": "Tank",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-22T21:23:18.055Z-xexpvx",
       "finishedAt": "2026-10-22T21:23:18.055Z",
@@ -5882,32 +6223,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-19T20:13:41.203Z",
-        "mode": "force",
-        "refreshedCount": 491,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-19T15:34:35.642Z-rsjtii",
-      "finishedAt": "2026-09-19T15:34:35.642Z",
-      "mode": "force",
-      "refreshedCount": 491,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-19T15:34:35.642Z",
         "mode": "force",
         "refreshedCount": 491,
         "dpsUp": [],
