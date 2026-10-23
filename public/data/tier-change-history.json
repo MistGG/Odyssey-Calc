@@ -1,6 +1,32 @@
 {
-  "updated_at": "2026-10-23T11:13:56.137Z",
+  "updated_at": "2026-10-23T16:48:23.934Z",
   "runs": [
+    {
+      "id": "2026-10-23T16:48:23.958Z-4cypnq",
+      "finishedAt": "2026-10-23T16:48:23.958Z",
+      "mode": "force",
+      "refreshedCount": 521,
+      "apiCount": 0,
+      "tierCount": 0,
+      "sampleDigimon": [],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-10-23T16:48:23.958Z",
+        "mode": "force",
+        "refreshedCount": 521,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": []
+      }
+    },
     {
       "id": "2026-10-23T11:13:56.161Z-as6758",
       "finishedAt": "2026-10-23T11:13:56.161Z",
@@ -6189,52 +6215,6 @@
         "healerDown": [],
         "healerNew": [],
         "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-20T03:44:18.383Z-aduc3b",
-      "finishedAt": "2026-09-20T03:44:18.383Z",
-      "mode": "force",
-      "refreshedCount": 492,
-      "apiCount": 1,
-      "tierCount": 1,
-      "sampleDigimon": [
-        {
-          "id": "de00who",
-          "name": "V-mon",
-          "cause": "api"
-        }
-      ],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-20T03:44:18.383Z",
-        "mode": "force",
-        "refreshedCount": 492,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [
-          {
-            "id": "de00who",
-            "name": "V-mon",
-            "role": "Hybrid",
-            "after": 4273.38011437791
-          }
-        ],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": [
-          {
-            "id": "de00who",
-            "name": "V-mon",
-            "role": "Hybrid",
-            "to": "complete"
-          }
-        ]
       }
     }
   ]
