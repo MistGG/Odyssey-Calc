@@ -1,6 +1,84 @@
 {
-  "updated_at": "2026-10-25T20:32:28.989Z",
+  "updated_at": "2026-10-26T03:32:35.879Z",
   "runs": [
+    {
+      "id": "2026-10-26T03:32:35.893Z-1vmpqb",
+      "finishedAt": "2026-10-26T03:32:35.893Z",
+      "mode": "force",
+      "refreshedCount": 522,
+      "apiCount": 2,
+      "tierCount": 1,
+      "sampleDigimon": [
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        },
+        {
+          "id": "d8xrh57",
+          "name": "Dracmon",
+          "cause": "api"
+        },
+        {
+          "id": "d17kebi5",
+          "name": "Meicoomon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d8xrh57": [
+          "Skill Hypnotic Glare radius: 0 -> 575"
+        ],
+        "d17kebi5": [
+          "Skill Distorted Data radius: 0 -> 700"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d8xrh57",
+          "name": "Dracmon",
+          "lines": [
+            "Skill Hypnotic Glare radius: 0 -> 575"
+          ]
+        },
+        {
+          "id": "d17kebi5",
+          "name": "Meicoomon",
+          "lines": [
+            "Skill Distorted Data radius: 0 -> 700"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-26T03:32:35.893Z",
+        "mode": "force",
+        "refreshedCount": 522,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-25T20:32:29.014Z-p22gtm",
       "finishedAt": "2026-10-25T20:32:29.014Z",
@@ -6157,32 +6235,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-23T03:38:47.926Z",
-        "mode": "force",
-        "refreshedCount": 492,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-22T21:05:24.576Z-jwxjut",
-      "finishedAt": "2026-09-22T21:05:24.576Z",
-      "mode": "force",
-      "refreshedCount": 492,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-22T21:05:24.576Z",
         "mode": "force",
         "refreshedCount": 492,
         "dpsUp": [],
