@@ -1,6 +1,350 @@
 {
-  "updated_at": "2026-10-29T12:30:47.570Z",
+  "updated_at": "2026-10-29T22:37:45.010Z",
   "runs": [
+    {
+      "id": "2026-10-29T22:37:45.029Z-dyaoso",
+      "finishedAt": "2026-10-29T22:37:45.029Z",
+      "mode": "force",
+      "refreshedCount": 525,
+      "apiCount": 8,
+      "tierCount": 11,
+      "sampleDigimon": [
+        {
+          "id": "d12gvha8",
+          "name": "Fanglongmon",
+          "cause": "api"
+        },
+        {
+          "id": "dnd51zs",
+          "name": "Fanglongmon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "dijnp7z",
+          "name": "Monzaemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1hc93zd",
+          "name": "Fanglongmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1b6ma4j",
+          "name": "Fanglongmon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "d1ean2zk",
+          "name": "Fanglongmon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "d1vnmxm9",
+          "name": "Mastemon",
+          "cause": "api"
+        },
+        {
+          "id": "dmi2w5v",
+          "name": "Magnamon X",
+          "cause": "api"
+        },
+        {
+          "id": "d17lxyxv",
+          "name": "Lilithmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "cause": "api"
+        },
+        {
+          "id": "d16gwq7v",
+          "name": "Fanglongmon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "dijnp7z": [
+          "Rank: 4 -> 6",
+          "HP: 10235 -> 20546",
+          "Attack: 5320 -> 5738",
+          "Stats.ds: 11310 -> 25575",
+          "Stats.defense: 248 -> 671",
+          "Stats.crit_rate: 455 -> 3898",
+          "Stats.evasion: 2100 -> 3364",
+          "Stats.hit_rate: 0 -> 1110"
+        ],
+        "d1vnmxm9": [
+          "Skill Duskfang base_dmg: 21656 -> 28802",
+          "Skill Duskfang scaling: 733 -> 975",
+          "Skill Chaos Nova base_dmg: 62508 -> 83136",
+          "Skill Chaos Nova scaling: 1660 -> 2208"
+        ],
+        "dmi2w5v": [
+          "Skill Plasma Lance base_dmg: 26265 -> 34932",
+          "Skill Plasma Lance scaling: 893 -> 1188",
+          "Skill Radiant Jihad base_dmg: 70074 -> 93198",
+          "Skill Radiant Jihad scaling: 1866 -> 2482"
+        ],
+        "d17lxyxv": [
+          "Skill Nazar Nail base_dmg: 36080 -> 47986",
+          "Skill Nazar Nail scaling: 1221 -> 1624",
+          "Skill Phantom Pain base_dmg: 104138 -> 138504",
+          "Skill Phantom Pain scaling: 2765 -> 3677"
+        ],
+        "d1dyhy6u": [
+          "Skill White Sanctuary (Awakened) cast_time: 5.2 -> 1.2"
+        ],
+        "d12gvha8": [
+          "Attack: 8881 -> 8407"
+        ],
+        "dnd51zs": [
+          "HP: 59419 -> 59787",
+          "Attack: 8232 -> 8127",
+          "Stats.defense: 3955 -> 3925",
+          "Skill Mountain Seal base_dmg: 24377 -> 29438",
+          "Skill Mountain Seal scaling: 2925 -> 3532",
+          "Skill Fang of the Emperor base_dmg: 99156 -> 119744",
+          "Skill Fang of the Emperor scaling: 11899 -> 14369",
+          "Skill Taikyoku base_dmg: 31476 -> 38012"
+        ],
+        "d16gwq7v": [
+          "Skill Life Vortex base_dmg: 21655 -> 38373",
+          "Skill Life Vortex scaling: 734 -> 1301",
+          "Skill Jade Thunder Cannon base_dmg: 100691 -> 133822",
+          "Skill Jade Thunder Cannon scaling: 2674 -> 3554",
+          "Skill Jade Thunder Cannon radius: 800 -> 1350",
+          "Skill Rain of Rebirth cast_time: 4.3 -> 1.5",
+          "Skill Rain of Rebirth description: \"Fanglongmon roars at the sky and a healing rain of green light falls all around him. Instantly restores 6,683 HP (+400 per Skill Level) to you and nearby allies.\" -> \"Fanglongmon roars at the sky and a healing rain of green light falls all around him. Instantly restores 6,513 HP (+709 per Skill Level) and 6% of MaxHP to you and nearby allies.\"",
+          "Skill Verdant Cyclone base_dmg: 100691 -> 111518"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "dijnp7z",
+          "name": "Monzaemon",
+          "lines": [
+            "Rank: 4 -> 6",
+            "HP: 10235 -> 20546",
+            "Attack: 5320 -> 5738",
+            "Stats.ds: 11310 -> 25575",
+            "Stats.defense: 248 -> 671",
+            "Stats.crit_rate: 455 -> 3898",
+            "Stats.evasion: 2100 -> 3364",
+            "Stats.hit_rate: 0 -> 1110"
+          ]
+        },
+        {
+          "id": "d1vnmxm9",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Duskfang base_dmg: 21656 -> 28802",
+            "Skill Duskfang scaling: 733 -> 975",
+            "Skill Chaos Nova base_dmg: 62508 -> 83136",
+            "Skill Chaos Nova scaling: 1660 -> 2208"
+          ]
+        },
+        {
+          "id": "dmi2w5v",
+          "name": "Magnamon X",
+          "lines": [
+            "Skill Plasma Lance base_dmg: 26265 -> 34932",
+            "Skill Plasma Lance scaling: 893 -> 1188",
+            "Skill Radiant Jihad base_dmg: 70074 -> 93198",
+            "Skill Radiant Jihad scaling: 1866 -> 2482"
+          ]
+        },
+        {
+          "id": "d17lxyxv",
+          "name": "Lilithmon X",
+          "lines": [
+            "Skill Nazar Nail base_dmg: 36080 -> 47986",
+            "Skill Nazar Nail scaling: 1221 -> 1624",
+            "Skill Phantom Pain base_dmg: 104138 -> 138504",
+            "Skill Phantom Pain scaling: 2765 -> 3677"
+          ]
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "lines": [
+            "Skill White Sanctuary (Awakened) cast_time: 5.2 -> 1.2"
+          ]
+        },
+        {
+          "id": "d12gvha8",
+          "name": "Fanglongmon",
+          "lines": [
+            "Attack: 8881 -> 8407"
+          ]
+        },
+        {
+          "id": "dnd51zs",
+          "name": "Fanglongmon(Sealed)",
+          "lines": [
+            "HP: 59419 -> 59787",
+            "Attack: 8232 -> 8127",
+            "Stats.defense: 3955 -> 3925",
+            "Skill Mountain Seal base_dmg: 24377 -> 29438",
+            "Skill Mountain Seal scaling: 2925 -> 3532",
+            "Skill Fang of the Emperor base_dmg: 99156 -> 119744",
+            "Skill Fang of the Emperor scaling: 11899 -> 14369",
+            "Skill Taikyoku base_dmg: 31476 -> 38012"
+          ]
+        },
+        {
+          "id": "d16gwq7v",
+          "name": "Fanglongmon",
+          "lines": [
+            "Skill Life Vortex base_dmg: 21655 -> 38373",
+            "Skill Life Vortex scaling: 734 -> 1301",
+            "Skill Jade Thunder Cannon base_dmg: 100691 -> 133822",
+            "Skill Jade Thunder Cannon scaling: 2674 -> 3554",
+            "Skill Jade Thunder Cannon radius: 800 -> 1350",
+            "Skill Rain of Rebirth cast_time: 4.3 -> 1.5",
+            "Skill Rain of Rebirth description: \"Fanglongmon roars at the sky and a healing rain of green light falls all around him. Instantly restores 6,683 HP (+400 per Skill Level) to you and nearby allies.\" -> \"Fanglongmon roars at the sky and a healing rain of green light falls all around him. Instantly restores 6,513 HP (+709 per Skill Level) and 6% of MaxHP to you and nearby allies.\"",
+            "Skill Verdant Cyclone base_dmg: 100691 -> 111518"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-29T22:37:45.029Z",
+        "mode": "force",
+        "refreshedCount": 525,
+        "dpsUp": [
+          {
+            "id": "dijnp7z",
+            "name": "Monzaemon",
+            "role": "Hybrid",
+            "before": 5290.812689055553,
+            "after": 29965.69231004355,
+            "delta": 24674.879620987995
+          },
+          {
+            "id": "d1vnmxm9",
+            "name": "Mastemon",
+            "role": "Support",
+            "before": 33823.319379890105,
+            "after": 44359.74214912092,
+            "delta": 10536.422769230812
+          },
+          {
+            "id": "dmi2w5v",
+            "name": "Magnamon X",
+            "role": "Support",
+            "before": 36093.977473927414,
+            "after": 47488.360247429555,
+            "delta": 11394.38277350214
+          },
+          {
+            "id": "d17lxyxv",
+            "name": "Lilithmon X",
+            "role": "Support",
+            "before": 44181.00688666665,
+            "after": 58292.4365671585,
+            "delta": 14111.429680491849
+          },
+          {
+            "id": "dnd51zs",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Tank",
+            "before": 56168.33873274333,
+            "after": 67281.9610159292,
+            "delta": 11113.622283185876
+          },
+          {
+            "id": "d16gwq7v",
+            "name": "Fanglongmon",
+            "role": "Support",
+            "before": 42214.94200088474,
+            "after": 58125.23574414553,
+            "delta": 15910.293743260794
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "d12gvha8",
+            "name": "Fanglongmon",
+            "role": "Tank",
+            "before": 118077.80496150022,
+            "after": 117938.34511549919,
+            "delta": -139.4598460010311
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d1hc93zd",
+            "name": "Fanglongmon",
+            "role": "Melee DPS",
+            "after": 197513.68468213547
+          },
+          {
+            "id": "d1b6ma4j",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Support",
+            "after": 41571.25966833778
+          },
+          {
+            "id": "d1ean2zk",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Melee DPS",
+            "after": 271833.4106255293
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Support",
+            "before": 6.349858537636033,
+            "after": 6.395872197376608,
+            "delta": 0.04601365974057536
+          },
+          {
+            "id": "d16gwq7v",
+            "name": "Fanglongmon",
+            "role": "Support",
+            "before": 5.986517844103669,
+            "after": 6.593279363427216,
+            "delta": 0.6067615193235474
+          }
+        ],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d1b6ma4j",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Support",
+            "after": 6.226505052329702
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d1hc93zd",
+            "name": "Fanglongmon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1b6ma4j",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d1ean2zk",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Melee DPS",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-29T12:30:47.598Z-7pabt4",
       "finishedAt": "2026-10-29T12:30:47.598Z",
@@ -5939,32 +6283,6 @@
             "to": "complete"
           }
         ]
-      }
-    },
-    {
-      "id": "2026-09-25T21:15:49.393Z-mgr1qj",
-      "finishedAt": "2026-09-25T21:15:49.393Z",
-      "mode": "force",
-      "refreshedCount": 493,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-25T21:15:49.393Z",
-        "mode": "force",
-        "refreshedCount": 493,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
       }
     }
   ]
