@@ -1,6 +1,584 @@
 {
-  "updated_at": "2026-10-29T22:37:45.010Z",
+  "updated_at": "2026-10-30T04:42:24.133Z",
   "runs": [
+    {
+      "id": "2026-10-30T04:42:24.161Z-elw9ob",
+      "finishedAt": "2026-10-30T04:42:24.161Z",
+      "mode": "force",
+      "refreshedCount": 558,
+      "apiCount": 34,
+      "tierCount": 36,
+      "sampleDigimon": [
+        {
+          "id": "d1ig9juf",
+          "name": "Beelzebumon BM(Realized)",
+          "cause": "api"
+        },
+        {
+          "id": "dpw13j4",
+          "name": "Botamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1v6kvug",
+          "name": "Bukamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1n5umhq",
+          "name": "Choromon",
+          "cause": "api"
+        },
+        {
+          "id": "df7genk",
+          "name": "Dodomon",
+          "cause": "api"
+        },
+        {
+          "id": "dus4imq",
+          "name": "Dorimon",
+          "cause": "api"
+        },
+        {
+          "id": "d1r22gkk",
+          "name": "Hangyomon",
+          "cause": "api"
+        },
+        {
+          "id": "d2z6tlj",
+          "name": "Kapurimon",
+          "cause": "api"
+        },
+        {
+          "id": "di0qizg",
+          "name": "Koromon",
+          "cause": "api"
+        },
+        {
+          "id": "dqgnykr",
+          "name": "Kuramon",
+          "cause": "api"
+        },
+        {
+          "id": "duz8ou1",
+          "name": "Megidramon X",
+          "cause": "api"
+        },
+        {
+          "id": "dn4ayz0",
+          "name": "Motimon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d9fr4zr": [
+          "Skill Hurricane Screw Shot cast_time: 4.3 -> 3",
+          "Skill Fly Bullet: Segundo cast_time: 4.7 -> 3"
+        ],
+        "d1q0mitc": [
+          "Skill Hurricane Screw Shot cast_time: 4.3 -> 3",
+          "Skill Fly Bullet: Segundo cast_time: 4.7 -> 3"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d9fr4zr",
+          "name": "BeelStarmon",
+          "lines": [
+            "Skill Hurricane Screw Shot cast_time: 4.3 -> 3",
+            "Skill Fly Bullet: Segundo cast_time: 4.7 -> 3"
+          ]
+        },
+        {
+          "id": "d1q0mitc",
+          "name": "BeelStarmon(Sealed)",
+          "lines": [
+            "Skill Hurricane Screw Shot cast_time: 4.3 -> 3",
+            "Skill Fly Bullet: Segundo cast_time: 4.7 -> 3"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-30T04:42:24.161Z",
+        "mode": "force",
+        "refreshedCount": 558,
+        "dpsUp": [
+          {
+            "id": "d9fr4zr",
+            "name": "BeelStarmon",
+            "role": "Ranged DPS",
+            "before": 159738.44556906607,
+            "after": 170171.066035267,
+            "delta": 10432.620466200926
+          },
+          {
+            "id": "d1q0mitc",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Ranged DPS",
+            "before": 114897.52712935979,
+            "after": 136306.96078153478,
+            "delta": 21409.433652174994
+          }
+        ],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "d1ig9juf",
+            "name": "Beelzebumon BM(Realized)",
+            "role": "Ranged DPS",
+            "after": 115483.64403825375
+          },
+          {
+            "id": "dpw13j4",
+            "name": "Botamon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1v6kvug",
+            "name": "Bukamon",
+            "role": "None",
+            "after": 1801.104875000001
+          },
+          {
+            "id": "d1n5umhq",
+            "name": "Choromon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "df7genk",
+            "name": "Dodomon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "dus4imq",
+            "name": "Dorimon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1r22gkk",
+            "name": "Hangyomon",
+            "role": "Melee DPS",
+            "after": 15145.281446518215
+          },
+          {
+            "id": "d2z6tlj",
+            "name": "Kapurimon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "di0qizg",
+            "name": "Koromon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "dqgnykr",
+            "name": "Kuramon",
+            "role": "None",
+            "after": 0
+          },
+          {
+            "id": "duz8ou1",
+            "name": "Megidramon X",
+            "role": "Caster",
+            "after": 104031.69913700646
+          },
+          {
+            "id": "dn4ayz0",
+            "name": "Motimon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1f8dl9s",
+            "name": "Neptunemon",
+            "role": "Melee DPS",
+            "after": 182383.5590803501
+          },
+          {
+            "id": "d1r5o5fg",
+            "name": "Neptunemon(Sealed)",
+            "role": "Melee DPS",
+            "after": 144049.0753300674
+          },
+          {
+            "id": "d1aoi7g3",
+            "name": "Nyaromon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1qrfsc4",
+            "name": "Octomon",
+            "role": "Melee DPS",
+            "after": 9184.945834440896
+          },
+          {
+            "id": "daq946p",
+            "name": "Pabumon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "ddzv3dw",
+            "name": "Pagumon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1r5apef",
+            "name": "Poyomon",
+            "role": "None",
+            "after": 910.8224375000001
+          },
+          {
+            "id": "d12avslr",
+            "name": "Punimon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1to0ypq",
+            "name": "Shakomon",
+            "role": "Tank",
+            "after": 2821.368947426614
+          },
+          {
+            "id": "dupb92q",
+            "name": "Tanemon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "dg9564x",
+            "name": "Tsumemon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1su0px5",
+            "name": "Tsunomon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "dh0cayn",
+            "name": "Wanyamon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "d1htf5y7",
+            "name": "Yokomon",
+            "role": "None",
+            "after": 50164.26854334995
+          },
+          {
+            "id": "dltsd1c",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Caster",
+            "after": 119962.64305484666
+          },
+          {
+            "id": "dy4htyr",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Support",
+            "after": 38494.50177215754
+          },
+          {
+            "id": "dazo82i",
+            "name": "Beelzebumon BM(Realized)",
+            "role": "Caster",
+            "after": 87266.34263845946
+          },
+          {
+            "id": "d1rhiedm",
+            "name": "Megidramon X",
+            "role": "Melee DPS",
+            "after": 104641.44536876817
+          },
+          {
+            "id": "dm09odn",
+            "name": "Neptunemon",
+            "role": "Support",
+            "after": 55553.07465825032
+          },
+          {
+            "id": "d1amix4c",
+            "name": "Neptunemon",
+            "role": "Tank",
+            "after": 74408.25675644449
+          },
+          {
+            "id": "d1in1kn7",
+            "name": "Neptunemon(Sealed)",
+            "role": "Support",
+            "after": 46592.5563376976
+          },
+          {
+            "id": "d180h6ai",
+            "name": "Neptunemon(Sealed)",
+            "role": "Tank",
+            "after": 56554.27057483442
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "d1to0ypq",
+            "name": "Shakomon",
+            "role": "Tank",
+            "after": 2.401138191134748
+          },
+          {
+            "id": "d1amix4c",
+            "name": "Neptunemon",
+            "role": "Tank",
+            "after": 4.162436302321107
+          },
+          {
+            "id": "d180h6ai",
+            "name": "Neptunemon(Sealed)",
+            "role": "Tank",
+            "after": 3.957297946707613
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "dy4htyr",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Support",
+            "after": 6.508943766008031
+          },
+          {
+            "id": "dm09odn",
+            "name": "Neptunemon",
+            "role": "Support",
+            "after": 6.703210632862579
+          },
+          {
+            "id": "d1in1kn7",
+            "name": "Neptunemon(Sealed)",
+            "role": "Support",
+            "after": 6.232466429513121
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d1ig9juf",
+            "name": "Beelzebumon BM(Realized)",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dpw13j4",
+            "name": "Botamon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1v6kvug",
+            "name": "Bukamon",
+            "role": "None",
+            "to": "incomplete"
+          },
+          {
+            "id": "d1n5umhq",
+            "name": "Choromon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "df7genk",
+            "name": "Dodomon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "dus4imq",
+            "name": "Dorimon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1r22gkk",
+            "name": "Hangyomon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d2z6tlj",
+            "name": "Kapurimon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "di0qizg",
+            "name": "Koromon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "dqgnykr",
+            "name": "Kuramon",
+            "role": "None",
+            "to": "incomplete"
+          },
+          {
+            "id": "duz8ou1",
+            "name": "Megidramon X",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "dn4ayz0",
+            "name": "Motimon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1f8dl9s",
+            "name": "Neptunemon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1r5o5fg",
+            "name": "Neptunemon(Sealed)",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1aoi7g3",
+            "name": "Nyaromon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1qrfsc4",
+            "name": "Octomon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "daq946p",
+            "name": "Pabumon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "ddzv3dw",
+            "name": "Pagumon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1r5apef",
+            "name": "Poyomon",
+            "role": "None",
+            "to": "incomplete"
+          },
+          {
+            "id": "d12avslr",
+            "name": "Punimon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1to0ypq",
+            "name": "Shakomon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "dupb92q",
+            "name": "Tanemon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "dg9564x",
+            "name": "Tsumemon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1su0px5",
+            "name": "Tsunomon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "dh0cayn",
+            "name": "Wanyamon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "d1htf5y7",
+            "name": "Yokomon",
+            "role": "None",
+            "to": "complete"
+          },
+          {
+            "id": "dltsd1c",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "dy4htyr",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dazo82i",
+            "name": "Beelzebumon BM(Realized)",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "d1rhiedm",
+            "name": "Megidramon X",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dm09odn",
+            "name": "Neptunemon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d1amix4c",
+            "name": "Neptunemon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1in1kn7",
+            "name": "Neptunemon(Sealed)",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "d180h6ai",
+            "name": "Neptunemon(Sealed)",
+            "role": "Tank",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-29T22:37:45.029Z-dyaoso",
       "finishedAt": "2026-10-29T22:37:45.029Z",
@@ -6237,52 +6815,6 @@
         "healerDown": [],
         "healerNew": [],
         "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-26T03:51:25.962Z-y6pn1x",
-      "finishedAt": "2026-09-26T03:51:25.962Z",
-      "mode": "force",
-      "refreshedCount": 494,
-      "apiCount": 1,
-      "tierCount": 1,
-      "sampleDigimon": [
-        {
-          "id": "de00who",
-          "name": "V-mon",
-          "cause": "api"
-        }
-      ],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-26T03:51:25.962Z",
-        "mode": "force",
-        "refreshedCount": 494,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [
-          {
-            "id": "de00who",
-            "name": "V-mon",
-            "role": "Hybrid",
-            "after": 4273.38011437791
-          }
-        ],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": [
-          {
-            "id": "de00who",
-            "name": "V-mon",
-            "role": "Hybrid",
-            "to": "complete"
-          }
-        ]
       }
     }
   ]
