@@ -1,6 +1,909 @@
 {
-  "updated_at": "2026-10-30T22:07:30.234Z",
+  "updated_at": "2026-10-31T04:26:19.017Z",
   "runs": [
+    {
+      "id": "2026-10-31T04:26:19.046Z-x4isoa",
+      "finishedAt": "2026-10-31T04:26:19.046Z",
+      "mode": "force",
+      "refreshedCount": 559,
+      "apiCount": 27,
+      "tierCount": 27,
+      "sampleDigimon": [
+        {
+          "id": "duz8ou1",
+          "name": "Megidramon X",
+          "cause": "api"
+        },
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        },
+        {
+          "id": "d1rhiedm",
+          "name": "Megidramon X",
+          "cause": "api"
+        },
+        {
+          "id": "dg63th8",
+          "name": "Lilithmon X",
+          "cause": "api"
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "cause": "api"
+        },
+        {
+          "id": "dkn5pci",
+          "name": "Examon",
+          "cause": "api"
+        },
+        {
+          "id": "d1d6hjvi",
+          "name": "Millenniumon",
+          "cause": "api"
+        },
+        {
+          "id": "d18amvwr",
+          "name": "ImperialDramon",
+          "cause": "api"
+        },
+        {
+          "id": "d1oz6yb5",
+          "name": "Omegamon Alter-S",
+          "cause": "api"
+        },
+        {
+          "id": "d7tgi4w",
+          "name": "SaintGalgomon(Realized)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1dnnjni": [
+          "Skill Dark Despair base_dmg: 4697 -> 5749",
+          "Skill Dark Despair scaling: 422 -> 516",
+          "Skill Chaos Degrade base_dmg: 15312 -> 18742",
+          "Skill Chaos Degrade scaling: 918 -> 1124",
+          "Skill Holy Desire base_dmg: 22124 -> 27080",
+          "Skill Holy Desire scaling: 1549 -> 1896",
+          "Skill Twilight Severance base_dmg: 98222 -> 120223",
+          "Skill Twilight Severance scaling: 4912 -> 6012"
+        ],
+        "d1ja7r7v": [
+          "Skill Garuru Cannon base_dmg: 52694 -> 66657",
+          "Skill Garuru Cannon scaling: 6320 -> 7995",
+          "Skill Grey Sword base_dmg: 77396 -> 97906",
+          "Skill Grey Sword scaling: 9287 -> 11748",
+          "Skill Supreme Cannon base_dmg: 84215 -> 106533",
+          "Skill Supreme Cannon scaling: 10099 -> 12775",
+          "Skill Omega Blast base_dmg: 459874 -> 581740",
+          "Skill Omega Blast scaling: 45988 -> 58175"
+        ],
+        "dhoymox": [
+          "Skill Dragon's Roar base_dmg: 4770 -> 6201",
+          "Skill Dragon's Roar scaling: 431 -> 560",
+          "Skill Dragon's Gust base_dmg: 14774 -> 19206",
+          "Skill Dragon's Gust scaling: 886 -> 1152",
+          "Skill Breath of Wyvern base_dmg: 21829 -> 28378",
+          "Skill Breath of Wyvern scaling: 1528 -> 1986",
+          "Skill Soul Dragon Onslaught base_dmg: 98554 -> 128120",
+          "Skill Soul Dragon Onslaught scaling: 4928 -> 6406"
+        ],
+        "dkn5pci": [
+          "Skill Dragonic Impact base_dmg: 41768 -> 60041",
+          "Skill Dragonic Impact scaling: 5009 -> 7200",
+          "Skill Pendragon's Glory base_dmg: 61929 -> 89023",
+          "Skill Pendragon's Glory scaling: 7431 -> 10682",
+          "Skill Pendragon Overcharge base_dmg: 66128 -> 95059",
+          "Skill Pendragon Overcharge scaling: 7931 -> 11401",
+          "Skill Draconic Cataclysm base_dmg: 376946 -> 541859",
+          "Skill Draconic Cataclysm scaling: 37695 -> 54187"
+        ],
+        "d1d6hjvi": [
+          "Skill Time Unlimited base_dmg: 24096 -> 31325",
+          "Skill Time Unlimited scaling: 2892 -> 3760",
+          "Skill Dimension Destroyer base_dmg: 76706 -> 99718",
+          "Skill Dimension Destroyer scaling: 9205 -> 11966",
+          "Skill Dimension Collapse base_dmg: 91015 -> 118320",
+          "Skill Dimension Collapse scaling: 10922 -> 14199",
+          "Skill Chrono Annihilation base_dmg: 376950 -> 490035",
+          "Skill Chrono Annihilation scaling: 37695 -> 49004"
+        ],
+        "d18amvwr": [
+          "Skill Positron Laser base_dmg: 36047 -> 49744",
+          "Skill Positron Laser scaling: 4326 -> 5970",
+          "Skill Mega Death base_dmg: 52953 -> 73076",
+          "Skill Mega Death scaling: 6354 -> 8769",
+          "Skill Positron Sweep base_dmg: 57597 -> 79483",
+          "Skill Positron Sweep scaling: 6912 -> 9538",
+          "Skill Mega Crusher base_dmg: 376946 -> 520185",
+          "Skill Mega Crusher scaling: 37695 -> 52019"
+        ],
+        "d1oz6yb5": [
+          "Skill Garuru Sword base_dmg: 43031 -> 56909",
+          "Skill Garuru Sword scaling: 5164 -> 6830",
+          "Skill Grey Cannon base_dmg: 63171 -> 83544",
+          "Skill Grey Cannon scaling: 7580 -> 10025",
+          "Skill Supreme Grey Cannon base_dmg: 68735 -> 90902",
+          "Skill Supreme Grey Cannon scaling: 8248 -> 10908",
+          "Skill Alter Blast base_dmg: 431226 -> 570296",
+          "Skill Alter Blast scaling: 43123 -> 57030"
+        ],
+        "dg63th8": [
+          "HP: 21320 -> 21473",
+          "Attack: 5486 -> 5456",
+          "Stats.ds: 41292 -> 41180",
+          "Stats.defense: 557 -> 563",
+          "Skill Nazar Nail base_dmg: 7815 -> 9739",
+          "Skill Nazar Nail scaling: 702 -> 875",
+          "Skill Phantom Pain base_dmg: 23946 -> 28395",
+          "Skill Phantom Pain scaling: 1437 -> 1704"
+        ],
+        "d7tgi4w": [
+          "Skill Saint Tackle base_dmg: 29093 -> 40730",
+          "Skill Saint Tackle scaling: 3491 -> 4887",
+          "Skill Giant Missile base_dmg: 88950 -> 124530",
+          "Skill Giant Missile scaling: 10674 -> 14944",
+          "Skill Full Throttle Tackle base_dmg: 51625 -> 72275",
+          "Skill Full Throttle Tackle scaling: 6195 -> 8673",
+          "Skill Moumantai Warhead base_dmg: 377126 -> 527976",
+          "Skill Moumantai Warhead scaling: 45255 -> 63357"
+        ],
+        "d1e5c50k": [
+          "Skill Izuna base_dmg: 5802 -> 6962",
+          "Skill Izuna scaling: 522 -> 626",
+          "Skill Kongou Mandala base_dmg: 28646 -> 34375",
+          "Skill Kongou Mandala scaling: 1719 -> 2063",
+          "Skill Hikari Mandala base_dmg: 41103 -> 49324",
+          "Skill Hikari Mandala scaling: 2877 -> 3452",
+          "Skill Taizou Mandala base_dmg: 145603 -> 174724",
+          "Skill Taizou Mandala scaling: 7281 -> 8737"
+        ],
+        "dl6kmwq": [
+          "Skill Fallen Star cast_time: 4.7 -> 0"
+        ],
+        "drsr19f": [
+          "Skill Izuna base_dmg: 5802 -> 6962",
+          "Skill Izuna scaling: 522 -> 626",
+          "Skill Kongou Mandala base_dmg: 28646 -> 34375",
+          "Skill Kongou Mandala scaling: 1719 -> 2063",
+          "Skill Hikari Mandala base_dmg: 41103 -> 49324",
+          "Skill Hikari Mandala scaling: 2877 -> 3452",
+          "Skill Taizou Mandala base_dmg: 145603 -> 174724",
+          "Skill Taizou Mandala scaling: 7281 -> 8737"
+        ],
+        "d1q0mitc": [
+          "Skill added: Dark Pentagram",
+          "Skill removed: Dark Pentagram"
+        ],
+        "d12gvha8": [
+          "Skill Mountain Seal base_dmg: 64721 -> 58249",
+          "Skill Mountain Seal scaling: 7766 -> 6989",
+          "Skill Fang of the Emperor base_dmg: 136651 -> 122986",
+          "Skill Fang of the Emperor scaling: 16398 -> 14758",
+          "Skill Taikyoku base_dmg: 83568 -> 75211",
+          "Skill Taikyoku scaling: 10028 -> 9025"
+        ],
+        "d16gwq7v": [
+          "Skill Life Vortex base_dmg: 38373 -> 42210",
+          "Skill Life Vortex scaling: 1301 -> 1431",
+          "Skill Jade Thunder Cannon base_dmg: 133822 -> 147204",
+          "Skill Jade Thunder Cannon scaling: 3554 -> 3909",
+          "Skill Verdant Cyclone base_dmg: 111518 -> 122670",
+          "Skill Verdant Cyclone scaling: 2961 -> 3257"
+        ],
+        "d1hc93zd": [
+          "Skill Volcanic Seal base_dmg: 62319 -> 88712",
+          "Skill Volcanic Seal scaling: 7478 -> 10646",
+          "Skill Volcanic Seal cooldown: 4.5 -> 3.5",
+          "Skill Magma Geyser Bite base_dmg: 103450 -> 138180",
+          "Skill Magma Geyser Bite scaling: 12414 -> 16584",
+          "Skill Magma Geyser Bite cooldown: 13.5 -> 12.5",
+          "Skill Meteor base_dmg: 127755 -> 170098",
+          "Skill Meteor scaling: 15330 -> 20412"
+        ],
+        "d1b6ma4j": [
+          "Skill Life Vortex base_dmg: 36080 -> 32472",
+          "Skill Life Vortex scaling: 1221 -> 1099",
+          "Skill Jade Thunder Cannon base_dmg: 104138 -> 93724",
+          "Skill Jade Thunder Cannon scaling: 2765 -> 2488"
+        ],
+        "d1ean2zk": [
+          "Skill Volcanic Seal base_dmg: 76807 -> 64812",
+          "Skill Volcanic Seal scaling: 9217 -> 7777",
+          "Skill Magma Geyser Bite base_dmg: 119636 -> 107588",
+          "Skill Magma Geyser Bite scaling: 14358 -> 12911",
+          "Skill Meteor base_dmg: 147271 -> 132865",
+          "Skill Meteor scaling: 17673 -> 15943",
+          "Skill Grand Meteor base_dmg: 634023 -> 356466",
+          "Skill Grand Meteor scaling: 76082 -> 42776"
+        ],
+        "d1ig9juf": [
+          "Skill Corona Destroyer base_dmg: 14111 -> 17639",
+          "Skill Corona Destroyer scaling: 1693 -> 2116",
+          "Skill Death Slinger base_dmg: 64715 -> 80894",
+          "Skill Death Slinger scaling: 7766 -> 9708",
+          "Skill Ravenous Volley base_dmg: 37560 -> 46950",
+          "Skill Ravenous Volley scaling: 4507 -> 5634",
+          "Skill Chaos Flare base_dmg: 320107 -> 400134",
+          "Skill Chaos Flare scaling: 38413 -> 48016"
+        ],
+        "duz8ou1": [
+          "HP: 21320 -> 21005",
+          "Attack: 5486 -> 5529",
+          "Stats.ds: 41292 -> 41518",
+          "Stats.defense: 557 -> 548",
+          "Skill Megido Flame description: \"Breath of flame that burns everything into ashes.\" -> \"Breath of flame that burns everything into ashes, leaving the target burning every second for 15 seconds.\"",
+          "Skill Megido Flame buff name: \"\" -> \"Megido Flame\"",
+          "Skill Megido Flame buff description: \"\" -> \"Crimson hellfire clings to the target, burning it every second.\"",
+          "Skill Megido Flame buff duration: 0 -> 15"
+        ],
+        "d1f8dl9s": [
+          "Skill Tidal Trident base_dmg: 43321 -> 49594",
+          "Skill Tidal Trident scaling: 5199 -> 5952",
+          "Skill Tidal Trident cooldown: 5 -> 2.2",
+          "Skill Tsunami Break base_dmg: 71975 -> 82398",
+          "Skill Tsunami Break scaling: 8637 -> 9887",
+          "Skill Tsunami Break cooldown: 14 -> 11",
+          "Skill Maelstrom Plunge base_dmg: 88601 -> 101430",
+          "Skill Maelstrom Plunge scaling: 10632 -> 12172"
+        ],
+        "d1r5o5fg": [
+          "Skill Tidal Trident base_dmg: 25596 -> 27644",
+          "Skill Tidal Trident scaling: 3073 -> 3319",
+          "Skill Tsunami Break base_dmg: 51754 -> 55894",
+          "Skill Tsunami Break scaling: 6211 -> 6708",
+          "Skill Maelstrom Plunge base_dmg: 82204 -> 88780",
+          "Skill Maelstrom Plunge scaling: 9865 -> 10654",
+          "Skill Tidal Judgement base_dmg: 229714 -> 248091",
+          "Skill Tidal Judgement scaling: 27566 -> 29771"
+        ],
+        "dazo82i": [
+          "Stats.int: 1786 -> 1941",
+          "Skill Devouring Mark base_dmg: 7960 -> 9313",
+          "Skill Devouring Mark scaling: 715 -> 837",
+          "Skill Abyss Bullet base_dmg: 9554 -> 11178",
+          "Skill Abyss Bullet scaling: 573 -> 671",
+          "Skill Code Feast base_dmg: 28372 -> 33196",
+          "Skill Code Feast scaling: 1987 -> 2325",
+          "Skill Gluttony Sigil base_dmg: 119372 -> 139666"
+        ],
+        "d1rhiedm": [
+          "Attack: 15402 -> 16442",
+          "Stats.crit_rate: 4787 -> 4889",
+          "Stats.atk_speed: 1050 -> 1200",
+          "Skill Megido Axe base_dmg: 48377 -> 58052",
+          "Skill Megido Axe scaling: 5806 -> 6967",
+          "Skill Megido Flame base_dmg: 58053 -> 69664",
+          "Skill Megido Flame scaling: 6967 -> 8360",
+          "Skill Hell Howling base_dmg: 84662 -> 101594"
+        ],
+        "d1amix4c": [
+          "Skill Abyssal Harpoon base_dmg: 20530 -> 22172",
+          "Skill Abyssal Harpoon scaling: 2464 -> 2661",
+          "Skill Abyssal Lance base_dmg: 59924 -> 64718",
+          "Skill Abyssal Lance scaling: 7190 -> 7765",
+          "Skill Abyssal Pressure base_dmg: 33059 -> 35704",
+          "Skill Abyssal Pressure scaling: 3968 -> 4285"
+        ],
+        "d1in1kn7": [
+          "Skill Riptide Javelin base_dmg: 30227 -> 22973",
+          "Skill Riptide Javelin scaling: 1024 -> 778",
+          "Skill Surging Tide base_dmg: 105412 -> 80113",
+          "Skill Surging Tide scaling: 2799 -> 2127"
+        ],
+        "d180h6ai": [
+          "Skill Abyssal Harpoon base_dmg: 18662 -> 17542",
+          "Skill Abyssal Harpoon scaling: 2240 -> 2106",
+          "Skill Abyssal Lance base_dmg: 39404 -> 37040",
+          "Skill Abyssal Lance scaling: 4729 -> 4445",
+          "Skill Abyssal Pressure base_dmg: 24098 -> 22652",
+          "Skill Abyssal Pressure scaling: 2892 -> 2718"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Skill Dark Despair base_dmg: 4697 -> 5749",
+            "Skill Dark Despair scaling: 422 -> 516",
+            "Skill Chaos Degrade base_dmg: 15312 -> 18742",
+            "Skill Chaos Degrade scaling: 918 -> 1124",
+            "Skill Holy Desire base_dmg: 22124 -> 27080",
+            "Skill Holy Desire scaling: 1549 -> 1896",
+            "Skill Twilight Severance base_dmg: 98222 -> 120223",
+            "Skill Twilight Severance scaling: 4912 -> 6012"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Garuru Cannon base_dmg: 52694 -> 66657",
+            "Skill Garuru Cannon scaling: 6320 -> 7995",
+            "Skill Grey Sword base_dmg: 77396 -> 97906",
+            "Skill Grey Sword scaling: 9287 -> 11748",
+            "Skill Supreme Cannon base_dmg: 84215 -> 106533",
+            "Skill Supreme Cannon scaling: 10099 -> 12775",
+            "Skill Omega Blast base_dmg: 459874 -> 581740",
+            "Skill Omega Blast scaling: 45988 -> 58175"
+          ]
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "lines": [
+            "Skill Dragon's Roar base_dmg: 4770 -> 6201",
+            "Skill Dragon's Roar scaling: 431 -> 560",
+            "Skill Dragon's Gust base_dmg: 14774 -> 19206",
+            "Skill Dragon's Gust scaling: 886 -> 1152",
+            "Skill Breath of Wyvern base_dmg: 21829 -> 28378",
+            "Skill Breath of Wyvern scaling: 1528 -> 1986",
+            "Skill Soul Dragon Onslaught base_dmg: 98554 -> 128120",
+            "Skill Soul Dragon Onslaught scaling: 4928 -> 6406"
+          ]
+        },
+        {
+          "id": "dkn5pci",
+          "name": "Examon",
+          "lines": [
+            "Skill Dragonic Impact base_dmg: 41768 -> 60041",
+            "Skill Dragonic Impact scaling: 5009 -> 7200",
+            "Skill Pendragon's Glory base_dmg: 61929 -> 89023",
+            "Skill Pendragon's Glory scaling: 7431 -> 10682",
+            "Skill Pendragon Overcharge base_dmg: 66128 -> 95059",
+            "Skill Pendragon Overcharge scaling: 7931 -> 11401",
+            "Skill Draconic Cataclysm base_dmg: 376946 -> 541859",
+            "Skill Draconic Cataclysm scaling: 37695 -> 54187"
+          ]
+        },
+        {
+          "id": "d1d6hjvi",
+          "name": "Millenniumon",
+          "lines": [
+            "Skill Time Unlimited base_dmg: 24096 -> 31325",
+            "Skill Time Unlimited scaling: 2892 -> 3760",
+            "Skill Dimension Destroyer base_dmg: 76706 -> 99718",
+            "Skill Dimension Destroyer scaling: 9205 -> 11966",
+            "Skill Dimension Collapse base_dmg: 91015 -> 118320",
+            "Skill Dimension Collapse scaling: 10922 -> 14199",
+            "Skill Chrono Annihilation base_dmg: 376950 -> 490035",
+            "Skill Chrono Annihilation scaling: 37695 -> 49004"
+          ]
+        },
+        {
+          "id": "d18amvwr",
+          "name": "ImperialDramon",
+          "lines": [
+            "Skill Positron Laser base_dmg: 36047 -> 49744",
+            "Skill Positron Laser scaling: 4326 -> 5970",
+            "Skill Mega Death base_dmg: 52953 -> 73076",
+            "Skill Mega Death scaling: 6354 -> 8769",
+            "Skill Positron Sweep base_dmg: 57597 -> 79483",
+            "Skill Positron Sweep scaling: 6912 -> 9538",
+            "Skill Mega Crusher base_dmg: 376946 -> 520185",
+            "Skill Mega Crusher scaling: 37695 -> 52019"
+          ]
+        },
+        {
+          "id": "d1oz6yb5",
+          "name": "Omegamon Alter-S",
+          "lines": [
+            "Skill Garuru Sword base_dmg: 43031 -> 56909",
+            "Skill Garuru Sword scaling: 5164 -> 6830",
+            "Skill Grey Cannon base_dmg: 63171 -> 83544",
+            "Skill Grey Cannon scaling: 7580 -> 10025",
+            "Skill Supreme Grey Cannon base_dmg: 68735 -> 90902",
+            "Skill Supreme Grey Cannon scaling: 8248 -> 10908",
+            "Skill Alter Blast base_dmg: 431226 -> 570296",
+            "Skill Alter Blast scaling: 43123 -> 57030"
+          ]
+        },
+        {
+          "id": "dg63th8",
+          "name": "Lilithmon X",
+          "lines": [
+            "HP: 21320 -> 21473",
+            "Attack: 5486 -> 5456",
+            "Stats.ds: 41292 -> 41180",
+            "Stats.defense: 557 -> 563",
+            "Skill Nazar Nail base_dmg: 7815 -> 9739",
+            "Skill Nazar Nail scaling: 702 -> 875",
+            "Skill Phantom Pain base_dmg: 23946 -> 28395",
+            "Skill Phantom Pain scaling: 1437 -> 1704"
+          ]
+        },
+        {
+          "id": "d7tgi4w",
+          "name": "SaintGalgomon(Realized)",
+          "lines": [
+            "Skill Saint Tackle base_dmg: 29093 -> 40730",
+            "Skill Saint Tackle scaling: 3491 -> 4887",
+            "Skill Giant Missile base_dmg: 88950 -> 124530",
+            "Skill Giant Missile scaling: 10674 -> 14944",
+            "Skill Full Throttle Tackle base_dmg: 51625 -> 72275",
+            "Skill Full Throttle Tackle scaling: 6195 -> 8673",
+            "Skill Moumantai Warhead base_dmg: 377126 -> 527976",
+            "Skill Moumantai Warhead scaling: 45255 -> 63357"
+          ]
+        },
+        {
+          "id": "d1e5c50k",
+          "name": "Sakuyamon(Realized)",
+          "lines": [
+            "Skill Izuna base_dmg: 5802 -> 6962",
+            "Skill Izuna scaling: 522 -> 626",
+            "Skill Kongou Mandala base_dmg: 28646 -> 34375",
+            "Skill Kongou Mandala scaling: 1719 -> 2063",
+            "Skill Hikari Mandala base_dmg: 41103 -> 49324",
+            "Skill Hikari Mandala scaling: 2877 -> 3452",
+            "Skill Taizou Mandala base_dmg: 145603 -> 174724",
+            "Skill Taizou Mandala scaling: 7281 -> 8737"
+          ]
+        },
+        {
+          "id": "dl6kmwq",
+          "name": "BeelStarmon",
+          "lines": [
+            "Skill Fallen Star cast_time: 4.7 -> 0"
+          ]
+        },
+        {
+          "id": "drsr19f",
+          "name": "Sakuyamon(Simplified)",
+          "lines": [
+            "Skill Izuna base_dmg: 5802 -> 6962",
+            "Skill Izuna scaling: 522 -> 626",
+            "Skill Kongou Mandala base_dmg: 28646 -> 34375",
+            "Skill Kongou Mandala scaling: 1719 -> 2063",
+            "Skill Hikari Mandala base_dmg: 41103 -> 49324",
+            "Skill Hikari Mandala scaling: 2877 -> 3452",
+            "Skill Taizou Mandala base_dmg: 145603 -> 174724",
+            "Skill Taizou Mandala scaling: 7281 -> 8737"
+          ]
+        },
+        {
+          "id": "d1q0mitc",
+          "name": "BeelStarmon(Sealed)",
+          "lines": [
+            "Skill added: Dark Pentagram",
+            "Skill removed: Dark Pentagram"
+          ]
+        },
+        {
+          "id": "d12gvha8",
+          "name": "Fanglongmon",
+          "lines": [
+            "Skill Mountain Seal base_dmg: 64721 -> 58249",
+            "Skill Mountain Seal scaling: 7766 -> 6989",
+            "Skill Fang of the Emperor base_dmg: 136651 -> 122986",
+            "Skill Fang of the Emperor scaling: 16398 -> 14758",
+            "Skill Taikyoku base_dmg: 83568 -> 75211",
+            "Skill Taikyoku scaling: 10028 -> 9025"
+          ]
+        },
+        {
+          "id": "d16gwq7v",
+          "name": "Fanglongmon",
+          "lines": [
+            "Skill Life Vortex base_dmg: 38373 -> 42210",
+            "Skill Life Vortex scaling: 1301 -> 1431",
+            "Skill Jade Thunder Cannon base_dmg: 133822 -> 147204",
+            "Skill Jade Thunder Cannon scaling: 3554 -> 3909",
+            "Skill Verdant Cyclone base_dmg: 111518 -> 122670",
+            "Skill Verdant Cyclone scaling: 2961 -> 3257"
+          ]
+        },
+        {
+          "id": "d1hc93zd",
+          "name": "Fanglongmon",
+          "lines": [
+            "Skill Volcanic Seal base_dmg: 62319 -> 88712",
+            "Skill Volcanic Seal scaling: 7478 -> 10646",
+            "Skill Volcanic Seal cooldown: 4.5 -> 3.5",
+            "Skill Magma Geyser Bite base_dmg: 103450 -> 138180",
+            "Skill Magma Geyser Bite scaling: 12414 -> 16584",
+            "Skill Magma Geyser Bite cooldown: 13.5 -> 12.5",
+            "Skill Meteor base_dmg: 127755 -> 170098",
+            "Skill Meteor scaling: 15330 -> 20412"
+          ]
+        },
+        {
+          "id": "d1b6ma4j",
+          "name": "Fanglongmon(Sealed)",
+          "lines": [
+            "Skill Life Vortex base_dmg: 36080 -> 32472",
+            "Skill Life Vortex scaling: 1221 -> 1099",
+            "Skill Jade Thunder Cannon base_dmg: 104138 -> 93724",
+            "Skill Jade Thunder Cannon scaling: 2765 -> 2488"
+          ]
+        },
+        {
+          "id": "d1ean2zk",
+          "name": "Fanglongmon(Sealed)",
+          "lines": [
+            "Skill Volcanic Seal base_dmg: 76807 -> 64812",
+            "Skill Volcanic Seal scaling: 9217 -> 7777",
+            "Skill Magma Geyser Bite base_dmg: 119636 -> 107588",
+            "Skill Magma Geyser Bite scaling: 14358 -> 12911",
+            "Skill Meteor base_dmg: 147271 -> 132865",
+            "Skill Meteor scaling: 17673 -> 15943",
+            "Skill Grand Meteor base_dmg: 634023 -> 356466",
+            "Skill Grand Meteor scaling: 76082 -> 42776"
+          ]
+        },
+        {
+          "id": "d1ig9juf",
+          "name": "Beelzebumon BM(Realized)",
+          "lines": [
+            "Skill Corona Destroyer base_dmg: 14111 -> 17639",
+            "Skill Corona Destroyer scaling: 1693 -> 2116",
+            "Skill Death Slinger base_dmg: 64715 -> 80894",
+            "Skill Death Slinger scaling: 7766 -> 9708",
+            "Skill Ravenous Volley base_dmg: 37560 -> 46950",
+            "Skill Ravenous Volley scaling: 4507 -> 5634",
+            "Skill Chaos Flare base_dmg: 320107 -> 400134",
+            "Skill Chaos Flare scaling: 38413 -> 48016"
+          ]
+        },
+        {
+          "id": "duz8ou1",
+          "name": "Megidramon X",
+          "lines": [
+            "HP: 21320 -> 21005",
+            "Attack: 5486 -> 5529",
+            "Stats.ds: 41292 -> 41518",
+            "Stats.defense: 557 -> 548",
+            "Skill Megido Flame description: \"Breath of flame that burns everything into ashes.\" -> \"Breath of flame that burns everything into ashes, leaving the target burning every second for 15 seconds.\"",
+            "Skill Megido Flame buff name: \"\" -> \"Megido Flame\"",
+            "Skill Megido Flame buff description: \"\" -> \"Crimson hellfire clings to the target, burning it every second.\"",
+            "Skill Megido Flame buff duration: 0 -> 15"
+          ]
+        },
+        {
+          "id": "d1f8dl9s",
+          "name": "Neptunemon",
+          "lines": [
+            "Skill Tidal Trident base_dmg: 43321 -> 49594",
+            "Skill Tidal Trident scaling: 5199 -> 5952",
+            "Skill Tidal Trident cooldown: 5 -> 2.2",
+            "Skill Tsunami Break base_dmg: 71975 -> 82398",
+            "Skill Tsunami Break scaling: 8637 -> 9887",
+            "Skill Tsunami Break cooldown: 14 -> 11",
+            "Skill Maelstrom Plunge base_dmg: 88601 -> 101430",
+            "Skill Maelstrom Plunge scaling: 10632 -> 12172"
+          ]
+        },
+        {
+          "id": "d1r5o5fg",
+          "name": "Neptunemon(Sealed)",
+          "lines": [
+            "Skill Tidal Trident base_dmg: 25596 -> 27644",
+            "Skill Tidal Trident scaling: 3073 -> 3319",
+            "Skill Tsunami Break base_dmg: 51754 -> 55894",
+            "Skill Tsunami Break scaling: 6211 -> 6708",
+            "Skill Maelstrom Plunge base_dmg: 82204 -> 88780",
+            "Skill Maelstrom Plunge scaling: 9865 -> 10654",
+            "Skill Tidal Judgement base_dmg: 229714 -> 248091",
+            "Skill Tidal Judgement scaling: 27566 -> 29771"
+          ]
+        },
+        {
+          "id": "dazo82i",
+          "name": "Beelzebumon BM(Realized)",
+          "lines": [
+            "Stats.int: 1786 -> 1941",
+            "Skill Devouring Mark base_dmg: 7960 -> 9313",
+            "Skill Devouring Mark scaling: 715 -> 837",
+            "Skill Abyss Bullet base_dmg: 9554 -> 11178",
+            "Skill Abyss Bullet scaling: 573 -> 671",
+            "Skill Code Feast base_dmg: 28372 -> 33196",
+            "Skill Code Feast scaling: 1987 -> 2325",
+            "Skill Gluttony Sigil base_dmg: 119372 -> 139666"
+          ]
+        },
+        {
+          "id": "d1rhiedm",
+          "name": "Megidramon X",
+          "lines": [
+            "Attack: 15402 -> 16442",
+            "Stats.crit_rate: 4787 -> 4889",
+            "Stats.atk_speed: 1050 -> 1200",
+            "Skill Megido Axe base_dmg: 48377 -> 58052",
+            "Skill Megido Axe scaling: 5806 -> 6967",
+            "Skill Megido Flame base_dmg: 58053 -> 69664",
+            "Skill Megido Flame scaling: 6967 -> 8360",
+            "Skill Hell Howling base_dmg: 84662 -> 101594"
+          ]
+        },
+        {
+          "id": "d1amix4c",
+          "name": "Neptunemon",
+          "lines": [
+            "Skill Abyssal Harpoon base_dmg: 20530 -> 22172",
+            "Skill Abyssal Harpoon scaling: 2464 -> 2661",
+            "Skill Abyssal Lance base_dmg: 59924 -> 64718",
+            "Skill Abyssal Lance scaling: 7190 -> 7765",
+            "Skill Abyssal Pressure base_dmg: 33059 -> 35704",
+            "Skill Abyssal Pressure scaling: 3968 -> 4285"
+          ]
+        },
+        {
+          "id": "d1in1kn7",
+          "name": "Neptunemon(Sealed)",
+          "lines": [
+            "Skill Riptide Javelin base_dmg: 30227 -> 22973",
+            "Skill Riptide Javelin scaling: 1024 -> 778",
+            "Skill Surging Tide base_dmg: 105412 -> 80113",
+            "Skill Surging Tide scaling: 2799 -> 2127"
+          ]
+        },
+        {
+          "id": "d180h6ai",
+          "name": "Neptunemon(Sealed)",
+          "lines": [
+            "Skill Abyssal Harpoon base_dmg: 18662 -> 17542",
+            "Skill Abyssal Harpoon scaling: 2240 -> 2106",
+            "Skill Abyssal Lance base_dmg: 39404 -> 37040",
+            "Skill Abyssal Lance scaling: 4729 -> 4445",
+            "Skill Abyssal Pressure base_dmg: 24098 -> 22652",
+            "Skill Abyssal Pressure scaling: 2892 -> 2718"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-10-31T04:26:19.046Z",
+        "mode": "force",
+        "refreshedCount": 559,
+        "dpsUp": [
+          {
+            "id": "d1dnnjni",
+            "name": "Mastemon",
+            "role": "Caster",
+            "before": 84659.36439933923,
+            "after": 103323.72432238807,
+            "delta": 18664.359923048833
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 114606.57430690725,
+            "after": 140524.05734878764,
+            "delta": 25917.48304188039
+          },
+          {
+            "id": "dhoymox",
+            "name": "Dynasmon X",
+            "role": "Caster",
+            "before": 96666.81816130824,
+            "after": 124995.33009146347,
+            "delta": 28328.511930155233
+          },
+          {
+            "id": "dkn5pci",
+            "name": "Examon",
+            "role": "Ranged DPS",
+            "before": 103613.30074700798,
+            "after": 134680.22460178123,
+            "delta": 31066.923854773253
+          },
+          {
+            "id": "d1d6hjvi",
+            "name": "Millenniumon",
+            "role": "Ranged DPS",
+            "before": 122629.56426193248,
+            "after": 156533.98218060928,
+            "delta": 33904.4179186768
+          },
+          {
+            "id": "d18amvwr",
+            "name": "ImperialDramon",
+            "role": "Ranged DPS",
+            "before": 104645.09471808239,
+            "after": 136954.00877437915,
+            "delta": 32308.914056296766
+          },
+          {
+            "id": "d1oz6yb5",
+            "name": "Omegamon Alter-S",
+            "role": "Ranged DPS",
+            "before": 123782.92566045154,
+            "after": 158245.74133142573,
+            "delta": 34462.81567097419
+          },
+          {
+            "id": "dg63th8",
+            "name": "Lilithmon X",
+            "role": "Caster",
+            "before": 112057.47303831173,
+            "after": 135160.7003002165,
+            "delta": 23103.227261904773
+          },
+          {
+            "id": "d7tgi4w",
+            "name": "SaintGalgomon(Realized)",
+            "role": "Ranged DPS",
+            "before": 106819.15498744001,
+            "after": 152782.62045444566,
+            "delta": 45963.46546700565
+          },
+          {
+            "id": "d1e5c50k",
+            "name": "Sakuyamon(Realized)",
+            "role": "Caster",
+            "before": 95702.49772249545,
+            "after": 106072.8086072848,
+            "delta": 10370.310884789345
+          },
+          {
+            "id": "drsr19f",
+            "name": "Sakuyamon(Simplified)",
+            "role": "Caster",
+            "before": 95702.49772249545,
+            "after": 106072.8086072848,
+            "delta": 10370.310884789345
+          },
+          {
+            "id": "d16gwq7v",
+            "name": "Fanglongmon",
+            "role": "Support",
+            "before": 58125.23574414553,
+            "after": 63814.21806602336,
+            "delta": 5688.982321877826
+          },
+          {
+            "id": "d1hc93zd",
+            "name": "Fanglongmon",
+            "role": "Melee DPS",
+            "before": 197513.68468213547,
+            "after": 297239.922765408,
+            "delta": 99726.23808327253
+          },
+          {
+            "id": "d1ig9juf",
+            "name": "Beelzebumon BM(Realized)",
+            "role": "Ranged DPS",
+            "before": 115483.64403825375,
+            "after": 137345.5524124122,
+            "delta": 21861.908374158433
+          },
+          {
+            "id": "duz8ou1",
+            "name": "Megidramon X",
+            "role": "Caster",
+            "before": 104031.69913700646,
+            "after": 104045.38918150366,
+            "delta": 13.69004449719796
+          },
+          {
+            "id": "d1f8dl9s",
+            "name": "Neptunemon",
+            "role": "Melee DPS",
+            "before": 182383.5590803501,
+            "after": 261864.0518288122,
+            "delta": 79480.4927484621
+          },
+          {
+            "id": "d1r5o5fg",
+            "name": "Neptunemon(Sealed)",
+            "role": "Melee DPS",
+            "before": 144049.0753300674,
+            "after": 154730.839376502,
+            "delta": 10681.764046434604
+          },
+          {
+            "id": "dazo82i",
+            "name": "Beelzebumon BM(Realized)",
+            "role": "Caster",
+            "before": 87266.34263845946,
+            "after": 102385.03730777783,
+            "delta": 15118.69466931837
+          },
+          {
+            "id": "d1rhiedm",
+            "name": "Megidramon X",
+            "role": "Melee DPS",
+            "before": 104641.44536876817,
+            "after": 143139.39627916733,
+            "delta": 38497.95091039916
+          },
+          {
+            "id": "d1amix4c",
+            "name": "Neptunemon",
+            "role": "Tank",
+            "before": 74408.25675644449,
+            "after": 79834.93763815852,
+            "delta": 5426.680881714026
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "dl6kmwq",
+            "name": "BeelStarmon",
+            "role": "Caster",
+            "before": 204459.161695735,
+            "after": 190524.14293549472,
+            "delta": -13935.018760240288
+          },
+          {
+            "id": "d12gvha8",
+            "name": "Fanglongmon",
+            "role": "Tank",
+            "before": 117938.34511549919,
+            "after": 106389.31725008272,
+            "delta": -11549.027865416472
+          },
+          {
+            "id": "d1b6ma4j",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Support",
+            "before": 41571.25966833778,
+            "after": 37523.68256074042,
+            "delta": -4047.5771075973607
+          },
+          {
+            "id": "d1ean2zk",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Melee DPS",
+            "before": 271833.4106255293,
+            "after": 204019.28300542338,
+            "delta": -67814.12762010592
+          },
+          {
+            "id": "d1in1kn7",
+            "name": "Neptunemon(Sealed)",
+            "role": "Support",
+            "before": 46592.5563376976,
+            "after": 36055.69173187239,
+            "delta": -10536.864605825205
+          },
+          {
+            "id": "d180h6ai",
+            "name": "Neptunemon(Sealed)",
+            "role": "Tank",
+            "before": 56554.27057483442,
+            "after": 53433.43225253859,
+            "delta": -3120.8383222958364
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-10-30T22:07:30.260Z-nwv0v2",
       "finishedAt": "2026-10-30T22:07:30.260Z",
@@ -6777,32 +7680,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-09-27T04:00:56.070Z",
-        "mode": "force",
-        "refreshedCount": 493,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-09-26T20:50:37.043Z-6c3sdu",
-      "finishedAt": "2026-09-26T20:50:37.043Z",
-      "mode": "force",
-      "refreshedCount": 493,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-09-26T20:50:37.043Z",
         "mode": "force",
         "refreshedCount": 493,
         "dpsUp": [],
