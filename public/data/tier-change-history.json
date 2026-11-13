@@ -1,6 +1,731 @@
 {
-  "updated_at": "2026-11-13T14:09:36.588Z",
+  "updated_at": "2026-11-13T23:26:55.398Z",
   "runs": [
+    {
+      "id": "2026-11-13T23:26:55.423Z-6cv5y1",
+      "finishedAt": "2026-11-13T23:26:55.423Z",
+      "mode": "force",
+      "refreshedCount": 566,
+      "apiCount": 39,
+      "tierCount": 16,
+      "sampleDigimon": [
+        {
+          "id": "d14xi3vx",
+          "name": "AvengeKidmon",
+          "cause": "api"
+        },
+        {
+          "id": "d5bu2tx",
+          "name": "Ceresmon",
+          "cause": "api"
+        },
+        {
+          "id": "dru0lr5",
+          "name": "MagnaKidmon",
+          "cause": "api"
+        },
+        {
+          "id": "d18dz2g5",
+          "name": "Mervamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "dt88f5r",
+          "name": "Sirenmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1846655",
+          "name": "WaruMonzaemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1fjn61",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "dhroobo",
+          "name": "AvengeKidmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1461jqz",
+          "name": "Ceresmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1guhyti",
+          "name": "MagnaKidmon",
+          "cause": "api"
+        },
+        {
+          "id": "d1v6a4mo",
+          "name": "Barbamon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1v6a4mo": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "dx0m1jn": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1m5hyp7": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d3gby2n": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d55iyrw": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d16lihoe": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d104y2rc": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "dfabzxw": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d17kebi5": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1myywqm": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "da534d5": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "der4hr2": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1yast50": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1numzqk": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d4w6oll": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1a8u0sl": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d186rzyx": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1b204a4": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d13da2bb": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "dn2dc8s": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "dijnp7z": [
+          "Skill Lovely Heart cast_time: 1.5 -> 1.597",
+          "Skill Heart Cutter cast_time: 2.1 -> 2.17",
+          "Skill Plush Avalanche cast_time: 1.8 -> 1.85",
+          "Skill Teddy Embrace cast_time: 0 -> 1",
+          "Skill Stuffed Love cast_time: 0 -> 1"
+        ],
+        "d1dnnjni": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1ja7r7v": [
+          "Skill added: Garuru Cannon",
+          "Skill added: Grey Sword",
+          "Skill added: Supreme Cannon",
+          "Skill added: Omega Blast",
+          "Skill added: Omega InForce",
+          "Skill removed: Garuru Cannon",
+          "Skill removed: Grey Sword",
+          "Skill removed: Supreme Cannon"
+        ],
+        "d1fjn61": [
+          "Skill Garuru Cannon cast_time: 2.6 -> 2.67",
+          "Skill Grey Sword cast_time: 3.6 -> 3.67",
+          "Skill Omega InForce cast_time: 0 -> 1"
+        ],
+        "dhoymox": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d7a46gc": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1mu63gm": [
+          "Skill Midnight Mass description: \"Sistermon Noir holds Anthony across her chest and says a wicked little mass for her party. Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 10 seconds.\" -> \"Sistermon Noir holds Anthony across her chest and says a wicked little mass for her party. Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 20 seconds.\"",
+          "Skill Midnight Mass buff description: \"Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 20 seconds.\"",
+          "Skill Midnight Mass buff duration: 10 -> 20"
+        ],
+        "dg63th8": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1e5c50k": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "dl6kmwq": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "drsr19f": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1ppbxz0": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1hc93zd": [
+          "Skill Emperor's Wrath description: \"Fanglongmon awakens the fury of the Yellow Emperor. Increases Skill Damage by 20% (+5% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\" -> \"Fanglongmon awakens the fury of the Yellow Emperor. Increases Skill Damage by 20% (+10% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\"",
+          "Skill Emperor's Wrath buff description: \"Increases Skill Damage by 20% (+5% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\" -> \"Increases Skill Damage by 20% (+10% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\""
+        ],
+        "d1ean2zk": [
+          "Skill Emperor's Wrath description: \"Fanglongmon awakens the fury of the Yellow Emperor. Instantly restores 10% of MaxHP, then increases Skill Damage by 10% (+3% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\" -> \"Fanglongmon awakens the fury of the Yellow Emperor. Instantly restores 10% of MaxHP, then increases Skill Damage by 10% (+8% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\"",
+          "Skill Emperor's Wrath buff description: \"Increases Skill Damage by 10% (+3% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\" -> \"Increases Skill Damage by 10% (+8% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\""
+        ],
+        "duz8ou1": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "d1f8dl9s": [
+          "Stats.int: 0 -> 2500",
+          "Skill Tidal Trident base_dmg: 49594 -> 47114",
+          "Skill Tidal Trident scaling: 5952 -> 5654",
+          "Skill Tsunami Break base_dmg: 82398 -> 78278",
+          "Skill Tsunami Break scaling: 9887 -> 9393",
+          "Skill Maelstrom Plunge base_dmg: 101430 -> 96359",
+          "Skill Maelstrom Plunge scaling: 12172 -> 11563",
+          "Skill Tidal Judgement base_dmg: 341148 -> 550954"
+        ],
+        "d1r5o5fg": [
+          "Stats.int: 0 -> 1500",
+          "Skill Tidal Trident base_dmg: 27644 -> 26262",
+          "Skill Tidal Trident scaling: 3319 -> 3153",
+          "Skill Tsunami Break base_dmg: 55894 -> 53099",
+          "Skill Tsunami Break scaling: 6708 -> 6373",
+          "Skill Maelstrom Plunge base_dmg: 88780 -> 84341",
+          "Skill Maelstrom Plunge scaling: 10654 -> 10121",
+          "Skill Tidal Judgement base_dmg: 248091 -> 400667"
+        ],
+        "dltsd1c": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ],
+        "dazo82i": [
+          "Stats.atk_speed: 2000 -> 3500"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1v6a4mo",
+          "name": "Barbamon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "dx0m1jn",
+          "name": "Cherubimon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1m5hyp7",
+          "name": "Demon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d3gby2n",
+          "name": "Dynasmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d55iyrw",
+          "name": "Jijimon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d16lihoe",
+          "name": "Lighdramon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d104y2rc",
+          "name": "Lilithmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "dfabzxw",
+          "name": "Megidramon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d17kebi5",
+          "name": "Meicoomon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1myywqm",
+          "name": "Meicrackmon: Vicious Mode",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "da534d5",
+          "name": "Murmukusmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "der4hr2",
+          "name": "Ornismon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1yast50",
+          "name": "Piemon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1numzqk",
+          "name": "Plesiomon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d4w6oll",
+          "name": "Raguelmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1a8u0sl",
+          "name": "Ravemon: BurstMode",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d186rzyx",
+          "name": "TyrantKabuterimon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1b204a4",
+          "name": "Baalmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d13da2bb",
+          "name": "Sleipmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "dn2dc8s",
+          "name": "Zhuqiaomon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "dijnp7z",
+          "name": "Monzaemon",
+          "lines": [
+            "Skill Lovely Heart cast_time: 1.5 -> 1.597",
+            "Skill Heart Cutter cast_time: 2.1 -> 2.17",
+            "Skill Plush Avalanche cast_time: 1.8 -> 1.85",
+            "Skill Teddy Embrace cast_time: 0 -> 1",
+            "Skill Stuffed Love cast_time: 0 -> 1"
+          ]
+        },
+        {
+          "id": "d1dnnjni",
+          "name": "Mastemon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "lines": [
+            "Skill added: Garuru Cannon",
+            "Skill added: Grey Sword",
+            "Skill added: Supreme Cannon",
+            "Skill added: Omega Blast",
+            "Skill added: Omega InForce",
+            "Skill removed: Garuru Cannon",
+            "Skill removed: Grey Sword",
+            "Skill removed: Supreme Cannon"
+          ]
+        },
+        {
+          "id": "d1fjn61",
+          "name": "Omegamon",
+          "lines": [
+            "Skill Garuru Cannon cast_time: 2.6 -> 2.67",
+            "Skill Grey Sword cast_time: 3.6 -> 3.67",
+            "Skill Omega InForce cast_time: 0 -> 1"
+          ]
+        },
+        {
+          "id": "dhoymox",
+          "name": "Dynasmon X",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d7a46gc",
+          "name": "Nefertimon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1mu63gm",
+          "name": "Sistermon Noir(Awakened)",
+          "lines": [
+            "Skill Midnight Mass description: \"Sistermon Noir holds Anthony across her chest and says a wicked little mass for her party. Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 10 seconds.\" -> \"Sistermon Noir holds Anthony across her chest and says a wicked little mass for her party. Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 20 seconds.\"",
+            "Skill Midnight Mass buff description: \"Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 10 seconds.\" -> \"Reduces damage taken by 15%, increases Attack Speed by 20% and increases Critical Damage by 11% (+1% per Skill Level) for 20 seconds.\"",
+            "Skill Midnight Mass buff duration: 10 -> 20"
+          ]
+        },
+        {
+          "id": "dg63th8",
+          "name": "Lilithmon X",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1e5c50k",
+          "name": "Sakuyamon(Realized)",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "dl6kmwq",
+          "name": "BeelStarmon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "drsr19f",
+          "name": "Sakuyamon(Simplified)",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1ppbxz0",
+          "name": "Armagemon",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1hc93zd",
+          "name": "Fanglongmon",
+          "lines": [
+            "Skill Emperor's Wrath description: \"Fanglongmon awakens the fury of the Yellow Emperor. Increases Skill Damage by 20% (+5% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\" -> \"Fanglongmon awakens the fury of the Yellow Emperor. Increases Skill Damage by 20% (+10% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\"",
+            "Skill Emperor's Wrath buff description: \"Increases Skill Damage by 20% (+5% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\" -> \"Increases Skill Damage by 20% (+10% per Skill Level) and Critical Damage by 28% (+8% per Skill Level) for 15 seconds.\""
+          ]
+        },
+        {
+          "id": "d1ean2zk",
+          "name": "Fanglongmon(Sealed)",
+          "lines": [
+            "Skill Emperor's Wrath description: \"Fanglongmon awakens the fury of the Yellow Emperor. Instantly restores 10% of MaxHP, then increases Skill Damage by 10% (+3% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\" -> \"Fanglongmon awakens the fury of the Yellow Emperor. Instantly restores 10% of MaxHP, then increases Skill Damage by 10% (+8% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\"",
+            "Skill Emperor's Wrath buff description: \"Increases Skill Damage by 10% (+3% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\" -> \"Increases Skill Damage by 10% (+8% per Skill Level) and reduces skill cooldowns by 10% for 12 seconds.\""
+          ]
+        },
+        {
+          "id": "duz8ou1",
+          "name": "Megidramon X",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "d1f8dl9s",
+          "name": "Neptunemon",
+          "lines": [
+            "Stats.int: 0 -> 2500",
+            "Skill Tidal Trident base_dmg: 49594 -> 47114",
+            "Skill Tidal Trident scaling: 5952 -> 5654",
+            "Skill Tsunami Break base_dmg: 82398 -> 78278",
+            "Skill Tsunami Break scaling: 9887 -> 9393",
+            "Skill Maelstrom Plunge base_dmg: 101430 -> 96359",
+            "Skill Maelstrom Plunge scaling: 12172 -> 11563",
+            "Skill Tidal Judgement base_dmg: 341148 -> 550954"
+          ]
+        },
+        {
+          "id": "d1r5o5fg",
+          "name": "Neptunemon(Sealed)",
+          "lines": [
+            "Stats.int: 0 -> 1500",
+            "Skill Tidal Trident base_dmg: 27644 -> 26262",
+            "Skill Tidal Trident scaling: 3319 -> 3153",
+            "Skill Tsunami Break base_dmg: 55894 -> 53099",
+            "Skill Tsunami Break scaling: 6708 -> 6373",
+            "Skill Maelstrom Plunge base_dmg: 88780 -> 84341",
+            "Skill Maelstrom Plunge scaling: 10654 -> 10121",
+            "Skill Tidal Judgement base_dmg: 248091 -> 400667"
+          ]
+        },
+        {
+          "id": "dltsd1c",
+          "name": "BeelStarmon(Sealed)",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        },
+        {
+          "id": "dazo82i",
+          "name": "Beelzebumon BM(Realized)",
+          "lines": [
+            "Stats.atk_speed: 2000 -> 3500"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-11-13T23:26:55.423Z",
+        "mode": "force",
+        "refreshedCount": 566,
+        "dpsUp": [
+          {
+            "id": "d1fjn61",
+            "name": "Omegamon",
+            "role": "Melee DPS",
+            "before": 111761.78110157744,
+            "after": 111801.71637547995,
+            "delta": 39.93527390251984
+          },
+          {
+            "id": "d1hc93zd",
+            "name": "Fanglongmon",
+            "role": "Melee DPS",
+            "before": 297239.922765408,
+            "after": 368492.8882826495,
+            "delta": 71252.96551724151
+          },
+          {
+            "id": "d1ean2zk",
+            "name": "Fanglongmon(Sealed)",
+            "role": "Melee DPS",
+            "before": 204019.28300542338,
+            "after": 262685.31731643615,
+            "delta": 58666.03431101277
+          },
+          {
+            "id": "d1f8dl9s",
+            "name": "Neptunemon",
+            "role": "Melee DPS",
+            "before": 261864.0518288122,
+            "after": 376185.74113535456,
+            "delta": 114321.68930654236
+          },
+          {
+            "id": "d1r5o5fg",
+            "name": "Neptunemon(Sealed)",
+            "role": "Melee DPS",
+            "before": 154730.839376502,
+            "after": 220285.1904765572,
+            "delta": 65554.35110005521
+          }
+        ],
+        "dpsDown": [
+          {
+            "id": "dijnp7z",
+            "name": "Monzaemon",
+            "role": "Hybrid",
+            "before": 29965.69231004355,
+            "after": 29738.033058987134,
+            "delta": -227.6592510564151
+          },
+          {
+            "id": "d1ja7r7v",
+            "name": "Omegamon",
+            "role": "Ranged DPS",
+            "before": 140524.05734878764,
+            "after": 135893.61293549408,
+            "delta": -4630.4444132935605
+          },
+          {
+            "id": "d1mu63gm",
+            "name": "Sistermon Noir(Awakened)",
+            "role": "Ranged DPS",
+            "before": 110306.21917000029,
+            "after": 96266.524590253,
+            "delta": -14039.694579747287
+          }
+        ],
+        "dpsNew": [
+          {
+            "id": "d14xi3vx",
+            "name": "AvengeKidmon",
+            "role": "Caster",
+            "after": 128640.75359254495
+          },
+          {
+            "id": "d5bu2tx",
+            "name": "Ceresmon",
+            "role": "Support",
+            "after": 56917.35348712708
+          },
+          {
+            "id": "dru0lr5",
+            "name": "MagnaKidmon",
+            "role": "Ranged DPS",
+            "after": 127970.30876345784
+          },
+          {
+            "id": "d18dz2g5",
+            "name": "Mervamon",
+            "role": "Melee DPS",
+            "after": 48708.19234486645
+          },
+          {
+            "id": "dt88f5r",
+            "name": "Sirenmon",
+            "role": "Support",
+            "after": 20383.760953888894
+          },
+          {
+            "id": "dhroobo",
+            "name": "AvengeKidmon",
+            "role": "Ranged DPS",
+            "after": 135311.42611950115
+          },
+          {
+            "id": "d1461jqz",
+            "name": "Ceresmon",
+            "role": "Tank",
+            "after": 58419.16136611301
+          },
+          {
+            "id": "d1guhyti",
+            "name": "MagnaKidmon",
+            "role": "Caster",
+            "after": 129833.7859245304
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "d1461jqz",
+            "name": "Ceresmon",
+            "role": "Tank",
+            "after": 3.9706418299396993
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [
+          {
+            "id": "d5bu2tx",
+            "name": "Ceresmon",
+            "role": "Support",
+            "after": 6.226712267620252
+          },
+          {
+            "id": "dt88f5r",
+            "name": "Sirenmon",
+            "role": "Support",
+            "after": 6.16895172610101
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d14xi3vx",
+            "name": "AvengeKidmon",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "d5bu2tx",
+            "name": "Ceresmon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dru0lr5",
+            "name": "MagnaKidmon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d18dz2g5",
+            "name": "Mervamon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "dt88f5r",
+            "name": "Sirenmon",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dhroobo",
+            "name": "AvengeKidmon",
+            "role": "Ranged DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1461jqz",
+            "name": "Ceresmon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1guhyti",
+            "name": "MagnaKidmon",
+            "role": "Caster",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-11-13T14:09:36.619Z-a72mdp",
       "finishedAt": "2026-11-13T14:09:36.619Z",
@@ -7232,32 +7957,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-10-08T13:01:51.858Z",
-        "mode": "force",
-        "refreshedCount": 493,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-10-08T04:50:35.656Z-e13235",
-      "finishedAt": "2026-10-08T04:50:35.656Z",
-      "mode": "force",
-      "refreshedCount": 493,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-10-08T04:50:35.656Z",
         "mode": "force",
         "refreshedCount": 493,
         "dpsUp": [],
