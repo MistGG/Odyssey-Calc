@@ -1,6 +1,62 @@
 {
-  "updated_at": "2026-11-13T23:26:55.398Z",
+  "updated_at": "2026-11-14T05:15:15.785Z",
   "runs": [
+    {
+      "id": "2026-11-14T05:15:15.815Z-01yr8b",
+      "finishedAt": "2026-11-14T05:15:15.815Z",
+      "mode": "force",
+      "refreshedCount": 567,
+      "apiCount": 3,
+      "tierCount": 1,
+      "sampleDigimon": [
+        {
+          "id": "d1ja7r7v",
+          "name": "Omegamon",
+          "cause": "api"
+        },
+        {
+          "id": "de00who",
+          "name": "V-mon",
+          "cause": "api"
+        },
+        {
+          "id": "d1fjn61",
+          "name": "Omegamon",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {},
+      "apiDiffs": [],
+      "summary": {
+        "finishedAt": "2026-11-14T05:15:15.815Z",
+        "mode": "force",
+        "refreshedCount": 567,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "after": 4273.38011437791
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "de00who",
+            "name": "V-mon",
+            "role": "Hybrid",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-11-13T23:26:55.423Z-6cv5y1",
       "finishedAt": "2026-11-13T23:26:55.423Z",
@@ -7943,32 +7999,6 @@
             "to": "complete"
           }
         ]
-      }
-    },
-    {
-      "id": "2026-10-08T13:01:51.858Z-r00tfk",
-      "finishedAt": "2026-10-08T13:01:51.858Z",
-      "mode": "force",
-      "refreshedCount": 493,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-10-08T13:01:51.858Z",
-        "mode": "force",
-        "refreshedCount": 493,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
       }
     }
   ]
