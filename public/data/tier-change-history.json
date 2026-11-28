@@ -1,6 +1,122 @@
 {
-  "updated_at": "2026-11-27T16:23:03.477Z",
+  "updated_at": "2026-11-28T01:19:10.355Z",
   "runs": [
+    {
+      "id": "2026-11-28T01:19:10.376Z-ndm8la",
+      "finishedAt": "2026-11-28T01:19:10.376Z",
+      "mode": "force",
+      "refreshedCount": 568,
+      "apiCount": 2,
+      "tierCount": 3,
+      "sampleDigimon": [
+        {
+          "id": "d18dz2g5",
+          "name": "Mervamon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "dknfhf7",
+          "name": "Mervamon(Sealed)",
+          "cause": "api"
+        },
+        {
+          "id": "dy4htyr",
+          "name": "BeelStarmon(Sealed)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "dy4htyr": [
+          "Skill Emerald Dome description: \"BeelStarmon spreads her pentagram circle and a vast green dome bursts out from her. Instantly restores 6,230 HP (+678 per Skill Level) and 7% of MaxHP to you and nearby allies.\" -> \"BeelStarmon spreads her pentagram circle and a vast green dome bursts out from her. Instantly restores 3,907 HP (+600 per Skill Level) to you and nearby allies.\"",
+          "Skill Emerald Dome buff description: \"Instantly restores 6,230 HP (+678 per Skill Level) and 7% of MaxHP to you and nearby allies.\" -> \"Instantly restores 3,907 HP (+600 per Skill Level) to you and nearby allies.\"",
+          "Skill Life Siphon Barrage description: \"BeelStarmon rapid-fires blue magic bullets at the target and scatters its life energy to her allies. Deals damage to the target, instantly restores 10,836 HP (+944 per Skill Level) and 12% of MaxHP to you and nearby allies.\" -> \"BeelStarmon rapid-fires blue magic bullets at the target and scatters its life energy to her allies. Deals damage to the target and instantly restores 5,469 HP (+1,000 per Skill Level) to you and nearby allies.\"",
+          "Skill Life Siphon Barrage buff description: \"Instantly restores 10,836 HP (+944 per Skill Level) and 12% of MaxHP to you and nearby allies.\" -> \"Instantly restores 5,469 HP (+1,000 per Skill Level) to you and nearby allies.\""
+        ],
+        "d18dz2g5": [
+          "HP: 16013 -> 24703",
+          "Attack: 7740 -> 17578",
+          "Stats.ds: 14660 -> 21187",
+          "Stats.defense: 452 -> 657",
+          "Stats.crit_rate: 988 -> 4787",
+          "Stats.atk_speed: 1900 -> 1500",
+          "Stats.evasion: 2840 -> 3500",
+          "Stats.hit_rate: 490 -> 1472"
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "dy4htyr",
+          "name": "BeelStarmon(Sealed)",
+          "lines": [
+            "Skill Emerald Dome description: \"BeelStarmon spreads her pentagram circle and a vast green dome bursts out from her. Instantly restores 6,230 HP (+678 per Skill Level) and 7% of MaxHP to you and nearby allies.\" -> \"BeelStarmon spreads her pentagram circle and a vast green dome bursts out from her. Instantly restores 3,907 HP (+600 per Skill Level) to you and nearby allies.\"",
+            "Skill Emerald Dome buff description: \"Instantly restores 6,230 HP (+678 per Skill Level) and 7% of MaxHP to you and nearby allies.\" -> \"Instantly restores 3,907 HP (+600 per Skill Level) to you and nearby allies.\"",
+            "Skill Life Siphon Barrage description: \"BeelStarmon rapid-fires blue magic bullets at the target and scatters its life energy to her allies. Deals damage to the target, instantly restores 10,836 HP (+944 per Skill Level) and 12% of MaxHP to you and nearby allies.\" -> \"BeelStarmon rapid-fires blue magic bullets at the target and scatters its life energy to her allies. Deals damage to the target and instantly restores 5,469 HP (+1,000 per Skill Level) to you and nearby allies.\"",
+            "Skill Life Siphon Barrage buff description: \"Instantly restores 10,836 HP (+944 per Skill Level) and 12% of MaxHP to you and nearby allies.\" -> \"Instantly restores 5,469 HP (+1,000 per Skill Level) to you and nearby allies.\""
+          ]
+        },
+        {
+          "id": "d18dz2g5",
+          "name": "Mervamon(Sealed)",
+          "lines": [
+            "HP: 16013 -> 24703",
+            "Attack: 7740 -> 17578",
+            "Stats.ds: 14660 -> 21187",
+            "Stats.defense: 452 -> 657",
+            "Stats.crit_rate: 988 -> 4787",
+            "Stats.atk_speed: 1900 -> 1500",
+            "Stats.evasion: 2840 -> 3500",
+            "Stats.hit_rate: 490 -> 1472"
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-11-28T01:19:10.376Z",
+        "mode": "force",
+        "refreshedCount": 568,
+        "dpsUp": [
+          {
+            "id": "d18dz2g5",
+            "name": "Mervamon(Sealed)",
+            "role": "Melee DPS",
+            "before": 48708.19234486645,
+            "after": 121878.43931121082,
+            "delta": 73170.24696634436
+          }
+        ],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "dknfhf7",
+            "name": "Mervamon(Sealed)",
+            "role": "Caster",
+            "after": 177299.38683130537
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [],
+        "healerUp": [],
+        "healerDown": [
+          {
+            "id": "dy4htyr",
+            "name": "BeelStarmon(Sealed)",
+            "role": "Support",
+            "before": 6.508943766008031,
+            "after": 6.389207501783044,
+            "delta": -0.1197362642249864
+          }
+        ],
+        "healerNew": [],
+        "statusChanges": [
+          {
+            "id": "dknfhf7",
+            "name": "Mervamon(Sealed)",
+            "role": "Caster",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-11-27T16:23:03.494Z-e7mp22",
       "finishedAt": "2026-11-27T16:23:03.494Z",
@@ -6552,32 +6668,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-10-18T15:32:51.835Z",
-        "mode": "force",
-        "refreshedCount": 505,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-10-18T10:37:46.160Z-nq6vus",
-      "finishedAt": "2026-10-18T10:37:46.160Z",
-      "mode": "force",
-      "refreshedCount": 505,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-10-18T10:37:46.160Z",
         "mode": "force",
         "refreshedCount": 505,
         "dpsUp": [],
