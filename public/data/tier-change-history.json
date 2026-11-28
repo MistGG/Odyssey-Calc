@@ -1,6 +1,189 @@
 {
-  "updated_at": "2026-11-28T01:19:10.355Z",
+  "updated_at": "2026-11-28T15:15:40.479Z",
   "runs": [
+    {
+      "id": "2026-11-28T15:15:40.495Z-yf6heu",
+      "finishedAt": "2026-11-28T15:15:40.495Z",
+      "mode": "force",
+      "refreshedCount": 574,
+      "apiCount": 6,
+      "tierCount": 7,
+      "sampleDigimon": [
+        {
+          "id": "d1es9yeq",
+          "name": "MedievalDukemon",
+          "cause": "api"
+        },
+        {
+          "id": "duuqeyk",
+          "name": "Mervamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1gw4973",
+          "name": "Sakuyamon Miko Mode",
+          "cause": "api"
+        },
+        {
+          "id": "dc0oz5c",
+          "name": "MedievalDukemon",
+          "cause": "api"
+        },
+        {
+          "id": "d1xlmswr",
+          "name": "Mervamon",
+          "cause": "api"
+        },
+        {
+          "id": "d1z0chza",
+          "name": "Sakuyamon Miko Mode",
+          "cause": "api"
+        },
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "cause": "api"
+        }
+      ],
+      "apiDiffById": {
+        "d1dyhy6u": [
+          "Skill White Sanctuary (Awakened) description: \"Sistermon Blanc(Awakened) spins Cross Barbee into a wheel of light and plants it, opening a sanctuary around the party. Restores 16,182 HP (+870 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\" -> \"Sistermon Blanc(Awakened) spins Cross Barbee into a wheel of light and plants it, opening a sanctuary around the party. Restores 3,907 HP (+600 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\"",
+          "Skill White Sanctuary (Awakened) buff description: \"Restores 16,182 HP (+870 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\" -> \"Restores 3,907 HP (+600 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\"",
+          "Skill Thunder Hymn description: \"Sistermon Blanc(Awakened) spins Cross Barbee overhead in a storm of golden lightning as a massive sphere of healing light swells around her, then charges the enemy with two afterimages and strikes three times. Restores 13,018 HP (+780 per Skill Level) to you and nearby allies.\" -> \"Sistermon Blanc(Awakened) spins Cross Barbee overhead in a storm of golden lightning as a massive sphere of healing light swells around her, then charges the enemy with two afterimages and strikes three times. Restores 5,469 HP (+1,000 per Skill Level) to you and nearby allies.\"",
+          "Skill Thunder Hymn buff description: \"Restores 13,018 HP (+780 per Skill Level).\" -> \"Restores 5,469 HP (+1,000 per Skill Level).\"",
+          "Skill Protect Wave (Awakened) radius: 8000 -> 0",
+          "Skill Protect Wave (Awakened) description: \"Sistermon Blanc(Awakened) spins Cross Barbee and a wave of light closes around the whole party. Reduces damage taken by 15% and gains a Shield of 8,000 (+777 per Skill Level) for 15 seconds.\" -> \"Sistermon Blanc(Awakened) spins Cross Barbee and a wave of light closes around a single ally. Instantly restores 20% of MaxHP, then reduces damage taken by 15% and grants a Shield of 15,254 (+3,220 per Skill Level) for 15 seconds.\"",
+          "Skill Protect Wave (Awakened) buff description: \"Reduces damage taken by 15% and gains a Shield of 8,000 (+777 per Skill Level) for 15 seconds.\" -> \"Reduces damage taken by 15% and grants a Shield of 15,254 (+3,220 per Skill Level) for 15 seconds.\""
+        ]
+      },
+      "apiDiffs": [
+        {
+          "id": "d1dyhy6u",
+          "name": "Sistermon Blanc(Awakened)",
+          "lines": [
+            "Skill White Sanctuary (Awakened) description: \"Sistermon Blanc(Awakened) spins Cross Barbee into a wheel of light and plants it, opening a sanctuary around the party. Restores 16,182 HP (+870 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\" -> \"Sistermon Blanc(Awakened) spins Cross Barbee into a wheel of light and plants it, opening a sanctuary around the party. Restores 3,907 HP (+600 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\"",
+            "Skill White Sanctuary (Awakened) buff description: \"Restores 16,182 HP (+870 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\" -> \"Restores 3,907 HP (+600 per Skill Level) and gains a Shield of 3,272 (+164 per Skill Level) for 15 seconds.\"",
+            "Skill Thunder Hymn description: \"Sistermon Blanc(Awakened) spins Cross Barbee overhead in a storm of golden lightning as a massive sphere of healing light swells around her, then charges the enemy with two afterimages and strikes three times. Restores 13,018 HP (+780 per Skill Level) to you and nearby allies.\" -> \"Sistermon Blanc(Awakened) spins Cross Barbee overhead in a storm of golden lightning as a massive sphere of healing light swells around her, then charges the enemy with two afterimages and strikes three times. Restores 5,469 HP (+1,000 per Skill Level) to you and nearby allies.\"",
+            "Skill Thunder Hymn buff description: \"Restores 13,018 HP (+780 per Skill Level).\" -> \"Restores 5,469 HP (+1,000 per Skill Level).\"",
+            "Skill Protect Wave (Awakened) radius: 8000 -> 0",
+            "Skill Protect Wave (Awakened) description: \"Sistermon Blanc(Awakened) spins Cross Barbee and a wave of light closes around the whole party. Reduces damage taken by 15% and gains a Shield of 8,000 (+777 per Skill Level) for 15 seconds.\" -> \"Sistermon Blanc(Awakened) spins Cross Barbee and a wave of light closes around a single ally. Instantly restores 20% of MaxHP, then reduces damage taken by 15% and grants a Shield of 15,254 (+3,220 per Skill Level) for 15 seconds.\"",
+            "Skill Protect Wave (Awakened) buff description: \"Reduces damage taken by 15% and gains a Shield of 8,000 (+777 per Skill Level) for 15 seconds.\" -> \"Reduces damage taken by 15% and grants a Shield of 15,254 (+3,220 per Skill Level) for 15 seconds.\""
+          ]
+        }
+      ],
+      "summary": {
+        "finishedAt": "2026-11-28T15:15:40.495Z",
+        "mode": "force",
+        "refreshedCount": 574,
+        "dpsUp": [],
+        "dpsDown": [],
+        "dpsNew": [
+          {
+            "id": "d1es9yeq",
+            "name": "MedievalDukemon",
+            "role": "Melee DPS",
+            "after": 154972.49178822432
+          },
+          {
+            "id": "duuqeyk",
+            "name": "Mervamon",
+            "role": "Melee DPS",
+            "after": 260804.08831307502
+          },
+          {
+            "id": "d1gw4973",
+            "name": "Sakuyamon Miko Mode",
+            "role": "Support",
+            "after": 37661.66963802195
+          },
+          {
+            "id": "dc0oz5c",
+            "name": "MedievalDukemon",
+            "role": "Tank",
+            "after": 116994.89082694148
+          },
+          {
+            "id": "d1xlmswr",
+            "name": "Mervamon",
+            "role": "Caster",
+            "after": 258777.16685379966
+          },
+          {
+            "id": "d1z0chza",
+            "name": "Sakuyamon Miko Mode",
+            "role": "Ranged DPS",
+            "after": 106830.5888645456
+          }
+        ],
+        "tankUp": [],
+        "tankDown": [],
+        "tankNew": [
+          {
+            "id": "dc0oz5c",
+            "name": "MedievalDukemon",
+            "role": "Tank",
+            "after": 3.9515229875220355
+          }
+        ],
+        "healerUp": [],
+        "healerDown": [
+          {
+            "id": "d1dyhy6u",
+            "name": "Sistermon Blanc(Awakened)",
+            "role": "Support",
+            "before": 6.395872197376608,
+            "after": 6.148063611127873,
+            "delta": -0.24780858624873492
+          }
+        ],
+        "healerNew": [
+          {
+            "id": "d1gw4973",
+            "name": "Sakuyamon Miko Mode",
+            "role": "Support",
+            "after": 6.422291204623934
+          }
+        ],
+        "statusChanges": [
+          {
+            "id": "d1es9yeq",
+            "name": "MedievalDukemon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "duuqeyk",
+            "name": "Mervamon",
+            "role": "Melee DPS",
+            "to": "complete"
+          },
+          {
+            "id": "d1gw4973",
+            "name": "Sakuyamon Miko Mode",
+            "role": "Support",
+            "to": "complete"
+          },
+          {
+            "id": "dc0oz5c",
+            "name": "MedievalDukemon",
+            "role": "Tank",
+            "to": "complete"
+          },
+          {
+            "id": "d1xlmswr",
+            "name": "Mervamon",
+            "role": "Caster",
+            "to": "complete"
+          },
+          {
+            "id": "d1z0chza",
+            "name": "Sakuyamon Miko Mode",
+            "role": "Ranged DPS",
+            "to": "complete"
+          }
+        ]
+      }
+    },
     {
       "id": "2026-11-28T01:19:10.376Z-ndm8la",
       "finishedAt": "2026-11-28T01:19:10.376Z",
@@ -6642,32 +6825,6 @@
       "apiDiffs": [],
       "summary": {
         "finishedAt": "2026-10-18T20:18:14.657Z",
-        "mode": "force",
-        "refreshedCount": 505,
-        "dpsUp": [],
-        "dpsDown": [],
-        "dpsNew": [],
-        "tankUp": [],
-        "tankDown": [],
-        "tankNew": [],
-        "healerUp": [],
-        "healerDown": [],
-        "healerNew": [],
-        "statusChanges": []
-      }
-    },
-    {
-      "id": "2026-10-18T15:32:51.835Z-9udrwa",
-      "finishedAt": "2026-10-18T15:32:51.835Z",
-      "mode": "force",
-      "refreshedCount": 505,
-      "apiCount": 0,
-      "tierCount": 0,
-      "sampleDigimon": [],
-      "apiDiffById": {},
-      "apiDiffs": [],
-      "summary": {
-        "finishedAt": "2026-10-18T15:32:51.835Z",
         "mode": "force",
         "refreshedCount": 505,
         "dpsUp": [],
